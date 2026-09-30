@@ -18,6 +18,7 @@ import {
   KeyRound,
   LogOut,
   Sparkles,
+  Eye,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -81,8 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
     userContext.dentistId === 6036933394890752 ||
     Boolean(userContext.userName && userContext.userName.includes('Avaliador')) ||
     selectedDentist?.id === 6036933394890752 ||
-    Boolean(selectedDentist?.Name && selectedDentist.Name.includes('Avaliador')) ||
-    Boolean(userContext.email && userContext.email.toLowerCase().includes('flaviosantiago'));
+    Boolean(selectedDentist?.Name && selectedDentist.Name.includes('Avaliador'));
 
   const canManageClinics = isAdmin || isClinicaAdmin || isGerente;
   const canManageUsers = isAdmin || isClinicaAdmin || !!userContext.permissions?.canManageUsers;
@@ -119,20 +119,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand / Logo (shrink-0 ensures it NEVER gets squeezed) */}
         <div className="flex items-center gap-3 shrink-0">
           <BertuolLogo size="md" mode="horizontal" />
-          <div className="hidden md:flex flex-col pl-2 border-l border-[#E2E6E7]">
-            <span className="text-[11px] font-bold text-[#199A9F]">
+          <div className="hidden md:flex flex-col pl-2.5 border-l border-[#E2E6E7]">
+            <span className="text-[12px] font-extrabold text-[#199A9F] tracking-tight">
               Agenda Inteligente
-            </span>
-            <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-              {isReceptionist
-                ? userContext.userName
-                : isAvaliador
-                ? `${selectedDentist?.Name || 'Avaliador'} • Triagem & Avaliação`
-                : isDentist
-                ? `${selectedDentist?.Name || 'Dentista'} • Corpo Clínico`
-                : isGerente
-                ? 'Gestão de Atendimento'
-                : 'Visão Multi-Unidades'}
             </span>
           </div>
         </div>
@@ -159,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   onSelectClinic(val);
                 }}
-                className="appearance-none bg-white hover:bg-gray-50 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-8 pr-7 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#FFB347] focus:border-transparent transition-all cursor-pointer max-w-[160px] truncate shadow-2xs"
+                className="appearance-none bg-white hover:bg-gray-50 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-8 pr-7 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all cursor-pointer max-w-[160px] truncate shadow-2xs"
               >
                 <option value="all">🏢 {clinics.filter((c) => c.active).length === 1 ? 'Unidade Palmas' : 'Todas as Clínicas'}</option>
                 {clinics
@@ -170,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </option>
                   ))}
               </select>
-              <Building2 className="w-4 h-4 text-amber-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Building2 className="w-4 h-4 text-[#199A9F] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
@@ -186,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="appearance-none bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-3 pr-8 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#FFB347] focus:border-transparent transition-all cursor-pointer max-w-[180px] truncate shadow-2xs"
+                className="appearance-none bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-3 pr-8 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all cursor-pointer max-w-[180px] truncate shadow-2xs"
               >
                 {dentists.length === 0 ? (
                   <option value="">Carregando profissionais...</option>
@@ -314,7 +303,7 @@ export const Header: React.FC<HeaderProps> = ({
             {isMobileView ? (
               <Monitor className="w-4 h-4 text-gray-700" />
             ) : (
-              <Smartphone className="w-4 h-4 text-[#FFB347]" />
+              <Smartphone className="w-4 h-4 text-[#4BBCBE]" />
             )}
           </button>
 
@@ -398,8 +387,8 @@ export const Header: React.FC<HeaderProps> = ({
               title="Notificações Push"
               className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors cursor-pointer"
             >
-              <Bell className="w-4 h-4 text-[#ff981a]" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FFB347] animate-pulse ring-1.5 ring-white" />
+              <Bell className="w-4 h-4 text-[#199A9F]" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#4BBCBE] animate-pulse ring-1.5 ring-white" />
             </button>
 
             {/* Logout Mobile Button */}
@@ -432,7 +421,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   onSelectClinic(val);
                 }}
-                className="w-full appearance-none bg-white border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-7 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#FFB347] truncate shadow-2xs"
+                className="w-full appearance-none bg-white border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-7 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] truncate shadow-2xs"
               >
                 <option value="all">🏢 {clinics.filter((c) => c.active).length === 1 ? 'Palmas (Ativa)' : 'Todas as Clínicas'}</option>
                 {clinics
@@ -443,7 +432,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </option>
                   ))}
               </select>
-              <Building2 className="w-3.5 h-3.5 text-amber-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Building2 className="w-3.5 h-3.5 text-[#199A9F] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <ChevronDown className="w-3 h-3 text-gray-500 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
@@ -459,7 +448,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="w-full appearance-none bg-[#F8F9FA] border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-2.5 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#FFB347] truncate shadow-2xs"
+                className="w-full appearance-none bg-[#F8F9FA] border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-2.5 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] truncate shadow-2xs"
               >
                 {dentists.length === 0 ? (
                   <option value="">Carregando...</option>
@@ -488,38 +477,71 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Selected Dentist Banner / Reception Banner */}
-      <div className="bg-[#F8F9FA]/90 border-t border-gray-100 px-3 sm:px-4 py-1.5 text-xs text-gray-600 w-full overflow-hidden">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 min-w-0">
+      {/* Selected Dentist Banner / Reception Banner / User Identity Bar */}
+      <div className="bg-[#F8F9FA]/95 border-t border-gray-100 px-3 sm:px-4 py-1.5 text-xs text-gray-600 w-full overflow-hidden">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             {isReceptionist ? (
               <>
                 <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span className="font-semibold text-[#1A1A1A] truncate">
-                  {currentClinic?.shortName || 'Recepção'}: Todos os Pacientes
+                <span className="font-bold text-[#1A1A1A] truncate">
+                  {currentClinic?.shortName || 'Recepção'}:
+                </span>
+                <span className="text-gray-600 truncate">
+                  Todos os Pacientes da Recepção
                 </span>
               </>
-            ) : (
+            ) : canSwitchDentist ? (
               <>
-                <UserCheck className="w-3.5 h-3.5 text-[#FFB347] shrink-0" />
-                <span className="font-semibold text-[#1A1A1A] truncate">
-                  {selectedDentist?.Name || 'Dentista'}
+                <Eye className="w-3.5 h-3.5 text-[#199A9F] shrink-0" />
+                <span className="text-gray-500 hidden xs:inline shrink-0">Agenda em Exibição:</span>
+                <span className="font-bold text-[#1A1A1A] truncate">
+                  {selectedDentist?.Name || 'Todos os Profissionais'}
                 </span>
                 <span className="text-gray-400 hidden sm:inline">•</span>
                 <span className="text-gray-500 truncate hidden sm:inline">
                   {selectedClinicId === 'all'
-                    ? 'Todas as Unidades'
-                    : currentClinic?.shortName}
+                    ? '🏢 Todas as Unidades'
+                    : `📍 ${currentClinic?.shortName}`}
+                </span>
+              </>
+            ) : (
+              <>
+                <Stethoscope className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="text-gray-500 hidden xs:inline shrink-0">Profissional:</span>
+                <span className="font-bold text-[#1A1A1A] truncate">
+                  {selectedDentist?.Name || userContext.userName || 'Dentista'}
+                </span>
+                <span className="text-gray-400 hidden sm:inline">•</span>
+                <span className="text-gray-500 truncate hidden sm:inline">
+                  {currentClinic?.shortName || 'Unidade Local'}
                 </span>
               </>
             )}
           </div>
 
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${roleBadge.bg}`}
-          >
-            {roleBadge.label}
-          </span>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {userContext.userName && (
+              <span className="text-[11px] text-gray-700 font-medium hidden md:inline truncate max-w-[200px]">
+                👤 <strong className="text-gray-900">{userContext.userName}</strong>
+              </span>
+            )}
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${roleBadge.bg}`}
+            >
+              {roleBadge.label}
+            </span>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sair / Desconectar do Sistema"
+                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 hover:bg-red-100/90 border border-red-200 text-red-700 text-[11px] font-bold transition-all cursor-pointer shadow-2xs hover:scale-102 active:scale-95 shrink-0"
+              >
+                <LogOut className="w-3 h-3 text-red-600 shrink-0" />
+                <span>Sair</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

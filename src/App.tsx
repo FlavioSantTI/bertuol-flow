@@ -408,7 +408,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#FFB347]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
       {/* Top Header Component (Multi-Tenant, RF01 Dropdown & Branding) */}
       <Header
         dentists={dentists}
@@ -559,7 +559,7 @@ export default function App() {
                 placeholder="Buscar por paciente, procedimento ou histórico..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-[#F8F9FA] hover:bg-gray-100/80 focus:bg-white text-xs sm:text-sm text-[#1A1A1A] placeholder-gray-400 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-[#FFB347] focus:border-transparent transition-all min-h-[44px]"
+                className="w-full pl-9 pr-4 py-2.5 bg-[#F8F9FA] hover:bg-gray-100/80 focus:bg-white text-xs sm:text-sm text-[#1A1A1A] placeholder-gray-400 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all min-h-[44px]"
               />
               {searchQuery && (
                 <button
@@ -638,7 +638,7 @@ export default function App() {
             ) : (
               /* Empty State (PRD UI/UX Section 2) */
               <div className="py-14 sm:py-20 px-4 text-center flex flex-col items-center justify-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-[#FFB347] border border-amber-200/60 shadow-xs">
+                <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center text-[#4BBCBE] border border-teal-200/60 shadow-xs">
                   <CalendarX className="w-8 h-8 stroke-[1.8]" />
                 </div>
                 <div className="space-y-1">
@@ -657,7 +657,7 @@ export default function App() {
                       setSearchQuery('');
                       setSelectedCategoryFilter('all');
                     }}
-                    className="mt-2 text-xs font-bold text-[#ff8f00] hover:underline"
+                    className="mt-2 text-xs font-bold text-[#199A9F] hover:underline"
                   >
                     Redefinir Filtros
                   </button>
@@ -669,7 +669,7 @@ export default function App() {
           {/* Quick AI Tip / Footer */}
           <div className="bg-white p-3 px-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
             <span className="flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-[#FFB347]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#4BBCBE]" />
               Toque no paciente para abrir a ficha e o Resumo IA
             </span>
             <span className="text-[11px] font-semibold text-gray-400">
@@ -764,19 +764,22 @@ export default function App() {
         }}
       />
 
-      {/* Floating Robot Widget (Chat-style Persona Simulator) */}
-      <FloatingPersonaBot
-        userContext={userContext}
-        onUpdateUserContext={handleUpdateUserContext}
-        dentists={dentists}
-        selectedDentist={selectedDentist}
-        onSelectDentist={handleSelectDentist}
-        clinics={clinics}
-        selectedClinicId={selectedClinicId}
-        onSelectClinic={handleSelectClinic}
-        onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
-        onOpenChangePasswordModal={() => setIsChangePasswordModalOpen(true)}
-      />
+      {/* Floating Robot Widget (Chat-style Persona Simulator - Only for Admin Root) */}
+      {userContext.role === 'admin_root' && (
+        <FloatingPersonaBot
+          userContext={userContext}
+          onUpdateUserContext={handleUpdateUserContext}
+          dentists={dentists}
+          selectedDentist={selectedDentist}
+          onSelectDentist={handleSelectDentist}
+          clinics={clinics}
+          selectedClinicId={selectedClinicId}
+          onSelectClinic={handleSelectClinic}
+          onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
+          onOpenChangePasswordModal={() => setIsChangePasswordModalOpen(true)}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* User Management & RBAC CRUD Modal */}
       <UserManagementModal

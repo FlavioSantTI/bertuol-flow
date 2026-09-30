@@ -34,6 +34,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberCredentials, setRememberCredentials] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bertuol_remember_credentials') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // First Access state (mandatory password change)
   const [pendingFirstAccessUser, setPendingFirstAccessUser] = useState<SystemUser | null>(null);
@@ -49,6 +56,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [inviteUserFound, setInviteUserFound] = useState<SystemUser | null>(null);
 
   useEffect(() => {
+    // Restore remembered credentials if enabled and not overridden by query params
+    try {
+      const savedRemember = localStorage.getItem('bertuol_remember_credentials') === 'true';
+      if (savedRemember && !initialEmail && !initialUserId) {
+        const savedEmail = localStorage.getItem('bertuol_saved_email');
+        const savedPassword = localStorage.getItem('bertuol_saved_password');
+        if (savedEmail) setEmail(savedEmail);
+        if (savedPassword) setPassword(savedPassword);
+      }
+    } catch {}
+
     // If initialUserId matches Avaliador Bertuol, prefill email
     if (initialUserId === 'usr_1790684828991_8v2hw' && !email) {
       setEmail('suporte@flaviosantiago.com.br');
@@ -137,6 +155,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           mustChangePassword: false,
         });
 
+        // Persist remembered credentials if requested
+        try {
+          if (rememberCredentials) {
+            localStorage.setItem('bertuol_remember_credentials', 'true');
+            localStorage.setItem('bertuol_saved_email', email.trim());
+            localStorage.setItem('bertuol_saved_password', password.trim());
+          } else {
+            localStorage.removeItem('bertuol_remember_credentials');
+            localStorage.removeItem('bertuol_saved_email');
+            localStorage.removeItem('bertuol_saved_password');
+          }
+        } catch {}
+
         const userCtx = dataService.getUserContext();
         onLoginSuccess(userCtx);
         return;
@@ -159,6 +190,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         setPendingFirstAccessUser(res.user);
         return;
       }
+
+      // Persist remembered credentials if requested
+      try {
+        if (rememberCredentials) {
+          localStorage.setItem('bertuol_remember_credentials', 'true');
+          localStorage.setItem('bertuol_saved_email', email.trim());
+          localStorage.setItem('bertuol_saved_password', password.trim());
+        } else {
+          localStorage.removeItem('bertuol_remember_credentials');
+          localStorage.removeItem('bertuol_saved_email');
+          localStorage.removeItem('bertuol_saved_password');
+        }
+      } catch {}
+
       const userCtx = dataService.getUserContext();
       onLoginSuccess(userCtx);
     } catch {
@@ -331,6 +376,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                </div>
+
+                {/* Remember Login & Password Checkbox */}
+                <div className="flex items-center justify-between pt-0.5 pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none group">
+                    <input
+                      type="checkbox"
+                      checked={rememberCredentials}
+                      onChange={(e) => setRememberCredentials(e.target.checked)}
+                      className="w-4 h-4 rounded-md border-gray-300 text-[#4BBCBE] focus:ring-[#4BBCBE] focus:ring-offset-0 cursor-pointer accent-[#4BBCBE]"
+                    />
+                    <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Lembrar login e senha
+                    </span>
+                  </label>
+                  <span className="text-[10px] text-gray-400 font-medium hidden sm:inline">
+                    Neste dispositivo
+                  </span>
                 </div>
 
                 {/* Submit Button */}

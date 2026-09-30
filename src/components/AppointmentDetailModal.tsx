@@ -35,7 +35,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
   if (!appointment) return null;
 
-  const categoryColor = appointment.category?.color || '#FFB347';
+  const categoryColor = appointment.category?.color || '#4BBCBE';
   const categoryName = appointment.category?.description || 'Geral';
   const patient = appointment.patient;
 
@@ -128,9 +128,9 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Top Quick Badges */}
           <div className="flex items-center flex-wrap gap-2.5">
-            {/* Time Badge in prominent orange */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-[#ff8f00] font-bold text-sm border border-amber-200">
-              <Clock className="w-4 h-4 text-[#FFB347]" />
+            {/* Time Badge in prominent teal */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#199A9F] font-bold text-sm border border-teal-200">
+              <Clock className="w-4 h-4 text-[#4BBCBE]" />
               <span>
                 {appointment.fromTime} – {appointment.toTime}
               </span>
@@ -145,8 +145,8 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             </span>
 
             {/* Professional / Dentist Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100/90 text-amber-950 border border-amber-300 text-xs font-bold shadow-2xs">
-              <Stethoscope className="w-3.5 h-3.5 text-[#d97706]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 border border-slate-300 text-xs font-bold shadow-2xs">
+              <Stethoscope className="w-3.5 h-3.5 text-[#199A9F]" />
               <span>{appointment.dentist?.Name || appointment.dentist_name || 'Dr(a). Profissional'}</span>
             </div>
 
@@ -158,13 +158,13 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           </div>
 
           {/* Professional / Dentist Card */}
-          <div className="bg-amber-50/70 rounded-2xl p-3.5 sm:p-4 border border-amber-200 flex items-center justify-between gap-3">
+          <div className="bg-[#FAF9F6] rounded-2xl p-3.5 sm:p-4 border border-gray-200 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0">
-                <Stethoscope className="w-5 h-5 text-amber-700" />
+              <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#199A9F] flex items-center justify-center shrink-0">
+                <Stethoscope className="w-5 h-5 text-[#199A9F]" />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#199A9F] block">
                   Profissional Responsável
                 </span>
                 <h4 className="text-sm sm:text-base font-bold text-gray-900">
@@ -183,7 +183,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-gray-200/80 space-y-3">
             <div className="flex items-center justify-between border-b border-gray-200/60 pb-2.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-[#FFB347]" />
+                <User className="w-3.5 h-3.5 text-[#4BBCBE]" />
                 Dados do Paciente
               </span>
               {patient?.Age && (
@@ -230,7 +230,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           {/* Procedure Card */}
           <div className="bg-white rounded-2xl p-4 border border-gray-200/90 shadow-2xs space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-              <Stethoscope className="w-3.5 h-3.5 text-[#FFB347]" />
+              <Stethoscope className="w-3.5 h-3.5 text-[#4BBCBE]" />
               Procedimento Previsto
             </span>
             <p className="text-base font-bold text-[#1A1A1A] leading-snug">
@@ -241,7 +241,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           {/* Clinical Notes / History (RF04) */}
           <div className="bg-white rounded-2xl p-4 border border-gray-200/90 shadow-2xs space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-amber-500" />
+              <FileText className="w-3.5 h-3.5 text-[#199A9F]" />
               Observações Clínicas Anteriores (Notes)
             </span>
             <div className="bg-gray-50 rounded-xl p-3 text-sm text-[#1A1A1A] leading-relaxed font-normal border border-gray-100">
@@ -252,10 +252,10 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           </div>
 
           {/* RF05 - AI Clinical Summary Section */}
-          <div className="rounded-2xl border-2 border-[#FFB347]/50 bg-amber-50/40 p-4 sm:p-5 space-y-3 relative overflow-hidden">
+          <div className="rounded-2xl border-2 border-[#4BBCBE]/40 bg-teal-50/20 p-4 sm:p-5 space-y-3 relative overflow-hidden">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#FFB347] text-white flex items-center justify-center shadow-xs">
+                <div className="w-7 h-7 rounded-lg bg-[#4BBCBE] text-white flex items-center justify-center shadow-xs">
                   <Sparkles className="w-4 h-4 fill-white" />
                 </div>
                 <div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, X, Check, Stethoscope, Crown, Users, Sparkles, ChevronRight, ShieldCheck, Building, KeyRound } from 'lucide-react';
+import { Bot, X, Check, Stethoscope, Crown, Users, Sparkles, ChevronRight, ShieldCheck, Building, KeyRound, LogOut } from 'lucide-react';
 import { AppUserContext, Dentist, Clinic } from '../types/database';
 
 interface FloatingPersonaBotProps {
@@ -13,6 +13,7 @@ interface FloatingPersonaBotProps {
   onSelectClinic: (id: number | 'all') => void;
   onOpenUserManagementModal?: () => void;
   onOpenChangePasswordModal?: () => void;
+  onLogout?: () => void;
 }
 
 export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
@@ -26,6 +27,7 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
   onSelectClinic,
   onOpenUserManagementModal,
   onOpenChangePasswordModal,
+  onLogout,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -252,6 +254,20 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
               >
                 <KeyRound className="w-3.5 h-3.5 text-gray-600" />
                 <span>{userContext.mustChangePassword ? 'Cadastrar Senha Inicial (Pendente!)' : 'Alterar Minha Senha'}</span>
+              </button>
+            )}
+
+            {/* Logout Action */}
+            {onLogout && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onLogout();
+                }}
+                className="w-full py-2 px-3 rounded-2xl bg-red-50 hover:bg-red-100/90 text-red-700 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-red-200"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-600" />
+                <span>Desconectar / Sair do Sistema</span>
               </button>
             )}
           </div>
