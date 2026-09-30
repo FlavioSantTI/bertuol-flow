@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  bertuol_flow:
+    image: bertuolflow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+
+    networks:
+      - BertuolNet
+
+    environment:
+      ## 🚀 Servidor & Ambiente
+      - NODE_ENV=production
+      - PORT=3000
+
+      ## 🟢 Evolution GO (WhatsApp API Integrada)
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL:-https://go.app-bertuol.tech}
+      - GLOBAL_API_KEY=${GLOBAL_API_KEY}
+      - EVOLUTION_INSTANCE_NAME=${EVOLUTION_INSTANCE_NAME:-atendimento-palmas}
+
+      ## 🦷 Clinicorp API
+      - CLINICORP_API_URL=${CLINICORP_API_URL:-https://api.clinicorp.com/rest/v1}
+      - CLINICORP_USER=${CLINICORP_USER}
+      - CLINICORP_KEY=${CLINICORP_KEY}
+
+      ## 🗄️ Supabase Database
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.bertuol_flow.rule=Host(`bertuolflow.app-bertuol.tech`)
+        - traefik.http.routers.bertuol_flow.entrypoints=websecure
+        - traefik.http.routers.bertuol_flow.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.bertuol_flow.service=bertuol_flow
+        - traefik.http.services.bertuol_flow.loadbalancer.server.port=3000
+        - traefik.http.services.bertuol_flow.loadbalancer.passHostHeader=true
+
+networks:
+  BertuolNet:
+    external: true
+    name: BertuolNet
