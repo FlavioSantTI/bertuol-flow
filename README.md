@@ -18,7 +18,7 @@
 
 ## 📌 Visão Geral do Projeto
 
-O **Bertuol Flow** é uma plataforma clínica web/PWA de alto desempenho desenvolvida para transformar a rotina dos cirurgiões-dentistas, recepcionistas e gestores da rede **Bertuol Odontologia**. 
+O **Bertuol Flow** é uma plataforma clínica web/PWA de alto desempenho desenvolvida para transformar a rotina dos profissionais da odontologia, recepcionistas e gestores da rede **Bertuol Odontologia Avançada**. 
 
 O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de dados **Supabase** e à infraestrutura de mensageria **Evolution GO (WhatsApp Gateway)**, permitindo:
 - Visualização cronológica rápida de pacientes do dia por profissional e por unidade física.
