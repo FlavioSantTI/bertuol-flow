@@ -677,6 +677,21 @@ export default function App() {
             </span>
           </div>
 
+          {/* App Footer */}
+          <footer className="mt-8 pt-4 pb-4 border-t border-[#E2E6E7] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#147A80]">Bertuol Flow</span>
+              <span className="text-gray-300">•</span>
+              <span className="text-[11px] text-gray-500">Bertuol Odontologia Avançada</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30 shadow-2xs">
+                Versão 0.9.1 RC
+              </span>
+              <span className="text-[10px] text-gray-400">© 2026</span>
+            </div>
+          </footer>
+
           {/* Mobile frame simulated home indicator */}
           {isMobileFrameView && (
             <div className="bg-white py-2 flex justify-center">

@@ -234,9 +234,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* Brand Header with Authentic Logo */}
         <div className="text-center mb-6">
           <BertuolLogo size="xl" mode="full" className="mx-auto" />
-          <p className="text-xs text-[#147A80] font-bold mt-2">
-            Bertuol Flow • Agenda & Gestão Inteligente
-          </p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <p className="text-xs text-[#147A80] font-bold">
+              Bertuol Flow • Agenda & Gestão Inteligente
+            </p>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30">
+              Versão 0.9.1 RC
+            </span>
+          </div>
         </div>
 
         {/* Card Container */}
@@ -507,14 +512,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         </div>
 
         {/* Security & System Info Footer */}
-        <div className="text-center mt-6 space-y-1 text-xs text-gray-400">
+        <div className="text-center mt-6 space-y-1.5 text-xs text-gray-400">
           <p className="flex items-center justify-center gap-1.5 font-medium text-[11px]">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Autenticação Criptografada • Sistema Bertuol Odontologia</span>
           </p>
-          <p className="text-[10px] text-gray-400">
-            Dúvidas ou redefinição de acesso? Entre em contato com o suporte da clínica.
-          </p>
+          <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400">
+            <span>Dúvidas ou redefinição de acesso? Entre em contato com o suporte.</span>
+            <span>•</span>
+            <span className="font-bold text-gray-500">Versão 0.9.1 RC</span>
+          </div>
         </div>
       </div>
     </div>
