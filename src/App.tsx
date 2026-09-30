@@ -686,7 +686,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30 shadow-2xs">
-                Versão 0.9.1 RC
+                Versão 1.0
               </span>
               <span className="text-[10px] text-gray-400">© 2026</span>
             </div>

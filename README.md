@@ -2,8 +2,8 @@
 
 <div align="center">
 
-![Bertuol Flow Version](https://img.shields.io/badge/version-0.9.1%20RC-0D9488?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-Release%20Candidate-FFCC29?style=for-the-badge)
+![Bertuol Flow Version](https://img.shields.io/badge/version-1.0.0-0D9488?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-Production%20Ready-059669?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-Proprietary-slate?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Ready-4BBCBE?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge)
@@ -28,7 +28,7 @@ O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de 
 
 ---
 
-## 🚀 Funcionalidades Principais (v0.9.1 RC)
+## 🚀 Funcionalidades Principais (v1.0.0)
 
 ### 🩺 1. Visão do Profissional / Dentista
 * **Timeline Cronológica do Dia:** Lista limpa de horários, procedimentos agendados, convênios e histórico do paciente.

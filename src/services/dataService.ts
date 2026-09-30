@@ -626,7 +626,11 @@ export function formatInviteUrl(user: SystemUser, customAppUrl?: string): string
 }
 
 export function formatInviteTextMessage(user: SystemUser, temporaryPassword?: string, customAppUrl?: string): string {
+  const baseUrl =
+    customAppUrl ||
+    (typeof window !== 'undefined' ? window.location.origin : 'https://bertuolflow.app-bertuol.tech');
   const accessUrl = formatInviteUrl(user, customAppUrl);
+  const manualUrl = `${baseUrl}/manual-instalacao.html`;
   const pass = temporaryPassword || user.initialPassword || user.password || 'Bertuol@2026';
 
   return `🦷 *Olá, ${user.name}!*
@@ -639,6 +643,9 @@ ${accessUrl}
 🔑 *Seus Dados de Acesso Inicial:*
 • *E-mail:* ${user.email}
 • *Senha Provisória:* ${pass}
+
+📱 *Como Instalar o App no Celular (Android & iPhone):*
+${manualUrl}
 
 🔒 *Primeiro Acesso:* O sistema solicitará o cadastro de uma nova senha pessoal definitiva assim que você entrar.`;
 }
