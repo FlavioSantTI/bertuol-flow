@@ -28,7 +28,7 @@ app.use(express.json());
 
 // Initialize Google GenAI client with required user-agent header
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY || 'AIzaSyDummyKeyForInitialization',
   httpOptions: {
     headers: {
       'User-Agent': 'aistudio-build',
@@ -282,7 +282,12 @@ const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2JrZnJweGJveG1qdnVuaHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4Nzc5OTcsImV4cCI6MjA5MDQ1Mzk5N30.-z9guq5XL6274zDsgMGWvXQ2XKHH-ZvwsN70sLjnfNA';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
 // Helper to format phone to clean digits with country code 55 (e.g. 5563981487023)
 function formatPhoneForDatabase(rawPhone: string | null | undefined): string {

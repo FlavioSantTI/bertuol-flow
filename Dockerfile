@@ -2,8 +2,8 @@
 # Multi-Stage Dockerfile for Bertuol Flow (Production)
 # -------------------------------------------------------------------
 
-# 1. Build Stage
-FROM node:20-alpine AS builder
+# 1. Build Stage (Node 22 LTS)
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -17,8 +17,8 @@ COPY . .
 # Build production assets (Vite frontend + PWA)
 RUN npm run build
 
-# 2. Production Runtime Stage
-FROM node:20-alpine AS runner
+# 2. Production Runtime Stage (Node 22 LTS with native WebSocket support)
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
