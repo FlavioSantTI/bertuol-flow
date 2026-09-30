@@ -565,8 +565,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
   // Copy Magic Link for fast login simulation
   const handleCopyLink = (user: SystemUser) => {
-    const baseUrl = window.location.origin;
-    const magicLink = `${baseUrl}/?user_id=${user.id}&role=${user.role}`;
+    const magicLink = formatInviteUrl(user);
     try {
       navigator.clipboard.writeText(magicLink);
       setCopiedUserId(user.id);

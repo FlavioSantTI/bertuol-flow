@@ -60,6 +60,8 @@ O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de 
 * **Instalação Nativa:** Suporte completo a instalação em dispositivos Android, iPhone e iPad (iOS Safari).
 * **Service Worker com Cache Inteligente:** Carregamento ultra-rápido mesmo em conexões oscilantes.
 * **Notificações Push com Vibração e Áudio:** Alertas configuráveis de acordo com a preferência de cada profissional.
+* **Manual de Instalação Integrado:** Guia de instalação interativo disponível em `/manual-instalacao.html` para auxiliar os profissionais na instalação passo a passo, otimizado para celulares e pronto para salvar em PDF.
+* **Convites Inteligentes:** Disparo de links pelo WhatsApp com redirecionamento de setup padrão para `https://bertuolflow.app-bertuol.tech/` de ponta a ponta.
 
 ---
 

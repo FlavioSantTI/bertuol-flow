@@ -607,11 +607,7 @@ export function generateSecureTemporaryPassword(): string {
 }
 
 export function formatInviteUrl(user: SystemUser, customAppUrl?: string): string {
-  const appUrl =
-    customAppUrl ||
-    (typeof window !== 'undefined' && window.location.origin
-      ? window.location.origin
-      : 'https://ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app');
+  const appUrl = customAppUrl || 'https://bertuolflow.app-bertuol.tech';
 
   const params = new URLSearchParams();
   params.set('user_id', user.id);
@@ -626,10 +622,8 @@ export function formatInviteUrl(user: SystemUser, customAppUrl?: string): string
 }
 
 export function formatInviteTextMessage(user: SystemUser, temporaryPassword?: string, customAppUrl?: string): string {
-  const baseUrl =
-    customAppUrl ||
-    (typeof window !== 'undefined' ? window.location.origin : 'https://bertuolflow.app-bertuol.tech');
-  const accessUrl = formatInviteUrl(user, customAppUrl);
+  const baseUrl = customAppUrl || 'https://bertuolflow.app-bertuol.tech';
+  const accessUrl = formatInviteUrl(user, baseUrl);
   const manualUrl = `${baseUrl}/manual-instalacao.html`;
   const pass = temporaryPassword || user.initialPassword || user.password || 'Bertuol@2026';
 
