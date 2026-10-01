@@ -591,6 +591,30 @@ export async function sendDentistPushNotification({
                 </div>
               </div>
 
+              {/* Central Tutorial Box */}
+              <div className="p-3.5 bg-[#FEF2F2] border border-[#FCA5A5] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[#991B1B]">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#FEE2E2] flex items-center justify-center text-sm shrink-0">
+                    💡
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-xs sm:text-sm block">⚠️ Dúvidas sobre como ativar as notificações?</span>
+                    <p className="text-[11px] text-[#7F1D1D] leading-normal">
+                      Os celulares (especialmente iPhones) exigem regras específicas para permitir sons e alertas em segundo plano.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/como-ativar-notificacoes.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-red-50 text-[#EF4444] border border-[#FCA5A5] text-[11px] font-extrabold shadow-2xs flex items-center gap-1 transition-all shrink-0 hover:scale-102 active:scale-95"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Ver Tutorial Completo</span>
+                </a>
+              </div>
+
               {/* SEÇÃO 1: CANAIS DE NOTIFICAÇÃO */}
               <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">

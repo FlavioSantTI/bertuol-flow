@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ - Central de Dúvidas - Bertuol Flow</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4BBCBE;
+      --primary-dark: #199A9F;
+      --primary-deeper: #147A80;
+      --gold: #FFCC29;
+      --dark: #1A1A1A;
+      --gray-light: #F4F7F8;
+      --gray-border: #E2E6E7;
+      --text-muted: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: #F8F9FA;
+      color: var(--dark);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Header Banner */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary-deeper) 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 36px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(75, 188, 190, 0.25);
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.95;
+      max-width: 600px;
+      margin: 0 auto 18px;
+    }
+
+    .btn-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-white {
+      background: white;
+      color: var(--primary-deeper);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .btn-white:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+
+    /* Navigation Quick Links */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .nav-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .nav-card {
+      background: white;
+      border: 1px solid var(--gray-border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .nav-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(75, 188, 190, 0.08);
+    }
+
+    .nav-card-icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .nav-card h3 {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* FAQ Sections */
+    .faq-section {
+      background: white;
+      border: 1px solid var(--gray-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      scroll-margin-top: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--gray-light);
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .section-icon.login { background: #EBF5FF; color: #1E40AF; }
+    .section-icon.alert { background: #FEF3C7; color: #92400E; }
+    .section-icon.agenda { background: #ECFDF5; color: #065F46; }
+    .section-icon.resumo { background: #F3E8FF; color: #6B21A8; }
+
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    /* Accordion / Questions styling */
+    .faq-item {
+      border-bottom: 1px solid var(--gray-border);
+      padding: 16px 0;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .faq-item:first-child {
+      padding-top: 0;
+    }
+
+    .faq-question {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .faq-question::after {
+      content: "▼";
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    /* Open state */
+    .faq-item[open] .faq-question::after {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 10px;
+      padding-left: 4px;
+      line-height: 1.6;
+    }
+
+    .faq-answer p {
+      margin-bottom: 10px;
+    }
+
+    .faq-answer p:last-child {
+      margin-bottom: 0;
+    }
+
+    .faq-answer strong {
+      color: var(--dark);
+    }
+
+    /* Visual pill guides */
+    .guide-box {
+      background: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .guide-box ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .guide-box li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .guide-box li::before {
+      content: "•";
+      color: var(--primary-dark);
+      font-weight: bold;
+      font-size: 16px;
+      position: absolute;
+      left: 4px;
+      top: -2px;
+    }
+
+    .guide-box li:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 32px 0;
+      color: #94A3B8;
+      font-size: 11px;
+      border-top: 1px solid var(--gray-border);
+    }
+
+    /* Print styles for PDF generation */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+      .container {
+        max-width: 100%;
+        padding: 0;
+      }
+      .header {
+        background: #199A9F !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        box-shadow: none;
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .btn-bar, .nav-grid {
+        display: none !important;
+      }
+      .faq-section {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+      }
+      .faq-item {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand-pill">
+        <span>🦷 Bertuol Odontologia Avançada</span>
+      </div>
+      <h1>Central de Dúvidas (FAQ)</h1>
+      <p>Tudo o que você precisa saber sobre o uso prático, login, alertas instantâneos, visualização de agenda cronológica e resumos com Inteligência Artificial.</p>
+      
+      <div class="btn-bar">
+        <button onclick="window.print()" class="btn btn-white">
+          <span>📄 Salvar FAQ como PDF</span>
+        </button>
+        <a href="/" class="btn btn-white" style="background: var(--gold); color: #1a1a1a;">
+          <span>🚀 Ir para o Sistema</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Quick Navigation -->
+    <div class="nav-grid">
+      <a href="#login" class="nav-card">
+        <div class="nav-card-icon">🔑</div>
+        <h3>1. Acesso & Login</h3>
+      </a>
+      <a href="#alertas" class="nav-card">
+        <div class="nav-card-icon">🔔</div>
+        <h3>2. Alertas & Sons</h3>
+      </a>
+      <a href="#agenda" class="nav-card">
+        <div class="nav-card-icon">📅</div>
+        <h3>3. Visão da Agenda</h3>
+      </a>
+      <a href="#resumos" class="nav-card">
+        <div class="nav-card-icon">🧠</div>
+        <h3>4. Resumos com IA</h3>
+      </a>
+    </div>
+
+    <!-- SECTION 1: LOGIN & ACESSOS -->
+    <section class="faq-section" id="login">
+      <div class="section-header">
+        <div class="section-icon login">🔑</div>
+        <div>
+          <h2>1. Acesso, Senhas & Primeiro Login</h2>
+          <p style="font-size: 12px; color: var(--text-muted);">Como entrar, redefinir senhas e manter-se conectado com segurança.</p>
+        </div>
+      </div>
+
+      <details class="faq-item" open>
+        <summary class="faq-question">Como funciona o meu primeiro login no Bertuol Flow?</summary>
+        <div class="faq-answer">
+          <p>Você receberá um convite no seu WhatsApp enviado pela administração contendo seus dados de acesso iniciais (E-mail e uma Senha Provisória).</p>
+          <p>Ao realizar o primeiro acesso utilizando essas informações, o sistema identificará que se trata de uma senha provisória e solicitará <strong>obrigatoriamente</strong> que você cadastre uma senha pessoal definitiva de sua escolha para garantir a segurança da LGPD.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">O que é a opção "Lembrar meu login e senha"?</summary>
+        <div class="faq-answer">
+          <p>Ao marcar a caixinha <strong>"Lembrar acesso"</strong> na tela de login, o aplicativo armazena suas credenciais de forma criptografada no dispositivo.</p>
+          <p>Dessa forma, sempre que você abrir o aplicativo ou o navegador, ele carregará direto para a sua agenda do dia, sem a necessidade de digitar e-mail e senha toda vez.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Esqueci minha senha, como devo redefini-la?</summary>
+        <div class="faq-answer">
+          <p>Por motivos de segurança e integridade das informações clínicas, as senhas não podem ser recuperadas por e-mail direto.</p>
+          <p>Caso esqueça sua senha pessoal definitiva, entre em contato com o <strong>Administrador Clínico</strong> ou com a equipe de TI da clínica. Eles poderão redefinir seu acesso no painel administrativo e enviar uma nova senha temporária para o seu WhatsApp.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECTION 2: ALERTAS DE CHECK-IN -->
+    <section class="faq-section" id="alertas">
+      <div class="section-header">
+        <div class="section-icon alert">🔔</div>
+        <div>
+          <h2>2. Alertas de Chegada do Paciente</h2>
+          <p style="font-size: 12px; color: var(--text-muted);">Configuração de avisos visuais, vibração, campainhas e notificações no WhatsApp.</p>
+        </div>
+      </div>
+
+      <details class="faq-item" open>
+        <summary class="faq-question">Como sou notificado de que meu paciente chegou na recepção?</summary>
+        <div class="faq-answer">
+          <p>O Bertuol Flow possui um sistema de notificações instantâneas acionado em tempo real. Quando o recepcionista clica em "Check-in" ao lado do nome do paciente na recepção, ocorrem os seguintes alertas simultâneos:</p>
+          <div class="guide-box">
+            <ul>
+              <li><strong>Alerta Push no Celular:</strong> Se você estiver com o app fechado, um card informativo aparece na tela de bloqueio do seu smartphone.</li>
+              <li><strong>Som de Campainha:</strong> O aplicativo emite um aviso sonoro característico de clínica de alto padrão ("Plim-plim").</li>
+              <li><strong>Alerta Visual:</strong> A barra superior da sua tela brilha suavemente em dourado piscando com os dados do paciente.</li>
+              <li><strong>Mensagem no WhatsApp:</strong> Você também recebe um aviso escrito automático no seu WhatsApp com o nome do paciente e o horário correto.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Como ativo os avisos sonoros e vibração no meu celular?</summary>
+        <div class="faq-answer">
+          <p>Toque no ícone do <strong>Sininho (🔔)</strong> no canto superior direito do painel para abrir a central de preferências.</p>
+          <p>Nela, certifique-se de marcar as opções para ativar a reprodução de som e a vibração. Você pode clicar no botão de "Testar Campainha" para ouvir o som imediatamente e garantir que o volume de mídia do aparelho esteja regulado corretamente.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Como receber o resumo do meu dia ou agenda?</summary>
+        <div class="faq-answer">
+          <p>O Bertuol Flow possui uma função inteligente chamada <strong>"Briefing Matinal com IA"</strong>.</p>
+          <p>Todas as manhãs, no horário configurado (o padrão é às <strong>08:00</strong>), o sistema realiza uma varredura automática na sua agenda e envia uma notificação push com o resumo completo do seu dia.</p>
+          <p>Esse resumo traz o total de consultas agendadas, quais são os pacientes com alertas importantes (como alergias de saúde graves) e um panorama geral de procedimentos para que você inicie o dia totalmente preparado.</p>
+          <p>Você pode configurar o horário do seu recebimento predileto diretamente na central de preferências (ícone do Sininho 🔔) no painel do sistema.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Por que não estou recebendo as notificações push no meu iPhone?</summary>
+        <div class="faq-answer">
+          <p>No iOS (iPhone/iPad), a Apple <strong>bloqueia</strong> o envio de notificações para páginas normais de internet.</p>
+          <p>Para resolver isso:</p>
+          <div class="guide-box">
+            <ul>
+              <li>Abra o link do sistema no navegador <strong>Safari</strong>.</li>
+              <li>Toque no botão de <strong>Compartilhar (⎋ - quadrado com seta para cima)</strong>.</li>
+              <li>Role e toque na opção <strong>"Adicionar à Tela de Início" (➕)</strong>.</li>
+              <li>Abra o app pelo ícone criado na sua tela inicial e clique em <strong>"Permitir"</strong> quando perguntado.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECTION 3: VISÃO DA AGENDA CRONOLÓGICA -->
+    <section class="faq-section" id="agenda">
+      <div class="section-header">
+        <div class="section-icon agenda">📅</div>
+        <div>
+          <h2>3. Visualização de Agenda & Timeline</h2>
+          <p style="font-size: 12px; color: var(--text-muted);">Como navegar pela timeline diária e entender as cores e badges.</p>
+        </div>
+      </div>
+
+      <details class="faq-item" open>
+        <summary class="faq-question">Quais informações são exibidas na minha Timeline diária?</summary>
+        <div class="faq-answer">
+          <p>A Timeline mostra de forma simplificada e cronológica os atendimentos previstos para o dia de hoje, incluindo:</p>
+          <div class="guide-box">
+            <ul>
+              <li><strong>Horário de Início e Término:</strong> Exibição clara do intervalo do agendamento.</li>
+              <li><strong>Dados do Paciente:</strong> Nome completo, idade atual e ícones indicando convênio ou particular.</li>
+              <li><strong>Status de Presença:</strong> Indicador de cores (Aguardando na Recepção, Em Atendimento, Finalizado, Faltou).</li>
+              <li><strong>Procedimento Clínico:</strong> Descrição exata do procedimento agendado.</li>
+              <li><strong>Alertas de Prontuário:</strong> Destaques em vermelho caso o paciente possua alergias graves (látex, antibióticos, anestésicos) ou doenças que requeiram cuidado prévio.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Como funciona a troca de Unidade Clínica?</summary>
+        <div class="faq-answer">
+          <p>Se você atende em mais de uma clínica física da rede Bertuol (por exemplo, Palmas - TO e Paraíso do Tocantins), o sistema é multi-clínica.</p>
+          <p>O aplicativo detecta automaticamente quais unidades você está afiliado. Basta tocar no seletor de unidade localizado no topo esquerdo do cabeçalho principal e escolher qual unidade física você quer visualizar no momento. Os pacientes daquele local carregarão na mesma hora.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">As agendas estão integradas com o Clinicorp oficial?</summary>
+        <div class="faq-answer">
+          <p><strong>Sim.</strong> O Bertuol Flow sincroniza-se em tempo real com a API oficial do <strong>Clinicorp</strong>.</p>
+          <p>Qualquer novo agendamento, alteração de horário ou cancelamento realizado no Clinicorp de sua unidade é replicado instantaneamente na timeline do Bertuol Flow, dispensando atualizações manuais repetitivas.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECTION 4: RESUMOS CLÍNICOS INTELIGENTES -->
+    <section class="faq-section" id="resumos">
+      <div class="section-header">
+        <div class="section-icon resumo">🧠</div>
+        <div>
+          <h2>4. Resumos com Inteligência Artificial</h2>
+          <p style="font-size: 12px; color: var(--text-muted);">Como funcionam as sínteses executivas pré-atendimento de prontuário.</p>
+        </div>
+      </div>
+
+      <details class="faq-item" open>
+        <summary class="faq-question">O que é o Resumo Executivo Clínico (IA)?</summary>
+        <div class="faq-answer">
+          <p>É uma funcionalidade desenvolvida para poupar o tempo do dentista na busca de informações entre as consultas.</p>
+          <p>Ao clicar em um paciente na Timeline, a inteligência artificial do sistema analisa rapidamente o prontuário histórico daquele paciente e sintetiza as principais informações em uma caixa executiva de destaque, permitindo que você saiba exatamente as queixas anteriores, o plano atual e observações em menos de 10 segundos antes do paciente entrar no consultório.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Como faço para gerar um novo Resumo Clínico?</summary>
+        <div class="faq-answer">
+          <p>Ao abrir os detalhes do agendamento de um paciente na sua Timeline:</p>
+          <p>Se a consulta ainda não tiver um resumo gerado, basta clicar no botão <strong>"Gerar Resumo com IA" (✨)</strong>. A IA processará os dados e criará as recomendações do procedimento e alertas de saúde imediatamente.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">As sugestões e alertas da Inteligência Artificial são confiáveis?</summary>
+        <div class="faq-answer">
+          <p><strong>Sim, mas servem como auxílio clínico.</strong> A IA extrai e organiza os dados reais escritos no prontuário oficial do Clinicorp, minimizando o risco de você esquecer observações antigas.</p>
+          <p>No entanto, as orientações são apenas sugestões executivas. O diagnóstico final, a conduta e as decisões terapêuticas continuam sendo de responsabilidade técnica exclusiva do cirurgião-dentista que realiza o atendimento.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p><strong>Bertuol Flow v1.0</strong> • Central de Ajuda & Tecnologia</p>
+      <p>Desenvolvido exclusivamente para a <strong>Bertuol Odontologia Avançada</strong>.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

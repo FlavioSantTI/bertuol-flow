@@ -576,14 +576,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
         {/* Security & System Info Footer */}
         <div className="text-center mt-6 space-y-2 text-xs text-gray-400">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <a
               href="/manual-instalacao.html"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-[#147A80] hover:text-[#0f5c61] border border-[#4BBCBE]/30 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
             >
-              <span>📱 Manual de Instalação no Celular (Android & iOS)</span>
+              <span>📱 Manual de Instalação</span>
+            </a>
+            <a
+              href="/faq.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-[#d97706] hover:text-[#b45309] border border-[#ffcc29]/40 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
+            >
+              <span>❓ Central de Dúvidas (FAQ)</span>
             </a>
           </div>
 

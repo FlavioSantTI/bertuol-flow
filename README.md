@@ -61,6 +61,8 @@ O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de 
 * **Service Worker com Cache Inteligente:** Carregamento ultra-rápido mesmo em conexões oscilantes.
 * **Notificações Push com Vibração e Áudio:** Alertas configuráveis de acordo com a preferência de cada profissional.
 * **Manual de Instalação Integrado:** Guia de instalação interativo disponível em `/manual-instalacao.html` para auxiliar os profissionais na instalação passo a passo, otimizado para celulares e pronto para salvar em PDF.
+* **Guia de Notificações para Dentistas:** Tutorial focado e passo a passo em `/como-ativar-notificacoes.html` detalhando a ativação de sons, vibração e permissões de push nos celulares.
+* **Central de Ajuda (FAQ):** Central de perguntas frequentes interativa disponível em `/faq.html` cobrindo detalhadamente os fluxos de login, notificações, agenda e o resumo diário com IA.
 * **Convites Inteligentes:** Disparo de links pelo WhatsApp com redirecionamento de setup padrão para `https://bertuolflow.app-bertuol.tech/` de ponta a ponta.
 
 ---
