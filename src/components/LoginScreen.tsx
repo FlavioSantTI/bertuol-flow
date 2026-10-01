@@ -585,14 +585,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             >
               <span>📱 Manual de Instalação</span>
             </a>
-            <a
-              href="/faq.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-[#d97706] hover:text-[#b45309] border border-[#ffcc29]/40 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
-            >
-              <span>❓ Central de Dúvidas (FAQ)</span>
-            </a>
           </div>
 
           <p className="flex items-center justify-center gap-1.5 font-medium text-[11px]">
