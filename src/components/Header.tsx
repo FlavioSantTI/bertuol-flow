@@ -19,6 +19,7 @@ import {
   LogOut,
   Sparkles,
   Eye,
+  HelpCircle,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -294,6 +295,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
           </button>
 
+          {/* FAQ Central de Dúvidas */}
+          <a
+            href="/faq.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Central de Ajuda (FAQ)"
+            className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl border bg-amber-500/10 hover:bg-amber-500/20 border-amber-300 text-amber-950 font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
+          >
+            <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span className="text-xs hidden md:inline">Ajuda (FAQ)</span>
+          </a>
+
           {/* View Mode Toggle */}
           <button
             onClick={onToggleView}
@@ -380,6 +393,17 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4 text-gray-600" />}
             </button>
+
+            {/* FAQ Central de Dúvidas Mobile */}
+            <a
+              href="/faq.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Central de Ajuda (FAQ)"
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-300 text-amber-950 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-4 h-4 text-amber-600" />
+            </a>
 
             {/* Bell Push Notifications Button */}
             <button
