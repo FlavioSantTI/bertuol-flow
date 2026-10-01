@@ -20,6 +20,7 @@ import {
   Sparkles,
   Eye,
   HelpCircle,
+  TrendingUp,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -39,6 +40,7 @@ interface HeaderProps {
   onOpenClinicorpModal?: () => void;
   onOpenUserManagementModal?: () => void;
   onOpenChangePasswordModal?: () => void;
+  onOpenRolloutReportModal?: () => void;
   onLogout?: () => void;
 }
 
@@ -59,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenClinicorpModal,
   onOpenUserManagementModal,
   onOpenChangePasswordModal,
+  onOpenRolloutReportModal,
   onLogout,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -215,6 +218,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* Rollout Report / Access logs Button (For Admin and Managers) */}
+          {canManageUsers && onOpenRolloutReportModal && (
+            <button
+              onClick={onOpenRolloutReportModal}
+              title="Relatório Geral de Implantação, Adoção e Acessos"
+              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-200 text-emerald-950 text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+            >
+              <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="hidden xl:inline">Implantação</span>
+            </button>
+          )}
+
           {/* Multi-Clinic Modal Button (Only for Admins and Gerente) */}
           {canManageClinics && (
             <button
@@ -352,6 +367,17 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 transition-colors cursor-pointer"
               >
                 <Users className="w-4 h-4 text-orange-600" />
+              </button>
+            )}
+
+            {/* Rollout Report Button Mobile */}
+            {canManageUsers && onOpenRolloutReportModal && (
+              <button
+                onClick={onOpenRolloutReportModal}
+                title="Relatório Geral de Implantação e Acessos"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 transition-colors cursor-pointer"
+              >
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
               </button>
             )}
 

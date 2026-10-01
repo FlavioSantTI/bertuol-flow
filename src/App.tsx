@@ -12,6 +12,7 @@ import { DailyBriefingModal } from './components/DailyBriefingModal';
 import { FloatingPersonaBot } from './components/FloatingPersonaBot';
 import { UserManagementModal } from './components/UserManagementModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { RolloutReportModal } from './components/RolloutReportModal';
 import { LoginScreen } from './components/LoginScreen';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { SkeletonCard } from './components/SkeletonLoader';
@@ -56,6 +57,7 @@ export default function App() {
   const [isDailyBriefingOpen, setIsDailyBriefingOpen] = useState(false);
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isRolloutReportModalOpen, setIsRolloutReportModalOpen] = useState(false);
 
   // Multi-Tenant state
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -427,6 +429,7 @@ export default function App() {
         onOpenClinicorpModal={() => setIsClinicorpModalOpen(true)}
         onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
         onOpenChangePasswordModal={() => setIsChangePasswordModalOpen(true)}
+        onOpenRolloutReportModal={() => setIsRolloutReportModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -801,6 +804,13 @@ export default function App() {
           const updatedCtx = dataService.getUserContext();
           setUserContext(updatedCtx);
         }}
+      />
+
+      {/* Rollout Report & Access Logs Modal */}
+      <RolloutReportModal
+        isOpen={isRolloutReportModalOpen}
+        onClose={() => setIsRolloutReportModalOpen(false)}
+        systemUsers={dataService.getSystemUsers()}
       />
     </div>
   );

@@ -307,6 +307,71 @@ function formatPhoneForDatabase(rawPhone: string | null | undefined): string {
   return digits;
 }
 
+// Access Logs Persistence File path
+const ACCESS_LOGS_FILE = path.join(__dirname, 'access_logs.json');
+
+// Helper to read logs
+const readAccessLogs = (): any[] => {
+  try {
+    if (fs.existsSync(ACCESS_LOGS_FILE)) {
+      const content = fs.readFileSync(ACCESS_LOGS_FILE, 'utf-8');
+      return JSON.parse(content) || [];
+    }
+  } catch (e) {
+    console.error('Error reading access logs file:', e);
+  }
+  return [];
+};
+
+// Helper to write logs
+const writeAccessLogs = (logs: any[]) => {
+  try {
+    fs.writeFileSync(ACCESS_LOGS_FILE, JSON.stringify(logs, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Error writing access logs file:', e);
+  }
+};
+
+// GET: Fetch all access logs for the Deployment Report
+app.get('/api/access-logs', (_req: Request, res: Response) => {
+  try {
+    const logs = readAccessLogs();
+    // Sort descending by timestamp (newest first)
+    const sorted = logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return res.json({ success: true, logs: sorted });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Erro ao carregar relatórios de acesso.' });
+  }
+});
+
+// POST: Add a new access log (called on login or on app initialization)
+app.post('/api/access-logs', (req: Request, res: Response) => {
+  try {
+    const { usuario_id, name, email, role, device } = req.body;
+    if (!usuario_id || !name || !email) {
+      return res.status(400).json({ success: false, error: 'Campos obrigatórios ausentes.' });
+    }
+
+    const logs = readAccessLogs();
+    const newLog = {
+      id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      usuario_id,
+      name,
+      email,
+      role: role === 'recepcao' ? 'receptionist' : role,
+      device: device || 'Dispositivo Desconhecido',
+      timestamp: new Date().toISOString()
+    };
+
+    logs.push(newLog);
+    writeAccessLogs(logs);
+
+    return res.json({ success: true, log: newLog });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Erro ao registrar acesso.' });
+  }
+});
+
 // System Users online multi-device endpoints directly via Supabase
 app.get('/api/system-users', async (_req: Request, res: Response) => {
   try {
@@ -686,6 +751,23 @@ app.post('/api/login', async (req: Request, res: Response) => {
           mustChangePassword: false,
         };
 
+        // Log access in background
+        try {
+          const logs = readAccessLogs();
+          logs.push({
+            id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            usuario_id: authData.user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            device: req.headers['user-agent'] || 'Dispositivo PWA',
+            timestamp: new Date().toISOString()
+          });
+          writeAccessLogs(logs);
+        } catch (e) {
+          console.warn('Logging error:', e);
+        }
+
         return res.json({
           success: true,
           user,
@@ -750,6 +832,23 @@ app.post('/api/login', async (req: Request, res: Response) => {
           active: dbUser.ativo ?? true,
           mustChangePassword: mustChange,
         };
+
+        // Log access in background
+        try {
+          const logs = readAccessLogs();
+          logs.push({
+            id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            usuario_id: dbUser.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            device: req.headers['user-agent'] || 'Dispositivo PWA',
+            timestamp: new Date().toISOString()
+          });
+          writeAccessLogs(logs);
+        } catch (e) {
+          console.warn('Logging error:', e);
+        }
 
         return res.json({
           success: true,
