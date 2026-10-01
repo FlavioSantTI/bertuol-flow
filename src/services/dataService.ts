@@ -1717,7 +1717,7 @@ class DataService {
   }
 
   public getDentists(clinicBusinessId?: number): Dentist[] {
-    const isDentistActive = (d: Dentist) => d.Active === 'true' || d.Active === true || d.Active === undefined;
+    const isDentistActive = (d: Dentist) => (d.Active as any) === 'true' || (d.Active as any) === true || d.Active === undefined;
     if (clinicBusinessId) {
       return this.dentists.filter((d) => d.Clinic_BusinessId === clinicBusinessId && isDentistActive(d));
     }

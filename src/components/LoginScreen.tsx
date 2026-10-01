@@ -594,7 +594,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400">
             <span>Dúvidas ou redefinição de acesso? Entre em contato com o suporte.</span>
             <span>•</span>
-            <span className="font-bold text-gray-500">Versão 1.0</span>
+            <span className="font-bold text-gray-500">Versão 1.1.0</span>
           </div>
         </div>
       </div>

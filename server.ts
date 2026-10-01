@@ -1217,7 +1217,7 @@ app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
     const instanceToken = matchedInstance?.token || process.env.EVOLUTION_INSTANCE_TOKEN || '22a95d2c-082a-4df2-80aa-0b36982b8ced';
 
     // 2. Dispatch via Evolution GO /send/text with Instance Token
-    const candidateAuthHeaders = [
+    const candidateAuthHeaders: Record<string, string>[] = [
       { 'apikey': instanceToken, 'token': instanceToken },
       { 'apikey': instanceToken, 'token': globalKey },
       { 'apikey': globalKey, 'token': instanceToken },
