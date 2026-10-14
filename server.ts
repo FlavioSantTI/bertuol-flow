@@ -3458,7 +3458,7 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
 
     const host = req.get('host') || 'ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app';
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const qrTarget = `${protocol}://${host}/paciente.html?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
+    const qrTarget = `${protocol}://${host}/paciente?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
 
     let qrDataUrl = '';
     try {
@@ -3721,6 +3721,17 @@ if (isProd) {
     try {
       const template = fs.readFileSync(path.resolve(__dirname, 'paciente.html'), 'utf-8');
       const html = await vite.transformIndexHtml(req.originalUrl || '/paciente.html', template);
+      return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // Roteamento explícito do Profissional (Dentistas e Equipe) em Desenvolvimento
+  app.get(['/dentista', '/profissional', '/dentista/*', '/profissional/*'], async (req: Request, res: Response, next) => {
+    try {
+      const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+      const html = await vite.transformIndexHtml(req.originalUrl || '/', template);
       return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e) {
       next(e);

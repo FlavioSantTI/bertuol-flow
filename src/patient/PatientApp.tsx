@@ -99,6 +99,7 @@ interface PatientAppProps {
 }
 
 export const PatientApp: React.FC<PatientAppProps> = ({
+  onSwitchToDentistView,
   onOpenAdminGamificationModal,
 }) => {
   // Query parameters or local storage
@@ -679,6 +680,30 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-800 antialiased selection:bg-[#147A80]/20">
+      {/* Top Banner de Identificação & Alternância para Dentistas/Equipe */}
+      <div className="bg-slate-900 text-white px-3 py-2 text-xs flex items-center justify-between border-b border-slate-800 sticky top-0 z-40">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>
+          <span className="text-slate-300 font-semibold text-[11px] truncate">
+            Clube Sorriso • Portal do Paciente
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (onSwitchToDentistView) {
+              onSwitchToDentistView();
+            } else {
+              window.location.href = '/';
+            }
+          }}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 hover:text-white font-bold text-[11px] border border-teal-500/40 transition-colors cursor-pointer shrink-0"
+          title="Acessar Área do Dentista / Agenda Clínica"
+        >
+          <span>🩺 Sou Dentista (Bertuol Flow)</span>
+          <span className="text-[10px]">→</span>
+        </button>
+      </div>
       {/* Toast Notification with ESC dismissal */}
       {toastMessage && (
         <div

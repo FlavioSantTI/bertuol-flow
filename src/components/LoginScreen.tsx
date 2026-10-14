@@ -661,7 +661,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="text-center mt-6 space-y-2 text-xs text-gray-400">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <a
-              href="/paciente.html"
+              href="/paciente"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"

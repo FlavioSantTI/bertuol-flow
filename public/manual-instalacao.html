@@ -371,18 +371,66 @@
       <div class="brand-pill">
         <span>🦷 Bertuol Odontologia Avançada</span>
       </div>
-      <h1>Manual de Instalação do App</h1>
-      <p>Aprenda a instalar o <strong>Bertuol Flow</strong> diretamente na tela inicial do seu celular (Android ou iPhone) como um aplicativo nativo (PWA).</p>
+      <h1>Manual de Instalação dos Aplicativos</h1>
+      <p>A Bertuol Odontologia possui <strong>dois aplicativos distintos</strong>. Certifique-se de instalar o aplicativo correspondente ao seu perfil para evitar cair na tela incorreta:</p>
       
       <div class="actions-bar">
         <button onclick="window.print()" class="btn btn-white">
           <span>📄 Salvar como PDF / Imprimir</span>
         </button>
         <a href="/" class="btn btn-gold">
-          <span>🚀 Acessar o Bertuol Flow</span>
+          <span>🩺 Acessar Bertuol Flow (Profissional)</span>
+        </a>
+        <a href="/paciente" class="btn btn-white">
+          <span>🌟 Acessar Bertuol Paciente</span>
         </a>
       </div>
     </header>
+
+    <!-- SELETOR DE PERFIL / APPS DISTINTOS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      <!-- Card Profissional -->
+      <div style="background: white; border: 2px solid #4BBCBE; border-radius: 20px; padding: 20px; box-shadow: 0 4px 14px rgba(75, 188, 190, 0.12);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <span style="background: #E6F7F7; color: #147A80; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">
+            Para Dentistas & Equipe
+          </span>
+          <span style="font-size: 20px;">🩺</span>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #1E293B; margin-bottom: 6px;">Bertuol Flow</h3>
+        <p style="font-size: 13px; color: #64748B; margin-bottom: 14px; line-height: 1.5;">
+          App exclusivo para dentistas e secretárias. Gerencie sua agenda diária, consulte resumos clínicos por IA, receba alertas sonoros de paciente na recepção e acesse com Face ID / Biometria.
+        </p>
+        <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 10px; margin-bottom: 14px; font-size: 12px;">
+          <div><strong>Nome na tela do celular:</strong> Bertuol Flow</div>
+          <div><strong>Rota de Acesso:</strong> <code style="background: #E2E8F0; padding: 2px 6px; border-radius: 4px;">/</code> ou <code style="background: #E2E8F0; padding: 2px 6px; border-radius: 4px;">/dentista</code></div>
+        </div>
+        <a href="/" style="display: block; text-align: center; background: #147A80; color: white; padding: 10px 16px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 13px;">
+          Abrir App do Profissional →
+        </a>
+      </div>
+
+      <!-- Card Paciente -->
+      <div style="background: white; border: 2px solid #F59E0B; border-radius: 20px; padding: 20px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <span style="background: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">
+            Para Pacientes & Clientes
+          </span>
+          <span style="font-size: 20px;">🌟</span>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #1E293B; margin-bottom: 6px;">Bertuol Paciente</h3>
+        <p style="font-size: 13px; color: #64748B; margin-bottom: 14px; line-height: 1.5;">
+          Portal do paciente com Clube Sorriso Bertuol. Confirme consultas com 1 toque, faça check-in por QR Code no totem da recepção e troque pontos por prêmios.
+        </p>
+        <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 10px; margin-bottom: 14px; font-size: 12px;">
+          <div><strong>Nome na tela do celular:</strong> Bertuol Paciente</div>
+          <div><strong>Rota de Acesso:</strong> <code style="background: #E2E8F0; padding: 2px 6px; border-radius: 4px;">/paciente</code></div>
+        </div>
+        <a href="/paciente" style="display: block; text-align: center; background: #D97706; color: white; padding: 10px 16px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 13px;">
+          Abrir App do Paciente →
+        </a>
+      </div>
+    </div>
 
     <!-- ANDROID GUIDE -->
     <section class="os-card">

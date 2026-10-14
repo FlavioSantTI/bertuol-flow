@@ -1,14 +1,14 @@
 {
   "id": "/paciente",
-  "name": "Clube Sorriso Bertuol",
-  "short_name": "ClubeBertuol",
-  "description": "Portal do Paciente, Check-in no Totem e Clube de Vantagens da Bertuol Odontologia.",
+  "name": "Clube Sorriso Bertuol - Paciente",
+  "short_name": "Bertuol Paciente",
+  "description": "Portal do Paciente, Confirmação de Consultas em 1 toque, Check-in no Totem e Clube Sorriso da Bertuol Odontologia.",
   "theme_color": "#147A80",
   "background_color": "#FFFFFF",
   "display": "standalone",
   "orientation": "portrait",
   "start_url": "/paciente",
-  "scope": "/",
+  "scope": "/paciente",
   "icons": [
     {
       "src": "/pwa-192x192.png",

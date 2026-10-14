@@ -36,7 +36,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
 
   // Generate QR Code with checkin URL
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://bertuolodontologia.com.br';
-  const qrPayload = `${baseUrl}/paciente.html?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
+  const qrPayload = `${baseUrl}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
     selectedClinic.name
   )}`;
 

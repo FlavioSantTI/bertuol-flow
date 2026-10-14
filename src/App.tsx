@@ -76,10 +76,16 @@ export default function App() {
   } | null>(null);
   const [lastSeenCheckinId, setLastSeenCheckinId] = useState<string | null>(null);
 
-  // Modo de visualização: 'patient' (App do Cliente) como padrão para testes rápidos conforme solicitado
+  // Modo de visualização: 'dentist' (App Profissional / Bertuol Flow) como PADRÃO ABSOLUTO!
+  // Dentistas que já instalaram o PWA no celular e acessam a raiz '/' NUNCA devem cair na tela de paciente.
   const [appMode, setAppMode] = useState<'patient' | 'dentist'>(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('app') === 'dentista' || params.get('app') === 'dentist' ? 'dentist' : 'patient';
+    const appParam = params.get('app')?.toLowerCase();
+    // Somente abre o modo paciente se for explicitamente requisitado
+    if (appParam === 'paciente' || appParam === 'patient') {
+      return 'patient';
+    }
+    return 'dentist';
   });
 
   // Multi-Tenant state
@@ -476,27 +482,39 @@ export default function App() {
     setUserContext(dataService.getUserContext());
   };
 
+  const handleSwitchToDentist = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('app');
+    window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+    setAppMode('dentist');
+    if (!userContext.isAuthenticated) {
+      const rootAdmin = dataService.getSystemUsers().find((u) => u.role === 'admin_root') || {
+        id: 'usr_root',
+        name: 'Favuca Dias (Admin Root)',
+        email: 'favuca.dias@gmail.com',
+        role: 'admin_root' as const,
+        clinicId: 1,
+        allowedClinicIds: [1, 2, 3],
+        active: true,
+        mustChangePassword: false,
+      };
+      handleSimulateUser(rootAdmin as any);
+    }
+  };
+
+  const handleSwitchToPatient = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('app', 'paciente');
+    window.history.pushState({}, '', url.pathname + '?' + url.searchParams.toString());
+    setAppMode('patient');
+  };
+
   // 1. Modo Paciente ativo: renderiza o App do Cliente diretamente para testes
   if (appMode === 'patient') {
     return (
       <>
         <PatientApp
-          onSwitchToDentistView={() => {
-            setAppMode('dentist');
-            if (!userContext.isAuthenticated) {
-              const rootAdmin = dataService.getSystemUsers().find((u) => u.role === 'admin_root') || {
-                id: 'usr_root',
-                name: 'Favuca Dias (Admin Root)',
-                email: 'favuca.dias@gmail.com',
-                role: 'admin_root' as const,
-                clinicId: 1,
-                allowedClinicIds: [1, 2, 3],
-                active: true,
-                mustChangePassword: false,
-              };
-              handleSimulateUser(rootAdmin as any);
-            }
-          }}
+          onSwitchToDentistView={handleSwitchToDentist}
           onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
         />
         {/* Admin Clube de Vantagens (acessível diretamente a partir do modo paciente) */}
@@ -519,13 +537,13 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col">
         <div className="bg-slate-900 text-white px-3 py-2 text-xs flex items-center justify-between">
-          <span className="text-gray-300">Modo Dentista • Identificação Necessária</span>
-          <button
-            onClick={() => setAppMode('patient')}
-            className="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs cursor-pointer"
+          <span className="text-gray-300 font-semibold">Bertuol Flow • Acesso Profissional</span>
+          <a
+            href="/paciente"
+            className="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1"
           >
-            🌟 Voltar ao App do Cliente (Paciente)
-          </button>
+            🌟 Ir para App do Paciente
+          </a>
         </div>
         <LoginScreen
           onLoginSuccess={handleLoginSuccess}
@@ -544,16 +562,26 @@ export default function App() {
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
           <span className="font-bold text-slate-200">
-            Ambiente da Clínica & Dentistas (Agenda em Tempo Real)
+            Bertuol Flow • Painel do Profissional (Agenda & IA)
           </span>
         </div>
-        <button
-          onClick={() => setAppMode('patient')}
-          className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>🌟 Alternar para o App do Cliente (Paciente)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/paciente"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-semibold hidden sm:inline-flex items-center gap-1 border border-slate-700"
+          >
+            <span>📱 Abrir /paciente em nova aba</span>
+          </a>
+          <button
+            onClick={handleSwitchToPatient}
+            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Visualizar App do Paciente</span>
+          </button>
+        </div>
       </div>
 
       {/* Top Header Component (Multi-Tenant, RF01 Dropdown & Branding) */}
