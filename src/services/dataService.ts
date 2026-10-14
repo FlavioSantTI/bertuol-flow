@@ -290,7 +290,9 @@ export const INITIAL_PATIENTS: Patient[] = [
   },
 ];
 
-export const INITIAL_APPOINTMENTS: Appointment[] = [
+export const INITIAL_APPOINTMENTS: Appointment[] = [];
+
+const MOCK_APPOINTMENTS_LEGACY: Appointment[] = [
   // 1. Dr. Claudio Borba (id: 5229563695136768) - 3 Pacientes reais do Clinicorp
   {
     id: 6101348905385981,
@@ -1915,21 +1917,6 @@ class DataService {
         }
       });
     }
-
-    // Ensure appointments exist for dentists
-    mapped.forEach((d) => {
-      const hasAppts = this.appointments.some((a) => a.Dentist_PersonId === d.id);
-      if (!hasAppts) {
-        INITIAL_APPOINTMENTS.forEach((initApp, i) => {
-          this.appointments.push({
-            ...initApp,
-            id: Number(`${d.id}0${i + 1}`),
-            Dentist_PersonId: d.id,
-            date: todayStr,
-          });
-        });
-      }
-    });
 
     this.saveAll();
   }

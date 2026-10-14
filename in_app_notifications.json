@@ -1,0 +1,192 @@
+[
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "✅ Presença Confirmada!",
+    "body": "Você confirmou sua presença para a consulta com Dr(a). Dentista às Horário marcado. Bom atendimento!",
+    "type": "confirmation",
+    "read": false,
+    "id": "notif_1791464856698_kaji9",
+    "createdAt": "2026-10-08T13:07:36.698Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Bertuol Odontologia — Unidade Paraíso",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791464846371_k18dq",
+    "createdAt": "2026-10-08T13:07:26.371Z"
+  },
+  {
+    "phone": "6392657183",
+    "patientName": "Angela Maria De Sousa",
+    "title": "🎁 Cortesia de Aniversário Agendada!",
+    "body": "Recebemos sua solicitação para 2026-10-11 (Manhã (08h às 12h)). Nossa equipe já reservou sua cortesia de Profilaxia e Sky Câmera na unidade Bertuol Odontologia Avançada - Matriz Palmas.",
+    "type": "confirmation",
+    "data": {
+      "id": "bday_req_1791309925910",
+      "phone": "6392657183",
+      "patientName": "Angela Maria De Sousa",
+      "giftTitle": "Cortesia de Aniversário: Profilaxia e Diagnóstico Sky Câmera",
+      "preferredDate": "2026-10-11",
+      "preferredPeriod": "Manhã (08h às 12h)",
+      "unit": "Bertuol Odontologia Avançada - Matriz Palmas",
+      "notes": "",
+      "status": "solicitado",
+      "createdAt": "2026-10-06T18:05:25.910Z"
+    },
+    "read": false,
+    "id": "notif_1791309925910_hdpks",
+    "createdAt": "2026-10-06T18:05:25.910Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "✅ Presença Confirmada!",
+    "body": "Você confirmou sua presença para a consulta com Dr(a). Dentista às Horário marcado. Bom atendimento!",
+    "type": "confirmation",
+    "read": false,
+    "id": "notif_1791309912844_cg0ys",
+    "createdAt": "2026-10-06T18:05:12.844Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791309911314_q3gmw",
+    "createdAt": "2026-10-06T18:05:11.314Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "✅ Presença Confirmada!",
+    "body": "Você confirmou sua presença para a consulta com Dr(a). Dentista às Horário marcado. Bom atendimento!",
+    "type": "confirmation",
+    "read": false,
+    "id": "notif_1791309769284_efbxt",
+    "createdAt": "2026-10-06T18:02:49.284Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791309767753_vzqxo",
+    "createdAt": "2026-10-06T18:02:47.753Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "✅ Presença Confirmada!",
+    "body": "Você confirmou sua presença para a consulta com Dr(a). Dentista às Horário marcado. Bom atendimento!",
+    "type": "confirmation",
+    "read": false,
+    "id": "notif_1791309684354_9pbsj",
+    "createdAt": "2026-10-06T18:01:24.354Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791309682823_2ngtv",
+    "createdAt": "2026-10-06T18:01:22.823Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791309576577_zr2gi",
+    "createdAt": "2026-10-06T17:59:36.577Z"
+  },
+  {
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Alice! Sua consulta com Dr(a). Dra. Ariane Bertuol está confirmada para amanhã às o horário agendado. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Ariane Bertuol",
+      "time": "o horário agendado",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791309490881_9n86t",
+    "createdAt": "2026-10-06T17:58:10.881Z"
+  },
+  {
+    "phone": "63993390500",
+    "patientName": "Juceline Palmas",
+    "title": "⏰ Sua consulta começa em 2 horas!",
+    "body": "Olá, Juceline! Dr(a). Dra. Muryel Castro aguarda você às 14:00 na Unidade Matriz Palmas (daqui a aproximadamente 2 horas). Toque para ver detalhes e fazer seu pré-check-in sem filas!",
+    "type": "reminder_2_hours",
+    "data": {
+      "dentistName": "Dra. Muryel Castro",
+      "time": "14:00",
+      "clinicName": "Unidade Matriz Palmas",
+      "date": "Hoje"
+    },
+    "read": false,
+    "id": "notif_1791244521074_biyoh",
+    "createdAt": "2026-10-05T23:55:21.074Z"
+  },
+  {
+    "phone": "63993390500",
+    "patientName": "Juceline Palmas",
+    "title": "📅 Lembrete Bertuol: Sua consulta é amanhã!",
+    "body": "Olá, Juceline! Sua consulta com Dra. Muryel Castro está confirmada para amanhã às 14:00. Toque para confirmar sua presença no app sem precisar de WhatsApp!",
+    "type": "reminder_1_day",
+    "data": {
+      "dentistName": "Dra. Muryel Castro",
+      "time": "14:00",
+      "clinicName": "Unidade Matriz Palmas • 104 Sul, Av. JK",
+      "date": "Amanhã"
+    },
+    "read": false,
+    "id": "notif_1791244411227_byjyq",
+    "createdAt": "2026-10-05T23:53:31.227Z"
+  }
+]

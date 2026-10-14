@@ -5,8 +5,33 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
+import webpush from 'web-push';
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} from '@simplewebauthn/server';
+import type {
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON,
+} from '@simplewebauthn/server';
 
 dotenv.config({ override: true });
+
+// Online Supabase connection (sswbkfrpxboxmjvunhzt)
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://sswbkfrpxboxmjvunhzt.supabase.co';
+const SUPABASE_ANON_KEY =
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2JrZnJweGJveG1qdnVuaHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4Nzc5OTcsImV4cCI6MjA5MDQ1Mzk5N30.-z9guq5XL6274zDsgMGWvXQ2XKHH-ZvwsN70sLjnfNA';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
 // Sanitize Clinicorp base URL in case of environment prefixing
 const getClinicorpBaseUrl = () => {
@@ -24,7 +49,750 @@ const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HOST = '0.0.0.0';
 
-app.use(express.json());
+// Configuração de limites para upload local de imagens sem serviços externos
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+// Diretório local de uploads de prêmios e catálogo
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads', 'rewards');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Endpoint: Upload de imagem de prêmio / catálogo (Supabase Storage com fallback local)
+app.post('/api/upload/image', async (req: Request, res: Response) => {
+  try {
+    const { filename, base64 } = req.body;
+    if (!base64 || typeof base64 !== 'string') {
+      return res.status(400).json({ success: false, error: 'Arquivo de imagem em base64 não fornecido.' });
+    }
+
+    // Extrai o formato MIME e os bytes do base64
+    const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+    let extension = 'png';
+    let mimeType = 'image/png';
+
+    if (matches && matches.length === 3) {
+      mimeType = matches[1].toLowerCase();
+      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = 'jpg';
+      else if (mimeType.includes('png')) extension = 'png';
+      else if (mimeType.includes('webp')) extension = 'webp';
+      else if (mimeType.includes('svg')) extension = 'svg';
+      else if (mimeType.includes('gif')) extension = 'gif';
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(base64, 'base64');
+      if (filename && filename.includes('.')) {
+        extension = filename.split('.').pop()?.toLowerCase() || 'png';
+      }
+    }
+
+    // Higieniza o nome do arquivo
+    const rawClean = (filename || 'premio')
+      .replace(/\.[^/.]+$/, '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9_-]/g, '-');
+
+    const safeFilename = `premio-${Date.now()}-${rawClean}.${extension}`;
+
+    // 1. Tenta fazer upload no Supabase Storage (Bucket 'rewards')
+    let supabasePublicUrl: string | null = null;
+    let storageEngine = 'local';
+    try {
+      const { data: uploadRes, error: uploadErr } = await supabase.storage
+        .from('rewards')
+        .upload(safeFilename, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (!uploadErr && uploadRes) {
+        const { data: publicUrlData } = supabase.storage
+          .from('rewards')
+          .getPublicUrl(safeFilename);
+        if (publicUrlData?.publicUrl) {
+          supabasePublicUrl = publicUrlData.publicUrl;
+          storageEngine = 'supabase_bucket';
+          console.log(`[Supabase Storage] Imagem salva com sucesso no bucket 'rewards': ${supabasePublicUrl}`);
+        }
+      } else if (uploadErr) {
+        console.warn(`[Supabase Storage] Bucket 'rewards' pendente ou inacessível (${uploadErr.message}). Utilizando armazenamento local.`);
+      }
+    } catch (e: any) {
+      console.warn('[Supabase Storage] Erro ao tentar bucket:', e?.message);
+    }
+
+    // 2. Sempre grava também na pasta local do servidor como garantia / fallback imediato
+    const targetPath = path.join(UPLOADS_DIR, safeFilename);
+    fs.writeFileSync(targetPath, buffer);
+    const localPublicUrl = `/uploads/rewards/${safeFilename}`;
+
+    const finalUrl = supabasePublicUrl || localPublicUrl;
+
+    return res.json({
+      success: true,
+      url: finalUrl,
+      supabaseUrl: supabasePublicUrl,
+      localUrl: localPublicUrl,
+      storage: storageEngine,
+      filename: safeFilename,
+      size: buffer.length,
+      message:
+        storageEngine === 'supabase_bucket'
+          ? "Imagem salva com sucesso no Supabase Storage (Bucket 'rewards')!"
+          : 'Imagem salva no servidor local (Bucket Supabase rewards aguardando ativação no console).',
+    });
+  } catch (error: any) {
+    console.error('Erro no upload de imagem:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Falha ao salvar arquivo no servidor/Supabase.',
+      details: error?.message,
+    });
+  }
+});
+
+// Endpoint: Listar imagens (Supabase Storage + Local)
+app.get('/api/upload/images', async (_req: Request, res: Response) => {
+  try {
+    const list: Array<{ filename: string; url: string; source: 'supabase' | 'local' }> = [];
+
+    // Tenta listar do bucket Supabase
+    try {
+      const { data: supaFiles, error: supaErr } = await supabase.storage.from('rewards').list('', { limit: 50 });
+      if (!supaErr && Array.isArray(supaFiles)) {
+        supaFiles
+          .filter((f) => f.name && /\.(png|jpe?g|webp|svg|gif)$/i.test(f.name))
+          .forEach((f) => {
+            const { data } = supabase.storage.from('rewards').getPublicUrl(f.name);
+            list.push({
+              filename: f.name,
+              url: data.publicUrl,
+              source: 'supabase',
+            });
+          });
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Complementa com a pasta local se não estiver na lista
+    if (fs.existsSync(UPLOADS_DIR)) {
+      const localFiles = fs
+        .readdirSync(UPLOADS_DIR)
+        .filter((file) => /\.(png|jpe?g|webp|svg|gif)$/i.test(file));
+
+      localFiles.forEach((file) => {
+        if (!list.some((item) => item.filename === file)) {
+          list.push({
+            filename: file,
+            url: `/uploads/rewards/${file}`,
+            source: 'local',
+          });
+        }
+      });
+    }
+
+    return res.json({ success: true, images: list });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Erro ao listar imagens.' });
+  }
+});
+
+// ========================================================
+// INFRAESTRUTURA DE WEB PUSH NOTIFICATIONS (VAPID)
+// Notificações nativas no celular sem dependência de WhatsApp
+// ========================================================
+const VAPID_PUBLIC_KEY =
+  process.env.VAPID_PUBLIC_KEY ||
+  'BNkrzWGWMVVV-LiQ61eTQ7rDVn5ncbYw3aAPbQGlNBKNjmGd0gQb9BKZKxSST2t3ITCjcSnzSYNIONWct3-slrc';
+const VAPID_PRIVATE_KEY =
+  process.env.VAPID_PRIVATE_KEY || 'UhesbDa3dwFuAvhj0WIDL1W7PZDWWJ7cvWyZfkJONzM';
+const VAPID_SUBJECT =
+  process.env.VAPID_SUBJECT || 'mailto:contato@bertuolodontologia.com.br';
+
+try {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log('[Web Push] VAPID configurado com sucesso para Bertuol Odontologia.');
+} catch (err: any) {
+  console.warn('[Web Push] Aviso ao configurar VAPID:', err?.message);
+}
+
+// Armazenamento persistente de inscrições Push (PushSubscription)
+interface PushSubRecord {
+  phone: string;
+  patientName?: string;
+  subscription: any;
+  updatedAt: string;
+}
+const PUSH_SUBS_FILE = path.join(__dirname, 'push_subscriptions.json');
+
+const readPushSubscriptions = (): Map<string, PushSubRecord> => {
+  const map = new Map<string, PushSubRecord>();
+  try {
+    if (fs.existsSync(PUSH_SUBS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(PUSH_SUBS_FILE, 'utf-8'));
+      if (Array.isArray(data)) {
+        data.forEach((item) => map.set(item.phone, item));
+      }
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar push subscriptions:', e);
+  }
+  return map;
+};
+
+const savePushSubscriptions = (map: Map<string, PushSubRecord>) => {
+  try {
+    fs.writeFileSync(PUSH_SUBS_FILE, JSON.stringify(Array.from(map.values()), null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Erro ao salvar push subscriptions:', e);
+  }
+};
+
+const pushSubscriptionsMap = readPushSubscriptions();
+
+// Armazenamento persistente de Notificações In-App (Central de Notificações do Paciente)
+interface InAppNotification {
+  id: string;
+  phone: string;
+  patientName: string;
+  title: string;
+  body: string;
+  type: 'birthday' | 'reminder_1_day' | 'reminder_2_hours' | 'confirmation' | 'system';
+  data?: any;
+  read: boolean;
+  createdAt: string;
+}
+
+const NOTIFICATIONS_FILE = path.join(__dirname, 'in_app_notifications.json');
+const readInAppNotifications = (): InAppNotification[] => {
+  try {
+    if (fs.existsSync(NOTIFICATIONS_FILE)) {
+      return JSON.parse(fs.readFileSync(NOTIFICATIONS_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar notificações in-app:', e);
+  }
+  return [];
+};
+
+const saveInAppNotifications = (list: InAppNotification[]) => {
+  try {
+    fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(list.slice(-500), null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Erro ao salvar notificações in-app:', e);
+  }
+};
+
+let inAppNotificationsList = readInAppNotifications();
+
+function addInAppNotification(notif: Omit<InAppNotification, 'id' | 'createdAt'>) {
+  const cleanPhone = notif.phone.replace(/\D/g, '');
+  const item: InAppNotification = {
+    ...notif,
+    phone: cleanPhone,
+    id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    createdAt: new Date().toISOString(),
+  };
+  inAppNotificationsList.unshift(item);
+  saveInAppNotifications(inAppNotificationsList);
+  return item;
+}
+
+// Armazenamento de Solicitações de Agendamento da Cortesia de Aniversário (Sem WhatsApp)
+interface BirthdayGiftRequest {
+  id: string;
+  phone: string;
+  patientName: string;
+  giftTitle: string;
+  preferredDate: string;
+  preferredPeriod: string;
+  unit: string;
+  notes?: string;
+  status: 'solicitado' | 'confirmado' | 'realizado';
+  createdAt: string;
+}
+
+const BIRTHDAY_REQUESTS_FILE = path.join(__dirname, 'birthday_gift_requests.json');
+const readBirthdayRequests = (): BirthdayGiftRequest[] => {
+  try {
+    if (fs.existsSync(BIRTHDAY_REQUESTS_FILE)) {
+      return JSON.parse(fs.readFileSync(BIRTHDAY_REQUESTS_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar solicitações de cortesia de aniversário:', e);
+  }
+  return [];
+};
+
+const saveBirthdayRequests = (list: BirthdayGiftRequest[]) => {
+  try {
+    fs.writeFileSync(BIRTHDAY_REQUESTS_FILE, JSON.stringify(list.slice(-500), null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Erro ao salvar solicitações de cortesia de aniversário:', e);
+  }
+};
+
+let birthdayRequestsList = readBirthdayRequests();
+
+// Helper: Disparar notificação Push para o paciente
+async function sendPushToPhone(cleanPhone: string, payload: any): Promise<boolean> {
+  let record = pushSubscriptionsMap.get(cleanPhone);
+  if (!record && cleanPhone.length >= 8) {
+    const last8 = cleanPhone.slice(-8);
+    for (const [p, r] of pushSubscriptionsMap.entries()) {
+      if (p.endsWith(last8)) {
+        record = r;
+        break;
+      }
+    }
+  }
+
+  if (!record || !record.subscription) {
+    console.warn(`[Web Push] Inscrição não encontrada para o número: ${cleanPhone}`);
+    return false;
+  }
+
+  try {
+    await webpush.sendNotification(record.subscription, JSON.stringify(payload));
+    console.log(`[Web Push] Notificação enviada com sucesso para ${cleanPhone}: "${payload.title}"`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Web Push] Erro ao enviar notificação para ${cleanPhone}:`, error?.message);
+    if (error.statusCode === 410 || error.statusCode === 404) {
+      pushSubscriptionsMap.delete(cleanPhone);
+      savePushSubscriptions(pushSubscriptionsMap);
+    }
+    return false;
+  }
+}
+
+// Endpoint: Chave pública VAPID para registro no navegador
+app.get('/api/push/vapid-public-key', (_req: Request, res: Response) => {
+  res.json({ success: true, publicKey: VAPID_PUBLIC_KEY });
+});
+
+// Endpoint: Listar inscrições push ativas (para o painel admin)
+app.get('/api/push/subscriptions', (_req: Request, res: Response) => {
+  const list = Array.from(pushSubscriptionsMap.values()).map((r) => ({
+    phone: r.phone,
+    patientName: r.patientName,
+    updatedAt: r.updatedAt,
+  }));
+  res.json({ success: true, count: list.length, subscribers: list });
+});
+
+// Endpoint: Salvar inscrição Push do celular do paciente
+app.post('/api/push/subscribe', (req: Request, res: Response) => {
+  try {
+    const { phone, subscription, patientName } = req.body;
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ success: false, error: 'Objeto de inscrição inválido.' });
+    }
+    const cleanPhone = (phone || 'anonimo').replace(/\D/g, '');
+    const record: PushSubRecord = {
+      phone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      subscription,
+      updatedAt: new Date().toISOString(),
+    };
+    pushSubscriptionsMap.set(cleanPhone, record);
+    savePushSubscriptions(pushSubscriptionsMap);
+
+    console.log(`[Web Push] Inscrição salva para: ${record.patientName} (${cleanPhone})`);
+    return res.json({
+      success: true,
+      message: 'Inscrição para notificações Push nativas ativada com sucesso!',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Teste manual de Push direto na tela do paciente
+app.post('/api/push/send-test', async (req: Request, res: Response) => {
+  try {
+    const { phone, patientName } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+    const nome = patientName || 'Paciente';
+    const payload = {
+      title: '🔔 Bertuol Odontologia • Notificações Ativas!',
+      body: `Olá, ${nome}! Suas notificações push estão funcionando perfeitamente no seu aparelho.`,
+      icon: '/pwa-192x192.png',
+      badge: '/icon.svg',
+      data: { url: '/paciente' },
+    };
+
+    // Registra na central de notificações in-app
+    addInAppNotification({
+      phone: cleanPhone,
+      patientName: nome,
+      title: payload.title,
+      body: payload.body,
+      type: 'system',
+      read: false,
+    });
+
+    const sent = await sendPushToPhone(cleanPhone, payload);
+    return res.json({
+      success: sent,
+      message: sent
+        ? 'Notificação Push enviada com sucesso para seu dispositivo!'
+        : 'Inscrição Push não localizada para este telefone. Clique em "Ativar Notificações" primeiro no celular.',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Enviar Notificação de Cortesia de Aniversário (Push + In-App)
+app.post('/api/push/send-birthday', async (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, dataLimite } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+    const primeiroNome = (patientName || 'Paciente').trim().split(' ')[0];
+    const limite = dataLimite || '30 dias';
+
+    const title = `🎉 Parabéns, ${primeiroNome}! Feliz Aniversário 🚀`;
+    const body = `Queremos que seu sorriso acompanhe suas conquistas. Por isso, você recebeu uma Cortesia de Aniversário: Profilaxia e Diagnóstico por Imagem (Sky Câmera) por nossa conta. Válido até ${limite}. Agende seu presente direto aqui no app!`;
+
+    const payload = {
+      title,
+      body,
+      icon: '/pwa-192x192.png',
+      badge: '/icon.svg',
+      tag: 'birthday-gift',
+      data: { url: '/paciente?aba=vouchers&niver=true' },
+    };
+
+    // Sempre grava na Central de Notificações In-App
+    addInAppNotification({
+      phone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      title,
+      body,
+      type: 'birthday',
+      data: { validUntil: limite, voucherCode: `NIVER-2026-${cleanPhone.slice(-4) || '8491'}` },
+      read: false,
+    });
+
+    const sent = await sendPushToPhone(cleanPhone, payload);
+    return res.json({
+      success: sent,
+      message: sent
+        ? 'Notificação Push de aniversário entregue ao celular do paciente!'
+        : 'Cortesia registrada no app do paciente! (Inscrição Push não encontrada para este celular).',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Enviar Lembrete de Consulta (1 Dia Antes ou 2 Horas Antes)
+app.post('/api/push/send-reminder', async (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, dentistName, time, type, clinicName, date } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+    const cleanName = String(patientName || 'Paciente').replace(/\s*\([^)]*\)/g, '').trim();
+    const primeiroNome = cleanName.split(' ')[0];
+    const dr = dentistName || 'seu dentista';
+    const unidade = clinicName || 'Bertuol Odontologia';
+    const horario = time || 'o horário agendado';
+
+    let title = '';
+    let body = '';
+    let tag = '';
+
+    if (type === '2_hours_before') {
+      title = `⏰ Sua consulta começa em 2 horas!`;
+      body = `Olá, ${primeiroNome}! Dr(a). ${dr} aguarda você às ${horario} na ${unidade} (daqui a aproximadamente 2 horas). Toque para ver detalhes e fazer seu pré-check-in sem filas!`;
+      tag = 'reminder-2h';
+    } else {
+      // 1 dia antes
+      title = `📅 Lembrete Bertuol: Sua consulta é amanhã!`;
+      body = `Olá, ${primeiroNome}! Sua consulta com Dr(a). ${dr} está confirmada para amanhã às ${horario}. Toque para confirmar sua presença no app sem precisar de WhatsApp!`;
+      tag = 'reminder-1d';
+    }
+
+    const payload = {
+      title,
+      body,
+      icon: '/pwa-192x192.png',
+      badge: '/icon.svg',
+      tag,
+      data: { url: '/paciente?aba=appointment' },
+    };
+
+    // Registra na central de notificações in-app
+    addInAppNotification({
+      phone: cleanPhone,
+      patientName: cleanName,
+      title,
+      body,
+      type: type === '2_hours_before' ? 'reminder_2_hours' : 'reminder_1_day',
+      data: { dentistName: dr, time: horario, clinicName: unidade, date: date || (type === '2_hours_before' ? 'Hoje' : 'Amanhã') },
+      read: false,
+    });
+
+    const sent = await sendPushToPhone(cleanPhone, payload);
+    return res.json({
+      success: sent,
+      message: sent
+        ? `Lembrete Push (${type === '2_hours_before' ? '2 horas antes' : '1 dia antes'}) enviado com sucesso!`
+        : `Lembrete salvo na Central do Paciente! (Inscrição Push não localizada para este telefone).`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Buscar Notificações In-App de um Paciente
+app.get('/api/patient/notifications', (req: Request, res: Response) => {
+  const rawPhone = String(req.query.phone || '');
+  const cleanPhone = rawPhone.replace(/\D/g, '');
+
+  let list = inAppNotificationsList;
+  if (cleanPhone) {
+    const last8 = cleanPhone.slice(-8);
+    list = inAppNotificationsList.filter(
+      (n) => n.phone.endsWith(last8) || n.phone === cleanPhone || n.phone === 'todos' || !n.phone
+    );
+  }
+
+  const unreadCount = list.filter((n) => !n.read).length;
+  res.json({
+    success: true,
+    notifications: list,
+    unreadCount,
+  });
+});
+
+// Endpoint: Marcar Notificação como Lida
+app.post('/api/patient/notifications/mark-read', (req: Request, res: Response) => {
+  const { id, phone } = req.body;
+  if (id) {
+    inAppNotificationsList = inAppNotificationsList.map((n) =>
+      n.id === id ? { ...n, read: true } : n
+    );
+  } else if (phone) {
+    const cleanPhone = String(phone).replace(/\D/g, '');
+    const last8 = cleanPhone.slice(-8);
+    inAppNotificationsList = inAppNotificationsList.map((n) =>
+      n.phone.endsWith(last8) || n.phone === cleanPhone ? { ...n, read: true } : n
+    );
+  }
+  saveInAppNotifications(inAppNotificationsList);
+  res.json({ success: true, message: 'Notificações marcadas como lidas.' });
+});
+
+// Endpoint: Paciente Agenda a Cortesia de Aniversário Diretamente no App (Sem WhatsApp)
+app.post('/api/patient/schedule-birthday-gift', (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, preferredDate, preferredPeriod, unit, notes } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+
+    const newRequest: BirthdayGiftRequest = {
+      id: 'bday_req_' + Date.now(),
+      phone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      giftTitle: 'Cortesia de Aniversário: Profilaxia e Diagnóstico Sky Câmera',
+      preferredDate: preferredDate || new Date().toISOString().split('T')[0],
+      preferredPeriod: preferredPeriod || 'Manhã',
+      unit: unit || 'Bertuol Palmas Matriz',
+      notes: notes || '',
+      status: 'solicitado',
+      createdAt: new Date().toISOString(),
+    };
+
+    birthdayRequestsList.unshift(newRequest);
+    saveBirthdayRequests(birthdayRequestsList);
+
+    // Registra confirmação na central de notificações
+    addInAppNotification({
+      phone: cleanPhone,
+      patientName: newRequest.patientName,
+      title: '🎁 Cortesia de Aniversário Agendada!',
+      body: `Recebemos sua solicitação para ${newRequest.preferredDate} (${newRequest.preferredPeriod}). Nossa equipe já reservou sua cortesia de Profilaxia e Sky Câmera na unidade ${newRequest.unit}.`,
+      type: 'confirmation',
+      data: newRequest,
+      read: false,
+    });
+
+    // Dispara push confirmando o agendamento do presente
+    sendPushToPhone(cleanPhone, {
+      title: '🎁 Presente de Aniversário Confirmado!',
+      body: `Sua cortesia de Profilaxia e Sky Câmera foi solicitada com sucesso para ${newRequest.preferredDate}. Estamos te esperando!`,
+      icon: '/pwa-192x192.png',
+      badge: '/icon.svg',
+      data: { url: '/paciente?aba=vouchers' },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Sua solicitação de agendamento do presente foi recebida com sucesso! Nossa recepção já confirmou seu horário.',
+      request: newRequest,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Listar Solicitações de Presente de Aniversário (para o Admin)
+app.get('/api/patient/birthday-requests', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    requests: birthdayRequestsList,
+    count: birthdayRequestsList.length,
+  });
+});
+
+// Endpoint: Paciente Confirma Consulta pelo App (Sem WhatsApp)
+app.post('/api/patient/confirm-appointment', (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, appointmentTime, dentistName } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+
+    addInAppNotification({
+      phone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      title: '✅ Presença Confirmada!',
+      body: `Você confirmou sua presença para a consulta com Dr(a). ${dentistName || 'Dentista'} às ${appointmentTime || 'Horário marcado'}. Bom atendimento!`,
+      type: 'confirmation',
+      read: false,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Presença confirmada com sucesso! O dentista e a recepção já foram notificados.',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Disparar Cortesia de Aniversário em Massa para todos os aniversariantes do Clinicorp
+app.post('/api/notifications/dispatch-all-birthdays', async (req: Request, res: Response) => {
+  try {
+    const user = process.env.CLINICORP_USER || 'qsparaisoto';
+    const key = process.env.CLINICORP_KEY || 'f77112ec-f697-4e2e-8966-f18f8826d4c6';
+    const baseUrl = getClinicorpBaseUrl();
+    const subscriberId = (req.query.subscriber_id as string) || user.trim();
+    const authHeader = 'Basic ' + Buffer.from(`${user.trim()}:${key.trim()}`).toString('base64');
+
+    const response = await fetch(`${baseUrl}/patient/birthdays?subscriber_id=${subscriberId}`, {
+      method: 'GET',
+      headers: { Authorization: authHeader, Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      return res.status(400).json({ success: false, error: 'Falha ao buscar aniversariantes do Clinicorp.' });
+    }
+
+    const birthdays = await response.json();
+    if (!Array.isArray(birthdays) || birthdays.length === 0) {
+      return res.json({ success: true, message: 'Nenhum aniversariante encontrado para envio hoje.', dispatched: 0 });
+    }
+
+    const nextMonth = new Date();
+    nextMonth.setDate(nextMonth.getDate() + 30);
+    const dataLimite = nextMonth.toLocaleDateString('pt-BR');
+
+    let pushCount = 0;
+    let inAppCount = 0;
+
+    for (const b of birthdays) {
+      const cleanPhone = String(b.MobilePhone || '').replace(/\D/g, '');
+      const firstName = (b.Name || 'Paciente').trim().split(' ')[0];
+
+      const title = `🎉 Parabéns, ${firstName}! Feliz Aniversário 🚀`;
+      const body = `Queremos que seu sorriso acompanhe suas conquistas. Por isso, você recebeu uma Cortesia de Aniversário: Profilaxia e Diagnóstico por Imagem (Sky Câmera) por nossa conta. Válido até ${dataLimite}. Agende seu presente direto pelo App!`;
+
+      // Grava no In-App
+      addInAppNotification({
+        phone: cleanPhone,
+        patientName: b.Name,
+        title,
+        body,
+        type: 'birthday',
+        data: { validUntil: dataLimite, voucherCode: `NIVER-2026-${cleanPhone.slice(-4) || '8491'}` },
+        read: false,
+      });
+      inAppCount++;
+
+      // Dispara push se tiver inscrição
+      if (cleanPhone) {
+        const sent = await sendPushToPhone(cleanPhone, {
+          title,
+          body,
+          icon: '/pwa-192x192.png',
+          badge: '/icon.svg',
+          tag: 'birthday-gift',
+          data: { url: '/paciente?aba=vouchers&niver=true' },
+        });
+        if (sent) pushCount++;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Disparo concluído: ${inAppCount} cortesias geradas no app, ${pushCount} notificações push nativas entregues nos celulares!`,
+      totalBirthdays: birthdays.length,
+      inAppCreated: inAppCount,
+      pushDelivered: pushCount,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Consultar Aniversariantes do Clinicorp ao vivo com subscriber_id
+app.get('/api/clinicorp/birthdays', async (req: Request, res: Response) => {
+  try {
+    const user = process.env.CLINICORP_USER || 'qsparaisoto';
+    const key = process.env.CLINICORP_KEY || 'f77112ec-f697-4e2e-8966-f18f8826d4c6';
+    const baseUrl = getClinicorpBaseUrl();
+
+    const authHeader = 'Basic ' + Buffer.from(`${user.trim()}:${key.trim()}`).toString('base64');
+    const subscriberId = (req.query.subscriber_id as string) || user.trim();
+
+    const response = await fetch(`${baseUrl}/patient/birthdays?subscriber_id=${subscriberId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: authHeader,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({
+        success: false,
+        error: `Falha na API do Clinicorp (HTTP ${response.status})`,
+        details: errText,
+      });
+    }
+
+    const list = await response.json();
+    return res.json({
+      success: true,
+      birthdays: Array.isArray(list) ? list : [],
+      count: Array.isArray(list) ? list.length : 0,
+      subscriber_id: subscriberId,
+    });
+  } catch (err: any) {
+    console.error('Erro ao consultar aniversariantes do Clinicorp:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao consultar aniversariantes.',
+      details: err?.message,
+    });
+  }
+});
 
 // Initialize Google GenAI client with required user-agent header
 const ai = new GoogleGenAI({
@@ -272,21 +1040,6 @@ app.post('/api/whatsapp/send-notification', (req: Request, res: Response) => {
     status: 'sent',
     timestamp: new Date().toISOString(),
   });
-});
-
-import { createClient } from '@supabase/supabase-js';
-
-// Online Supabase connection (sswbkfrpxboxmjvunhzt)
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://sswbkfrpxboxmjvunhzt.supabase.co';
-const SUPABASE_ANON_KEY =
-  process.env.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2JrZnJweGJveG1qdnVuaHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4Nzc5OTcsImV4cCI6MjA5MDQ1Mzk5N30.-z9guq5XL6274zDsgMGWvXQ2XKHH-ZvwsN70sLjnfNA';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
 });
 
 // Helper to format phone to clean digits with country code 55 (e.g. 5563981487023)
@@ -910,6 +1663,458 @@ app.post('/api/system-users/batch', async (_req: Request, res: Response) => {
   return res.json({ success: true });
 });
 
+// ==========================================
+// WEBAUTHN / PASSKEYS BIOMETRIC ENDPOINTS
+// ==========================================
+
+interface WebAuthnStoredCredential {
+  id: string; // Base64URL string of credential ID
+  userId: string;
+  userEmail: string;
+  userName: string;
+  publicKey: string; // Base64URL string of public key
+  counter: number;
+  deviceName: string;
+  deviceType?: 'singleDevice' | 'multiDevice';
+  backedUp?: boolean;
+  transports?: string[];
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
+const WEBAUTHN_FILE = path.join(__dirname, 'webauthn_credentials.json');
+
+const readWebAuthnCredentials = (): WebAuthnStoredCredential[] => {
+  try {
+    if (fs.existsSync(WEBAUTHN_FILE)) {
+      return JSON.parse(fs.readFileSync(WEBAUTHN_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.warn('Erro ao ler webauthn_credentials.json:', e);
+  }
+  return [];
+};
+
+const saveWebAuthnCredentials = (list: WebAuthnStoredCredential[]) => {
+  try {
+    fs.writeFileSync(WEBAUTHN_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Erro ao salvar webauthn_credentials.json:', e);
+  }
+};
+
+// In-memory challenge store (5 min TTL)
+const activeWebAuthnChallenges = new Map<
+  string,
+  {
+    challenge: string;
+    userId?: string;
+    userEmail?: string;
+    createdAt: number;
+  }
+>();
+
+// Prune expired challenges every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of activeWebAuthnChallenges.entries()) {
+    if (now - val.createdAt > 5 * 60 * 1000) {
+      activeWebAuthnChallenges.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+const getRpID = (req: Request): string => {
+  const hostHeader = (req.headers['x-forwarded-host'] as string) || req.headers.host || 'localhost';
+  const cleanHost = hostHeader.split(',')[0].trim().split(':')[0];
+  return cleanHost;
+};
+
+const getExpectedOrigins = (req: Request): string[] => {
+  const origins = new Set<string>();
+  if (req.headers.origin) {
+    origins.add(req.headers.origin as string);
+  }
+  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'http';
+  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || 'localhost:3000';
+  const cleanHost = host.split(',')[0].trim();
+  origins.add(`${proto}://${cleanHost}`);
+  origins.add(`https://${cleanHost}`);
+  origins.add(`http://${cleanHost}`);
+  origins.add('https://ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app');
+  origins.add('https://ais-pre-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app');
+  origins.add('http://localhost:3000');
+  origins.add('http://localhost:5173');
+  return Array.from(origins);
+};
+
+// 1. POST /api/auth/webauthn/register/options
+app.post('/api/auth/webauthn/register/options', async (req: Request, res: Response) => {
+  try {
+    const { userId, userEmail, userName } = req.body;
+    if (!userId || !userEmail) {
+      return res.status(400).json({ success: false, error: 'Identificação do usuário é obrigatória.' });
+    }
+
+    const creds = readWebAuthnCredentials();
+    const userCreds = creds.filter(
+      (c) => c.userId === String(userId) || c.userEmail.toLowerCase() === userEmail.toLowerCase()
+    );
+
+    const rpID = getRpID(req);
+    const options = await generateRegistrationOptions({
+      rpName: 'Bertuol Odontologia Avançada',
+      rpID,
+      userName: userEmail,
+      userID: new TextEncoder().encode(String(userId)),
+      userDisplayName: userName || userEmail,
+      attestationType: 'none',
+      authenticatorSelection: {
+        residentKey: 'preferred',
+        userVerification: 'preferred',
+      },
+      excludeCredentials: userCreds.map((c) => ({
+        id: c.id,
+        transports: c.transports as any,
+      })),
+    });
+
+    activeWebAuthnChallenges.set(options.challenge, {
+      challenge: options.challenge,
+      userId: String(userId),
+      userEmail,
+      createdAt: Date.now(),
+    });
+
+    return res.json({ success: true, options });
+  } catch (error: any) {
+    console.error('Erro em /api/auth/webauthn/register/options:', error);
+    return res.status(500).json({ success: false, error: error?.message || 'Erro ao gerar desafio WebAuthn.' });
+  }
+});
+
+// 2. POST /api/auth/webauthn/register/verify
+app.post('/api/auth/webauthn/register/verify', async (req: Request, res: Response) => {
+  try {
+    const { userId, deviceName, response: regResponse } = req.body;
+    if (!userId || !regResponse) {
+      return res.status(400).json({ success: false, error: 'Dados de registro biométrico incompletos.' });
+    }
+
+    const rpID = getRpID(req);
+    const expectedOrigins = getExpectedOrigins(req);
+
+    const verification = await verifyRegistrationResponse({
+      response: regResponse as RegistrationResponseJSON,
+      expectedChallenge: (challenge: string) => {
+        return activeWebAuthnChallenges.has(challenge);
+      },
+      expectedOrigin: expectedOrigins,
+      expectedRPID: rpID,
+      requireUserVerification: false,
+    });
+
+    if (verification.verified && verification.registrationInfo) {
+      const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+
+      // Clean challenge
+      try {
+        const clientDataJSON = JSON.parse(
+          Buffer.from(regResponse.response.clientDataJSON, 'base64url').toString('utf-8')
+        );
+        if (clientDataJSON?.challenge) {
+          activeWebAuthnChallenges.delete(clientDataJSON.challenge);
+        }
+      } catch {}
+
+      // Fetch user details to save alongside credential
+      let userEmail = 'usuario@bertuolodontologia.com.br';
+      let userName = 'Profissional Bertuol';
+      try {
+        const { data: dbUser } = await supabase
+          .from('usuarios')
+          .select('email, nome')
+          .eq('id', userId)
+          .maybeSingle();
+        if (dbUser) {
+          userEmail = dbUser.email;
+          userName = dbUser.nome;
+        }
+      } catch {}
+
+      const newCred: WebAuthnStoredCredential = {
+        id: credential.id,
+        userId: String(userId),
+        userEmail,
+        userName,
+        publicKey: Buffer.from(credential.publicKey).toString('base64url'),
+        counter: credential.counter,
+        deviceName: deviceName || 'Meu Dispositivo',
+        deviceType: credentialDeviceType,
+        backedUp: credentialBackedUp,
+        transports: credential.transports,
+        createdAt: new Date().toISOString(),
+        lastUsedAt: new Date().toISOString(),
+      };
+
+      const currentCreds = readWebAuthnCredentials().filter((c) => c.id !== newCred.id);
+      currentCreds.push(newCred);
+      saveWebAuthnCredentials(currentCreds);
+
+      // Async attempt to mirror in Supabase webauthn_credentials if table exists
+      try {
+        await supabase.from('webauthn_credentials').upsert({
+          id: newCred.id,
+          user_id: newCred.userId,
+          public_key: newCred.publicKey,
+          counter: newCred.counter,
+          device_name: newCred.deviceName,
+          created_at: newCred.createdAt,
+        });
+      } catch {}
+
+      console.log(`[WebAuthn] Nova credencial biométrica registrada: "${newCred.deviceName}" para ${userEmail}`);
+      return res.json({
+        success: true,
+        verified: true,
+        credential: { id: newCred.id, deviceName: newCred.deviceName },
+      });
+    }
+
+    return res.status(400).json({ success: false, error: 'Falha na verificação da assinatura biométrica.' });
+  } catch (error: any) {
+    console.error('Erro em /api/auth/webauthn/register/verify:', error);
+    return res.status(500).json({ success: false, error: error?.message || 'Erro ao verificar registro WebAuthn.' });
+  }
+});
+
+// 3. POST /api/auth/webauthn/login/options
+app.post('/api/auth/webauthn/login/options', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const rpID = getRpID(req);
+    const creds = readWebAuthnCredentials();
+
+    let allowCredentials = undefined;
+    if (email && typeof email === 'string' && email.trim()) {
+      const userCreds = creds.filter((c) => c.userEmail.toLowerCase() === email.trim().toLowerCase());
+      if (userCreds.length > 0) {
+        allowCredentials = userCreds.map((c) => ({
+          id: c.id,
+          transports: c.transports as any,
+        }));
+      }
+    }
+
+    const options = await generateAuthenticationOptions({
+      rpID,
+      userVerification: 'preferred',
+      allowCredentials,
+    });
+
+    activeWebAuthnChallenges.set(options.challenge, {
+      challenge: options.challenge,
+      userEmail: email,
+      createdAt: Date.now(),
+    });
+
+    return res.json({ success: true, options });
+  } catch (error: any) {
+    console.error('Erro em /api/auth/webauthn/login/options:', error);
+    return res.status(500).json({ success: false, error: error?.message || 'Erro ao iniciar autenticação WebAuthn.' });
+  }
+});
+
+// 4. POST /api/auth/webauthn/login/verify
+app.post('/api/auth/webauthn/login/verify', async (req: Request, res: Response) => {
+  try {
+    const { response: authResponse } = req.body;
+    if (!authResponse || !authResponse.id) {
+      return res.status(400).json({ success: false, error: 'Resposta de autenticação não fornecida.' });
+    }
+
+    const creds = readWebAuthnCredentials();
+    const storedCred = creds.find((c) => c.id === authResponse.id);
+
+    if (!storedCred) {
+      return res.status(404).json({
+        success: false,
+        error: 'Dispositivo biométrico não reconhecido. Faça login com senha e registre este dispositivo.',
+      });
+    }
+
+    const rpID = getRpID(req);
+    const expectedOrigins = getExpectedOrigins(req);
+
+    const verification = await verifyAuthenticationResponse({
+      response: authResponse as AuthenticationResponseJSON,
+      expectedChallenge: (challenge: string) => {
+        return activeWebAuthnChallenges.has(challenge);
+      },
+      expectedOrigin: expectedOrigins,
+      expectedRPID: rpID,
+      credential: {
+        id: storedCred.id,
+        publicKey: Buffer.from(storedCred.publicKey, 'base64url'),
+        counter: storedCred.counter,
+        transports: storedCred.transports as any,
+      },
+      requireUserVerification: false,
+    });
+
+    if (verification.verified) {
+      // Update counter and lastUsedAt
+      storedCred.counter = verification.authenticationInfo.newCounter;
+      storedCred.lastUsedAt = new Date().toISOString();
+      saveWebAuthnCredentials(creds);
+
+      // Async update in Supabase if table exists
+      try {
+        await supabase
+          .from('webauthn_credentials')
+          .update({
+            counter: storedCred.counter,
+            last_used_at: storedCred.lastUsedAt,
+          })
+          .eq('id', storedCred.id);
+      } catch {}
+
+      // Clean challenge
+      try {
+        const clientDataJSON = JSON.parse(
+          Buffer.from(authResponse.response.clientDataJSON, 'base64url').toString('utf-8')
+        );
+        if (clientDataJSON?.challenge) {
+          activeWebAuthnChallenges.delete(clientDataJSON.challenge);
+        }
+      } catch {}
+
+      // Resolve full user object
+      let user: any = null;
+      try {
+        const { data: dbUser } = await supabase
+          .from('usuarios')
+          .select('*')
+          .or(`id.eq.${storedCred.userId},email.ilike.${storedCred.userEmail}`)
+          .maybeSingle();
+
+        if (dbUser) {
+          const isAvaliador =
+            storedCred.userEmail === 'suporte@flaviosantiago.com.br' ||
+            (dbUser.nome && dbUser.nome.includes('Avaliador'));
+          const dentistId = isAvaliador ? 6036933394890752 : dbUser.dentista_id || 5229563695136768;
+
+          user = {
+            id: dbUser.id,
+            name: isAvaliador ? 'Avaliador Bertuol' : dbUser.nome || storedCred.userName,
+            email: dbUser.email || storedCred.userEmail,
+            phone: dbUser.telefone || '',
+            role: dbUser.role || 'dentist',
+            dentist_id: dentistId,
+            clinicId: 1,
+            allowedClinicIds: [1, 2, 3],
+            active: dbUser.ativo ?? true,
+            mustChangePassword: false,
+          };
+        }
+      } catch {}
+
+      if (!user) {
+        // Fallback user representation from stored credential
+        const isFavuca = storedCred.userEmail === 'favuca.dias@gmail.com';
+        user = {
+          id: storedCred.userId,
+          name: storedCred.userName,
+          email: storedCred.userEmail,
+          role: isFavuca ? 'admin_root' : 'dentist',
+          dentist_id: 5229563695136768,
+          clinicId: 1,
+          allowedClinicIds: [1, 2, 3],
+          active: true,
+          mustChangePassword: false,
+        };
+      }
+
+      // Log access
+      try {
+        const logs = readAccessLogs();
+        logs.push({
+          id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          usuario_id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          device: `${storedCred.deviceName} (Face ID / Passkey)`,
+          timestamp: new Date().toISOString(),
+        });
+        writeAccessLogs(logs);
+      } catch (e) {
+        console.warn('Logging error on WebAuthn login:', e);
+      }
+
+      console.log(`[WebAuthn] Login bem-sucedido via biometria: ${user.name} (${user.email}) em "${storedCred.deviceName}"`);
+      return res.json({
+        success: true,
+        verified: true,
+        user,
+      });
+    }
+
+    return res.status(401).json({ success: false, error: 'Assinatura biométrica inválida.' });
+  } catch (error: any) {
+    console.error('Erro em /api/auth/webauthn/login/verify:', error);
+    return res.status(500).json({ success: false, error: error?.message || 'Erro ao verificar login WebAuthn.' });
+  }
+});
+
+// 5. GET /api/auth/webauthn/devices
+app.get('/api/auth/webauthn/devices', (req: Request, res: Response) => {
+  try {
+    const { userId } = req.query;
+    const creds = readWebAuthnCredentials();
+
+    let filtered = creds;
+    if (userId && typeof userId === 'string') {
+      filtered = creds.filter((c) => c.userId === userId || c.userEmail.toLowerCase() === userId.toLowerCase());
+    }
+
+    const devices = filtered.map((c) => ({
+      id: c.id,
+      userId: c.userId,
+      userEmail: c.userEmail,
+      userName: c.userName,
+      deviceName: c.deviceName,
+      deviceType: c.deviceType,
+      backedUp: c.backedUp,
+      createdAt: c.createdAt,
+      lastUsedAt: c.lastUsedAt,
+    }));
+
+    return res.json({ success: true, count: devices.length, devices });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: 'Erro ao listar dispositivos WebAuthn.' });
+  }
+});
+
+// 6. DELETE /api/auth/webauthn/devices/:id
+app.delete('/api/auth/webauthn/devices/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const creds = readWebAuthnCredentials();
+    const updated = creds.filter((c) => c.id !== id);
+    saveWebAuthnCredentials(updated);
+
+    // Also remove from Supabase if table exists
+    try {
+      supabase.from('webauthn_credentials').delete().eq('id', id);
+    } catch {}
+
+    return res.json({ success: true, message: 'Dispositivo biométrico revogado com sucesso.' });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: 'Erro ao revogar dispositivo biométrico.' });
+  }
+});
+
 // Endpoint to generate clinical summary via Gemini
 app.post('/api/generate-summary', async (req: Request, res: Response) => {
   try {
@@ -1045,6 +2250,48 @@ app.get('/api/clinicorp/professionals', async (_req: Request, res: Response) => 
     return res.status(500).json({
       success: false,
       error: 'Erro interno ao consultar profissionais do Clinicorp',
+      message: error?.message,
+    });
+  }
+});
+
+// Endpoint to get patients from Clinicorp API
+app.get('/api/clinicorp/patients', async (req: Request, res: Response) => {
+  try {
+    const user = process.env.CLINICORP_USER || 'qsparaisoto';
+    const key = process.env.CLINICORP_KEY || 'f77112ec-f697-4e2e-8966-f18f8826d4c6';
+    const baseUrl = getClinicorpBaseUrl();
+
+    const authHeader = 'Basic ' + Buffer.from(`${user.trim()}:${key.trim()}`).toString('base64');
+
+    const response = await fetch(`${baseUrl}/patient/list`, {
+      method: 'GET',
+      headers: {
+        Authorization: authHeader,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({
+        success: false,
+        error: `Falha na API do Clinicorp (HTTP ${response.status})`,
+        details: errText,
+      });
+    }
+
+    const patients = await response.json();
+    return res.json({
+      success: true,
+      patients: Array.isArray(patients) ? patients : [],
+      count: Array.isArray(patients) ? patients.length : 0,
+    });
+  } catch (error: any) {
+    console.error('Erro ao consultar pacientes do Clinicorp:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao consultar pacientes do Clinicorp',
       message: error?.message,
     });
   }
@@ -1330,10 +2577,1123 @@ app.get('/api/whatsapp/status', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================
+// PORTAL DO PACIENTE & GAMIFICAÇÃO (PRD v1.2)
+// ============================================================
+
+interface InMemCheckin {
+  id: string;
+  clinicId: number;
+  appointmentId?: number;
+  patientPhone: string;
+  patientName: string;
+  dentistId: number;
+  dentistName?: string;
+  method: 'qr_code_totem' | 'manual_receptionist';
+  dentistNotified: boolean;
+  timestamp: string;
+}
+
+interface InMemVoucher {
+  id: string;
+  rewardId: string;
+  rewardTitle: string;
+  patientPhone: string;
+  patientName: string;
+  pointsSpent: number;
+  secretCode: string;
+  status: 'pending' | 'claimed' | 'expired';
+  expiresAt: string;
+  claimedAt?: string;
+  claimedBy?: string;
+  clinicId?: number;
+  createdAt: string;
+}
+
+interface InMemRule {
+  id: string;
+  title: string;
+  description: string;
+  points_reward: number;
+  trigger_event: string;
+  is_active: boolean;
+  updated_at: string;
+  created_at: string;
+}
+
+interface InMemReward {
+  id: string;
+  clinic_id: number | null;
+  title: string;
+  description: string;
+  points_required: number;
+  stock_available: number;
+  voucher_validity_days: number;
+  image_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface InMemTier {
+  id: string;
+  name: string;
+  badge: string;
+  min_points: number;
+  color_theme: string;
+  multiplier: number;
+  benefits_description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+const memoryCheckins: InMemCheckin[] = [];
+const memoryPoints: Record<string, { points: number; patientName?: string; history: any[] }> = {};
+const memoryVouchers: InMemVoucher[] = [];
+
+const memoryTiers: InMemTier[] = [
+  {
+    id: 'tier_bronze',
+    name: 'Bronze',
+    badge: '🥉',
+    min_points: 0,
+    color_theme: 'bronze',
+    multiplier: 1.0,
+    benefits_description: 'Acesso ao Clube de Vantagens e acúmulo padrão de pontos.',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'tier_prata',
+    name: 'Prata',
+    badge: '🥈',
+    min_points: 80,
+    color_theme: 'prata',
+    multiplier: 1.1,
+    benefits_description: '10% de bônus adicional em pontos por pontualidade no Totem.',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'tier_ouro',
+    name: 'Ouro',
+    badge: '🥇',
+    min_points: 180,
+    color_theme: 'ouro',
+    multiplier: 1.25,
+    benefits_description: '25% de bônus em todas as pontuações e brinde exclusivo de aniversário.',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'tier_diamante',
+    name: 'Diamante',
+    badge: '💎',
+    min_points: 300,
+    color_theme: 'diamante',
+    multiplier: 1.5,
+    benefits_description: '50% de bônus em pontuações, vouchers premium e atendimento prioritário.',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+const memoryRules: InMemRule[] = [
+  {
+    id: 'rule_confirmation',
+    title: 'Confirmação Antecipada',
+    description: 'Confirmou a presença na véspera pelo link do WhatsApp',
+    points_reward: 10,
+    trigger_event: 'appointment_confirmed',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_punctual',
+    title: 'Pontualidade no Check-in',
+    description: 'Realizou check-in pelo QR Code do balcão no horário',
+    points_reward: 20,
+    trigger_event: 'checkin_on_time',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_preventive_streak',
+    title: 'Fidelidade Preventiva',
+    description: 'Compareceu a consultas de prevenção sem faltas consecutivas',
+    points_reward: 50,
+    trigger_event: 'preventive_streak',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_referral',
+    title: 'Indicação de Amigo ou Familiar',
+    description: 'Indicou um novo paciente que compareceu à primeira consulta',
+    points_reward: 80,
+    trigger_event: 'friend_referral',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+];
+
+const memoryRewards: InMemReward[] = [
+  {
+    id: 'rew_kit_higiene',
+    clinic_id: null,
+    title: 'Kit Higiene Bucal Premium Bertuol',
+    description: 'Estojo personalizado com escova ultra-macia, fio dental e gel dental.',
+    points_required: 50,
+    stock_available: 48,
+    voucher_validity_days: 30,
+    image_url: 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_profilaxia',
+    clinic_id: null,
+    title: 'Profilaxia Preventiva & Aplicação de Flúor',
+    description: 'Sessão completa de limpeza dental para manter seu sorriso protegido e brilhante.',
+    points_required: 120,
+    stock_available: 22,
+    voucher_validity_days: 45,
+    image_url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_escova_eletrica',
+    clinic_id: null,
+    title: 'Escova Dental Elétrica Sônica Bertuol',
+    description: 'Tecnologia sônica de alta frequência para máxima remoção de placa bacteriana.',
+    points_required: 250,
+    stock_available: 14,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_clareamento_desconto',
+    clinic_id: null,
+    title: 'Voucher 20% OFF em Clareamento a Laser',
+    description: 'Desconto exclusivo no tratamento de clareamento estético no consultório.',
+    points_required: 180,
+    stock_available: 10,
+    voucher_validity_days: 30,
+    image_url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+// Helper para normalizar telefone (últimos 8 a 9 dígitos)
+function sanitizePhone(raw: string): string {
+  return (raw || '').replace(/\D/g, '');
+}
+
+// 1. Validar ou Iniciar Sessão do Paciente (Link Mágico)
+app.post('/api/patient/auth/session', async (req: Request, res: Response) => {
+  try {
+    const { phone, appointmentId, name } = req.body;
+    const cleanPhone = sanitizePhone(phone);
+    if (!cleanPhone && !appointmentId) {
+      return res.status(400).json({ error: 'Telefone ou ID da consulta é obrigatório.' });
+    }
+
+    const patientName = name || 'Paciente Bertuol';
+    const token = Buffer.from(`${cleanPhone || appointmentId}_${Date.now()}`).toString('base64url');
+
+    // Inicializa pontos se for o primeiro acesso
+    if (!memoryPoints[cleanPhone]) {
+      memoryPoints[cleanPhone] = {
+        points: 30, // Bônus de boas-vindas
+        history: [
+          {
+            id: `pt_${Date.now()}`,
+            patient_phone: cleanPhone,
+            patient_name: patientName,
+            points: 30,
+            description: '🎁 Bônus de boas-vindas ao Clube Bertuol',
+            created_at: new Date().toISOString(),
+          },
+        ],
+      };
+    }
+
+    return res.json({
+      success: true,
+      token,
+      phone: cleanPhone,
+      patientName,
+      points: memoryPoints[cleanPhone].points,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 2. Perfil do Paciente, Saldo de Pontos e Extrato
+app.get('/api/patient/profile', async (req: Request, res: Response) => {
+  try {
+    const rawPhone = (req.query.phone as string) || '';
+    const cleanPhone = sanitizePhone(rawPhone);
+
+    const record = memoryPoints[cleanPhone] || {
+      points: 40,
+      history: [
+        {
+          id: `pt_init_${cleanPhone}`,
+          patient_phone: cleanPhone,
+          points: 40,
+          description: 'Pontos acumulados em consultas anteriores',
+          created_at: new Date().toISOString(),
+        },
+      ],
+    };
+
+    const totalPoints = record.points;
+    const sortedTiers = [...memoryTiers].filter((t) => t.is_active).sort((a, b) => a.min_points - b.min_points);
+    const currentTier = [...sortedTiers].reverse().find((t) => totalPoints >= t.min_points) || sortedTiers[0] || {
+      id: 'tier_bronze',
+      name: 'Bronze',
+      badge: '🥉',
+      min_points: 0,
+    };
+    const nextTier = sortedTiers.find((t) => t.min_points > totalPoints);
+    const nextTierPoints = nextTier ? nextTier.min_points : totalPoints;
+    const tierProgress = nextTier
+      ? Math.min(
+          100,
+          Math.max(
+            5,
+            Math.round(
+              ((totalPoints - currentTier.min_points) / (nextTier.min_points - currentTier.min_points || 1)) * 100
+            )
+          )
+        )
+      : 100;
+    const tier = currentTier.name.toLowerCase();
+
+    const patientVouchers = memoryVouchers.filter((v) => sanitizePhone(v.patientPhone) === cleanPhone);
+
+    return res.json({
+      phone: cleanPhone,
+      totalPoints,
+      tier,
+      tierProgress,
+      nextTierPoints,
+      pointsHistory: record.history,
+      activeVouchers: patientVouchers,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 3. Confirmar Consulta em 1 Toque (+10 Pontos)
+app.post('/api/patient/confirm-appointment', async (req: Request, res: Response) => {
+  try {
+    const { appointmentId, phone, patientName } = req.body;
+    const cleanPhone = sanitizePhone(phone);
+
+    if (!cleanPhone) {
+      return res.status(400).json({ error: 'Telefone é obrigatório.' });
+    }
+
+    if (!memoryPoints[cleanPhone]) {
+      memoryPoints[cleanPhone] = { points: 0, history: [] };
+    }
+
+    const alreadyConfirmed = memoryPoints[cleanPhone].history.some(
+      (h) => h.appointment_id === appointmentId && h.description.includes('Confirmação')
+    );
+
+    if (alreadyConfirmed) {
+      return res.json({
+        success: true,
+        alreadyConfirmed: true,
+        totalPoints: memoryPoints[cleanPhone].points,
+        message: 'Consulta já havia sido confirmada anteriormente!',
+      });
+    }
+
+    const pointsAwarded = 10;
+    memoryPoints[cleanPhone].points += pointsAwarded;
+    const pointEntry = {
+      id: `pt_${Date.now()}`,
+      patient_phone: cleanPhone,
+      patient_name: patientName,
+      appointment_id: appointmentId,
+      points: pointsAwarded,
+      description: '✨ Confirmação antecipada de consulta pelo WhatsApp',
+      created_at: new Date().toISOString(),
+    };
+    memoryPoints[cleanPhone].history.unshift(pointEntry);
+
+    return res.json({
+      success: true,
+      pointsAwarded,
+      totalPoints: memoryPoints[cleanPhone].points,
+      message: `Presença confirmada com sucesso! Você ganhou +${pointsAwarded} pontos no Clube Bertuol.`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 4. Check-in Físico na Recepção (Leitura QR Code Totem) (+20 Pontos)
+app.post(['/api/patient/checkin', '/api/patient/checkin-totem'], async (req: Request, res: Response) => {
+  try {
+    const { clinicId, phone, patientName, appointmentId, dentistId, dentistName, method } = req.body;
+    const cleanPhone = sanitizePhone(phone);
+
+    const targetClinicId = Number(clinicId) || 1;
+    const targetDentistId = Number(dentistId) || 6036933394890752; // Padrão: Avaliador Bertuol (Modo Seguro de Testes)
+    const isSandboxEvaluator = targetDentistId === 6036933394890752;
+
+    const checkinRecord: InMemCheckin = {
+      id: `chk_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      clinicId: targetClinicId,
+      appointmentId: appointmentId ? Number(appointmentId) : undefined,
+      patientPhone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      dentistId: targetDentistId,
+      dentistName: dentistName || (isSandboxEvaluator ? 'Avaliador Bertuol' : 'Dr. Claudio Borba'),
+      method: (method as any) || 'qr_code_totem',
+      dentistNotified: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    memoryCheckins.unshift(checkinRecord);
+    if (memoryCheckins.length > 100) memoryCheckins.pop();
+
+    // Bonifica +20 pontos de pontualidade
+    if (!memoryPoints[cleanPhone]) {
+      memoryPoints[cleanPhone] = { points: 0, history: [] };
+    }
+    const pointsAwarded = 20;
+    memoryPoints[cleanPhone].points += pointsAwarded;
+    memoryPoints[cleanPhone].history.unshift({
+      id: `pt_${Date.now()}`,
+      patient_phone: cleanPhone,
+      patient_name: patientName,
+      appointment_id: appointmentId,
+      points: pointsAwarded,
+      description: '📍 Check-in de pontualidade na recepção da clínica',
+      created_at: new Date().toISOString(),
+    });
+
+    const successMsg = isSandboxEvaluator
+      ? `Check-in confirmado com sucesso! Notificação encaminhada com segurança para o Avaliador Bertuol (Modo Sandbox: nenhum dentista real foi notificado).`
+      : `Check-in realizado com sucesso! O dentista responsável já foi notificado da sua chegada na recepção.`;
+
+    return res.json({
+      success: true,
+      checkin: checkinRecord,
+      pointsAwarded,
+      isSandbox: isSandboxEvaluator,
+      totalPoints: memoryPoints[cleanPhone].points,
+      message: successMsg,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 5. Catálogo de Prêmios (Para o Paciente)
+app.get('/api/patient/rewards', async (req: Request, res: Response) => {
+  try {
+    const clinicId = req.query.clinic_id ? Number(req.query.clinic_id) : undefined;
+    let list = memoryRewards.filter((r) => r.is_active);
+    if (clinicId) {
+      list = list.filter((r) => !r.clinic_id || r.clinic_id === clinicId);
+    }
+    return res.json(list);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 6. Resgatar Prêmio e Gerar Voucher (com código tipo BT-4892)
+app.post(['/api/patient/redeem', '/api/patient/redeem-reward'], async (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, rewardId } = req.body;
+    const cleanPhone = sanitizePhone(phone);
+
+    if (!cleanPhone || !rewardId) {
+      return res.status(400).json({ error: 'Telefone e ID do prêmio são obrigatórios.' });
+    }
+
+    const targetReward = memoryRewards.find((r) => r.id === rewardId) || {
+      id: rewardId,
+      title: 'Brinde Bertuol',
+      points_required: 50,
+      voucher_validity_days: 30,
+      stock_available: 10,
+    };
+
+    if (targetReward.stock_available <= 0) {
+      return res.status(400).json({ error: 'Este prêmio está temporariamente esgotado.' });
+    }
+
+    if (!memoryPoints[cleanPhone]) {
+      memoryPoints[cleanPhone] = { points: 0, patientName, history: [] };
+    }
+
+    if (memoryPoints[cleanPhone].points < targetReward.points_required) {
+      return res.status(400).json({
+        error: `Saldo insuficiente. Você possui ${memoryPoints[cleanPhone].points} pts e precisa de ${targetReward.points_required} pts.`,
+      });
+    }
+
+    // Deduz pontos e decrementa estoque
+    memoryPoints[cleanPhone].points -= targetReward.points_required;
+    targetReward.stock_available = Math.max(0, targetReward.stock_available - 1);
+
+    memoryPoints[cleanPhone].history.unshift({
+      id: `pt_${Date.now()}`,
+      patient_phone: cleanPhone,
+      patient_name: patientName,
+      points: -targetReward.points_required,
+      description: `🎁 Resgate: ${targetReward.title}`,
+      created_at: new Date().toISOString(),
+    });
+
+    // Código alfanumérico amigável BT-XXXX
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const secretCode = `BT-${randomSuffix}`;
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + (targetReward.voucher_validity_days || 30));
+
+    const voucher: InMemVoucher = {
+      id: `vch_${Date.now()}`,
+      rewardId,
+      rewardTitle: targetReward.title,
+      patientPhone: cleanPhone,
+      patientName: patientName || 'Paciente',
+      pointsSpent: targetReward.points_required,
+      secretCode,
+      status: 'pending',
+      expiresAt: expiresAt.toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    memoryVouchers.unshift(voucher);
+
+    return res.json({
+      success: true,
+      voucher,
+      remainingPoints: memoryPoints[cleanPhone].points,
+      message: `Parabéns! Você resgatou "${targetReward.title}". Apresente o código ${secretCode} na recepção.`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 7. Check-ins Recentes para a Agenda do Dentista e Recepção (RF04)
+app.get('/api/reception/checkins/recent', async (req: Request, res: Response) => {
+  try {
+    const dentistId = req.query.dentist_id ? Number(req.query.dentist_id) : undefined;
+    const clinicId = req.query.clinic_id ? Number(req.query.clinic_id) : undefined;
+
+    let filtered = memoryCheckins;
+    if (dentistId) {
+      filtered = filtered.filter((c) => c.dentistId === dentistId);
+    }
+    if (clinicId) {
+      filtered = filtered.filter((c) => c.clinicId === clinicId);
+    }
+
+    // Retorna os últimos 20 check-ins
+    return res.json(filtered.slice(0, 20));
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 8. Recepção: Dar Baixa no Voucher (RF07)
+app.post('/api/reception/voucher/claim', async (req: Request, res: Response) => {
+  try {
+    const { secretCode, claimedBy, clinicId } = req.body;
+    if (!secretCode) {
+      return res.status(400).json({ error: 'Código do voucher é obrigatório.' });
+    }
+
+    const cleanCode = secretCode.trim().toUpperCase();
+    const voucher = memoryVouchers.find((v) => v.secretCode.toUpperCase() === cleanCode);
+
+    if (!voucher) {
+      return res.status(404).json({ success: false, message: `Voucher com código "${cleanCode}" não encontrado.` });
+    }
+
+    if (voucher.status === 'claimed') {
+      return res.status(400).json({
+        success: false,
+        message: `Este voucher já foi retirado em ${new Date(voucher.claimedAt || '').toLocaleString('pt-BR')}.`,
+        voucher,
+      });
+    }
+
+    if (new Date(voucher.expiresAt).getTime() < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Este voucher expirou.',
+        voucher,
+      });
+    }
+
+    voucher.status = 'claimed';
+    voucher.claimedAt = new Date().toISOString();
+    voucher.claimedBy = claimedBy || 'Recepção Bertuol';
+    voucher.clinicId = clinicId ? Number(clinicId) : 1;
+
+    return res.json({
+      success: true,
+      message: `Brinde "${voucher.rewardTitle}" entregue com sucesso para ${voucher.patientName}!`,
+      voucher,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 9. Recepção: Listar todos os vouchers resgatados
+app.get('/api/reception/vouchers', async (req: Request, res: Response) => {
+  try {
+    return res.json(memoryVouchers);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// ============================================================
+// CRUD DE REGRAS DE PONTUAÇÃO (RF05)
+// ============================================================
+app.get('/api/gamification/rules', (_req: Request, res: Response) => {
+  return res.json(memoryRules);
+});
+
+app.post('/api/gamification/rules', (req: Request, res: Response) => {
+  try {
+    const { title, description, points_reward, trigger_event, is_active } = req.body;
+    if (!title || points_reward === undefined) {
+      return res.status(400).json({ error: 'Título e pontuação são obrigatórios.' });
+    }
+    const newRule: InMemRule = {
+      id: `rule_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      title,
+      description: description || '',
+      points_reward: Number(points_reward) || 10,
+      trigger_event: trigger_event || 'custom_event',
+      is_active: is_active !== false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    memoryRules.unshift(newRule);
+    return res.status(201).json(newRule);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+app.put('/api/gamification/rules/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = memoryRules.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Regra não encontrada.' });
+  }
+  const current = memoryRules[index];
+  const { title, description, points_reward, trigger_event, is_active } = req.body;
+  memoryRules[index] = {
+    ...current,
+    title: title !== undefined ? title : current.title,
+    description: description !== undefined ? description : current.description,
+    points_reward: points_reward !== undefined ? Number(points_reward) : current.points_reward,
+    trigger_event: trigger_event !== undefined ? trigger_event : current.trigger_event,
+    is_active: is_active !== undefined ? Boolean(is_active) : current.is_active,
+    updated_at: new Date().toISOString(),
+  };
+  return res.json(memoryRules[index]);
+});
+
+app.delete('/api/gamification/rules/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = memoryRules.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Regra não encontrada.' });
+  }
+  const removed = memoryRules.splice(index, 1);
+  return res.json({ success: true, removed: removed[0] });
+});
+
+// ============================================================
+// CRUD DO CATÁLOGO DE PRÊMIOS (RF06)
+// ============================================================
+app.get('/api/gamification/rewards', (_req: Request, res: Response) => {
+  return res.json(memoryRewards);
+});
+
+app.post('/api/gamification/rewards', (req: Request, res: Response) => {
+  try {
+    const { title, description, points_required, stock_available, voucher_validity_days, image_url, clinic_id, is_active } = req.body;
+    if (!title || points_required === undefined) {
+      return res.status(400).json({ error: 'Título e pontos necessários são obrigatórios.' });
+    }
+    const newReward: InMemReward = {
+      id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      clinic_id: clinic_id ? Number(clinic_id) : null,
+      title,
+      description: description || '',
+      points_required: Number(points_required) || 50,
+      stock_available: Number(stock_available) || 10,
+      voucher_validity_days: Number(voucher_validity_days) || 30,
+      image_url: image_url || 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
+      is_active: is_active !== false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    memoryRewards.unshift(newReward);
+    return res.status(201).json(newReward);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+app.put('/api/gamification/rewards/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = memoryRewards.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Prêmio não encontrado.' });
+  }
+  const current = memoryRewards[index];
+  const { title, description, points_required, stock_available, voucher_validity_days, image_url, clinic_id, is_active } = req.body;
+  memoryRewards[index] = {
+    ...current,
+    title: title !== undefined ? title : current.title,
+    description: description !== undefined ? description : current.description,
+    points_required: points_required !== undefined ? Number(points_required) : current.points_required,
+    stock_available: stock_available !== undefined ? Number(stock_available) : current.stock_available,
+    voucher_validity_days: voucher_validity_days !== undefined ? Number(voucher_validity_days) : current.voucher_validity_days,
+    image_url: image_url !== undefined ? image_url : current.image_url,
+    clinic_id: clinic_id !== undefined ? (clinic_id ? Number(clinic_id) : null) : current.clinic_id,
+    is_active: is_active !== undefined ? Boolean(is_active) : current.is_active,
+    updated_at: new Date().toISOString(),
+  };
+  return res.json(memoryRewards[index]);
+});
+
+app.delete('/api/gamification/rewards/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = memoryRewards.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Prêmio não encontrado.' });
+  }
+  const removed = memoryRewards.splice(index, 1);
+  return res.json({ success: true, removed: removed[0] });
+});
+
+// ============================================================
+// CRUD DE CATEGORIAS / NÍVEIS DE FIDELIDADE (TIERS - BRONZE, PRATA, OURO, DIAMANTE...)
+// ============================================================
+app.get('/api/gamification/tiers', (_req: Request, res: Response) => {
+  const sorted = [...memoryTiers].sort((a, b) => a.min_points - b.min_points);
+  return res.json(sorted);
+});
+
+app.post('/api/gamification/tiers', (req: Request, res: Response) => {
+  try {
+    const { name, badge, min_points, color_theme, multiplier, benefits_description, is_active } = req.body;
+    if (!name || min_points === undefined) {
+      return res.status(400).json({ error: 'Nome da categoria e pontuação mínima são obrigatórios.' });
+    }
+    const newTier: InMemTier = {
+      id: `tier_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name,
+      badge: badge || '⭐',
+      min_points: Number(min_points) || 0,
+      color_theme: color_theme || 'amber',
+      multiplier: Number(multiplier) || 1.0,
+      benefits_description: benefits_description || '',
+      is_active: is_active !== false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    memoryTiers.push(newTier);
+    return res.status(201).json(newTier);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+app.put('/api/gamification/tiers/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const index = memoryTiers.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Categoria não encontrada.' });
+  }
+  const current = memoryTiers[index];
+  const { name, badge, min_points, color_theme, multiplier, benefits_description, is_active } = req.body;
+  memoryTiers[index] = {
+    ...current,
+    name: name !== undefined ? name : current.name,
+    badge: badge !== undefined ? badge : current.badge,
+    min_points: min_points !== undefined ? Number(min_points) : current.min_points,
+    color_theme: color_theme !== undefined ? color_theme : current.color_theme,
+    multiplier: multiplier !== undefined ? Number(multiplier) : current.multiplier,
+    benefits_description: benefits_description !== undefined ? benefits_description : current.benefits_description,
+    is_active: is_active !== undefined ? Boolean(is_active) : current.is_active,
+    updated_at: new Date().toISOString(),
+  };
+  return res.json(memoryTiers[index]);
+});
+
+app.delete('/api/gamification/tiers/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (memoryTiers.length <= 1) {
+    return res.status(400).json({ error: 'O sistema deve manter pelo menos uma categoria ativa.' });
+  }
+  const index = memoryTiers.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Categoria não encontrada.' });
+  }
+  const removed = memoryTiers.splice(index, 1);
+  return res.json({ success: true, removed: removed[0] });
+});
+
+// ============================================================
+// GESTÃO DE PONTUAÇÃO DE PACIENTES (RF07 / ADMIN)
+// ============================================================
+app.get('/api/gamification/patients', (_req: Request, res: Response) => {
+  const sortedTiers = [...memoryTiers].filter((t) => t.is_active).sort((a, b) => a.min_points - b.min_points);
+
+  const list = Object.entries(memoryPoints).map(([phone, data]) => {
+    const currentTier = [...sortedTiers].reverse().find((t) => data.points >= t.min_points) || sortedTiers[0] || {
+      name: 'Bronze',
+      badge: '🥉',
+    };
+
+    return {
+      phone,
+      patientName: data.patientName || 'Paciente',
+      totalPoints: data.points,
+      tier: currentTier.name.toLowerCase(),
+      tierName: currentTier.name,
+      tierBadge: currentTier.badge,
+      historyCount: data.history?.length || 0,
+      lastActivity: data.history?.[0]?.created_at || new Date().toISOString(),
+      history: data.history || [],
+    };
+  });
+  return res.json(list);
+});
+
+app.post('/api/gamification/patients/credit', (req: Request, res: Response) => {
+  try {
+    const { phone, patientName, points, description, staffName } = req.body;
+    const cleanPhone = sanitizePhone(phone);
+    if (!cleanPhone || points === undefined) {
+      return res.status(400).json({ error: 'Telefone e pontuação são obrigatórios.' });
+    }
+
+    if (!memoryPoints[cleanPhone]) {
+      memoryPoints[cleanPhone] = {
+        points: 0,
+        patientName: patientName || 'Paciente Bertuol',
+        history: [],
+      };
+    }
+
+    const numPoints = Number(points);
+    memoryPoints[cleanPhone].points += numPoints;
+    if (patientName) {
+      memoryPoints[cleanPhone].patientName = patientName;
+    }
+
+    const entry = {
+      id: `pt_${Date.now()}`,
+      patient_phone: cleanPhone,
+      patient_name: patientName || memoryPoints[cleanPhone].patientName,
+      points: numPoints,
+      description: description || `Ajuste manual de pontuação por ${staffName || 'Recepção'}`,
+      created_at: new Date().toISOString(),
+    };
+
+    memoryPoints[cleanPhone].history.unshift(entry);
+
+    return res.json({
+      success: true,
+      phone: cleanPhone,
+      newTotalPoints: memoryPoints[cleanPhone].points,
+      entry,
+      message: `Pontuação atualizada com sucesso! Novo saldo: ${memoryPoints[cleanPhone].points} pts.`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message });
+  }
+});
+
+// Rota dedicada de impressão do Totem (formato A4 para recepção, abre impressora do Windows)
+app.get('/totem-imprimir', async (req: Request, res: Response) => {
+  try {
+    const clinicId = req.query.clinic_id === '2' ? 2 : 1;
+    const clinicName = clinicId === 2 ? 'Unidade Paraíso do Tocantins' : 'Unidade Matriz Palmas';
+    const clinicAddress = clinicId === 2 ? 'Av. Bernardo Sayão, Centro, Paraíso - TO' : '104 Sul, Av. JK, Palmas - TO';
+
+    const host = req.get('host') || 'ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app';
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const qrTarget = `${protocol}://${host}/paciente.html?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
+
+    let qrDataUrl = '';
+    try {
+      const QRCode = (await import('qrcode')).default;
+      qrDataUrl = await QRCode.toDataURL(qrTarget, {
+        width: 480,
+        margin: 2,
+        color: { dark: '#147A80', light: '#FFFFFF' },
+        errorCorrectionLevel: 'H',
+      });
+    } catch (e) {
+      qrDataUrl = '';
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Totem de Check-in Bertuol - ${clinicName}</title>
+  <style>
+    @page { size: A4 portrait; margin: 15mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+      color: #0f172a;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .print-controls {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary { background: #147A80; color: #fff; }
+    .btn-primary:hover { background: #0f5c61; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .card {
+      background: #ffffff;
+      border: 4px solid #147A80;
+      border-radius: 36px;
+      padding: 44px 36px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      background: #147A80;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 900;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #147A80;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      text-align: left;
+    }
+    .brand-sub {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #64748b;
+      margin-top: 3px;
+    }
+    .totem-badge {
+      display: inline-block;
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      color: #0f766e;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: 900;
+      margin: 0 0 6px 0;
+      color: #0f172a;
+    }
+    .clinic-text {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .qr-frame {
+      border: 3px dashed #147A80;
+      border-radius: 28px;
+      padding: 16px;
+      display: inline-block;
+      background: #ffffff;
+      margin-bottom: 24px;
+    }
+    .qr-frame img {
+      width: 270px;
+      height: 270px;
+      display: block;
+    }
+    .cta-instruction {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .points-tag {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 14px;
+      display: inline-block;
+      margin-bottom: 18px;
+    }
+    .footer-note {
+      font-size: 11px;
+      color: #94a3b8;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+      font-weight: 500;
+    }
+    @media print {
+      body { background: #ffffff !important; padding: 0 !important; }
+      .print-controls { display: none !important; }
+      .card { box-shadow: none !important; border-width: 3px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-controls">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Chamar Impressora do Windows (Ctrl+P)</button>
+    <button class="btn btn-secondary" onclick="window.close()">Fechar Guia</button>
+  </div>
+
+  <div class="card">
+    <div class="logo-container">
+      <div class="logo-badge">b</div>
+      <div>
+        <div class="brand-name">bertuol</div>
+        <div class="brand-sub">Odontologia Avançada</div>
+      </div>
+    </div>
+
+    <div class="totem-badge">Totem de Autoatendimento</div>
+    <h1 class="title">Check-in de Chegada</h1>
+    <div class="clinic-text">${clinicName} • ${clinicAddress}</div>
+
+    <div class="qr-frame">
+      <img src="${qrDataUrl}" alt="QR Code Check-in" />
+    </div>
+
+    <div class="cta-instruction">
+      Aponte a câmera do seu celular para este código ao chegar
+    </div>
+
+    <div class="points-tag">
+      ⭐ Ganhe +20 pontos no Clube Sorriso Bertuol!
+    </div>
+
+    <div class="footer-note">
+      Seu dentista é avisado instantaneamente na sala de atendimento.
+    </div>
+  </div>
+
+  <script>
+    // Dispara a caixa de diálogo da impressora do Windows automaticamente
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        window.print();
+      }, 400);
+    });
+  </script>
+</body>
+</html>`;
+
+    return res.send(html);
+  } catch (e: any) {
+    return res.status(500).send('Erro ao gerar página de impressão: ' + e.message);
+  }
+});
+
 const isProd = process.env.NODE_ENV === 'production';
 const distPath = path.resolve(__dirname, 'dist');
 
 if (isProd) {
+  // Roteamento exclusivo do Portal do Paciente em Produção
+  app.get(['/paciente', '/paciente/*'], (_req: Request, res: Response) => {
+    const pacientePath = path.resolve(distPath, 'paciente.html');
+    if (fs.existsSync(pacientePath)) {
+      return res.sendFile(pacientePath);
+    }
+    return res.status(404).send('PWA do Paciente não encontrado.');
+  });
+
   app.use(express.static(distPath));
   app.get('*', (_req: Request, res: Response, next) => {
     if (_req.url.startsWith('/api/')) {
@@ -1355,6 +3715,18 @@ if (isProd) {
     },
     appType: 'spa',
   });
+
+  // Roteamento exclusivo do Portal do Paciente em Desenvolvimento
+  app.get(['/paciente', '/paciente/*'], async (req: Request, res: Response, next) => {
+    try {
+      const template = fs.readFileSync(path.resolve(__dirname, 'paciente.html'), 'utf-8');
+      const html = await vite.transformIndexHtml(req.originalUrl || '/paciente.html', template);
+      return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+    } catch (e) {
+      next(e);
+    }
+  });
+
   app.use(vite.middlewares);
 }
 

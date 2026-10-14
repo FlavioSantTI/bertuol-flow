@@ -64,6 +64,23 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Compatibilidade com scripts e ferramentas padrão do Supabase que buscam 'profiles':
+CREATE OR REPLACE VIEW public.profiles AS
+SELECT 
+    id,
+    id AS user_id,
+    nome,
+    nome AS full_name,
+    email,
+    telefone,
+    telefone AS phone,
+    role,
+    dentista_id,
+    ativo AS is_active,
+    created_at,
+    created_at AS updated_at
+FROM public.usuarios;
+
 -- 4. VÍNCULO MULTI-CLÍNICA POR USUÁRIO (Permite Gerente gerir Palmas + Paraíso, etc.)
 CREATE TABLE IF NOT EXISTS public.usuario_clinicas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -146,4 +163,114 @@ INSERT INTO public.usuarios (nome, email, role, dentista_id, ativo) VALUES
     ('Recepção Matriz Palmas', 'recepcao.palmas@bertuolodontologia.com.br', 'recepcao', NULL, true),
     ('Recepção Unidade Paraíso', 'recepcao.paraiso@bertuolodontologia.com.br', 'recepcao', NULL, true)
 ON CONFLICT (email) DO NOTHING;
+
+-- ============================================================
+-- 9. PORTAL DO PACIENTE & GAMIFICAÇÃO (PRD v1.2)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.patient_magic_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_phone VARCHAR(30) NOT NULL,
+    session_token VARCHAR(64) UNIQUE NOT NULL,
+    appointment_id BIGINT REFERENCES public.appointments(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    ip_address VARCHAR(50),
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.reception_checkins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id INT NOT NULL,
+    appointment_id BIGINT REFERENCES public.appointments(id) ON DELETE CASCADE,
+    patient_phone VARCHAR(30) NOT NULL,
+    patient_name VARCHAR(255) NOT NULL,
+    dentist_id BIGINT NOT NULL,
+    method VARCHAR(30) NOT NULL DEFAULT 'qr_code_totem',
+    dentist_notified BOOLEAN DEFAULT false,
+    dentist_notified_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.gamification_rules (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    points_reward INT NOT NULL,
+    trigger_event VARCHAR(50) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.patient_points (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_phone VARCHAR(30) NOT NULL,
+    patient_name VARCHAR(255),
+    rule_id VARCHAR(50) REFERENCES public.gamification_rules(id) ON DELETE SET NULL,
+    appointment_id BIGINT REFERENCES public.appointments(id) ON DELETE SET NULL,
+    points INT NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.rewards_catalog (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id INT,
+    title VARCHAR(120) NOT NULL,
+    description TEXT,
+    points_required INT NOT NULL,
+    stock_available INT NOT NULL DEFAULT 0,
+    voucher_validity_days INT DEFAULT 30,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.reward_redemptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reward_id UUID NOT NULL REFERENCES public.rewards_catalog(id) ON DELETE RESTRICT,
+    patient_phone VARCHAR(30) NOT NULL,
+    patient_name VARCHAR(255) NOT NULL,
+    points_spent INT NOT NULL,
+    secret_code VARCHAR(12) UNIQUE NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    claimed_at TIMESTAMPTZ,
+    claimed_by_user_id UUID,
+    claimed_clinic_id INT,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS para novas tabelas de pacientes e gamificação
+ALTER TABLE public.patient_magic_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reception_checkins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gamification_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patient_points ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rewards_catalog ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reward_redemptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir leitura e escrita de sessoes" ON public.patient_magic_sessions FOR ALL USING (true);
+CREATE POLICY "Permitir leitura e escrita de checkins" ON public.reception_checkins FOR ALL USING (true);
+CREATE POLICY "Permitir leitura e escrita de regras" ON public.gamification_rules FOR ALL USING (true);
+CREATE POLICY "Permitir leitura e escrita de pontos" ON public.patient_points FOR ALL USING (true);
+CREATE POLICY "Permitir leitura e escrita de catalogo" ON public.rewards_catalog FOR ALL USING (true);
+CREATE POLICY "Permitir leitura e escrita de redencoes" ON public.reward_redemptions FOR ALL USING (true);
+
+-- 9. TABELA DE CREDENCIAIS BIOMÉTRICAS WEBAUTHN / PASSKEYS (FASE 1)
+CREATE TABLE IF NOT EXISTS public.webauthn_credentials (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    public_key TEXT NOT NULL,
+    counter BIGINT NOT NULL DEFAULT 0,
+    device_name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    last_used_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_webauthn_user ON public.webauthn_credentials(user_id);
+ALTER TABLE public.webauthn_credentials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir leitura e escrita de credenciais webauthn" ON public.webauthn_credentials FOR ALL USING (true);
 `;
+

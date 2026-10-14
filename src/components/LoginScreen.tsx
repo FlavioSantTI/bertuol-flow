@@ -12,8 +12,10 @@ import {
   ShieldCheck,
   ChevronRight,
   UserCheck,
+  Fingerprint,
 } from 'lucide-react';
 import { dataService } from '../services/dataService';
+import { webauthnService } from '../services/webauthnService';
 import { SystemUser, AppUserContext } from '../types/database';
 
 interface LoginScreenProps {
@@ -33,6 +35,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isBiometricLoading, setIsBiometricLoading] = useState<boolean>(false);
+  const [supportsWebAuthn, setSupportsWebAuthn] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [rememberCredentials, setRememberCredentials] = useState<boolean>(() => {
     try {
@@ -114,6 +118,50 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       })
       .catch(() => {});
   }, [initialUserId, initialEmail]);
+
+  useEffect(() => {
+    setSupportsWebAuthn(webauthnService.isSupported());
+  }, []);
+
+  // Handle 1-click WebAuthn Biometric Login (Face ID, Touch ID, Windows Hello)
+  const handleBiometricLogin = async () => {
+    setError(null);
+    setIsBiometricLoading(true);
+
+    try {
+      const res = await webauthnService.loginWithBiometrics();
+      setIsBiometricLoading(false);
+
+      if (res.success && res.user) {
+        // Sync local representation
+        dataService.upsertSystemUser(res.user);
+
+        // Set authenticated user context
+        dataService.setUserContext({
+          userId: res.user.id,
+          userName: res.user.name,
+          role: res.user.role,
+          clinicId: res.user.clinicId || 1,
+          dentistId: res.user.dentist_id || 5229563695136768,
+          isAuthenticated: true,
+          mustChangePassword: false,
+        });
+
+        const userCtx = dataService.getUserContext();
+        onLoginSuccess(userCtx);
+      } else {
+        if (!res.isCancelled) {
+          setError(
+            res.error ||
+              'Nenhuma credencial biométrica vinculada a este aparelho. Entre com senha e ative o Face ID em Configurações.'
+          );
+        }
+      }
+    } catch (err: any) {
+      setIsBiometricLoading(false);
+      setError(err?.message || 'Falha ao processar autenticação biométrica.');
+    }
+  };
 
   // Handle standard login
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -318,9 +366,44 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   Acessar Sistema
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Informe seus dados de acesso cadastrados
+                  Informe seus dados de acesso cadastrados ou entre com sua biometria
                 </p>
               </div>
+
+              {/* 1-Touch WebAuthn Biometrics (Passkey) */}
+              {supportsWebAuthn && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={handleBiometricLogin}
+                    disabled={isBiometricLoading || isLoading}
+                    className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-linear-to-r from-teal-50 via-[#EBF8F8] to-teal-50 hover:from-teal-100 hover:to-teal-100 border-2 border-[#4BBCBE]/60 hover:border-[#4BBCBE] text-[#147A80] hover:text-[#0D575B] font-black text-xs transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer active:scale-98 disabled:opacity-50 group"
+                  >
+                    {isBiometricLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-[#199A9F] border-t-transparent rounded-full animate-spin" />
+                        <span>Aguardando Face ID / Biometria no aparelho...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Fingerprint className="w-5 h-5 text-[#199A9F] group-hover:scale-110 transition-transform stroke-[2.5]" />
+                        <span>Entrar com Face ID / Biometria</span>
+                        <span className="ml-auto text-[10px] uppercase font-black text-[#147A80] bg-[#4BBCBE]/20 px-2 py-0.5 rounded-md">
+                          1 Toque
+                        </span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="relative flex items-center justify-center pt-1">
+                    <div className="border-t border-gray-200 w-full" />
+                    <span className="bg-white px-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0">
+                      ou entre com e-mail e senha
+                    </span>
+                    <div className="border-t border-gray-200 w-full" />
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in">
@@ -577,6 +660,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* Security & System Info Footer */}
         <div className="text-center mt-6 space-y-2 text-xs text-gray-400">
           <div className="flex flex-wrap items-center justify-center gap-2">
+            <a
+              href="/paciente.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
+            >
+              <span>🌟 Portal do Paciente & Clube Sorriso</span>
+            </a>
             <a
               href="/manual-instalacao.html"
               target="_blank"

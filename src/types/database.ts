@@ -33,7 +33,19 @@ export type UserRole =
   | 'gerente_atendimento' // Gestor de clínica multiclinica (todas as agendas, sem configs de TI)
   | 'dentist'             // Corpo clínico (apenas sua própria agenda)
   | 'receptionist'        // Recepção da unidade local
+  | 'paciente'            // PWA do Paciente (Clube Sorriso Bertuol)
   | 'admin';              // Alias de compatibilidade para admin_root
+
+export interface PatientPermissions {
+  canViewOwnAppointments: boolean;  // Visualizar apenas suas próprias consultas agendadas
+  canConfirmAppointment: boolean;   // Confirmar presença com 1 clique (+10 pts)
+  canPerformCheckIn: boolean;        // Escanear QR Code no Totem da recepção (+20 pts)
+  canRedeemRewards: boolean;         // Resgatar brindes do Clube Sorriso Bertuol
+  canScheduleBirthdayGift: boolean;  // Agendar cortesia de aniversário no app
+  canAccessInternalAgenda: boolean;  // Bloqueado: Sem acesso a agendas corporativas (false)
+  canAccessOtherPatients: boolean;   // Bloqueado: Sem acesso a dados de outros pacientes (false)
+  canAccessConfig: boolean;          // Bloqueado: Sem acesso a configurações (false)
+}
 
 export interface UserPermissions {
   canViewAgenda: boolean;
@@ -151,4 +163,120 @@ export interface SupabaseConfig {
   url: string;
   anonKey: string;
   isConnected: boolean;
+}
+
+// ==========================================
+// PORTAL DO PACIENTE & GAMIFICAÇÃO (PRD v1.2)
+// ==========================================
+
+export interface PatientMagicSession {
+  id: string;
+  patient_phone: string;
+  session_token: string;
+  appointment_id?: number | null;
+  expires_at: string;
+  used_at?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+}
+
+export interface ReceptionCheckin {
+  id: string;
+  clinic_id: number;
+  appointment_id?: number | null;
+  patient_phone: string;
+  patient_name: string;
+  dentist_id: number;
+  method: 'qr_code_totem' | 'manual_receptionist';
+  dentist_notified: boolean;
+  dentist_notified_at?: string | null;
+  created_at: string;
+}
+
+export interface GamificationRule {
+  id: string;
+  title: string;
+  description: string;
+  points_reward: number;
+  trigger_event: 'appointment_confirmed' | 'checkin_on_time' | 'preventive_streak' | 'survey_answered' | string;
+  is_active: boolean;
+  updated_at: string;
+  created_at: string;
+}
+
+export interface PatientPoint {
+  id: string;
+  patient_phone: string;
+  patient_name?: string;
+  rule_id?: string | null;
+  appointment_id?: number | null;
+  points: number;
+  description: string;
+  created_at: string;
+}
+
+export interface RewardCatalogItem {
+  id: string;
+  clinic_id?: number | null;
+  title: string;
+  description: string;
+  points_required: number;
+  stock_available: number;
+  voucher_validity_days: number;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardRedemption {
+  id: string;
+  reward_id?: string;
+  rewardId?: string;
+  rewardTitle?: string;
+  patient_phone?: string;
+  patientPhone?: string;
+  patient_name?: string;
+  patientName?: string;
+  points_spent?: number;
+  pointsSpent?: number;
+  secret_code?: string; // Ex: BT-8492
+  secretCode?: string;
+  status: 'pending' | 'claimed' | 'expired';
+  claimed_at?: string | null;
+  claimedAt?: string | null;
+  claimed_by_user_id?: string | null;
+  claimedBy?: string | null;
+  claimed_clinic_id?: number | null;
+  clinicId?: number | null;
+  expires_at?: string;
+  expiresAt?: string;
+  created_at?: string;
+  reward?: RewardCatalogItem;
+}
+
+export interface GamificationTier {
+  id: string;
+  name: string;
+  badge: string;
+  min_points: number;
+  color_theme: string;
+  multiplier: number;
+  benefits_description: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PatientPortalProfile {
+  phone: string;
+  name: string;
+  totalPoints: number;
+  tier: string;
+  tierProgress: number; // 0 to 100
+  nextTierPoints: number;
+  activeAppointment?: Appointment | null;
+  pointsHistory: PatientPoint[];
+  activeVouchers: RewardRedemption[];
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
 import { BertuolLogo } from './BertuolLogo';
+import { BertuolBotAvatar } from './BertuolBotAvatar';
 import {
   ChevronDown,
   Database,
@@ -21,6 +22,9 @@ import {
   Eye,
   HelpCircle,
   TrendingUp,
+  Gift,
+  QrCode,
+  Fingerprint,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -40,7 +44,11 @@ interface HeaderProps {
   onOpenClinicorpModal?: () => void;
   onOpenUserManagementModal?: () => void;
   onOpenChangePasswordModal?: () => void;
+  onOpenWebAuthnModal?: () => void;
   onOpenRolloutReportModal?: () => void;
+  onOpenVoucherModal?: () => void;
+  onOpenTotemQRModal?: () => void;
+  onOpenAdminGamificationModal?: () => void;
   onLogout?: () => void;
 }
 
@@ -61,7 +69,11 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenClinicorpModal,
   onOpenUserManagementModal,
   onOpenChangePasswordModal,
+  onOpenWebAuthnModal,
   onOpenRolloutReportModal,
+  onOpenVoucherModal,
+  onOpenTotemQRModal,
+  onOpenAdminGamificationModal,
   onLogout,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -230,6 +242,47 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* Clube Sorriso / Baixa de Vouchers (Recepção e Gestão) */}
+          {onOpenVoucherModal && (
+            <button
+              onClick={onOpenVoucherModal}
+              title="Clube Sorriso: Baixa de Vouchers e Prêmios"
+              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200 text-amber-900 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
+            >
+              <Gift className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="hidden xl:inline">Vouchers & Prêmios</span>
+            </button>
+          )}
+
+          {/* Admin Clube de Vantagens (CRUD Prêmios, Regras e Lançamentos) */}
+          {onOpenAdminGamificationModal && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenAdminGamificationModal();
+              }}
+              title="Painel de Controle do Admin: Clube de Vantagens (CRUD Prêmios, Regras de Pontos e Notificações Push)"
+              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-102 active:scale-95"
+            >
+              <Sparkles className="w-4 h-4 text-amber-200 shrink-0 pointer-events-none" />
+              <span className="hidden xl:inline pointer-events-none">Admin Clube & Push</span>
+            </button>
+          )}
+
+          {/* Totem QR Code Display (Recepção) */}
+          {onOpenTotemQRModal && (
+            <button
+              onClick={onOpenTotemQRModal}
+              title="Exibir e Imprimir QR Code do Totem de Balcão (Palmas / Paraíso)"
+              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-teal-50 hover:bg-teal-100/80 border border-teal-200 text-[#147A80] text-xs font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
+            >
+              <QrCode className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span className="hidden xl:inline">Totem QR</span>
+            </button>
+          )}
+
           {/* Multi-Clinic Modal Button (Only for Admins and Gerente) */}
           {canManageClinics && (
             <button
@@ -270,6 +323,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* WebAuthn Biometrics / Passkeys Button */}
+          {onOpenWebAuthnModal && (
+            <button
+              onClick={onOpenWebAuthnModal}
+              title="Gerenciar Face ID, Touch ID e Dispositivos Biométricos"
+              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-teal-50/70 hover:bg-teal-100/80 border border-teal-200 text-[#147A80] text-xs font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
+            >
+              <Fingerprint className="w-4 h-4 text-[#199A9F] shrink-0 stroke-[2.5]" />
+              <span className="hidden xl:inline">Biometria</span>
+            </button>
+          )}
+
           {/* Share / Copy Direct Link Button */}
           <button
             onClick={handleCopyLink}
@@ -296,18 +361,18 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Notification & Alerts Settings Button */}
           <button
             onClick={onOpenNotificationModal}
-            title={isDentist ? `Configurar Meus Alertas • ${selectedDentist?.Name || ''}` : "Central de Notificações e Alertas"}
-            className={`relative flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl border transition-all cursor-pointer shadow-2xs ${
+            title={isDentist ? `Bertuol Bot: Configurar Meus Alertas • ${selectedDentist?.Name || ''}` : "Bertuol Bot: Central de Notificações e Alertas"}
+            className={`relative flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl border transition-all cursor-pointer shadow-2xs hover:scale-102 ${
               isDentist
                 ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-300 text-amber-950 font-bold'
                 : 'bg-[#F8F9FA] hover:bg-gray-100 border-gray-200 text-gray-700 font-semibold'
             }`}
           >
-            <Bell className="w-4 h-4 text-amber-600 animate-pulse shrink-0" />
+            <BertuolBotAvatar mood="compact" size="sm" className="shrink-0" />
             <span className="text-xs hidden md:inline">
-              {isDentist ? 'Meus Alertas' : 'Alertas'}
+              {isDentist ? 'Bertuol Bot' : 'Bot Alertas'}
             </span>
-            <span className="w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ring-2 ring-white" />
           </button>
 
           {/* FAQ Central de Dúvidas */}
@@ -381,6 +446,28 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Vouchers & Prêmios Mobile */}
+            {onOpenVoucherModal && (
+              <button
+                onClick={onOpenVoucherModal}
+                title="Clube Sorriso: Baixa de Vouchers e Prêmios"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 transition-colors cursor-pointer"
+              >
+                <Gift className="w-4 h-4 text-amber-600" />
+              </button>
+            )}
+
+            {/* Totem QR Code Mobile */}
+            {onOpenTotemQRModal && (
+              <button
+                onClick={onOpenTotemQRModal}
+                title="Totem QR Code de Balcão"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] transition-colors cursor-pointer"
+              >
+                <QrCode className="w-4 h-4 text-[#147A80]" />
+              </button>
+            )}
+
             {/* Multi-Clinic Button (Only for Admins/Gerente) */}
             {canManageClinics && (
               <button
@@ -389,6 +476,18 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 transition-colors cursor-pointer"
               >
                 <Building2 className="w-4 h-4 text-amber-600" />
+              </button>
+            )}
+
+            {/* Admin Clube Mobile Button */}
+            {onOpenAdminGamificationModal && (
+              <button
+                type="button"
+                onClick={onOpenAdminGamificationModal}
+                title="Painel Admin: Clube de Vantagens & Notificações Push"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Sparkles className="w-4 h-4 text-amber-950" />
               </button>
             )}
 
@@ -404,6 +503,17 @@ export const Header: React.FC<HeaderProps> = ({
                 }`}
               >
                 <KeyRound className="w-4 h-4 text-amber-600" />
+              </button>
+            )}
+
+            {/* WebAuthn Biometrics Mobile Button */}
+            {onOpenWebAuthnModal && (
+              <button
+                onClick={onOpenWebAuthnModal}
+                title="Cadastrar e Gerenciar Face ID / Biometria"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] transition-colors cursor-pointer shadow-2xs"
+              >
+                <Fingerprint className="w-4 h-4 text-[#199A9F] stroke-[2.5]" />
               </button>
             )}
 

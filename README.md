@@ -65,6 +65,12 @@ O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de 
 * **Central de Ajuda (FAQ):** Central de perguntas frequentes interativa disponível em `/faq.html` cobrindo detalhadamente os fluxos de login, notificações, agenda e o resumo diário com IA.
 * **Convites Inteligentes:** Disparo de links pelo WhatsApp com redirecionamento de setup padrão para `https://bertuolflow.app-bertuol.tech/` de ponta a ponta.
 
+### 🎁 6. Portal do Paciente, Fidelização & Notificações Heads-Up
+* **Portal Gamificado do Paciente:** Acompanhamento de consulta, pré-check-in, extrato de pontos, níveis de fidelidade e resgate de vouchers.
+* **Notificações Heads-Up Persistentes:** Alertas In-App com duração configurável (Modo Fixo, 60s, 30s, 15s), suporte ao botão **`Sair (Esc)`** e atalho de teclado `ESC`.
+* **Simulador de Testes Rápido:** Disparos de demonstração imediata para **📅 1 Dia Antes**, **⏰ 2 Horas Antes** e **🎂 Aniversário** com atalhos de navegação e visualização em mockup de celular.
+* **Gestão de Aniversariantes:** Resgate de cortesia de Profilaxia + Sky Câmera e agendamento direto pelo aplicativo sem dependência de WhatsApp.
+
 ---
 
 ## 🛠️ Stack Tecnológica

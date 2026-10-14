@@ -179,11 +179,9 @@ class NotificationService {
     }
   }
 
-  // Preferences: In-App Toast Duration on screen (seconds, 0 = sticky/never auto dismiss)
+  // Preferences: In-App Toast Duration on screen (0 = 100% fixo/permanente na tela, saída apenas via Sair/ESC)
   getBannerDisplayDuration(): number {
-    if (typeof window === 'undefined') return 20;
-    const saved = localStorage.getItem('bertuol_banner_duration_sec');
-    return saved !== null ? parseInt(saved, 10) : 20; // 20s default
+    return 0; // 100% Fixo até fechar (Sair ou ESC)
   }
 
   setBannerDisplayDuration(seconds: number) {

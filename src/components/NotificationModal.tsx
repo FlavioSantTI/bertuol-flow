@@ -138,14 +138,34 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       id: 0,
       badge: 'Lembrete 24h Antes',
       title: '🦷 Bertuol Odontologia: Lembrete de Consulta',
-      body: 'Olá Marcos Vinicius! Sua consulta de Ortodontia é amanhã às 09:30 com Dr. Claudio Borba. Toque para confirmar.',
-      whatsappText: 'Olá Marcos Vinicius! Lembramos que sua consulta de Ortodontia na *Bertuol Odontologia* é amanhã às *09:30* com o *Dr. Claudio Borba*. Para confirmar sua presença, responda com 1 ou SIM. Muito obrigado!',
+      body: 'Olá Juceline! Sua consulta de Ortodontia é amanhã às 14:00 com Dra. Muryel Castro. Toque para confirmar.',
+      whatsappText: 'Olá Juceline! Lembramos que sua consulta na *Bertuol Odontologia* é amanhã às *14:00* com a *Dra. Muryel Castro*. Para confirmar sua presença, responda com 1 ou SIM. Muito obrigado!',
       category: 'Lembrete Paciente',
       icon: CalendarCheck,
       color: 'border-amber-400 text-amber-600 bg-amber-50',
     },
     {
       id: 1,
+      badge: 'Lembrete 2h Antes',
+      title: '⏰ Sua consulta começa em 2 horas!',
+      body: 'Olá Mariana! Sua consulta com Dr. Ari Bertuol na Bertuol Odontologia é hoje às 16:30 (daqui a 2 horas). Toque para fazer pré-check-in sem filas!',
+      whatsappText: 'Olá Mariana! Lembrando que sua consulta na *Bertuol Odontologia* é hoje às *16:30* (em 2 horas). Aguardamos você!',
+      category: 'Lembrete Paciente',
+      icon: Clock,
+      color: 'border-teal-400 text-teal-600 bg-teal-50',
+    },
+    {
+      id: 2,
+      badge: '🎂 Feliz Aniversário',
+      title: '🎉 Feliz Aniversário da Equipe Bertuol!',
+      body: 'Olá Alice! Parabéns pelo seu dia! Preparamos uma cortesia exclusiva de Profilaxia & Diagnóstico Sky Câmera no seu app!',
+      whatsappText: 'Parabéns pelo seu dia, Alice! 🎉 A *Bertuol Odontologia* te deseja muita saúde. Acesse seu app para resgatar sua cortesia exclusiva de aniversário!',
+      category: 'Aniversário',
+      icon: Sparkles,
+      color: 'border-pink-400 text-pink-600 bg-pink-50',
+    },
+    {
+      id: 3,
       badge: 'Confirmação de Agendamento',
       title: '✅ Consulta Agendada com Sucesso!',
       body: 'Olá Mariana! Seu horário foi reservado para amanhã às 14:00 na Bertuol Odontologia Avançada.',
@@ -155,7 +175,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       color: 'border-emerald-400 text-emerald-600 bg-emerald-50',
     },
     {
-      id: 2,
+      id: 4,
       badge: 'Sala Pronta / Check-in',
       title: '🚪 Sua Sala já está Liberada!',
       body: 'Olá Carlos! O Dr. Claudio Borba já está pronto para atendê-lo. Pode se dirigir ao Consultório 1.',
@@ -165,7 +185,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       color: 'border-blue-400 text-blue-600 bg-blue-50',
     },
     {
-      id: 3,
+      id: 5,
       badge: 'Cuidados Pós-Procedimento',
       title: '💊 Orientações e Cuidados Pós-Atendimento',
       body: 'Dr. Claudio: Olá Fernanda, evite mastigar na região operada e tome os medicamentos conforme a receita.',
@@ -239,7 +259,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     });
 
     setLastDispatched(title);
-    setTimeout(() => setLastDispatched(null), 4000);
+    // Não fecha abruptamente: o usuário pode dispensar via Sair ou ESC
   };
 
   const triggerScheduledNotification = async (
@@ -280,7 +300,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         if (remaining <= 0) {
           setCountdownSeconds(null);
           setLastDispatched(title);
-          setTimeout(() => setLastDispatched(null), 5000);
         } else {
           setCountdownSeconds(remaining);
         }
@@ -960,18 +979,18 @@ export async function sendDentistPushNotification({
                 <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-gray-900">
-                      Tempo de Permanência do Aviso na Tela:
+                      Permanência do Aviso na Tela:
                     </span>
                     <span className="text-xs font-bold text-amber-600">
-                      {dentistSettings.bannerDurationSeconds === 0 ? 'Fixo até fechar' : `${dentistSettings.bannerDurationSeconds}s`}
+                      {dentistSettings.bannerDurationSeconds === 0 ? 'Fixo até fechar (Sair ou ESC)' : `${dentistSettings.bannerDurationSeconds}s`}
                     </span>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5 w-full">
                     {[
-                      { sec: 10, label: '10s' },
-                      { sec: 20, label: '20s (Padrão)' },
-                      { sec: 35, label: '35s' },
-                      { sec: 0, label: 'Fixo' },
+                      { sec: 0, label: 'Fixo (Sair / ESC) ★' },
+                      { sec: 60, label: '60s (Longo)' },
+                      { sec: 30, label: '30s' },
+                      { sec: 15, label: '15s' },
                     ].map((opt) => (
                       <button
                         key={opt.sec}
@@ -987,6 +1006,9 @@ export async function sendDentistPushNotification({
                       </button>
                     ))}
                   </div>
+                  <p className="text-[10px] text-gray-500 pt-0.5">
+                    💡 Recomendado: Fixo, permitindo ler com calma e fechar a qualquer momento pelo botão <strong>Sair</strong> ou tecla <strong>ESC</strong>.
+                  </p>
                 </div>
               </div>
 
@@ -1788,12 +1810,27 @@ export async function sendDentistPushNotification({
                 </div>
               )}
 
-              {/* Feedback toast message */}
+              {/* Feedback toast message com botão Sair / ESC */}
               {lastDispatched && (
-                <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 pt-2 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Notificação disparada com sucesso: &ldquo;{lastDispatched}&rdquo;!
-                </p>
+                <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex flex-wrap items-center justify-between gap-2.5 animate-in fade-in">
+                  <div className="flex items-center gap-2 text-emerald-900 font-bold min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Notificação disparada: &ldquo;{lastDispatched}&rdquo;</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-gray-500 hidden sm:inline">
+                      ESC ou clique em Sair
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLastDispatched(null)}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-700 border border-gray-300 font-extrabold text-[11px] shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <X className="w-3 h-3 text-rose-500" />
+                      <span>Sair (Esc)</span>
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           )}

@@ -13,7 +13,13 @@ import { FloatingPersonaBot } from './components/FloatingPersonaBot';
 import { UserManagementModal } from './components/UserManagementModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { RolloutReportModal } from './components/RolloutReportModal';
+import { VoucherRedemptionModal } from './components/VoucherRedemptionModal';
+import { TotemQRCodeModal } from './components/TotemQRCodeModal';
+import { AdminGamificationModal } from './components/AdminGamificationModal';
+import { BertuolBotAvatar } from './components/BertuolBotAvatar';
 import { LoginScreen } from './components/LoginScreen';
+import { WebAuthnModal } from './components/WebAuthnModal';
+import { PatientApp } from './patient/PatientApp';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { SkeletonCard } from './components/SkeletonLoader';
 import { dataService, formatDateKey, getDefaultPermissionsForRole } from './services/dataService';
@@ -58,6 +64,23 @@ export default function App() {
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isRolloutReportModalOpen, setIsRolloutReportModalOpen] = useState(false);
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [isTotemModalOpen, setIsTotemModalOpen] = useState(false);
+  const [isAdminGamificationOpen, setIsAdminGamificationOpen] = useState(false);
+  const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
+  const [arrivalAlert, setArrivalAlert] = useState<{
+    patientName: string;
+    dentistName?: string;
+    clinicId: number;
+    time: string;
+  } | null>(null);
+  const [lastSeenCheckinId, setLastSeenCheckinId] = useState<string | null>(null);
+
+  // Modo de visualização: 'patient' (App do Cliente) como padrão para testes rápidos conforme solicitado
+  const [appMode, setAppMode] = useState<'patient' | 'dentist'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('app') === 'dentista' || params.get('app') === 'dentist' ? 'dentist' : 'patient';
+  });
 
   // Multi-Tenant state
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -243,6 +266,62 @@ export default function App() {
       });
   }, [selectedDentist, currentDate, selectedClinicId, userContext]);
 
+  // Listener em tempo real para avisar chegada de paciente no Totem (RF04)
+  useEffect(() => {
+    const checkArrivals = async () => {
+      try {
+        const queryParams = new URLSearchParams();
+        if (userContext.role === 'dentist' && selectedDentist?.id) {
+          queryParams.set('dentist_id', String(selectedDentist.id));
+        }
+        if (typeof selectedClinicId === 'number') {
+          queryParams.set('clinic_id', String(selectedClinicId));
+        }
+        const res = await fetch(`/api/reception/checkins/recent?${queryParams.toString()}`);
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            const latest = list[0];
+            const checkinTime = new Date(latest.timestamp).getTime();
+            const now = Date.now();
+            // Notifica se o checkin ocorreu nos últimos 5 minutos e não foi dispensado
+            if (now - checkinTime < 300000 && latest.id !== lastSeenCheckinId) {
+              setLastSeenCheckinId(latest.id);
+              setArrivalAlert({
+                patientName: latest.patientName,
+                dentistName: latest.dentistName,
+                clinicId: latest.clinicId,
+                time: new Date(latest.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              });
+
+              // Chime sonoro suave via Web Audio API (não depende de arquivo de áudio externo)
+              try {
+                const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioCtx) {
+                  const ctx = new AudioCtx();
+                  const osc = ctx.createOscillator();
+                  const gain = ctx.createGain();
+                  osc.type = 'sine';
+                  osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Nota Ré5
+                  osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // Nota Lá5
+                  gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                  osc.connect(gain);
+                  gain.connect(ctx.destination);
+                  osc.start();
+                  osc.stop(ctx.currentTime + 0.5);
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (err) {}
+    };
+
+    const interval = setInterval(checkArrivals, 7000);
+    return () => clearInterval(interval);
+  }, [selectedDentist, selectedClinicId, userContext, lastSeenCheckinId]);
+
   const handleSelectDentist = (dentist: Dentist) => {
     setSelectedDentist(dentist);
     dataService.setSelectedDentistId(dentist.id);
@@ -397,20 +476,86 @@ export default function App() {
     setUserContext(dataService.getUserContext());
   };
 
-  // If user is not authenticated, show secure Login Gate
+  // 1. Modo Paciente ativo: renderiza o App do Cliente diretamente para testes
+  if (appMode === 'patient') {
+    return (
+      <>
+        <PatientApp
+          onSwitchToDentistView={() => {
+            setAppMode('dentist');
+            if (!userContext.isAuthenticated) {
+              const rootAdmin = dataService.getSystemUsers().find((u) => u.role === 'admin_root') || {
+                id: 'usr_root',
+                name: 'Favuca Dias (Admin Root)',
+                email: 'favuca.dias@gmail.com',
+                role: 'admin_root' as const,
+                clinicId: 1,
+                allowedClinicIds: [1, 2, 3],
+                active: true,
+                mustChangePassword: false,
+              };
+              handleSimulateUser(rootAdmin as any);
+            }
+          }}
+          onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
+        />
+        {/* Admin Clube de Vantagens (acessível diretamente a partir do modo paciente) */}
+        <AdminGamificationModal
+          isOpen={isAdminGamificationOpen}
+          onClose={() => setIsAdminGamificationOpen(false)}
+          staffName={userContext.userName || 'Administração Bertuol'}
+        />
+        {/* Heads-Up Push Notification Banner (Top of Screen) - 100% Fixado */}
+        <HeadsUpNotification
+          onOpenAppointment={handleOpenAppointmentById}
+          onOpenDailyBriefing={() => setIsDailyBriefingOpen(true)}
+        />
+      </>
+    );
+  }
+
+  // If user is not authenticated in Dentist mode, show secure Login Gate
   if (!userContext.isAuthenticated) {
     return (
-      <LoginScreen
-        onLoginSuccess={handleLoginSuccess}
-        initialUserId={urlParamsUserId}
-        initialEmail={urlParamsEmail}
-        initialRole={urlParamsRole}
-      />
+      <div className="min-h-screen flex flex-col">
+        <div className="bg-slate-900 text-white px-3 py-2 text-xs flex items-center justify-between">
+          <span className="text-gray-300">Modo Dentista • Identificação Necessária</span>
+          <button
+            onClick={() => setAppMode('patient')}
+            className="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs cursor-pointer"
+          >
+            🌟 Voltar ao App do Cliente (Paciente)
+          </button>
+        </div>
+        <LoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          initialUserId={urlParamsUserId}
+          initialEmail={urlParamsEmail}
+          initialRole={urlParamsRole}
+        />
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
+      {/* Test Switcher Bar (when in Dentist View) */}
+      <div className="bg-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-xs border-b border-slate-700 shrink-0 sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span className="font-bold text-slate-200">
+            Ambiente da Clínica & Dentistas (Agenda em Tempo Real)
+          </span>
+        </div>
+        <button
+          onClick={() => setAppMode('patient')}
+          className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>🌟 Alternar para o App do Cliente (Paciente)</span>
+        </button>
+      </div>
+
       {/* Top Header Component (Multi-Tenant, RF01 Dropdown & Branding) */}
       <Header
         dentists={dentists}
@@ -429,9 +574,45 @@ export default function App() {
         onOpenClinicorpModal={() => setIsClinicorpModalOpen(true)}
         onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
         onOpenChangePasswordModal={() => setIsChangePasswordModalOpen(true)}
+        onOpenWebAuthnModal={() => setIsWebAuthnModalOpen(true)}
         onOpenRolloutReportModal={() => setIsRolloutReportModalOpen(true)}
+        onOpenVoucherModal={() => setIsVoucherModalOpen(true)}
+        onOpenTotemQRModal={() => setIsTotemModalOpen(true)}
+        onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
         onLogout={handleLogout}
       />
+
+      {/* Live Reception Totem Arrival Alert Banner (RF04) */}
+      {arrivalAlert && (
+        <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white px-4 py-3 shadow-md shrink-0 flex items-center justify-between text-xs font-medium animate-in slide-in-from-top-4 border-b border-emerald-500 z-30">
+          <div className="flex items-center gap-3 max-w-6xl mx-auto w-full justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <BertuolBotAvatar mood="alert" size="md" className="shrink-0" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-200 block">
+                    Bertuol Bot • Check-in na Recepção ({arrivalAlert.time})
+                  </span>
+                  {arrivalAlert.dentistName?.includes('Avaliador') && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-400/40 text-[9px] font-black">
+                      🛡️ AMBIENTE DE TESTES (SEM MENSAGEM A DENTISTAS REAIS)
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs sm:text-sm font-black truncate block mt-0.5">
+                  O paciente <u>{arrivalAlert.patientName}</u> realizou check-in para <strong>{arrivalAlert.dentistName || 'o consultório'}</strong> e aguarda atendimento!
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setArrivalAlert(null)}
+              className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-102 active:scale-95"
+            >
+              Dispensar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* First Access / Temporary Password Alert Banner */}
       {userContext.mustChangePassword && (
@@ -811,6 +992,34 @@ export default function App() {
         isOpen={isRolloutReportModalOpen}
         onClose={() => setIsRolloutReportModalOpen(false)}
         systemUsers={dataService.getSystemUsers()}
+      />
+
+      {/* Clube Sorriso Voucher & Gamification Modal (RF05, RF06, RF07) */}
+      <VoucherRedemptionModal
+        isOpen={isVoucherModalOpen}
+        onClose={() => setIsVoucherModalOpen(false)}
+        userName={userContext.userName || 'Recepção Bertuol'}
+        clinicId={typeof selectedClinicId === 'number' ? selectedClinicId : 1}
+      />
+
+      {/* Admin Clube de Vantagens: Painel de Controle e CRUDs (RF05, RF06, RF07) */}
+      <AdminGamificationModal
+        isOpen={isAdminGamificationOpen}
+        onClose={() => setIsAdminGamificationOpen(false)}
+        staffName={userContext.userName || 'Administração Bertuol'}
+      />
+
+      {/* Totem QR Code Display Modal (RF03) */}
+      <TotemQRCodeModal
+        isOpen={isTotemModalOpen}
+        onClose={() => setIsTotemModalOpen(false)}
+      />
+
+      {/* WebAuthn Biometrics & Passkeys Modal */}
+      <WebAuthnModal
+        isOpen={isWebAuthnModalOpen}
+        onClose={() => setIsWebAuthnModalOpen(false)}
+        userContext={userContext}
       />
     </div>
   );
