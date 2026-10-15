@@ -526,6 +526,18 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     }
   };
 
+  const handleLogout = () => {
+    if (confirm('Deseja realmente sair da sua conta do Clube Sorriso?')) {
+      localStorage.removeItem('bertuol_patient_phone');
+      localStorage.removeItem('bertuol_patient_name');
+      if (onSwitchToDentistView) {
+        onSwitchToDentistView();
+      } else {
+        window.location.href = '/paciente';
+      }
+    }
+  };
+
   // 3. Resgatar Prêmio
   const handleRedeemReward = async (reward: RewardCatalogItem) => {
     if (totalPoints < reward.points_required) {
@@ -770,6 +782,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           }
         }}
         isBirthdayToday={isBirthdayToday}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}

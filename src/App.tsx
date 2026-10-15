@@ -96,6 +96,19 @@ export default function App() {
   const [urlParamsEmail, setUrlParamsEmail] = useState<string | null>(null);
   const [urlParamsRole, setUrlParamsRole] = useState<string | null>(null);
 
+  // Admin Root Simulation state (Alternativa A)
+  const [simulatedRole, setSimulatedRole] = useState<UserRole | 'none'>('none');
+  const effectiveUserContext = useMemo(() => {
+    if (simulatedRole !== 'none' && (userContext.role === 'admin_root' || userContext.role === 'admin')) {
+      return {
+        ...userContext,
+        role: simulatedRole,
+        permissions: getDefaultPermissionsForRole(simulatedRole),
+      };
+    }
+    return userContext;
+  }, [userContext, simulatedRole]);
+
   // Load dentists and check URL query params on initial mount
   useEffect(() => {
     const loadedClinics = dataService.getClinics();
@@ -584,6 +597,38 @@ export default function App() {
         </div>
       </div>
 
+      {/* Admin Root Simulation Toolbar (Alternativa A) */}
+      {(userContext.role === 'admin_root' || userContext.role === 'admin') && (
+        <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-md shrink-0 z-40 border-b border-purple-500/30">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+            <span className="font-black tracking-tight truncate">👑 Painel Admin Root • Simulação de Perfil:</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <select
+              value={simulatedRole}
+              onChange={(e) => setSimulatedRole(e.target.value as any)}
+              className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-2.5 py-1 text-xs font-bold text-white focus:outline-hidden focus:ring-2 focus:ring-purple-400 cursor-pointer"
+            >
+              <option value="none" className="text-gray-900">👑 Visão Real Admin Root</option>
+              <option value="admin_clinica" className="text-gray-900">🏢 Admin Clínica</option>
+              <option value="gerente_atendimento" className="text-gray-900">👔 Gerente Atendimento</option>
+              <option value="dentist" className="text-gray-900">🩺 Dentista</option>
+              <option value="receptionist" className="text-gray-900">🛎️ Recepção</option>
+            </select>
+            {simulatedRole !== 'none' && (
+              <button
+                type="button"
+                onClick={() => setSimulatedRole('none')}
+                className="px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] shadow-xs cursor-pointer transition-all"
+              >
+                Restaurar Root
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top Header Component (Multi-Tenant, RF01 Dropdown & Branding) */}
       <Header
         dentists={dentists}
@@ -592,7 +637,7 @@ export default function App() {
         clinics={clinics}
         selectedClinicId={selectedClinicId}
         onSelectClinic={handleSelectClinic}
-        userContext={userContext}
+        userContext={effectiveUserContext}
         onUpdateUserContext={handleUpdateUserContext}
         onOpenMultiClinicModal={() => setIsMultiClinicModalOpen(true)}
         isMobileView={isMobileFrameView}

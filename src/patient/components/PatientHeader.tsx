@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Bell, ShieldCheck, Sparkles, User } from 'lucide-react';
+import { Award, Bell, LogOut, ShieldCheck, Sparkles, User } from 'lucide-react';
 import type { PatientTier } from '../types/patientTypes';
 
 interface PatientHeaderProps {
@@ -10,6 +10,7 @@ interface PatientHeaderProps {
   onOpenNotifications: () => void;
   onOpenAdminModal?: () => void;
   isBirthdayToday?: boolean;
+  onLogout?: () => void;
 }
 
 const TIER_CONFIG: Record<
@@ -54,6 +55,7 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
   onOpenNotifications,
   onOpenAdminModal,
   isBirthdayToday = false,
+  onLogout,
 }) => {
   const currentTier = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
 
@@ -122,6 +124,18 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
               title="Gestão de Regras do Clube"
             >
               <ShieldCheck className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Logout Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              title="Sair / Encerrar Sessão"
+              aria-label="Sair da conta"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
           )}
         </div>
