@@ -41,6 +41,7 @@ import {
   SystemUser,
   UserPermissions,
   UserRole,
+  CustomRoleDefinition,
 } from '../types/database';
 import {
   dataService,
@@ -77,6 +78,19 @@ function applyPhoneMask(value: string | null | undefined): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 
+const PERMISSION_LABELS: Record<string, string> = {
+  canViewAgenda: 'Visualizar Agenda do Dia',
+  canCheckIn: 'Realizar Check-in / Troca de Status',
+  canReceiveWhatsApp: 'Receber Alertas via WhatsApp',
+  canReceivePush: 'Push Notifications no Celular',
+  canViewPatientPhone: 'Visualizar Telefones (LGPD)',
+  canGenerateAISummary: 'Gerar Resumos com IA (Gemini)',
+  canAccessConfig: 'Configurações Técnicas & Webhooks',
+  canManageUsers: 'Gerenciar Usuários da Clínica',
+  canExportData: 'Exportar Relatórios & Dados',
+  canViewClubeSorriso: 'Leitura do Clube Sorriso & Vouchers',
+};
+
 interface UserManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -98,6 +112,61 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const [users, setUsers] = useState<SystemUser[]>(() =>
     dataService.getSystemUsers(currentUserContext)
   );
+
+  // Main Tabs: 'users' or 'roles' (RBAC CRUD)
+  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles'>('users');
+  const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(() => dataService.getCustomRoles());
+
+  // Role CRUD Modal State
+  const [isRoleFormOpen, setIsRoleFormOpen] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [roleFormData, setRoleFormData] = useState<CustomRoleDefinition>({
+    id: '',
+    name: '',
+    description: '',
+    badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
+    defaultPermissions: getDefaultPermissionsForRole('dentist'),
+  });
+  const [roleFormError, setRoleFormError] = useState<string | null>(null);
+
+  const refreshCustomRoles = () => {
+    setCustomRoles(dataService.getCustomRoles());
+  };
+
+  const handleSaveRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRoleFormError(null);
+
+    const systemRoleIds = ['dentist', 'receptionist', 'admin_clinica', 'admin_root', 'gerente_atendimento'];
+    if (editingRoleId && systemRoleIds.includes(editingRoleId)) {
+      const res = dataService.saveSystemRoleOverride(editingRoleId, roleFormData.defaultPermissions, currentUserContext);
+      if (res.error) {
+        setRoleFormError(res.error);
+        return;
+      }
+      refreshCustomRoles();
+      setIsRoleFormOpen(false);
+      return;
+    }
+
+    const res = dataService.saveCustomRole(roleFormData, currentUserContext);
+    if (res.error) {
+      setRoleFormError(res.error);
+      return;
+    }
+    refreshCustomRoles();
+    setIsRoleFormOpen(false);
+  };
+
+  const handleDeleteRole = (roleId: string) => {
+    if (!confirm('Deseja realmente excluir este perfil customizado?')) return;
+    const res = dataService.deleteCustomRole(roleId, currentUserContext);
+    if (res.error) {
+      alert(res.error);
+    } else {
+      refreshCustomRoles();
+    }
+  };
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -724,8 +793,307 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
             </div>
           </div>
 
-          {/* Action Row: Filters + Create Button */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Main Navigation Tabs: Users vs Roles CRUD */}
+          <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('users')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeMainTab === 'users'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Gerenciamento de Usuários</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('roles')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeMainTab === 'roles'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Perfis & Cargos de Acesso (CRUD RBAC)</span>
+            </button>
+          </div>
+
+          {activeMainTab === 'roles' ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Perfis de Acesso Personalizados (RBAC)</h3>
+                  <p className="text-xs text-gray-500">
+                    Crie novos papéis, defina descrições e ajuste quais funcionalidades cada perfil pode acessar.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoleFormData({
+                      id: `role_${Date.now()}`,
+                      name: '',
+                      description: '',
+                      badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
+                      defaultPermissions: getDefaultPermissionsForRole('dentist'),
+                    });
+                    setEditingRoleId(null);
+                    setRoleFormError(null);
+                    setIsRoleFormOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Novo Perfil Customizado</span>
+                </button>
+              </div>
+
+              {/* Roles List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Built-in standard roles (now fully editable!) */}
+                {[
+                  {
+                    id: 'dentist',
+                    name: 'Dentista',
+                    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                    desc: 'Acesso exclusivo à própria agenda e resumos com IA.',
+                  },
+                  {
+                    id: 'receptionist',
+                    name: 'Recepção',
+                    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+                    desc: 'Acesso à recepção, check-in e leitura do Clube Sorriso.',
+                  },
+                  {
+                    id: 'admin_clinica',
+                    name: 'Admin Clínica',
+                    badge: 'bg-amber-100 text-amber-800 border-amber-200',
+                    desc: 'Gestão de profissionais, usuários e relatórios da clínica.',
+                  },
+                  {
+                    id: 'admin_root',
+                    name: 'Admin Root',
+                    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+                    desc: 'Acesso global irrestrito a todas as unidades e configurações.',
+                  },
+                  {
+                    id: 'gerente_atendimento',
+                    name: 'Gerente Atendimento',
+                    badge: 'bg-orange-100 text-orange-800 border-orange-200',
+                    desc: 'Gestão de múltiplas agendas sem configurações técnicas.',
+                  },
+                ].map((sysRole) => {
+                  const currentPerms = getDefaultPermissionsForRole(sysRole.id);
+                  return (
+                    <div
+                      key={sysRole.id}
+                      className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold border ${sysRole.badge}`}
+                        >
+                          🩺 {sysRole.name} (Sistema)
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRoleFormData({
+                                id: sysRole.id,
+                                name: sysRole.name,
+                                description: sysRole.desc,
+                                badgeBg: sysRole.badge,
+                                defaultPermissions: currentPerms,
+                              });
+                              setEditingRoleId(sysRole.id);
+                              setRoleFormError(null);
+                              setIsRoleFormOpen(true);
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 cursor-pointer text-xs flex items-center gap-1.5 font-bold transition-all"
+                            title="Editar Permissões deste Perfil do Sistema"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Editar</span>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600">{sysRole.desc}</p>
+                      <div className="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <span className="font-bold block mb-1">Permissões Ativas:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(currentPerms).map(([k, v]) =>
+                            v ? (
+                              <span
+                                key={k}
+                                className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]"
+                              >
+                                {PERMISSION_LABELS[k] || k}
+                              </span>
+                            ) : null
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Custom roles created by admin */}
+                {customRoles.map((cr) => (
+                  <div key={cr.id} className="p-4 bg-white rounded-2xl border border-purple-300 shadow-2xs space-y-3 relative group">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${cr.badgeBg}`}>
+                        ✨ {cr.name}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFormData(cr);
+                            setEditingRoleId(cr.id);
+                            setRoleFormError(null);
+                            setIsRoleFormOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer text-xs"
+                          title="Editar Perfil"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        {isAdminRoot && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRole(cr.id)}
+                            className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer text-xs"
+                            title="Excluir Perfil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-600">{cr.description || 'Sem descrição.'}</p>
+                    <div className="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                      <span className="font-bold block mb-1">Permissões Ativas:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(cr.defaultPermissions).map(([k, v]) => v ? (
+                          <span key={k} className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">
+                            {PERMISSION_LABELS[k] || k}
+                          </span>
+                        ) : null)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Role Form Modal */}
+              {isRoleFormOpen && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                      <h3 className="text-base font-black text-gray-900">
+                        {editingRoleId ? 'Editar Perfil Customizado' : 'Novo Perfil de Acesso (RBAC)'}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsRoleFormOpen(false)}
+                        className="text-gray-400 hover:text-gray-600 text-sm font-bold cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {roleFormError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs font-bold">
+                        {roleFormError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSaveRole} className="space-y-4 text-xs">
+                      <div>
+                        <label className="font-bold text-gray-700 block mb-1">Nome do Perfil / Cargo *</label>
+                        <input
+                          type="text"
+                          required
+                          value={roleFormData.name || ''}
+                          onChange={(e) => {
+                            const name = e.target.value;
+                            setRoleFormData((prev) => ({
+                              ...prev,
+                              name,
+                              id: editingRoleId ? prev.id : name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                            }));
+                          }}
+                          placeholder="Ex: Financeiro Sênior, Coordenador..."
+                          className="w-full p-2.5 rounded-xl border border-gray-200 font-medium text-gray-900 focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-gray-700 block mb-1">Descrição Breve</label>
+                        <textarea
+                          rows={2}
+                          value={roleFormData.description || ''}
+                          onChange={(e) => setRoleFormData((prev) => ({ ...prev, description: e.target.value }))}
+                          placeholder="Explique o escopo de atuação deste perfil..."
+                          className="w-full p-2.5 rounded-xl border border-gray-200 font-medium text-gray-900 focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-gray-700 block mb-1">Permissões Padrão do Perfil</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {Object.keys(roleFormData.defaultPermissions).map((permKey) => (
+                            <label key={permKey} className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
+                              <span className="font-semibold text-gray-800">
+                                {PERMISSION_LABELS[permKey] || permKey}
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={(roleFormData.defaultPermissions as any)[permKey]}
+                                onChange={() =>
+                                  setRoleFormData((prev) => ({
+                                    ...prev,
+                                    defaultPermissions: {
+                                      ...prev.defaultPermissions,
+                                      [permKey]: !(prev.defaultPermissions as any)[permKey],
+                                    },
+                                  }))
+                                }
+                                className="rounded text-purple-600 focus:ring-purple-500"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => setIsRoleFormOpen(false)}
+                          className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold cursor-pointer"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer shadow-xs"
+                        >
+                          Salvar Perfil
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Action Row: Filters + Create Button */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             {/* Search Box */}
             <div className="relative flex-1 min-w-[220px]">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -1007,6 +1375,14 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           >
                             Push
                           </span>
+                          {user.permissions?.canViewClubeSorriso && (
+                            <span
+                              title="Leitura de Pacientes do Clube Sorriso e Vouchers: Permitido"
+                              className="p-1 rounded-md text-[10px] font-bold bg-teal-100 text-teal-800"
+                            >
+                              Clube
+                            </span>
+                          )}
                           {user.permissions?.canAccessConfig && (
                             <span
                               title="Configurações Técnicas e Webhooks: Permitido"
@@ -1097,6 +1473,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               })
             )}
           </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}
@@ -1413,6 +1791,32 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       </div>
                     </label>
                   )}
+
+                  {/* Custom Roles Created by Admin */}
+                  {customRoles.map((cr) => (
+                    <label
+                      key={cr.id}
+                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                        formData.role === cr.id
+                          ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-500/20'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role_select"
+                        checked={formData.role === cr.id}
+                        onChange={() => handleRoleChange(cr.id)}
+                        className="mt-0.5 text-purple-600"
+                      />
+                      <div>
+                        <span className="font-bold text-gray-900 block">✨ {cr.name}</span>
+                        <span className="text-[11px] text-gray-500 leading-snug block">
+                          {cr.description || 'Perfil customizado com permissões RBAC.'}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
                 </div>
 
                 {/* Dentist Person Linking (if role === dentist) */}
@@ -1549,6 +1953,21 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       type="checkbox"
                       checked={formData.permissions.canCheckIn}
                       onChange={() => handleTogglePermission('canCheckIn')}
+                      className="rounded text-amber-600 focus:ring-amber-500"
+                    />
+                  </label>
+
+                  {/* canViewClubeSorriso */}
+                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-800">
+                        Leitura do Clube Sorriso & Vouchers
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={formData.permissions.canViewClubeSorriso}
+                      onChange={() => handleTogglePermission('canViewClubeSorriso')}
                       className="rounded text-amber-600 focus:ring-amber-500"
                     />
                   </label>

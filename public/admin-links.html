@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Central de Despacho & Links • Bertuol Odontologia</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4BBCBE;
+      --primary-dark: #199A9F;
+      --primary-deeper: #147A80;
+      --gold: #FFCC29;
+      --gold-dark: #D97706;
+      --dark: #1A1A1A;
+      --gray-light: #F8F9FA;
+      --gray-border: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-light);
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary-deeper) 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(75, 188, 190, 0.25);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.95;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--gray-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary-deeper);
+    }
+
+    .card p {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 16px;
+    }
+
+    /* Form controls */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-border);
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-deeper);
+      color: white;
+      box-shadow: 0 4px 12px rgba(20, 122, 128, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: #0f5c61;
+    }
+
+    .btn-whatsapp {
+      background: #25D366;
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+    }
+
+    .btn-whatsapp:hover {
+      background: #22bf5b;
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #1A1A1A;
+      box-shadow: 0 4px 12px rgba(255, 204, 41, 0.2);
+    }
+
+    .btn-gold:hover {
+      background: #f8c117;
+    }
+
+    .result-box {
+      background: #F8FAFC;
+      border: 1px dashed var(--gray-border);
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 12px;
+      word-break: break-all;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    /* Testing Guide Section */
+    .guide-card {
+      background: white;
+      border: 1px solid var(--gray-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .guide-step {
+      display: flex;
+      gap: 14px;
+      background: #F8FAFC;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--gray-border);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: var(--primary-deeper);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .guide-step h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1E293B;
+      margin-bottom: 2px;
+    }
+
+    .guide-step p {
+      font-size: 12px;
+      color: #64748B;
+    }
+
+    code {
+      background: #E2E8F0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #0F172A;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #94A3B8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header class="header">
+      <h1>Central de Despacho & Links • Bertuol Odontologia</h1>
+      <p>Gerencie o envio de links individualizados para pacientes e profissionais, e entenda como testar os perfis sem conflito de sessão.</p>
+    </header>
+
+    <!-- GUIA RÁPIDO DE TESTES SEM CONFLITO -->
+    <div class="guide-card">
+      <h2>🛡️ Como Testar os 3 Perfis Sem Conflito de Sessão</h2>
+      <p>Como o navegador utiliza o armazenamento local (<code>localStorage</code>) para lembrar quem está logado, testar dois perfis na mesma aba pode gerar sobreposição. Siga estas regras de ouro:</p>
+      
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div>
+            <h4>Perfil 1: App do Paciente (Portal & Clube Sorriso)</h4>
+            <p>Acesse sempre pela rota <code>/paciente</code>. O paciente nunca vê telas de login de dentista e acumula pontos no Clube Sorriso. <strong>Dica:</strong> Use uma aba anônima para testar o fluxo de um paciente novo.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div>
+            <h4>Perfil 2: App do Profissional / Dentista</h4>
+            <p>Acesse pela rota <code>/</code> (ou <code>/dentista</code>). O profissional faz login com 1 toque (Passkey/Biometria WebAuthn) ou senha padrão <code>Bertuol@2026</code>. Gerencia a agenda do Clinicorp e resumos de IA.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div>
+            <h4>Perfil 3: Administrador Root (Favuca Dias)</h4>
+            <p>Faça login no App do Profissional com o usuário <code>admin_root</code>. O admin possui o robô assistente flutuante e o painel de gestão de usuários habilitados.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GERADORES DE LINKS -->
+    <div class="grid">
+      <!-- Gerador Paciente -->
+      <div class="card">
+        <h2>🌟 Gerador de Link para Paciente</h2>
+        <p>Crie o link personalizado para o paciente confirmar consulta e entrar no Clube Sorriso.</p>
+        
+        <div class="form-group">
+          <label>Nome do Paciente</label>
+          <input type="text" id="patName" value="Alice Póvoa" placeholder="Ex: Maria Silva" />
+        </div>
+        <div class="form-group">
+          <label>WhatsApp (com DDD)</label>
+          <input type="text" id="patPhone" value="63992474826" placeholder="Ex: 63999999999" />
+        </div>
+        <div class="form-group">
+          <label>ID da Consulta</label>
+          <input type="number" id="patApptId" value="5005" />
+        </div>
+
+        <button onclick="generatePatientLink()" class="btn btn-primary" style="margin-bottom: 8px;">
+          Gerar Link do Paciente
+        </button>
+        <button onclick="sendPatientWhatsApp()" class="btn btn-whatsapp">
+          📲 Enviar via WhatsApp
+        </button>
+
+        <div class="result-box" id="patResult">
+          Link gerado aparecerá aqui...
+        </div>
+      </div>
+
+      <!-- Gerador Dentista -->
+      <div class="card">
+        <h2>🩺 Gerador de Link para Dentista</h2>
+        <p>Envie o acesso seguro ao profissional com autenticação biométrica e agenda em tempo real.</p>
+        
+        <div class="form-group">
+          <label>Nome do Dentista</label>
+          <input type="text" id="dentName" value="Dra. Ariane Bertuol" />
+        </div>
+        <div class="form-group">
+          <label>E-mail de Acesso</label>
+          <input type="email" id="dentEmail" value="ariane@bertuolodontologia.com.br" />
+        </div>
+        <div class="form-group">
+          <label>Unidade de Atendimento</label>
+          <select id="dentClinic">
+            <option value="1">Matriz Palmas (Av. JK)</option>
+            <option value="2">Unidade Paraíso do Tocantins</option>
+          </select>
+        </div>
+
+        <button onclick="generateDentistLink()" class="btn btn-primary" style="margin-bottom: 8px;">
+          Gerar Link do Profissional
+        </button>
+        <button onclick="sendDentistWhatsApp()" class="btn btn-whatsapp">
+          📲 Enviar via WhatsApp
+        </button>
+
+        <div class="result-box" id="dentResult">
+          Link gerado aparecerá aqui...
+        </div>
+      </div>
+    </div>
+
+    <!-- ACESSO RÁPIDO AOS AMBIENTES -->
+    <div class="card" style="margin-bottom: 24px;">
+      <h2>🚀 Atalhos Rápidos de Implantação</h2>
+      <p>Acesse instantaneamente qualquer um dos módulos do sistema rodando no ambiente:</p>
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="/" target="_blank" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+          🩺 Abrir Bertuol Flow (Profissional)
+        </a>
+        <a href="/paciente" target="_blank" class="btn btn-gold" style="flex: 1; min-width: 200px;">
+          🌟 Abrir Bertuol Paciente (Clube Sorriso)
+        </a>
+        <a href="/paciente?checkin=totem" target="_blank" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+          🖥️ Totem de Recepção (Check-in)
+        </a>
+        <a href="/manual-instalacao.html" target="_blank" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+          📱 Manual de Instalação PWA
+        </a>
+        <a href="/tutorial-paciente.html" target="_blank" class="btn btn-gold" style="flex: 1; min-width: 200px; color: #1A1A1A;">
+          📖 Tutorial Completo do Paciente (Clube & Vouchers)
+        </a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p><strong>Bertuol Odontologia Avançada</strong> • Central de Implantação & Despacho v1.1</p>
+    </footer>
+  </div>
+
+  <script>
+    function getBaseUrl() {
+      return window.location.origin;
+    }
+
+    function generatePatientLink() {
+      const name = document.getElementById('patName').value.trim();
+      const phone = document.getElementById('patPhone').value.trim();
+      const apptId = document.getElementById('patApptId').value.trim();
+      
+      const url = `${getBaseUrl()}/paciente?phone=${phone}&name=${encodeURIComponent(name)}&appointment_id=${apptId}`;
+      document.getElementById('patResult').innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+      return url;
+    }
+
+    function sendPatientWhatsApp() {
+      const name = document.getElementById('patName').value.trim();
+      const phone = document.getElementById('patPhone').value.trim();
+      const url = generatePatientLink();
+      
+      const msg = encodeURIComponent(`Olá ${name}! Aqui é da Bertuol Odontologia. Sua consulta está confirmada. Clique no link para confirmar presença e acumular pontos no Clube Sorriso: ${url}`);
+      window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
+    }
+
+    function generateDentistLink() {
+      const name = document.getElementById('dentName').value.trim();
+      const email = document.getElementById('dentEmail').value.trim();
+      const clinicId = document.getElementById('dentClinic').value;
+      
+      const url = `${getBaseUrl()}/?email=${encodeURIComponent(email)}&role=dentist&clinic_id=${clinicId}&name=${encodeURIComponent(name)}`;
+      document.getElementById('dentResult').innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+      return url;
+    }
+
+    function sendDentistWhatsApp() {
+      const name = document.getElementById('dentName').value.trim();
+      const url = generateDentistLink();
+      
+      const msg = encodeURIComponent(`Olá ${name}, segue o seu link de acesso seguro ao Bertuol Flow (Agenda com IA e Biometria): ${url}. Senha padrão de 1º acesso: Bertuol@2026`);
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
+    }
+
+    // Gerar na carga inicial
+    window.addEventListener('load', () => {
+      generatePatientLink();
+      generateDentistLink();
+    });
+  </script>
+
+</body>
+</html>

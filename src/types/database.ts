@@ -34,7 +34,16 @@ export type UserRole =
   | 'dentist'             // Corpo clínico (apenas sua própria agenda)
   | 'receptionist'        // Recepção da unidade local
   | 'paciente'            // PWA do Paciente (Clube Sorriso Bertuol)
-  | 'admin';              // Alias de compatibilidade para admin_root
+  | 'admin'               // Alias de compatibilidade para admin_root
+  | string;               // Perfis e cargos customizados criados via CRUD RBAC
+
+export interface CustomRoleDefinition {
+  id: string;             // ex: 'financeiro', 'consultor'
+  name: string;           // ex: 'Financeiro & Faturamento'
+  description: string;    // Descrição das responsabilidades do perfil
+  defaultPermissions: UserPermissions;
+  badgeBg: string;        // ex: 'bg-purple-100 text-purple-800 border-purple-200'
+}
 
 export interface PatientPermissions {
   canViewOwnAppointments: boolean;  // Visualizar apenas suas próprias consultas agendadas
@@ -57,6 +66,7 @@ export interface UserPermissions {
   canAccessConfig: boolean;
   canManageUsers: boolean;
   canExportData: boolean;
+  canViewClubeSorriso: boolean;
 }
 
 export interface AppUserContext {

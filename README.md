@@ -46,24 +46,26 @@ O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de 
 * **Troca Ágil de Unidade:** Gestores corporativos e profissionais que atendem em mais de uma clínica podem alternar o contexto de atendimento com 1 clique.
 * **Sincronização em Lote Clinicorp:** Importação e mapeamento de categorias de procedimentos, cores institucionais e profissionais cadastrados.
 
-### 👑 4. Gestão de Usuários & Controle de Acesso (RBAC)
-* **Perfis Hierárquicos:**
+### 👑 4. Gestão de Usuários & Controle de Acesso (RBAC & CRUD de Perfis)
+* **Perfis Hierárquicos & Customizados:**
   * `Admin Root`: Visão corporativa irrestrita de todas as unidades, configurações técnicas e segurança.
   * `Admin Clínica`: Gestor local com autonomia para cadastrar e gerenciar profissionais e recepcionistas da sua unidade.
   * `Gerente de Atendimento`: Monitoramento global de fluxo e tempos de espera.
   * `Dentista`: Acesso à sua própria agenda e notificações.
   * `Recepção`: Gestão de fluxo de recepção e check-in.
+  * **Perfis Customizados (CRUD RBAC):** O administrador pode criar novos papéis de acesso e editar as permissões dos perfis padrão do sistema através do painel de administração, com rótulos compreensíveis em português.
 * **Pré-Cadastro em Lote:** Importação de profissionais cadastrados no Clinicorp com geração de links de convite e senhas temporárias via WhatsApp.
 * **Primeiro Acesso Seguro:** Redefinição obrigatória de senha e suporte a links mágicos com credenciais encriptadas.
 
-### 📱 5. PWA (Progressive Web App) & Mobile-First
-* **Instalação Nativa:** Suporte completo a instalação em dispositivos Android, iPhone e iPad (iOS Safari).
-* **Service Worker com Cache Inteligente:** Carregamento ultra-rápido mesmo em conexões oscilantes.
-* **Notificações Push com Vibração e Áudio:** Alertas configuráveis de acordo com a preferência de cada profissional.
-* **Manual de Instalação Integrado:** Guia de instalação interativo disponível em `/manual-instalacao.html` para auxiliar os profissionais na instalação passo a passo, otimizado para celulares e pronto para salvar em PDF.
-* **Guia de Notificações para Dentistas:** Tutorial focado e passo a passo em `/como-ativar-notificacoes.html` detalhando a ativação de sons, vibração e permissões de push nos celulares.
-* **Central de Ajuda (FAQ):** Central de perguntas frequentes interativa disponível em `/faq.html` cobrindo detalhadamente os fluxos de login, notificações, agenda e o resumo diário com IA.
-* **Convites Inteligentes:** Disparo de links pelo WhatsApp com redirecionamento de setup padrão para `https://bertuolflow.app-bertuol.tech/` de ponta a ponta.
+### 📱 5. PWA (Progressive Web App) & Separação de Rotas
+* **Isolamento de Aplicação:** 
+  * **Bertuol Flow (Profissional):** Rota raiz `/` dedicada exclusivamente aos dentistas, atendentes e gestores.
+  * **Clube Sorriso Bertuol (Paciente):** Rota `/paciente` dedicada aos pacientes, com manifesto PWA e escopo isolados.
+* **Instalação Nativa:** Suporte completo a instalação na tela inicial em dispositivos Android, iPhone e iPad (iOS Safari).
+* **Manuais e Tutoriais Integrados:**
+  * `/manual-instalacao.html`: Guia passo a passo otimizado para iOS e Android.
+  * `/tutorial-paciente.html`: Guia do paciente estruturado em exatamente 2 páginas para fácil impressão e leitura.
+  * `/faq.html`: Central de perguntas frequentes.
 
 ### 🎁 6. Portal do Paciente, Fidelização & Notificações Heads-Up
 * **Portal Gamificado do Paciente:** Acompanhamento de consulta, pré-check-in, extrato de pontos, níveis de fidelidade e resgate de vouchers.

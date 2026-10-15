@@ -676,6 +676,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             >
               <span>📱 Manual de Instalação</span>
             </a>
+            <a
+              href="/admin-links.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
+            >
+              <span>🛠️ Central de Despacho (Admin)</span>
+            </a>
           </div>
 
           <p className="flex items-center justify-center gap-1.5 font-medium text-[11px]">

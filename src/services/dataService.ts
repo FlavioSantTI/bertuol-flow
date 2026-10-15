@@ -1,9 +1,139 @@
-import { Appointment, Category, Dentist, Patient, Clinic, AppUserContext, UserRole, SystemUser, UserPermissions } from '../types/database';
+import { Appointment, Category, Dentist, Patient, Clinic, AppUserContext, UserRole, SystemUser, UserPermissions, CustomRoleDefinition } from '../types/database';
 
 export const CLINIC_BUSINESS_ID_PALMAS = 5053762760081408;
 export const CLINIC_BUSINESS_ID_PARAiSO = 5053762760081409;
 export const CLINIC_BUSINESS_ID_ARAGUAINA = 5053762760081410;
 export const CLINIC_BUSINESS_ID = CLINIC_BUSINESS_ID_PALMAS;
+
+export const INITIAL_CUSTOM_ROLES: CustomRoleDefinition[] = [
+  {
+    id: 'financeiro',
+    name: 'Financeiro & Faturamento',
+    description: 'Acesso a relatórios financeiros, faturamento e exportação de dados.',
+    badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    defaultPermissions: {
+      canViewAgenda: false,
+      canCheckIn: false,
+      canReceiveWhatsApp: false,
+      canReceivePush: false,
+      canViewPatientPhone: false,
+      canGenerateAISummary: false,
+      canAccessConfig: false,
+      canManageUsers: false,
+      canExportData: true,
+      canViewClubeSorriso: false,
+    },
+  },
+  {
+    id: 'consultor',
+    name: 'Consultor / Avaliador Externo',
+    description: 'Acesso a visualização de agendas e resumos clínicos com IA.',
+    badgeBg: 'bg-teal-100 text-teal-800 border-teal-200',
+    defaultPermissions: {
+      canViewAgenda: true,
+      canCheckIn: false,
+      canReceiveWhatsApp: false,
+      canReceivePush: false,
+      canViewPatientPhone: true,
+      canGenerateAISummary: true,
+      canAccessConfig: false,
+      canManageUsers: false,
+      canExportData: false,
+      canViewClubeSorriso: false,
+    },
+  },
+];
+
+export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions => {
+  // Check system role overrides first
+  try {
+    const storedOverrides = localStorage.getItem('bertuol_system_role_overrides_v1');
+    if (storedOverrides) {
+      const overrides: Record<string, UserPermissions> = JSON.parse(storedOverrides);
+      if (overrides[role]) return overrides[role];
+    }
+  } catch (e) {}
+
+  // Check custom roles
+  try {
+    const stored = localStorage.getItem('bertuol_custom_roles_v1');
+    const customRoles: CustomRoleDefinition[] = stored ? JSON.parse(stored) : INITIAL_CUSTOM_ROLES;
+    const found = customRoles.find((r) => r.id === role);
+    if (found) return found.defaultPermissions;
+  } catch (e) {
+    // ignore
+  }
+
+  switch (role) {
+    case 'admin_root':
+    case 'admin':
+      return {
+        canViewAgenda: true,
+        canCheckIn: true,
+        canReceiveWhatsApp: true,
+        canReceivePush: true,
+        canViewPatientPhone: true,
+        canGenerateAISummary: true,
+        canAccessConfig: true,
+        canManageUsers: true,
+        canExportData: true,
+        canViewClubeSorriso: true,
+      };
+    case 'admin_clinica':
+      return {
+        canViewAgenda: true,
+        canCheckIn: true,
+        canReceiveWhatsApp: true,
+        canReceivePush: true,
+        canViewPatientPhone: true,
+        canGenerateAISummary: true,
+        canAccessConfig: false,
+        canManageUsers: true,
+        canExportData: true,
+        canViewClubeSorriso: true,
+      };
+    case 'gerente_atendimento':
+      return {
+        canViewAgenda: true,
+        canCheckIn: true,
+        canReceiveWhatsApp: true,
+        canReceivePush: true,
+        canViewPatientPhone: true,
+        canGenerateAISummary: true,
+        canAccessConfig: false,
+        canManageUsers: false,
+        canExportData: true,
+        canViewClubeSorriso: true,
+      };
+    case 'receptionist':
+      return {
+        canViewAgenda: true,
+        canCheckIn: true,
+        canReceiveWhatsApp: true,
+        canReceivePush: true,
+        canViewPatientPhone: true,
+        canGenerateAISummary: false,
+        canAccessConfig: false,
+        canManageUsers: false,
+        canExportData: false,
+        canViewClubeSorriso: true,
+      };
+    case 'dentist':
+    default:
+      return {
+        canViewAgenda: true,
+        canCheckIn: true,
+        canReceiveWhatsApp: true,
+        canReceivePush: true,
+        canViewPatientPhone: true,
+        canGenerateAISummary: false,
+        canAccessConfig: false,
+        canManageUsers: false,
+        canExportData: false,
+        canViewClubeSorriso: true,
+      };
+  }
+};
 
 export const INITIAL_CLINICS: Clinic[] = [
   {
@@ -531,73 +661,6 @@ const MOCK_APPOINTMENTS_LEGACY: Appointment[] = [
     ai_summary: 'Exame de oclusão e guia anterior para reabilitação cerâmica. Atenção especial: utilizar apenas luvas de nitrilo (alergia a látex).',
   },
 ];
-
-export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions => {
-  switch (role) {
-    case 'admin_root':
-    case 'admin':
-      return {
-        canViewAgenda: true,
-        canCheckIn: true,
-        canReceiveWhatsApp: true,
-        canReceivePush: true,
-        canViewPatientPhone: true,
-        canGenerateAISummary: true,
-        canAccessConfig: true,
-        canManageUsers: true,
-        canExportData: true,
-      };
-    case 'admin_clinica':
-      return {
-        canViewAgenda: true,
-        canCheckIn: true,
-        canReceiveWhatsApp: true,
-        canReceivePush: true,
-        canViewPatientPhone: true,
-        canGenerateAISummary: true,
-        canAccessConfig: false,
-        canManageUsers: true,
-        canExportData: true,
-      };
-    case 'gerente_atendimento':
-      return {
-        canViewAgenda: true,
-        canCheckIn: true,
-        canReceiveWhatsApp: true,
-        canReceivePush: true,
-        canViewPatientPhone: true,
-        canGenerateAISummary: true,
-        canAccessConfig: false,
-        canManageUsers: false,
-        canExportData: true,
-      };
-    case 'receptionist':
-      return {
-        canViewAgenda: true,
-        canCheckIn: true,
-        canReceiveWhatsApp: true,
-        canReceivePush: true,
-        canViewPatientPhone: true,
-        canGenerateAISummary: false,
-        canAccessConfig: false,
-        canManageUsers: false,
-        canExportData: false,
-      };
-    case 'dentist':
-    default:
-      return {
-        canViewAgenda: true,
-        canCheckIn: true,
-        canReceiveWhatsApp: true,
-        canReceivePush: true,
-        canViewPatientPhone: true,
-        canGenerateAISummary: false,
-        canAccessConfig: false,
-        canManageUsers: false,
-        canExportData: false,
-      };
-  }
-};
 
 export function generateSecureTemporaryPassword(): string {
   const words = ['Bertuol', 'Odonto', 'Sorriso', 'Dental', 'Clinica'];
@@ -2063,6 +2126,80 @@ class DataService {
 
     this.saveAll();
     return this.appointments[index];
+  }
+
+  // --- Custom Roles / RBAC CRUD Methods ---
+  public getCustomRoles(): CustomRoleDefinition[] {
+    try {
+      const stored = localStorage.getItem('bertuol_custom_roles_v1');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {}
+    return INITIAL_CUSTOM_ROLES;
+  }
+
+  public saveCustomRole(roleDef: CustomRoleDefinition, actorContext?: AppUserContext): { role?: CustomRoleDefinition; success: boolean; error?: string } {
+    const ctx = actorContext || this.userContext;
+    if (ctx.role !== 'admin_root' && ctx.role !== 'admin' && ctx.role !== 'admin_clinica') {
+      return { success: false, error: 'Apenas administradores podem gerenciar perfis e cargos (RBAC).' };
+    }
+    if (!roleDef.name.trim()) {
+      return { success: false, error: 'Informe o nome do perfil.' };
+    }
+    const currentRoles = this.getCustomRoles();
+    const slug = roleDef.id || roleDef.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const existingIndex = currentRoles.findIndex((r) => r.id === slug);
+
+    const newDef: CustomRoleDefinition = {
+      id: slug,
+      name: roleDef.name,
+      description: roleDef.description || '',
+      defaultPermissions: roleDef.defaultPermissions,
+      badgeBg: roleDef.badgeBg || 'bg-purple-100 text-purple-800 border-purple-200',
+    };
+
+    if (existingIndex >= 0) {
+      currentRoles[existingIndex] = newDef;
+    } else {
+      currentRoles.push(newDef);
+    }
+
+    localStorage.setItem('bertuol_custom_roles_v1', JSON.stringify(currentRoles));
+    return { success: true, role: newDef };
+  }
+
+  public deleteCustomRole(roleId: string, actorContext?: AppUserContext): { success: boolean; error?: string } {
+    const ctx = actorContext || this.userContext;
+    if (ctx.role !== 'admin_root' && ctx.role !== 'admin') {
+      return { success: false, error: 'Apenas Admin Root pode excluir perfis customizados.' };
+    }
+    const currentRoles = this.getCustomRoles();
+    const index = currentRoles.findIndex((r) => r.id === roleId);
+    if (index === -1) return { success: false, error: 'Perfil não encontrado.' };
+
+    currentRoles.splice(index, 1);
+    localStorage.setItem('bertuol_custom_roles_v1', JSON.stringify(currentRoles));
+    return { success: true };
+  }
+
+  public getSystemRoleOverrides(): Record<string, UserPermissions> {
+    try {
+      const stored = localStorage.getItem('bertuol_system_role_overrides_v1');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {};
+  }
+
+  public saveSystemRoleOverride(roleId: string, permissions: UserPermissions, actorContext?: AppUserContext): { success: boolean; error?: string } {
+    const ctx = actorContext || this.userContext;
+    if (ctx.role !== 'admin_root' && ctx.role !== 'admin' && ctx.role !== 'admin_clinica') {
+      return { success: false, error: 'Apenas administradores podem alterar permissões de perfis do sistema.' };
+    }
+    const overrides = this.getSystemRoleOverrides();
+    overrides[roleId] = permissions;
+    localStorage.setItem('bertuol_system_role_overrides_v1', JSON.stringify(overrides));
+    return { success: true };
   }
 }
 
