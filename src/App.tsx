@@ -549,15 +549,6 @@ export default function App() {
   if (!userContext.isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col">
-        <div className="bg-slate-900 text-white px-3 py-2 text-xs flex items-center justify-between">
-          <span className="text-gray-300 font-semibold">Bertuol Flow • Acesso Profissional</span>
-          <a
-            href="/paciente"
-            className="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1"
-          >
-            🌟 Ir para App do Paciente
-          </a>
-        </div>
         <LoginScreen
           onLoginSuccess={handleLoginSuccess}
           initialUserId={urlParamsUserId}
