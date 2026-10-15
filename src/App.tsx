@@ -579,21 +579,7 @@ export default function App() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/paciente"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-semibold hidden sm:inline-flex items-center gap-1 border border-slate-700"
-          >
-            <span>📱 Abrir /paciente em nova aba</span>
-          </a>
-          <button
-            onClick={handleSwitchToPatient}
-            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Visualizar App do Paciente</span>
-          </button>
+          <span className="text-slate-400 text-[11px]">Sistema Profissional</span>
         </div>
       </div>
 
