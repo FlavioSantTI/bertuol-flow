@@ -20,8 +20,15 @@ import { BertuolBotAvatar } from './components/BertuolBotAvatar';
 import { LoginScreen } from './components/LoginScreen';
 import { WebAuthnModal } from './components/WebAuthnModal';
 import { PatientApp } from './patient/PatientApp';
+import { InternalMessagingModal } from './components/InternalMessagingModal';
+import { messagingService } from './services/messagingService';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { SkeletonCard } from './components/SkeletonLoader';
+import { TenantProvider, useTenant } from './contexts/TenantContext';
+import { PatientLayout } from './routes/(patient)/PatientLayout';
+import { ClinicLayout } from './routes/(clinic)/ClinicLayout';
+import { RootLayout } from './routes/(root)/RootLayout';
+import { APP_VERSION } from './config/version';
 import { dataService, formatDateKey, getDefaultPermissionsForRole } from './services/dataService';
 import {
   fetchDentistas,
@@ -68,6 +75,8 @@ export default function App() {
   const [isTotemModalOpen, setIsTotemModalOpen] = useState(false);
   const [isAdminGamificationOpen, setIsAdminGamificationOpen] = useState(false);
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
+  const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
+  const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
     dentistName?: string;
@@ -76,13 +85,15 @@ export default function App() {
   } | null>(null);
   const [lastSeenCheckinId, setLastSeenCheckinId] = useState<string | null>(null);
 
-  // Modo de visualização: 'dentist' (App Profissional / Bertuol Flow) como PADRÃO ABSOLUTO!
-  // Dentistas que já instalaram o PWA no celular e acessam a raiz '/' NUNCA devem cair na tela de paciente.
-  const [appMode, setAppMode] = useState<'patient' | 'dentist'>(() => {
+  const [appMode, setAppMode] = useState<'patient' | 'dentist' | 'root'>(() => {
+    const pathname = window.location.pathname.toLowerCase();
     const params = new URLSearchParams(window.location.search);
     const appParam = params.get('app')?.toLowerCase();
-    // Somente abre o modo paciente se for explicitamente requisitado
-    if (appParam === 'paciente' || appParam === 'patient') {
+
+    if (pathname.startsWith('/root') || appParam === 'root' || appParam === 'admin') {
+      return 'root';
+    }
+    if (pathname.startsWith('/portal') || appParam === 'paciente' || appParam === 'patient') {
       return 'patient';
     }
     return 'dentist';
@@ -98,8 +109,24 @@ export default function App() {
 
   // Admin Root Simulation state (Alternativa A)
   const [simulatedRole, setSimulatedRole] = useState<UserRole | 'none'>('none');
+
   const effectiveUserContext = useMemo(() => {
-    if (simulatedRole !== 'none' && (userContext.role === 'admin_root' || userContext.role === 'admin')) {
+    const isRoot =
+      userContext.role === 'admin_root' ||
+      userContext.role === 'admin' ||
+      userContext.role === 'admin_tecnico' ||
+      Boolean(
+        userContext.email &&
+          (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
+            userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
+            userContext.email.toLowerCase().includes('flavio.santiago'))
+      ) ||
+      Boolean(
+        userContext.userName &&
+          (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
+      );
+
+    if (simulatedRole !== 'none' && isRoot) {
       return {
         ...userContext,
         role: simulatedRole,
@@ -238,6 +265,16 @@ export default function App() {
       .catch((err) => console.warn('Aviso: Falha ao carregar categorias do Clinicorp:', err));
   }, []);
 
+  // Abre automaticamente o modal da Central de Atendimento se o link contiver modal=mensageria ou app=atendente
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modalParam = params.get('modal')?.toLowerCase();
+    const appParam = params.get('app')?.toLowerCase();
+    if (modalParam === 'mensageria' || modalParam === 'messaging' || appParam === 'atendente' || appParam === 'staff') {
+      setIsInternalMessagingOpen(true);
+    }
+  }, []);
+
   // Keep URL query parameters in sync with selected dentist and date
   useEffect(() => {
     if (!selectedDentist) return;
@@ -340,6 +377,36 @@ export default function App() {
     const interval = setInterval(checkArrivals, 7000);
     return () => clearInterval(interval);
   }, [selectedDentist, selectedClinicId, userContext, lastSeenCheckinId]);
+
+  // Listener para contagem de mensagens não lidas da equipe (Recepção / Dentista)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnreadCount = async () => {
+      try {
+        const isDentist = effectiveUserContext.role === 'dentist';
+        const currentDentistName =
+          dentists.find((d) => d.id === effectiveUserContext.dentistId)?.Name || effectiveUserContext.userName;
+        const convs = await messagingService.getConversations({
+          clinicId: selectedClinicId,
+          dentistName: isDentist ? currentDentistName : undefined,
+          role: effectiveUserContext.role,
+        });
+        if (isMounted) {
+          const totalUnread = convs.reduce((acc, c) => acc + (c.unread_count || 0), 0);
+          setUnreadStaffMessagesCount(totalUnread);
+        }
+      } catch {
+        // Ignora erros transitórios de rede
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 12000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [effectiveUserContext, selectedClinicId, dentists]);
 
   const handleSelectDentist = (dentist: Dentist) => {
     setSelectedDentist(dentist);
@@ -522,30 +589,52 @@ export default function App() {
     setAppMode('patient');
   };
 
-  // 1. Modo Paciente ativo: renderiza o App do Cliente diretamente para testes
-  if (appMode === 'patient') {
+  const handleSwitchToRoot = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('app', 'root');
+    window.history.pushState({}, '', url.pathname + '?' + url.searchParams.toString());
+    setAppMode('root');
+  };
+
+  // 1. Modo SuperAdmin / Root (/root/*)
+  if (appMode === 'root') {
     return (
-      <>
-        <PatientApp
-          onSwitchToDentistView={handleSwitchToDentist}
-          onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
+      <TenantProvider>
+        <RootLayout
+          userContext={effectiveUserContext}
+          onNavigateToApp={handleSwitchToDentist}
+          onNavigateToPatient={handleSwitchToPatient}
         />
-        {/* Admin Clube de Vantagens (acessível diretamente a partir do modo paciente) */}
-        <AdminGamificationModal
-          isOpen={isAdminGamificationOpen}
-          onClose={() => setIsAdminGamificationOpen(false)}
-          staffName={userContext.userName || 'Administração Bertuol'}
-        />
-        {/* Heads-Up Push Notification Banner (Top of Screen) - 100% Fixado */}
-        <HeadsUpNotification
-          onOpenAppointment={handleOpenAppointmentById}
-          onOpenDailyBriefing={() => setIsDailyBriefingOpen(true)}
-        />
-      </>
+      </TenantProvider>
     );
   }
 
-  // If user is not authenticated in Dentist mode, show secure Login Gate
+  // 2. Modo Paciente ativo (/portal/*)
+  if (appMode === 'patient') {
+    return (
+      <TenantProvider>
+        <PatientLayout userContext={effectiveUserContext}>
+          <PatientApp
+            onSwitchToDentistView={handleSwitchToDentist}
+            onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
+          />
+          {/* Admin Clube de Vantagens (acessível diretamente a partir do modo paciente) */}
+          <AdminGamificationModal
+            isOpen={isAdminGamificationOpen}
+            onClose={() => setIsAdminGamificationOpen(false)}
+            staffName={userContext.userName || 'Administração Bertuol'}
+          />
+          {/* Heads-Up Push Notification Banner (Top of Screen) - 100% Fixado */}
+          <HeadsUpNotification
+            onOpenAppointment={handleOpenAppointmentById}
+            onOpenDailyBriefing={() => setIsDailyBriefingOpen(true)}
+          />
+        </PatientLayout>
+      </TenantProvider>
+    );
+  }
+
+  // Se o usuário não está autenticado na Aplicação da Clínica, exibe a tela de Login
   if (!userContext.isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -560,7 +649,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
+    <TenantProvider>
+      <ClinicLayout userContext={effectiveUserContext}>
+        <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
       {/* Test Switcher Bar (when in Dentist View) */}
       <div className="bg-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-xs border-b border-slate-700 shrink-0 sticky top-0 z-50">
         <div className="flex items-center gap-2">
@@ -575,7 +666,19 @@ export default function App() {
       </div>
 
       {/* Admin Root Simulation Toolbar (Alternativa A) */}
-      {(userContext.role === 'admin_root' || userContext.role === 'admin') && (
+      {(userContext.role === 'admin_root' ||
+        userContext.role === 'admin' ||
+        userContext.role === 'admin_tecnico' ||
+        Boolean(
+          userContext.email &&
+            (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
+              userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
+              userContext.email.toLowerCase().includes('flavio.santiago'))
+        ) ||
+        Boolean(
+          userContext.userName &&
+            (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
+        )) && (
         <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-md shrink-0 z-40 border-b border-purple-500/30">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
@@ -629,6 +732,8 @@ export default function App() {
         onOpenVoucherModal={() => setIsVoucherModalOpen(true)}
         onOpenTotemQRModal={() => setIsTotemModalOpen(true)}
         onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
+        onOpenMessagingModal={() => setIsInternalMessagingOpen(true)}
+        unreadMessagesCount={unreadStaffMessagesCount}
         onLogout={handleLogout}
       />
 
@@ -920,7 +1025,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30 shadow-2xs">
-                Versão 1.0
+                Versão {APP_VERSION}
               </span>
               <span className="text-[10px] text-gray-400">© 2026</span>
             </div>
@@ -999,7 +1104,19 @@ export default function App() {
       />
 
       {/* Floating Robot Widget (Chat-style Persona Simulator - Only for Admin Root) */}
-      {userContext.role === 'admin_root' && (
+      {(userContext.role === 'admin_root' ||
+        userContext.role === 'admin' ||
+        userContext.role === 'admin_tecnico' ||
+        Boolean(
+          userContext.email &&
+            (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
+              userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
+              userContext.email.toLowerCase().includes('flavio.santiago'))
+        ) ||
+        Boolean(
+          userContext.userName &&
+            (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
+        )) && (
         <FloatingPersonaBot
           userContext={userContext}
           onUpdateUserContext={handleUpdateUserContext}
@@ -1071,6 +1188,18 @@ export default function App() {
         onClose={() => setIsWebAuthnModalOpen(false)}
         userContext={userContext}
       />
-    </div>
+
+      {/* Internal Staff Messaging Modal (Bertuol Flow) */}
+      <InternalMessagingModal
+        isOpen={isInternalMessagingOpen}
+        onClose={() => setIsInternalMessagingOpen(false)}
+        userContext={effectiveUserContext}
+        dentists={dentists}
+        clinics={clinics}
+        selectedClinicId={selectedClinicId}
+      />
+        </div>
+      </ClinicLayout>
+    </TenantProvider>
   );
 }

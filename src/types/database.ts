@@ -16,6 +16,15 @@ export interface Clinic {
   webhook_secret?: string;
   colorTag: string;
   active: boolean;
+  // Endereço Estruturado e Geolocalização
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  google_maps_url?: string;
 }
 
 export interface DentistClinicAffiliation {
@@ -289,4 +298,84 @@ export interface PatientPortalProfile {
   activeAppointment?: Appointment | null;
   pointsHistory: PatientPoint[];
   activeVouchers: RewardRedemption[];
+}
+
+// ==========================================
+// MENSAGERIA INTERNA (PRD v2)
+// ==========================================
+export type ConversationStatus = 'open' | 'pending' | 'closed';
+export type ParticipantType = 'patient' | 'staff' | 'dentist';
+export type SenderType = 'patient' | 'staff' | 'dentist' | 'system';
+
+export interface Conversation {
+  id: string;
+  clinic_id: number;
+  patient_id?: string;
+  patient_name: string;
+  patient_phone?: string;
+  status: ConversationStatus;
+  subject?: string;
+  assigned_to_user_id?: string;
+  assigned_to_name?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string;
+  last_message_preview?: string;
+  unread_count?: number;
+  closed_at?: string;
+}
+
+export interface ConversationParticipant {
+  id: string;
+  conversation_id: string;
+  user_id?: string;
+  user_name?: string;
+  patient_id?: string;
+  participant_type: ParticipantType;
+  added_by?: string;
+  added_at: string;
+  is_active: boolean;
+}
+
+export type MediaType = 'audio' | 'image' | 'video' | 'document';
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_type: SenderType;
+  sender_user_id?: string;
+  sender_name: string;
+  sender_patient_id?: string;
+  body: string;
+  client_message_id: string;
+  created_at: string;
+  is_read?: boolean;
+
+  // Metadados de Mídia
+  media_url?: string;
+  media_type?: MediaType;
+  media_mime_type?: string;
+  media_size_bytes?: number;
+  media_duration_seconds?: number;
+  media_thumbnail_url?: string;
+}
+
+export interface MessageReceipt {
+  id: string;
+  message_id: string;
+  user_id?: string;
+  patient_id?: string;
+  read_at: string;
+}
+
+export interface ConversationEvent {
+  id: string;
+  conversation_id: string;
+  actor_id?: string;
+  actor_name?: string;
+  actor_type: string;
+  event_type: 'created' | 'assigned' | 'transferred' | 'participant_added' | 'participant_removed' | 'status_changed';
+  details?: Record<string, any>;
+  created_at: string;
 }

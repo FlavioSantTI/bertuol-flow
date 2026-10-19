@@ -1,197 +1,141 @@
-# 🦷 Bertuol Flow
+# 🦷 Bertuol Odontologia Avançada — Versão 1.2.0
 
-<div align="center">
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Agenda Diária Inteligente com IA Gemini, PWA do Paciente e Totem de Recepção com Gamificação.**
 
-![Bertuol Flow Version](https://img.shields.io/badge/version-1.0.0-0D9488?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-Production%20Ready-059669?style=for-the-badge)
-![License](https://img.shields.io/badge/license-Proprietary-slate?style=for-the-badge)
-![PWA](https://img.shields.io/badge/PWA-Ready-4BBCBE?style=for-the-badge)
-![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge)
-
-**Sistema de Gestão Inteligente de Atendimentos Clínicos, Agenda Cronológica, Resumos com IA e Notificações Push & WhatsApp**
-
-*Desenvolvido exclusivamente para a **Bertuol Odontologia Avançada**.*
-
-</div>
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.2.0-FF981A.svg?style=for-the-badge)](https://github.com)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-DB_Bertuol-3ECF8E.svg?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Gemini AI](https://img.shields.io/badge/Google_AI_Studio-Gemini_Flash-8E75FF.svg?style=for-the-badge&logo=google)](https://ai.google.dev)
 
 ---
 
-## 📌 Visão Geral do Projeto
+## 🌟 Visão Geral da Jornada & Versão 1.2.0
 
-O **Bertuol Flow** é uma plataforma clínica web/PWA de alto desempenho desenvolvida para transformar a rotina dos profissionais da odontologia, recepcionistas e gestores da rede **Bertuol Odontologia Avançada**. 
+O **Bertuol Odontologia Avançada** evoluiu para uma solução corporativa completa de ecossistema odontológico **Multi-Tenant / Multi-Clínicas**, integrando o fluxo do consultório (Dentistas, Gerentes, Atendentes) com o público final (Pacientes e Clube de Vantagens Sorriso).
 
-O sistema integra-se de forma nativa e segura ao **Clinicorp API**, ao banco de dados **Supabase** e à infraestrutura de mensageria **Evolution GO (WhatsApp Gateway)**, permitindo:
-- Visualização cronológica rápida de pacientes do dia por profissional e por unidade física.
-- Resumos clínicos inteligentes pré-atendimento com orientações de procedimentos e alertas de saúde.
-- Notificações instantâneas de chegada/check-in de pacientes na recepção (Push celular e WhatsApp).
-- Gestão de acessos hierárquica baseada em perfis (**Admin Root**, **Admin Clínica**, **Dentista**, **Recepção**, **Gerente**).
+### 🏆 Funcionalidades Principais da v1.2.0
 
----
+#### 1. 🏢 Gestão Multi-Clínicas (Multi-Tenant)
+- **Unidades Gerenciadas**: Matriz Palmas (TO), Paraíso do Tocantins (TO) e Araguaína (TO).
+- **Filtro de Unidade Consolidada ou Individual**: Seleção de clínicas no cabeçalho ou visão global consolidada.
+- **Isolamento e Segurança (LGPD)**: Recepção travada na unidade física local; SuperAdmin Root com controle irrestrito.
 
-## 🚀 Funcionalidades Principais (v1.0.0)
+#### 2. 📍 CRUD de Unidades com Endereço Estruturado & ViaCEP
+- **Integração Assíncrona ViaCEP**: Digitação de CEP (`00000-000`) com consulta automática na API `viacep.com.br`.
+- **Preenchimento Automático de Endereço**: Preenche logradouro, bairro, cidade e UF automaticamente.
+- **Foco Automático do Cursor**: Move o cursor diretamente para o campo **Número** após o CEP ser localizado.
+- **Geolocalização no Google Maps**: Link de rota/localização por unidade com botão de atalho *"Testar Link"* para envio automático em confirmações de WhatsApp.
 
-### 🩺 1. Visão do Profissional / Dentista
-* **Timeline Cronológica do Dia:** Lista limpa de horários, procedimentos agendados, convênios e histórico do paciente.
-* **Resumo Clínico Executivo:** Síntese rápida dos dados do prontuário, alertas de alergias (látex, antibióticos) e recomendações para o procedimento.
-* **Briefing Diário:** Modal executivo com estatísticas da jornada diária, distribuição de procedimentos e avisos importantes.
-* **Alertas no Consultório:** Notificações sonoras e visuais em tempo real quando o paciente dá entrada na recepção.
+#### 3. 👑 Modo SuperAdmin Root & Simulador de Perfis (RBAC)
+- **Acesso Irrestrito**: Garantido para os perfis `favuca.dias@gmail.com` e `flavio.santiago.ti@outlook.com`.
+- **Barra Superior de Simulação**: O SuperAdmin pode testar o sistema como *Dentista*, *Recepção*, *Gerente de Atendimento* ou *Admin Clínica*, mantendo o botão de 1 clique *"Restaurar Root"*.
 
-### 🛎️ 2. Módulo de Recepção & Check-in
-* **Check-in Instantâneo com 1 Clique:** Marcação de chegada do paciente no consultório.
-* **Disparo Automático de Alertas:** Notifica imediatamente o aparelho do dentista responsável via Push e WhatsApp da clínica.
-* **Isolamento de Unidade (LGPD):** Operadores de recepção visualizam e operam estritamente sobre a sua respectiva clínica física.
+#### 4. 🤖 Agenda Diária Inteligente com IA Gemini
+- **Análise Clínica com IA**: Geração de resumos inteligentes de prontuários e anamneses usando a SDK oficial `@google/genai` (Gemini Flash).
+- **Ordenação Rápida por Horário**: Sincronização cronológica de horários e procedimentos.
 
-### 🏢 3. Arquitetura Multi-Tenant & Multi-Clínicas
-* **Unidades Atendidas:** Palmas (Matriz), Paraíso do Tocantins e Araguaína.
-* **Troca Ágil de Unidade:** Gestores corporativos e profissionais que atendem em mais de uma clínica podem alternar o contexto de atendimento com 1 clique.
-* **Sincronização em Lote Clinicorp:** Importação e mapeamento de categorias de procedimentos, cores institucionais e profissionais cadastrados.
+#### 5. 📱 PWA do Paciente (Clube Sorriso Bertuol)
+- **Instalável (PWA)**: Manifest e Service Worker offline para celular ou desktop (`/paciente`).
+- **Check-in via QR Code no Totem**: O paciente escaneia o QR Code no Totem da recepção e acumula pontos (+20 pts).
+- **Catálogo de Resgate de Prêmios**: Troca de pontos por escovas elétricas, kits ortodônticos e clareamentos.
 
-### 👑 4. Gestão de Usuários & Controle de Acesso (RBAC & CRUD de Perfis)
-* **Perfis Hierárquicos & Customizados:**
-  * `Admin Root`: Visão corporativa irrestrita de todas as unidades, configurações técnicas e segurança.
-  * `Admin Clínica`: Gestor local com autonomia para cadastrar e gerenciar profissionais e recepcionistas da sua unidade.
-  * `Gerente de Atendimento`: Monitoramento global de fluxo e tempos de espera.
-  * `Dentista`: Acesso à sua própria agenda e notificações.
-  * `Recepção`: Gestão de fluxo de recepção e check-in.
-  * **Perfis Customizados (CRUD RBAC):** O administrador pode criar novos papéis de acesso e editar as permissões dos perfis padrão do sistema através do painel de administração, com rótulos compreensíveis em português.
-* **Pré-Cadastro em Lote:** Importação de profissionais cadastrados no Clinicorp com geração de links de convite e senhas temporárias via WhatsApp.
-* **Primeiro Acesso Seguro:** Redefinição obrigatória de senha e suporte a links mágicos com credenciais encriptadas.
-
-### 📱 5. PWA (Progressive Web App) & Separação de Rotas
-* **Isolamento de Aplicação:** 
-  * **Bertuol Flow (Profissional):** Rota raiz `/` dedicada exclusivamente aos dentistas, atendentes e gestores.
-  * **Clube Sorriso Bertuol (Paciente):** Rota `/paciente` dedicada aos pacientes, com manifesto PWA e escopo isolados.
-* **Instalação Nativa:** Suporte completo a instalação na tela inicial em dispositivos Android, iPhone e iPad (iOS Safari).
-* **Manuais e Tutoriais Integrados:**
-  * `/manual-instalacao.html`: Guia passo a passo otimizado para iOS e Android.
-  * `/tutorial-paciente.html`: Guia do paciente estruturado em exatamente 2 páginas para fácil impressão e leitura.
-  * `/faq.html`: Central de perguntas frequentes.
-
-### 🎁 6. Portal do Paciente, Fidelização & Notificações Heads-Up
-* **Portal Gamificado do Paciente:** Acompanhamento de consulta, pré-check-in, extrato de pontos, níveis de fidelidade e resgate de vouchers.
-* **Notificações Heads-Up Persistentes:** Alertas In-App com duração configurável (Modo Fixo, 60s, 30s, 15s), suporte ao botão **`Sair (Esc)`** e atalho de teclado `ESC`.
-* **Simulador de Testes Rápido:** Disparos de demonstração imediata para **📅 1 Dia Antes**, **⏰ 2 Horas Antes** e **🎂 Aniversário** com atalhos de navegação e visualização em mockup de celular.
-* **Gestão de Aniversariantes:** Resgate de cortesia de Profilaxia + Sky Câmera e agendamento direto pelo aplicativo sem dependência de WhatsApp.
+#### 6. 🛎️ Totem de Recepção & Notificação em Tempo Real
+- Alerta visual no topo da tela do consultório quando um paciente realiza check-in na recepção.
+- Suporte a notificações Web Push e som de aviso configurável.
 
 ---
 
-## 🛠️ Stack Tecnológica
+## 🏗️ Arquitetura de Software & Tecnologias
 
-| Camada | Tecnologia | Descrição |
-| :--- | :--- | :--- |
-| **Frontend** | React 19 + TypeScript + Vite | Interface reativa, modular e de altíssimo desempenho |
-| **Estilização** | Tailwind CSS + Plus Jakarta Sans | Design System exclusivo baseado no manual da marca Bertuol |
-| **Backend & Proxy** | Node.js + Express + TSX | Servidor de proxy seguro para rotas REST e orquestração de webhooks |
-| **Banco de Dados** | Supabase (PostgreSQL) | Armazenamento relacional, controle de sessões e perfis de usuários |
-| **Integração Clínica** | Clinicorp REST API | Sincronização oficial de agendas, categorias e profissionais |
-| **WhatsApp Gateway**| Evolution GO API | Disparo de mensagens transacionais, links de convite e alertas |
-| **Infraestrutura** | Docker + Traefik + Portainer | Containerização multi-stage e SSL automático Let's Encrypt |
-
----
-
-## 🎨 Identidade Visual e Paleta de Cores
-
-* **Turquesa Primário Bertuol:** `#4BBCBE` (RGB: `75, 188, 194` | CMYK: `C71 M11 Y33 K0`)
-* **Amarelo Dourado Bertuol:** `#FFCC29` (RGB: `255, 204, 41`)
-* **Fundo Suave Clínico:** `#F4F7F8`
-* **Divisores & Bordas:** `#E2E6E7`
-* **Tipografia:** *Plus Jakarta Sans*
-
----
-
-## ⚙️ Variáveis de Ambiente (`.env`)
-
-Crie um arquivo `.env` baseado no `.env.example`:
-
-```env
-# Servidor & Execução
-PORT=3000
-NODE_ENV=production
-
-# Integração Clinicorp
-CLINICORP_API_URL="https://api.clinicorp.com/rest/v1"
-CLINICORP_USER="seu_usuario_clinicorp"
-CLINICORP_KEY="sua_chave_clinicorp"
-
-# Banco de Dados Supabase
-VITE_SUPABASE_URL="https://seu-projeto.supabase.co"
-VITE_SUPABASE_ANON_KEY="sua_chave_anon_supabase"
-
-# WhatsApp Gateway (Evolution GO)
-EVOLUTION_API_URL="https://go.app-bertuol.tech"
-GLOBAL_API_KEY="sua_chave_global_evolution"
-EVOLUTION_INSTANCE_NAME="atendimento-palmas"
+```
+├── client (Vite + React 19 + TypeScript + Tailwind CSS v4)
+│   ├── src/
+│   │   ├── components/       # Componentes Modulares (Header, MultiClinicModal, LoginScreen, etc.)
+│   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
+│   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
+│   │   ├── routes/           # Rotas e Guards (RootLayout, ClinicLayout, ProtectedRoute)
+│   │   ├── services/         # DataService, SupabaseService, WebAuthn, Messaging
+│   │   ├── types/            # Tipagem TypeScript (database.ts, Clinic, UserRole)
+│   │   └── utils/            # Scripts SQL, Formatadores e Auxiliares
+├── server (Node.js Express + TSX Proxy Server)
+│   └── server.ts             # API endpoints (/api/clinics, /api/login, /api/webhooks, Gemini Proxy)
 ```
 
 ---
 
-## 📦 Como Executar o Projeto Localmente
+## 🗄️ Esquema do Banco de Dados (Supabase / PostgreSQL)
 
+O script DDL completo com a tabela `public.clinics` atualizada com o endereço estruturado:
+
+```sql
+-- TABELA DE CLÍNICAS / UNIDADES (MULTI-TENANT)
+CREATE TABLE IF NOT EXISTS public.clinics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    external_id VARCHAR(100),                          -- ID Clinicorp (ex: 5053762760081408)
+    name VARCHAR(255) NOT NULL,                         -- Nome oficial da unidade
+    short_name VARCHAR(100) NOT NULL,                   -- Nome curto para agendas
+    slug VARCHAR(100) UNIQUE NOT NULL,                  -- Slug do webhook
+    unidade VARCHAR(100) NOT NULL,                      -- Ex: "Palmas - TO"
+    owner_email VARCHAR(150),                           -- E-mail do responsável
+    phone VARCHAR(50),
+    whatsapp_number VARCHAR(50),
+    whatsapp_instance_key VARCHAR(100),
+    color_tag VARCHAR(20) DEFAULT '#FF981A',
+    active BOOLEAN DEFAULT true,
+    
+    -- ENDEREÇO E GEOLOCALIZAÇÃO (v1.2.0)
+    cep VARCHAR(10),                                    -- Máscara 00000-000
+    logradouro VARCHAR(255),                            -- Rua / Avenida
+    numero VARCHAR(20),                                 -- Número do imóvel
+    complemento VARCHAR(100),                           -- Sala, Edifício
+    bairro VARCHAR(100),                                -- Bairro
+    cidade VARCHAR(100),                                -- Cidade
+    estado VARCHAR(2),                                  -- UF (ex: TO)
+    google_maps_url TEXT,                               -- Link do Google Maps
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+* Node.js v18+ ou v20+
+* npm ou yarn
+
+### 1. Clonar o Repositório
 ```bash
-# 1. Instalar as dependências
+git clone https://github.com/SEU_USUARIO/bertuol-flow.git
+cd bertuol-flow
+```
+
+### 2. Instalar Dependências
+```bash
 npm install
+```
 
-# 2. Iniciar o servidor de desenvolvimento
+### 3. Configurar Variáveis de Ambiente (`.env`)
+Crie um arquivo `.env` na raiz do projeto:
+```env
+PORT=3000
+GEMINI_API_KEY=sua_chave_gemini_aqui
+SUPABASE_URL=https://sswbkfrpxboxmjvunhzt.supabase.co
+SUPABASE_ANON_KEY=sua_chave_anon_supabase
+```
+
+### 4. Executar em Modo de Desenvolvimento
+```bash
 npm run dev
-
-# 3. Gerar a build de produção
-npm run build
-
-# 4. Iniciar em modo produção
-npm start
 ```
+O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 
 ---
 
-## 🐳 Deploy no Portainer com Traefik
+## 📜 Licença e Propriedade
 
-Para implantar no **Portainer**, utilize a Stack abaixo configurada para a rede `BertuolNet` e domínio `bertuolflow.app-bertuol.tech`:
-
-```yaml
-version: "3.7"
-
-services:
-  bertuol_flow:
-    image: bertuolflow:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    networks:
-      - BertuolNet
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - EVOLUTION_API_URL=${EVOLUTION_API_URL}
-      - GLOBAL_API_KEY=${GLOBAL_API_KEY}
-      - EVOLUTION_INSTANCE_NAME=${EVOLUTION_INSTANCE_NAME}
-      - CLINICORP_API_URL=${CLINICORP_API_URL}
-      - CLINICORP_USER=${CLINICORP_USER}
-      - CLINICORP_KEY=${CLINICORP_KEY}
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - traefik.enable=true
-        - traefik.http.routers.bertuol_flow.rule=Host(`bertuolflow.app-bertuol.tech`)
-        - traefik.http.routers.bertuol_flow.entrypoints=websecure
-        - traefik.http.routers.bertuol_flow.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.bertuol_flow.service=bertuol_flow
-        - traefik.http.services.bertuol_flow.loadbalancer.server.port=3000
-        - traefik.http.services.bertuol_flow.loadbalancer.passHostHeader=true
-
-networks:
-  BertuolNet:
-    external: true
-    name: BertuolNet
-```
-
----
-
-## 📄 Licença
-
-Software proprietário. Todos os direitos reservados à **Bertuol Odontologia Avançada**.
+Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
+- **Versão**: `v1.2.0`
+- **Gestão**: Flávio Santiago & Favuca Dias

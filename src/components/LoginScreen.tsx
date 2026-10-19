@@ -17,6 +17,7 @@ import {
 import { dataService } from '../services/dataService';
 import { webauthnService } from '../services/webauthnService';
 import { SystemUser, AppUserContext } from '../types/database';
+import { APP_VERSION, APP_NAME } from '../config/version';
 
 interface LoginScreenProps {
   onLoginSuccess: (context: AppUserContext) => void;
@@ -196,6 +197,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         dataService.setUserContext({
           userId: apiData.user.id,
           userName: apiData.user.name,
+          email: apiData.user.email || email.trim(),
           role: apiData.user.role,
           clinicId: apiData.user.clinicId || 1,
           dentistId: apiData.user.dentist_id || 5229563695136768,
@@ -329,10 +331,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <BertuolLogo size="xl" mode="full" className="mx-auto" />
           <div className="flex items-center justify-center gap-2 mt-2">
             <p className="text-xs text-[#147A80] font-bold">
-              Bertuol Flow • Agenda & Gestão Inteligente
+              Agenda & Gestão Inteligente
             </p>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30">
-              Versão 1.0
+              Versão {APP_VERSION}
             </span>
           </div>
         </div>
@@ -610,51 +612,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           )}
 
-          {/* Quick Demo Switcher Accordion (Discreet for Evaluators) */}
-          <div className="p-4 bg-gray-50/80 border-t border-gray-100 text-center">
-            <button
-              type="button"
-              onClick={() => setShowDemoProfiles(!showDemoProfiles)}
-              className="text-[11px] text-gray-500 hover:text-gray-800 font-bold flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-              <span>
-                {showDemoProfiles
-                  ? 'Ocultar Perfis de Demonstração'
-                  : 'Acesso Rápido de Testes (Perfis Simulados)'}
-              </span>
-            </button>
 
-            {showDemoProfiles && (
-              <div className="mt-3 space-y-1.5 text-left animate-in fade-in">
-                <span className="text-[10px] text-gray-400 font-semibold block mb-1">
-                  Clique para entrar diretamente com o perfil:
-                </span>
-                <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
-                  {systemUsers.map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => handleQuickLogin(u)}
-                      className="w-full p-2 rounded-xl bg-white hover:bg-amber-50/80 border border-gray-200 text-left transition-colors flex items-center justify-between cursor-pointer group"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <span className="text-xs font-bold text-gray-800 group-hover:text-amber-800 block truncate">
-                          {u.name}
-                        </span>
-                        <span className="text-[10px] text-gray-400 block truncate">
-                          {u.email} • {u.role}
-                        </span>
-                      </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-gray-100 group-hover:bg-amber-100 text-gray-600 group-hover:text-amber-800 shrink-0">
-                        {u.mustChangePassword ? '1º Acesso' : 'Entrar'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Security & System Info Footer */}
@@ -676,14 +634,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             >
               <span>📱 Manual de Instalação</span>
             </a>
-            <a
-              href="/admin-links.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
-            >
-              <span>🛠️ Central de Despacho (Admin)</span>
-            </a>
           </div>
 
           <p className="flex items-center justify-center gap-1.5 font-medium text-[11px]">
@@ -693,7 +643,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400">
             <span>Dúvidas ou redefinição de acesso? Entre em contato com o suporte.</span>
             <span>•</span>
-            <span className="font-bold text-gray-500">Versão 1.1.0</span>
+            <span className="font-bold text-gray-500">Versão {APP_VERSION}</span>
           </div>
         </div>
       </div>

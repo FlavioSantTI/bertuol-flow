@@ -1,0 +1,115 @@
+[
+  {
+    "id": "part-1",
+    "conversation_id": "conv-init-1",
+    "participant_type": "patient",
+    "patient_id": "63992474826",
+    "user_name": "Alice Póvoa",
+    "added_at": "2026-10-15T20:41:08.590Z",
+    "is_active": true
+  },
+  {
+    "id": "part-2",
+    "conversation_id": "conv-init-1",
+    "participant_type": "staff",
+    "user_id": "usr_rec_palmas",
+    "user_name": "Recepção Palmas",
+    "added_at": "2026-10-15T20:41:08.590Z",
+    "is_active": true
+  },
+  {
+    "id": "part-3",
+    "conversation_id": "conv-init-2",
+    "participant_type": "patient",
+    "patient_id": "63993390500",
+    "user_name": "Juceline Palmas",
+    "added_at": "2026-10-15T20:41:08.590Z",
+    "is_active": true
+  },
+  {
+    "id": "part-4",
+    "conversation_id": "conv-init-2",
+    "participant_type": "dentist",
+    "user_id": "usr_ariane",
+    "user_name": "Dra. Ariane Bertuol",
+    "added_at": "2026-10-15T20:41:08.590Z",
+    "is_active": true
+  },
+  {
+    "id": "part-cfba11fe-c379-433d-a7d1-ca5f407ae58f",
+    "conversation_id": "conv-123993f6-1e29-4249-9f1f-212c575b55e7",
+    "participant_type": "dentist",
+    "patient_id": "63984913860",
+    "user_id": "a96d1468-5e0e-43e2-9f2d-eb02dd6e6fe0",
+    "user_name": "Flavio Admin",
+    "added_at": "2026-10-15T21:21:08.251Z",
+    "is_active": true
+  },
+  {
+    "id": "part-7d92dafe-2713-47dc-82c6-e8217c354c8c",
+    "conversation_id": "conv-3c9bbc47-681f-46bb-9510-ecdfed7b654e",
+    "participant_type": "dentist",
+    "patient_id": "63984913860",
+    "user_id": "a96d1468-5e0e-43e2-9f2d-eb02dd6e6fe0",
+    "user_name": "Flavio Admin",
+    "added_at": "2026-10-15T21:21:45.869Z",
+    "is_active": true
+  },
+  {
+    "id": "part-0175e890-450c-441b-9964-4ceb0fbd84d4",
+    "conversation_id": "conv-db6a4583-4aac-4255-aa3c-5ea129309235",
+    "participant_type": "dentist",
+    "patient_id": "63984913860",
+    "user_id": "a96d1468-5e0e-43e2-9f2d-eb02dd6e6fe0",
+    "user_name": "Flavio Admin",
+    "added_at": "2026-10-15T21:28:20.306Z",
+    "is_active": true
+  },
+  {
+    "id": "part-374afd97-a081-4a1d-a5eb-947c5b83d353",
+    "conversation_id": "conv-7a4d7fea-5e9d-4716-8d77-975a437e5398",
+    "participant_type": "dentist",
+    "patient_id": "safasfsdaf",
+    "user_id": "a96d1468-5e0e-43e2-9f2d-eb02dd6e6fe0",
+    "user_name": "Flavio Admin",
+    "added_at": "2026-10-15T21:33:22.884Z",
+    "is_active": true
+  },
+  {
+    "id": "part-a48a760f-d4c9-4832-aca6-688b6e59fd0f",
+    "conversation_id": "conv-2afd623d-151d-4c13-aeb0-e70db655ff9e",
+    "participant_type": "dentist",
+    "user_id": "a96d1468-5e0e-43e2-9f2d-eb02dd6e6fe0",
+    "user_name": "Flavio Admin",
+    "added_at": "2026-10-15T21:36:30.143Z",
+    "is_active": true
+  },
+  {
+    "id": "part-c997f3f7-6a58-4e45-856c-7e5675ce107e",
+    "conversation_id": "conv-9ecc7fa3-d735-4f6e-86b0-6cda56116d76",
+    "participant_type": "patient",
+    "patient_id": "63992474826",
+    "user_name": "Alice Póvoa",
+    "added_at": "2026-10-15T21:40:53.887Z",
+    "is_active": true
+  },
+  {
+    "id": "part-1b6a3cd4-df33-43cb-a9d0-e9780bf1623c",
+    "conversation_id": "c01f44ce-9fc2-4202-9281-5a46a7cdc4f2",
+    "participant_type": "patient",
+    "patient_id": "63999887766",
+    "user_name": "Paciente Teste Ajustes",
+    "added_at": "2026-10-16T12:10:33.625Z",
+    "is_active": true
+  },
+  {
+    "id": "part-1d0dce82-8052-48eb-8870-dec6ec483305",
+    "conversation_id": "c01f44ce-9fc2-4202-9281-5a46a7cdc4f2",
+    "user_id": "usr_ariane",
+    "user_name": "Dra. Ariane Bertuol",
+    "participant_type": "dentist",
+    "added_by": "Recepção Palmas",
+    "added_at": "2026-10-16T12:10:34.025Z",
+    "is_active": true
+  }
+]

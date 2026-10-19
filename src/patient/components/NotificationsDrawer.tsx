@@ -20,6 +20,7 @@ interface NotificationsDrawerProps {
   onMarkAllRead: () => void;
   onMarkRead: (id?: string) => void;
   onOpenBirthdaySchedule: () => void;
+  onOpenMessages?: (convId?: string) => void;
   onConfirmAppointment: () => void;
   onNavigateToCheckin: () => void;
   isConfirmed: boolean;
@@ -40,6 +41,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
   onMarkAllRead,
   onMarkRead,
   onOpenBirthdaySchedule,
+  onOpenMessages,
   onConfirmAppointment,
   onNavigateToCheckin,
   isConfirmed,
@@ -88,27 +90,44 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                     : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                 }`}
               >
-                {isPushSubscribed ? 'Ativo no Celular' : 'Não Ativado'}
+                {isPushSubscribed ? 'Ativado ✓' : 'Não Ativado'}
               </span>
             </div>
             <p className="text-[11px] text-gray-300">
               {isPushSubscribed
-                ? 'Seu aparelho recebe avisos 1 dia antes, 2 horas antes e cortesias mesmo com o app fechado.'
+                ? 'Seu aparelho está com notificações ativas para avisos de consultas e novidades.'
                 : 'Ative para receber avisos sem depender de WhatsApp.'}
             </p>
             {!isPushSubscribed ? (
-              <button
-                onClick={onSubscribePush}
-                disabled={isSubscribingPush}
-                className="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
-              >
-                <Bell className="w-3.5 h-3.5" />
-                <span>{isSubscribingPush ? 'Ativando...' : 'Ativar Notificações no Celular'}</span>
-              </button>
+              <div className="space-y-1.5">
+                <button
+                  onClick={onSubscribePush}
+                  disabled={isSubscribingPush}
+                  className="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>{isSubscribingPush ? 'Ativando...' : 'Ativar Notificações no Celular'}</span>
+                </button>
+                {typeof window !== 'undefined' && Notification.permission === 'denied' && (
+                  <p className="text-[10px] text-amber-300 bg-amber-950/60 p-2 rounded-xl border border-amber-500/30 font-medium">
+                    🔒 <strong>Permissão bloqueada no navegador:</strong> Toque no ícone de cadeado/configurações da barra de endereço e altere Notificações para "Permitir".
+                  </p>
+                )}
+                {typeof window !== 'undefined' && window.self !== window.top && (
+                  <a
+                    href={window.location.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-[10px] text-teal-300 hover:underline font-bold pt-1"
+                  >
+                    🔗 Abrir em Nova Aba do Navegador para Ativar ↗
+                  </a>
+                )}
+              </div>
             ) : (
               <button
                 onClick={onSendTestPush}
-                className="w-full py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold text-[11px] border border-slate-700 transition-colors"
+                className="w-full py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold text-[11px] border border-slate-700 transition-colors cursor-pointer"
               >
                 Disparar Notificação de Teste
               </button>
@@ -124,7 +143,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
               {notifications.length > 0 && (
                 <button
                   onClick={onMarkAllRead}
-                  className="text-[10px] text-[#147A80] font-bold hover:underline"
+                  className="text-[10px] text-[#147A80] font-bold hover:underline cursor-pointer"
                 >
                   Marcar todas como lidas
                 </button>
@@ -135,13 +154,14 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
               <div className="py-8 text-center text-gray-400 space-y-1.5 bg-gray-50 rounded-2xl border border-gray-100">
                 <Bell className="w-7 h-7 mx-auto text-gray-300" />
                 <p className="font-bold text-gray-600">Nenhum aviso no momento</p>
-                <p className="text-[11px] text-gray-400">Use os botões de simulação abaixo para testar os disparos!</p>
+                <p className="text-[11px] text-gray-400">Você receberá avisos automáticos de suas consultas e novidades aqui.</p>
               </div>
             ) : (
               notifications.map((notif) => {
                 const isBday = notif.type === 'birthday';
                 const is1d = notif.type === 'reminder_1_day';
                 const is2h = notif.type === 'reminder_2_hours';
+                const isMsg = notif.type === 'message';
                 const createdDate = notif.createdAt ? new Date(notif.createdAt) : new Date();
 
                 return (
@@ -156,7 +176,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2.5">
                         <span className="text-lg">
-                          {isBday ? '🎂' : is1d ? '📅' : is2h ? '⏰' : '🔔'}
+                          {isBday ? '🎂' : is1d ? '📅' : is2h ? '⏰' : isMsg ? '💬' : '🔔'}
                         </span>
                         <div>
                           <h4 className="font-black text-gray-900 text-xs leading-snug">{notif.title}</h4>
@@ -173,6 +193,21 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                     </div>
 
                     {/* Ações Diretas na Notificação (Sem WhatsApp) */}
+                    {isMsg && (
+                      <div className="mt-2.5 pt-2 border-t border-teal-100 flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            onClose();
+                            if (onOpenMessages) onOpenMessages(notif.data?.conversationId);
+                            onMarkRead(notif.id);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-black text-[11px] shadow-2xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                        >
+                          <span>💬 Abrir Chat e Responder</span>
+                        </button>
+                      </div>
+                    )}
+
                     {isBday && isBirthdayToday && (
                       <div className="mt-2.5 pt-2 border-t border-amber-200/60 flex items-center justify-end gap-2">
                         <button
@@ -221,32 +256,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
           </div>
         </div>
 
-        {/* Footer com simulador rápido */}
-        <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-2">
-            Simulador de Teste Rápido (Disparos Imediatos)
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              onClick={() => onSendReminderPush('1_day_before')}
-              className="py-1.5 px-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 font-bold text-[10px] transition-colors"
-            >
-              📅 1 Dia Antes
-            </button>
-            <button
-              onClick={() => onSendReminderPush('2_hours_before')}
-              className="py-1.5 px-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 font-bold text-[10px] transition-colors"
-            >
-              ⏰ 2 Horas Antes
-            </button>
-            <button
-              onClick={onSendBirthdayPush}
-              className="py-1.5 px-2 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 font-black text-[10px] transition-colors"
-            >
-              🎂 Aniversário
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

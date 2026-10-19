@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Bell, LogOut, ShieldCheck, Sparkles, User } from 'lucide-react';
+import { Award, Bell, LogOut, ShieldCheck, Sparkles, User, MessageSquare } from 'lucide-react';
 import type { PatientTier } from '../types/patientTypes';
 
 interface PatientHeaderProps {
@@ -7,7 +7,9 @@ interface PatientHeaderProps {
   points: number;
   tier: PatientTier;
   unreadCount?: number;
+  unreadMessagesCount?: number;
   onOpenNotifications: () => void;
+  onOpenMessages?: () => void;
   onOpenAdminModal?: () => void;
   isBirthdayToday?: boolean;
   onLogout?: () => void;
@@ -52,7 +54,9 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
   points,
   tier,
   unreadCount = 0,
+  unreadMessagesCount = 0,
   onOpenNotifications,
+  onOpenMessages,
   onOpenAdminModal,
   isBirthdayToday = false,
   onLogout,
@@ -84,7 +88,7 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
           </div>
         </div>
 
-        {/* Gamification Points & Tier Badge & Notifications */}
+        {/* Gamification Points & Tier Badge & Notifications & Messages */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Points Pill */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/80 shadow-xs">
@@ -101,10 +105,27 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
             <span>{currentTier.label}</span>
           </div>
 
+          {/* Messages Button (Chat com a Clínica) */}
+          {onOpenMessages && (
+            <button
+              onClick={onOpenMessages}
+              className="relative p-2 rounded-xl text-[#147A80] bg-teal-50 hover:bg-teal-100/90 border border-teal-200 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+              title="Central de Mensagens e Dúvidas com a Recepção e Dentistas"
+              aria-label="Abrir mensagens"
+            >
+              <MessageSquare className="w-5 h-5 text-[#147A80]" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce shadow-xs">
+                  {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Notifications Bell */}
           <button
             onClick={onOpenNotifications}
-            className="relative p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="relative p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
             title="Central de Notificações"
             aria-label="Abrir notificações"
           >

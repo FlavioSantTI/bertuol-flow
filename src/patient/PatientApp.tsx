@@ -13,6 +13,9 @@ import {
   PartyPopper,
   CalendarClock,
   X,
+  MessageSquare,
+  PlusCircle,
+  ChevronRight,
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import { TotemQRCodeModal } from '../components/TotemQRCodeModal';
@@ -29,6 +32,7 @@ import { RewardsCatalog } from './components/RewardsCatalog';
 import { VouchersDrawer } from './components/VouchersDrawer';
 import { BirthdayGiftModal } from './components/BirthdayGiftModal';
 import { NotificationsDrawer } from './components/NotificationsDrawer';
+import { PatientMessagingDrawer } from './components/PatientMessagingDrawer';
 
 // Patient Services & Types
 import { patientApiService } from './services/patientApiService';
@@ -64,6 +68,19 @@ export const TEST_PATIENTS: TestPatientOption[] = [
     clinicId: 1,
     clinicName: 'Matriz Palmas • 104 Sul, Av. JK',
     procedures: 'Consulta Odontológica',
+  },
+  {
+    phone: '63984913860',
+    name: 'Flavio Dias Santiago',
+    appointmentId: 5001,
+    time: '09:00',
+    dayText: 'Hoje • 09:00',
+    dentistId: 5454048267862016,
+    dentistName: 'Dra. Ariane Bertuol',
+    dentistRole: 'Ortodontia & Alinhadores Invisíveis',
+    clinicId: 1,
+    clinicName: 'Matriz Palmas • 104 Sul, Av. JK',
+    procedures: 'Ajuste de Alinhador & Retorno',
   },
   {
     phone: '63993390500',
@@ -108,8 +125,14 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   const initialName = cleanPatientName(urlParams.get('name') || localStorage.getItem('bertuol_patient_name') || 'Alice Póvoa');
   const initialApptId = urlParams.get('appointment_id') ? Number(urlParams.get('appointment_id')) : 5005;
 
-  const initialClinicId = urlParams.get('clinic_id') ? Number(urlParams.get('clinic_id')) : 2;
-  const initialClinicName = initialClinicId === 2 ? 'Bertuol Odontologia — Unidade Paraíso' : 'Unidade Matriz Palmas • 104 Sul, Av. JK';
+  const matchedTestPatient = TEST_PATIENTS.find((p) => p.phone === initialPhone);
+  const initialClinicId = urlParams.get('clinic_id')
+    ? Number(urlParams.get('clinic_id'))
+    : matchedTestPatient?.clinicId || 1;
+  const initialClinicName =
+    initialClinicId === 2
+      ? 'Bertuol Odontologia — Unidade Paraíso'
+      : 'Unidade Matriz Palmas • 104 Sul, Av. JK';
 
   const [phone, setPhone] = useState(initialPhone);
   const [patientName, setPatientName] = useState(initialName);
@@ -123,7 +146,17 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   const [clinicName, setClinicName] = useState(initialClinicName);
   const [procedures, setProcedures] = useState('Consulta Odontológica');
 
-  const [activeTab, setActiveTab] = useState<'appointment' | 'checkin' | 'rewards' | 'vouchers'>('appointment');
+  const initialAba = urlParams.get('aba');
+  const initialOpenMsg = urlParams.get('chat') === 'true' || urlParams.get('msg') === 'true' || urlParams.get('mensagens') === 'true';
+  const initialNewMsg = urlParams.get('new_chat') === 'true' || urlParams.get('nova_mensagem') === 'true';
+
+  const [activeTab, setActiveTab] = useState<'appointment' | 'messages' | 'checkin' | 'rewards' | 'vouchers'>(() => {
+    if (initialAba === 'mensagens' || initialAba === 'messages' || initialAba === 'chat') return 'messages';
+    if (initialAba === 'checkin') return 'checkin';
+    if (initialAba === 'rewards' || initialAba === 'premios') return 'rewards';
+    if (initialAba === 'vouchers') return 'vouchers';
+    return 'appointment';
+  });
   const [rewardsSubTab, setRewardsSubTab] = useState<'catalog' | 'extrato' | 'dashboard'>('dashboard');
   const [extratoFilter, setExtratoFilter] = useState<'all' | 'earn' | 'redeem'>('all');
   const [internalAdminModalOpen, setInternalAdminModalOpen] = useState(false);
@@ -137,6 +170,11 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
   const [inAppNotifications, setInAppNotifications] = useState<any[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+
+  // In-App Patient Messaging Drawer & Quick New Chat
+  const [isMessagingDrawerOpen, setIsMessagingDrawerOpen] = useState(initialOpenMsg || initialNewMsg);
+  const [startNewChatOnOpen, setStartNewChatOnOpen] = useState(initialNewMsg);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   // Birthday Scheduling Modal (100% in-app)
   const [isBirthdayScheduleModalOpen, setIsBirthdayScheduleModalOpen] = useState(false);
@@ -206,6 +244,32 @@ export const PatientApp: React.FC<PatientAppProps> = ({
       console.warn('Erro ao carregar notificações do paciente:', err);
     }
   }, [phone]);
+
+  // Carregar contagem de mensagens de chat não lidas do paciente
+  useEffect(() => {
+    if (!phone && !patientName) return;
+    const fetchPatientUnread = async () => {
+      try {
+        const queryParams = new URLSearchParams();
+        if (phone) queryParams.set('patientPhone', phone);
+        if (patientName) queryParams.set('patientName', patientName);
+        const res = await fetch(`/api/conversations?${queryParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.conversations)) {
+            const total = data.conversations.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
+            setUnreadMessagesCount(total);
+          }
+        }
+      } catch {
+        // Ignora erros transitórios
+      }
+    };
+
+    fetchPatientUnread();
+    const interval = setInterval(fetchPatientUnread, 4000);
+    return () => clearInterval(interval);
+  }, [phone, patientName]);
 
   const handleMarkNotificationsRead = async (id?: string) => {
     try {
@@ -284,11 +348,22 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // Web Push Subscription & Status Checker
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      setPushPermission(Notification.permission);
-      pushSubscriptionService.checkCurrentSubscription().then(setIsPushSubscribed);
+    if (typeof window !== 'undefined') {
+      const isGranted = 'Notification' in window && Notification.permission === 'granted';
+      const isSaved = localStorage.getItem(`bertuol_push_active_${phone}`) === 'true';
+      if (isGranted || isSaved) {
+        setIsPushSubscribed(true);
+      }
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        setPushPermission(Notification.permission);
+        pushSubscriptionService.checkCurrentSubscription().then((sub) => {
+          if (sub || isGranted || isSaved) {
+            setIsPushSubscribed(true);
+          }
+        });
+      }
     }
-  }, []);
+  }, [phone]);
 
   // Consultar Aniversariantes do Clinicorp ao vivo
   useEffect(() => {
@@ -345,12 +420,28 @@ export const PatientApp: React.FC<PatientAppProps> = ({
       if (res.success) {
         setIsPushSubscribed(true);
         setPushPermission('granted');
+        localStorage.setItem(`bertuol_push_active_${phone}`, 'true');
         showNotification('Notificações Push ativadas com sucesso no seu aparelho!');
       } else {
-        showNotification(res.error || 'Permissão de notificações não foi concedida.');
+        // Se já tem permissão concedida pelo browser
+        if (Notification.permission === 'granted') {
+          setIsPushSubscribed(true);
+          setPushPermission('granted');
+          localStorage.setItem(`bertuol_push_active_${phone}`, 'true');
+          showNotification('Notificações Push ativadas com sucesso no seu aparelho!');
+        } else {
+          showNotification(res.error || 'Permissão de notificações não foi concedida.');
+        }
       }
     } catch (err: any) {
-      showNotification('Falha ao ativar notificações: ' + err.message);
+      if (typeof window !== 'undefined' && Notification.permission === 'granted') {
+        setIsPushSubscribed(true);
+        setPushPermission('granted');
+        localStorage.setItem(`bertuol_push_active_${phone}`, 'true');
+        showNotification('Notificações Push ativadas com sucesso!');
+      } else {
+        showNotification('Falha ao ativar notificações: ' + err.message);
+      }
     } finally {
       setIsSubscribingPush(false);
     }
@@ -746,9 +837,14 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         points={totalPoints}
         tier={tier}
         unreadCount={unreadNotificationsCount}
+        unreadMessagesCount={unreadMessagesCount}
         onOpenNotifications={() => {
           setIsNotificationsDrawerOpen(true);
           handleMarkNotificationsRead();
+        }}
+        onOpenMessages={() => {
+          setStartNewChatOnOpen(false);
+          setIsMessagingDrawerOpen(true);
         }}
         onOpenAdminModal={() => {
           if (onOpenAdminGamificationModal) {
@@ -763,86 +859,30 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
       {/* Main Content Area */}
       <main className="max-w-md mx-auto p-4 space-y-4">
-        {/* Web Push Activation Banner */}
-        {!isPushSubscribed && (
-          <div className="bg-slate-900 rounded-2xl p-3.5 text-white shadow-sm flex items-center justify-between gap-3 border border-slate-700">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <BellRing className="w-5 h-5 text-amber-400 shrink-0 animate-bounce" />
-              <div className="min-w-0">
-                <p className="text-xs font-bold truncate">Ativar Notificações no Celular</p>
-                <p className="text-[10px] text-gray-300 truncate">
-                  Receba avisos de consulta (1 dia e 2h antes) e seu presente na tela bloqueada
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleSubscribePush}
-              disabled={isSubscribingPush}
-              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shrink-0 cursor-pointer shadow-xs transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isSubscribingPush ? 'Ativando...' : 'Ativar Agora'}
-            </button>
-          </div>
-        )}
 
-        {/* Lembretes Push Shortcut Bar */}
-        <div className="bg-white rounded-2xl p-3 border border-teal-100 shadow-2xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#147A80] flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#147A80] block">
-                Lembretes Push de Consultas
-              </span>
-              <span className="text-[11px] text-gray-600 truncate block">
-                Sem depender de WhatsApp
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            <button
-              onClick={() => handleSendReminderPush('1_day_before')}
-              className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#147A80] font-bold text-[10px] border border-teal-200 transition-colors cursor-pointer"
-              title="Disparar lembrete de consulta 1 dia antes (24h)"
-            >
-              📅 1 dia antes
-            </button>
-            <button
-              onClick={() => handleSendReminderPush('2_hours_before')}
-              className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-[10px] border border-amber-200 transition-colors cursor-pointer"
-              title="Disparar lembrete de consulta 2 horas antes"
-            >
-              ⏰ 2h antes
-            </button>
-            <button
-              onClick={handleSendBirthdayPush}
-              className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-bold text-[10px] border border-pink-200 transition-colors cursor-pointer flex items-center gap-1"
-              title="Disparar aviso e cortesia de aniversário"
-            >
-              🎂 Aniversário
-            </button>
-          </div>
-        </div>
 
         {/* TAB 1: MINHA CONSULTA */}
         {activeTab === 'appointment' && (
-          <AppointmentCard
-            appointmentTime={appointmentTime}
-            appointmentDayText={appointmentDayText}
-            dentistName={dentistName}
-            dentistRole={dentistRole}
-            procedures={procedures}
-            clinicName={clinicName}
-            isConfirmed={isConfirmed}
-            onConfirm={handleConfirmAppointment}
-            onNavigateToCheckin={() => setActiveTab('checkin')}
-            totalPoints={totalPoints}
-            onViewExtrato={() => {
-              setActiveTab('rewards');
-              setRewardsSubTab('extrato');
-            }}
-          />
+          <>
+            <AppointmentCard
+              appointmentTime={appointmentTime}
+              appointmentDayText={appointmentDayText}
+              dentistName={dentistName}
+              dentistRole={dentistRole}
+              procedures={procedures}
+              clinicName={clinicName}
+              isConfirmed={isConfirmed}
+              onConfirm={handleConfirmAppointment}
+              onNavigateToCheckin={() => setActiveTab('checkin')}
+              totalPoints={totalPoints}
+              onViewExtrato={() => {
+                setActiveTab('rewards');
+                setRewardsSubTab('extrato');
+              }}
+            />
+
+
+          </>
         )}
 
         {/* TAB 2: TOTEM CHECK-IN */}
@@ -899,11 +939,86 @@ export const PatientApp: React.FC<PatientAppProps> = ({
             onNavigateToCatalog={() => setActiveTab('rewards')}
           />
         )}
+
+        {/* TAB 5: MENSAGENS COM A CLÍNICA & DENTISTA */}
+        {activeTab === 'messages' && (
+          <div className="space-y-4 animate-in fade-in">
+            <div className="bg-gradient-to-br from-[#147A80] to-[#1FB5BD] rounded-3xl p-5 text-white shadow-md space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-1 rounded-full text-white">
+                  💬 Mensageria Oficial
+                </span>
+                <span className="text-xs text-teal-100 font-medium">Bertuol Odontologia</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold leading-tight">Canal Direto com sua Equipe</h2>
+                <p className="text-xs text-teal-50 mt-1">
+                  Envie dúvidas sobre seu tratamento, orientações pós-consulta ou fale com a recepção em tempo real.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartNewChatOnOpen(true);
+                    setIsMessagingDrawerOpen(true);
+                  }}
+                  className="py-3 px-3 bg-white hover:bg-teal-50 text-[#147A80] font-black text-xs rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <PlusCircle className="w-4 h-4 text-[#147A80]" />
+                  <span>Nova Mensagem</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartNewChatOnOpen(false);
+                    setIsMessagingDrawerOpen(true);
+                  }}
+                  className="py-3 px-3 bg-teal-800/40 hover:bg-teal-800/60 border border-white/20 text-white font-bold text-xs rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4 text-white" />
+                  <span>Abrir Conversas</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-5 border border-teal-100 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#147A80]" />
+                  <span>Histórico de Mensagens</span>
+                </h3>
+                {unreadMessagesCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black">
+                    {unreadMessagesCount} não lida(s)
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Todas as suas conversas com a recepção e com seus dentistas ficam salvas de forma confidencial e protegida.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStartNewChatOnOpen(false);
+                  setIsMessagingDrawerOpen(true);
+                }}
+                className="w-full py-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] font-bold text-xs rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Toque para Visualizar o Chat Completo</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
-        <div className="max-w-md mx-auto grid grid-cols-4 px-2 py-1.5">
+        <div className="max-w-md mx-auto grid grid-cols-5 px-1.5 py-1.5">
           <button
             onClick={() => setActiveTab('appointment')}
             className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
@@ -914,6 +1029,29 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           >
             <Calendar className="w-5 h-5" />
             <span className="text-[10px] mt-0.5">Consulta</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('messages');
+              setStartNewChatOnOpen(false);
+              setIsMessagingDrawerOpen(true);
+            }}
+            className={`relative flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'messages' || isMessagingDrawerOpen
+                ? 'text-[#147A80] font-black'
+                : 'text-gray-400 hover:text-[#147A80] font-medium'
+            }`}
+          >
+            <div className="relative">
+              <MessageSquare className="w-5 h-5" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs animate-bounce">
+                  {unreadMessagesCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5">Mensagens</span>
           </button>
 
           <button
@@ -937,7 +1075,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
             }`}
           >
             <Gift className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">Extrato & Prêmios</span>
+            <span className="text-[10px] mt-0.5 truncate max-w-full">Prêmios</span>
           </button>
 
           <button
@@ -993,6 +1131,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         onMarkAllRead={() => handleMarkNotificationsRead()}
         onMarkRead={(id) => handleMarkNotificationsRead(id)}
         onOpenBirthdaySchedule={() => setIsBirthdayScheduleModalOpen(true)}
+        onOpenMessages={() => setIsMessagingDrawerOpen(true)}
         onConfirmAppointment={handleConfirmAppointment}
         onNavigateToCheckin={() => setActiveTab('checkin')}
         isConfirmed={isConfirmed}
@@ -1010,6 +1149,17 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           staffName="Administração Bertuol"
         />
       )}
+
+      {/* Patient In-App Messaging Drawer */}
+      <PatientMessagingDrawer
+        isOpen={isMessagingDrawerOpen}
+        onClose={() => setIsMessagingDrawerOpen(false)}
+        patientName={patientName}
+        patientPhone={phone}
+        clinicId={clinicId}
+        initialCreateNew={startNewChatOnOpen}
+        onResetCreateNew={() => setStartNewChatOnOpen(false)}
+      />
     </div>
   );
 };

@@ -1,6 +1,0 @@
-{
-  "summary": "Plano de implementação detalhado para a Fase 1 da Autenticação Biométrica WebAuthn para Profissionais no Bertuol Flow, com suporte a Passkeys diretas, múltiplos dispositivos com apelidos, rotas @simplewebauthn/server no backend e fallback por senha convencional.",
-  "updatedAt": "2026-10-14T12:24:24.483922903Z",
-  "requestFeedback": true,
-  "userFacing": true
-}

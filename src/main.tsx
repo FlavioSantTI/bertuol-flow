@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
+import { APP_VERSION } from './config/version';
 import App from './App.tsx';
 import './index.css';
 
@@ -80,6 +81,17 @@ try {
         console.warn('Falha no registro do Service Worker:', error);
       },
     });
+
+    // Automated Cache Purge upon Version Upgrade
+    const storedVersion = localStorage.getItem('bertuol_pwa_version');
+    if (storedVersion && storedVersion !== APP_VERSION) {
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => caches.delete(name));
+        });
+      }
+    }
+    localStorage.setItem('bertuol_pwa_version', APP_VERSION);
 
     // If URL contains bust, v, or clear_cache, purge caches to guarantee newest code
     const urlParams = new URLSearchParams(window.location.search);

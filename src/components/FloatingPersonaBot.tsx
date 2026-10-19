@@ -70,7 +70,7 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
       onSelectClinic('all');
       onUpdateUserContext({
         role: 'admin_root',
-        userName: 'Favuca Dias (Admin Root)',
+        userName: userContext.userName || 'Flavio Santiago (Admin Root)',
         clinicId: 1,
         allowedClinicIds: [1, 2, 3],
         canAccessConfig: true,

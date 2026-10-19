@@ -152,6 +152,14 @@ export const INITIAL_CLINICS: Clinic[] = [
     webhook_secret: 'sec_palmas_9812a',
     colorTag: '#FF981A',
     active: true,
+    cep: '77001-002',
+    logradouro: 'Quadra 104 Sul, Av. LO-01',
+    numero: '402',
+    complemento: 'Ed. Executive Center, Sala 402',
+    bairro: 'Plano Diretor Sul',
+    cidade: 'Palmas',
+    estado: 'TO',
+    google_maps_url: 'https://maps.app.goo.gl/palmas',
   },
   {
     id: 2,
@@ -169,6 +177,14 @@ export const INITIAL_CLINICS: Clinic[] = [
     webhook_secret: 'sec_paraiso_4419f',
     colorTag: '#2563EB',
     active: false, // Inativa provisoriamente na fase de testes (Apenas Palmas)
+    cep: '77600-000',
+    logradouro: 'Av. Bernardo Sayão',
+    numero: '1420',
+    complemento: '',
+    bairro: 'Centro',
+    cidade: 'Paraíso do Tocantins',
+    estado: 'TO',
+    google_maps_url: 'https://maps.app.goo.gl/paraiso',
   },
   {
     id: 3,
@@ -186,6 +202,14 @@ export const INITIAL_CLINICS: Clinic[] = [
     webhook_secret: 'sec_araguaina_7721c',
     colorTag: '#059669',
     active: false, // Inativa provisoriamente na fase de testes (Apenas Palmas)
+    cep: '77804-010',
+    logradouro: 'Rua 13 de Maio',
+    numero: '850',
+    complemento: '',
+    bairro: 'Setor Central',
+    cidade: 'Araguaína',
+    estado: 'TO',
+    google_maps_url: 'https://maps.app.goo.gl/araguaina',
   },
 ];
 
@@ -800,6 +824,73 @@ export const INITIAL_SYSTEM_USERS: SystemUser[] = [
     lastLoginAt: 'Hoje às 11:00',
   },
   {
+    id: 'usr_dr_paulo',
+    name: 'Dr. Paulo Bertuol',
+    email: 'paulo@bertuolodontologia.com.br',
+    phone: '(63) 98148-7023',
+    role: 'dentist',
+    dentist_id: 5229563695136768,
+    clinicId: 1,
+    allowedClinicIds: [1, 2, 3],
+    permissions: getDefaultPermissionsForRole('dentist'),
+    active: true,
+    password: 'Bertuol@2026',
+    initialPassword: 'Bertuol@2026',
+    mustChangePassword: false,
+    createdAt: '2026-01-01T08:00:00Z',
+    lastLoginAt: 'Hoje às 09:00',
+  },
+  {
+    id: 'usr_dra_mariana',
+    name: 'Dra. Mariana Costa',
+    email: 'mariana@bertuolodontologia.com.br',
+    phone: '(63) 98412-3000',
+    role: 'dentist',
+    dentist_id: 6036933394890752,
+    clinicId: 1,
+    allowedClinicIds: [1, 2],
+    permissions: getDefaultPermissionsForRole('dentist'),
+    active: true,
+    password: 'Bertuol@2026',
+    initialPassword: 'Bertuol@2026',
+    mustChangePassword: false,
+    createdAt: '2026-01-15T08:00:00Z',
+    lastLoginAt: 'Hoje às 08:30',
+  },
+  {
+    id: 'usr_dra_juceline',
+    name: 'Dra. Juceline Palmas',
+    email: 'juceline@bertuolodontologia.com.br',
+    phone: '(63) 99247-4826',
+    role: 'dentist',
+    dentist_id: 4715910723076096,
+    clinicId: 1,
+    allowedClinicIds: [1],
+    permissions: getDefaultPermissionsForRole('dentist'),
+    active: true,
+    password: 'Bertuol@2026',
+    initialPassword: 'Bertuol@2026',
+    mustChangePassword: false,
+    createdAt: '2026-02-01T08:00:00Z',
+    lastLoginAt: 'Hoje às 08:00',
+  },
+  {
+    id: 'usr_recepcao_geral',
+    name: 'Recepção e Atendimento',
+    email: 'recepcao@bertuolodontologia.com.br',
+    phone: '(63) 3215-4000',
+    role: 'receptionist',
+    clinicId: 1,
+    allowedClinicIds: [1],
+    permissions: getDefaultPermissionsForRole('receptionist'),
+    active: true,
+    password: 'Bertuol@2026',
+    initialPassword: 'Bertuol@2026',
+    mustChangePassword: false,
+    createdAt: '2026-02-10T11:00:00Z',
+    lastLoginAt: 'Hoje às 07:30',
+  },
+  {
     id: 'usr_agda_bertuol',
     name: 'Agda Bertuol',
     email: 'agdacv@gmail.com',
@@ -884,13 +975,13 @@ export const INITIAL_SYSTEM_USERS: SystemUser[] = [
   },
   {
     id: 'usr_flavio_ti',
-    name: 'Flavio Admin (Suporte Técnico TI)',
+    name: 'Flavio Santiago (Admin Root)',
     email: 'flavio.santiago.ti@outlook.com',
     phone: '(63) 98148-7023',
-    role: 'admin_tecnico',
+    role: 'admin_root',
     clinicId: 1,
     allowedClinicIds: [1, 2, 3],
-    permissions: getDefaultPermissionsForRole('admin_tecnico'),
+    permissions: getDefaultPermissionsForRole('admin_root'),
     active: true,
     password: '123456',
     initialPassword: '123456',
@@ -1011,6 +1102,40 @@ class DataService {
         }
       } else {
         this.systemUsers = [...INITIAL_SYSTEM_USERS];
+      }
+
+      // Ensure Super Admin root accounts are strictly enforced as admin_root with full permissions
+      this.systemUsers.forEach((u) => {
+        if (
+          (u.email && (u.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || u.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
+          (u.name && (u.name.includes('Flavio') || u.name.includes('Favuca'))) ||
+          u.id === 'usr_flavio_ti' || u.id === 'usr_favuca_root' || u.id === 'usr_flavio_root'
+        ) {
+          u.role = 'admin_root';
+          u.allowedClinicIds = [1, 2, 3];
+          u.permissions = getDefaultPermissionsForRole('admin_root');
+          if (!u.email) {
+            u.email = u.name.includes('Favuca') ? 'favuca.dias@gmail.com' : 'flavio.santiago.ti@outlook.com';
+          }
+          u.name = u.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ? 'Flavio Santiago (Admin Root)' : 'Favuca Dias (Admin Root)';
+        }
+      });
+
+      if (this.userContext) {
+        const isRoot =
+          (this.userContext.email && (this.userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || this.userContext.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
+          (this.userContext.userName && (this.userContext.userName.includes('Flavio') || this.userContext.userName.includes('Favuca'))) ||
+          (this.userContext.userId && (this.userContext.userId === 'usr_flavio_ti' || this.userContext.userId === 'usr_favuca_root' || this.userContext.userId === 'usr_flavio_root'));
+
+        if (isRoot) {
+          this.userContext.role = 'admin_root';
+          this.userContext.allowedClinicIds = [1, 2, 3];
+          this.userContext.canAccessConfig = true;
+          this.userContext.permissions = getDefaultPermissionsForRole('admin_root');
+          if (!this.userContext.email) {
+            this.userContext.email = this.userContext.userName?.includes('Favuca') ? 'favuca.dias@gmail.com' : 'flavio.santiago.ti@outlook.com';
+          }
+        }
       }
 
       // Test phase requirement: Default to ONLY Palmas active
@@ -1237,6 +1362,20 @@ class DataService {
   }
 
   public setUserContext(context: AppUserContext) {
+    const isRoot =
+      (context.email && (context.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || context.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
+      (context.userName && (context.userName.includes('Flavio') || context.userName.includes('Favuca'))) ||
+      (context.userId && (context.userId === 'usr_flavio_ti' || context.userId === 'usr_favuca_root' || context.userId === 'usr_flavio_root'));
+
+    if (isRoot) {
+      context.role = 'admin_root';
+      context.allowedClinicIds = [1, 2, 3];
+      context.canAccessConfig = true;
+      context.permissions = getDefaultPermissionsForRole('admin_root');
+      if (!context.email) {
+        context.email = context.userName?.includes('Favuca') ? 'favuca.dias@gmail.com' : 'flavio.santiago.ti@outlook.com';
+      }
+    }
     this.userContext = {
       ...context,
       canAccessConfig: this.canUserAccessConfig(context.role),

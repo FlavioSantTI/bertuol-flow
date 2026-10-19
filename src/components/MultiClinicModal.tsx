@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   Building2,
@@ -27,6 +27,10 @@ import {
   Power,
   PowerOff,
   PauseCircle,
+  MapPin,
+  Search,
+  Loader2,
+  Compass,
 } from 'lucide-react';
 import { Clinic, AppUserContext, UserRole } from '../types/database';
 import { dataService } from '../services/dataService';
@@ -61,6 +65,9 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
   const [editingClinicId, setEditingClinicId] = useState<number | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const numeroInputRef = useRef<HTMLInputElement>(null);
+
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;
@@ -82,7 +89,80 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
     clinicorp_api_key: '',
     webhook_secret: '',
     colorTag: '#FF981A',
+    // Endereço Estruturado e Google Maps
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    estado: 'TO',
+    google_maps_url: '',
   });
+
+  const formatCep = (val: string) => {
+    const digits = val.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
+  const fetchAddressByCep = async (cleanCep: string) => {
+    if (cleanCep.length !== 8) return;
+    setIsLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      if (!response.ok) throw new Error('Erro na resposta do ViaCEP');
+      const data = await response.json();
+      if (data.erro) {
+        showToast('⚠️ CEP não encontrado no ViaCEP. Preencha os campos de endereço manualmente.');
+        return;
+      }
+      setFormData((prev) => {
+        const logradouro = data.logradouro || prev.logradouro;
+        const bairro = data.bairro || prev.bairro;
+        const cidade = data.localidade || prev.cidade || prev.city;
+        const estado = data.uf || prev.estado || prev.state;
+        const numStr = prev.numero ? `, ${prev.numero}` : '';
+        const compStr = prev.complemento ? ` (${prev.complemento})` : '';
+        const computedAddress = `${logradouro}${numStr}${compStr} - ${bairro}, ${cidade} - ${estado}`;
+        return {
+          ...prev,
+          logradouro,
+          bairro,
+          cidade,
+          city: cidade,
+          estado,
+          state: estado,
+          address: computedAddress,
+        };
+      });
+      setTimeout(() => {
+        numeroInputRef.current?.focus();
+      }, 100);
+      showToast('📍 Endereço preenchido automaticamente via ViaCEP!');
+    } catch (err) {
+      console.error('Erro ao consultar ViaCEP:', err);
+      showToast('⚠️ Não foi possível consultar o ViaCEP. Digite o endereço manualmente.');
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCep(e.target.value);
+    setFormData((prev) => ({ ...prev, cep: formatted }));
+    const clean = formatted.replace(/\D/g, '');
+    if (clean.length === 8) {
+      fetchAddressByCep(clean);
+    }
+  };
+
+  const handleCepBlur = () => {
+    const clean = formData.cep.replace(/\D/g, '');
+    if (clean.length === 8) {
+      fetchAddressByCep(clean);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -134,20 +214,28 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
   const handleStartEdit = (clinic: Clinic) => {
     setEditingClinicId(clinic.id);
     setFormData({
-      name: clinic.name,
-      shortName: clinic.shortName,
-      slug: clinic.slug,
-      city: clinic.city,
-      state: clinic.state,
-      address: clinic.address,
-      phone: clinic.phone,
-      whatsappNumber: clinic.whatsappNumber,
+      name: clinic.name || '',
+      shortName: clinic.shortName || '',
+      slug: clinic.slug || '',
+      city: clinic.city || clinic.cidade || '',
+      state: clinic.state || clinic.estado || 'TO',
+      address: clinic.address || '',
+      phone: clinic.phone || '',
+      whatsappNumber: clinic.whatsappNumber || '',
       whatsapp_instance_key: clinic.whatsapp_instance_key || `inst_${clinic.slug}`,
-      clinicorp_business_id: String(clinic.clinicorp_business_id),
+      clinicorp_business_id: String(clinic.clinicorp_business_id || ''),
       clinicorp_user: clinic.clinicorp_user || '',
       clinicorp_api_key: clinic.clinicorp_api_key || '',
       webhook_secret: clinic.webhook_secret || `sec_${clinic.slug}_auth`,
       colorTag: clinic.colorTag || '#FF981A',
+      cep: clinic.cep || '',
+      logradouro: clinic.logradouro || '',
+      numero: clinic.numero || '',
+      complemento: clinic.complemento || '',
+      bairro: clinic.bairro || '',
+      cidade: clinic.cidade || clinic.city || '',
+      estado: clinic.estado || clinic.state || 'TO',
+      google_maps_url: clinic.google_maps_url || '',
     });
     setTestResult(null);
     setShowApiKey(false);
@@ -171,6 +259,14 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
       clinicorp_api_key: '',
       webhook_secret: `sec_${Math.random().toString(36).substring(2, 8)}`,
       colorTag: '#8B5CF6',
+      cep: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: 'TO',
+      google_maps_url: '',
     });
     setTestResult(null);
     setShowApiKey(true);
@@ -183,14 +279,28 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
       showToast('Preencha os campos obrigatórios: Nome da Clínica, Nome Curto e Slug.');
       return;
     }
+    if (!formData.cep.trim()) {
+      showToast('O campo CEP é obrigatório.');
+      return;
+    }
+    if (!formData.numero.trim()) {
+      showToast('O campo Número do endereço é obrigatório.');
+      return;
+    }
 
-    const payload = {
+    const numStr = formData.numero.trim() ? `, ${formData.numero.trim()}` : '';
+    const compStr = formData.complemento.trim() ? ` (${formData.complemento.trim()})` : '';
+    const fullAddress = formData.logradouro.trim()
+      ? `${formData.logradouro.trim()}${numStr}${compStr} - ${formData.bairro.trim()}, ${formData.cidade.trim() || formData.city.trim()} - ${formData.estado.trim() || formData.state.trim()}`
+      : formData.address.trim();
+
+    const payload: Partial<Clinic> = {
       name: formData.name.trim(),
       shortName: formData.shortName.trim(),
       slug: formData.slug.trim().toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-      city: formData.city.trim(),
-      state: formData.state.trim().toUpperCase(),
-      address: formData.address.trim(),
+      city: (formData.cidade || formData.city || '').trim(),
+      state: (formData.estado || formData.state || 'TO').trim().toUpperCase(),
+      address: fullAddress,
       phone: formData.phone.trim(),
       whatsappNumber: formData.whatsappNumber.trim(),
       whatsapp_instance_key: formData.whatsapp_instance_key.trim(),
@@ -200,13 +310,21 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
       webhook_secret: formData.webhook_secret.trim(),
       colorTag: formData.colorTag,
       active: true,
+      cep: formData.cep.trim(),
+      logradouro: formData.logradouro.trim(),
+      numero: formData.numero.trim(),
+      complemento: formData.complemento.trim(),
+      bairro: formData.bairro.trim(),
+      cidade: (formData.cidade || formData.city || '').trim(),
+      estado: (formData.estado || formData.state || 'TO').trim().toUpperCase(),
+      google_maps_url: formData.google_maps_url.trim(),
     };
 
     if (editingClinicId) {
       dataService.updateClinic(editingClinicId, payload);
       showToast(`Configurações da unidade "${payload.shortName}" atualizadas com sucesso!`);
     } else {
-      dataService.addClinic(payload);
+      dataService.addClinic(payload as Omit<Clinic, 'id'>);
       showToast(`Nova unidade "${payload.shortName}" cadastrada no sistema!`);
     }
 
@@ -516,7 +634,7 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
                           </div>
 
                           {/* Credentials Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-[11px]">
                             <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200/70">
                               <span className="text-gray-500 font-semibold block flex items-center gap-1">
                                 <Key className="w-3 h-3 text-amber-600" />
@@ -545,6 +663,28 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
                               <span className="font-bold text-emerald-700 block truncate mt-0.5">
                                 {clinic.whatsappNumber || 'Sem WhatsApp'}
                               </span>
+                            </div>
+
+                            <div className="p-2.5 bg-amber-50/50 rounded-xl border border-amber-200/80">
+                              <span className="text-amber-900 font-semibold block flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-amber-600" />
+                                CEP e Google Maps:
+                              </span>
+                              <div className="flex items-center justify-between gap-1 mt-0.5">
+                                <span className="font-mono font-bold text-amber-950">
+                                  {clinic.cep || 'Sem CEP'}
+                                </span>
+                                {clinic.google_maps_url ? (
+                                  <a
+                                    href={clinic.google_maps_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-1.5 py-0.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 text-[10px] font-bold inline-flex items-center gap-0.5"
+                                  >
+                                    <ExternalLink className="w-2.5 h-2.5" /> Maps
+                                  </a>
+                                ) : null}
+                              </div>
                             </div>
                           </div>
 
@@ -600,57 +740,237 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {/* Clinic Name */}
-                    <div className="sm:col-span-2">
-                      <label className="block font-bold text-gray-700 mb-1">
-                        Nome Oficial da Unidade *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ex: Bertuol Odontologia Avançada - Unidade Gurupi"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
-                      />
+                    {/* Identification fields */}
+                    <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Clinic Name */}
+                      <div className="sm:col-span-2">
+                        <label className="block font-bold text-gray-700 mb-1">
+                          Nome Oficial da Unidade *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Ex: Bertuol Odontologia Avançada - Unidade Gurupi"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                        />
+                      </div>
+
+                      {/* Short Name */}
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1">
+                          Nome Curto para Agenda *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.shortName}
+                          onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
+                          placeholder="Ex: Gurupi"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                        />
+                      </div>
+
+                      {/* Slug */}
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1">
+                          Slug do Webhook (identificador URL) *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.slug}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                            })
+                          }
+                          placeholder="Ex: gurupi"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-mono font-bold"
+                        />
+                        <span className="text-[10px] text-gray-400 mt-0.5 block truncate">
+                          URL: {currentOrigin}/api/webhooks/clinicorp/{formData.slug || 'slug'}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Short Name */}
-                    <div>
-                      <label className="block font-bold text-gray-700 mb-1">
-                        Nome Curto para Agenda *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.shortName}
-                        onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
-                        placeholder="Ex: Gurupi"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
-                      />
-                    </div>
+                    {/* SEÇÃO / CARD ESTRUTURADO: ENDEREÇO COMPLETO & LOCALIZAÇÃO NO GOOGLE MAPS */}
+                    <div className="sm:col-span-2 p-3.5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-amber-200/60">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold shadow-2xs">
+                            <MapPin className="w-4 h-4 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-extrabold text-amber-950 uppercase tracking-wide">
+                              Endereço Completo & Localização Google Maps
+                            </h5>
+                            <p className="text-[11px] text-amber-900/70">
+                              Digite o CEP para buscar o endereço automaticamente via ViaCEP.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                    {/* Slug */}
-                    <div>
-                      <label className="block font-bold text-gray-700 mb-1">
-                        Slug do Webhook (identificador URL) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.slug}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-                          })
-                        }
-                        placeholder="Ex: gurupi"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-mono font-bold"
-                      />
-                      <span className="text-[10px] text-gray-400 mt-0.5 block truncate">
-                        URL: {currentOrigin}/api/webhooks/clinicorp/{formData.slug || 'slug'}
-                      </span>
+                      <div className="grid grid-cols-12 gap-2.5 text-xs">
+                        {/* Linha 1: CEP (col-span-4) + Logradouro (col-span-8) */}
+                        <div className="col-span-12 sm:col-span-4">
+                          <label className="block font-bold text-gray-700 mb-1 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Search className="w-3.5 h-3.5 text-amber-600" />
+                              CEP *
+                            </span>
+                            {isLoadingCep && (
+                              <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-1">
+                                <Loader2 className="w-3 h-3 animate-spin text-amber-600" /> Buscando...
+                              </span>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            maxLength={9}
+                            value={formData.cep}
+                            onChange={handleCepChange}
+                            onBlur={handleCepBlur}
+                            placeholder="00000-000"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-mono font-bold"
+                          />
+                        </div>
+
+                        <div className="col-span-12 sm:col-span-8">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            Logradouro / Rua *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.logradouro}
+                            onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
+                            placeholder="Ex: Quadra 104 Sul, Av. LO-01"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                          />
+                        </div>
+
+                        {/* Linha 2: Número (col-span-3) + Complemento (col-span-4) + Bairro (col-span-5) */}
+                        <div className="col-span-12 sm:col-span-3">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            Número *
+                          </label>
+                          <input
+                            ref={numeroInputRef}
+                            type="text"
+                            required
+                            value={formData.numero}
+                            onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                            placeholder="Ex: 402"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                          />
+                        </div>
+
+                        <div className="col-span-12 sm:col-span-4">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            Complemento <span className="font-normal text-gray-400">(opcional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.complemento}
+                            onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                            placeholder="Ex: Sala 204, Edifício X"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                          />
+                        </div>
+
+                        <div className="col-span-12 sm:col-span-5">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            Bairro *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.bairro}
+                            onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                            placeholder="Ex: Plano Diretor Sul"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                          />
+                        </div>
+
+                        {/* Linha 3: Cidade (col-span-8) + UF (col-span-4) */}
+                        <div className="col-span-12 sm:col-span-8">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            Cidade *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.cidade}
+                            onChange={(e) =>
+                              setFormData({ ...formData, cidade: e.target.value, city: e.target.value })
+                            }
+                            placeholder="Ex: Palmas"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-medium"
+                          />
+                        </div>
+
+                        <div className="col-span-12 sm:col-span-4">
+                          <label className="block font-bold text-gray-700 mb-1">
+                            UF / Estado *
+                          </label>
+                          <select
+                            value={formData.estado}
+                            onChange={(e) =>
+                              setFormData({ ...formData, estado: e.target.value, state: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-bold"
+                          >
+                            {[
+                              'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+                              'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+                              'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+                            ].map((uf) => (
+                              <option key={uf} value={uf}>
+                                {uf}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Linha 4: Link do Google Maps (col-span-12 com botão de preview/testar link) */}
+                        <div className="col-span-12">
+                          <label className="block font-bold text-gray-700 mb-1 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Compass className="w-3.5 h-3.5 text-blue-600" />
+                              Link do Google Maps (Localização)
+                            </span>
+                            {formData.google_maps_url ? (
+                              <a
+                                href={formData.google_maps_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-[11px] inline-flex items-center gap-1 transition-all"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Testar Link
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 font-medium">
+                                Nenhum link inserido
+                              </span>
+                            )}
+                          </label>
+                          <input
+                            type="url"
+                            value={formData.google_maps_url}
+                            onChange={(e) => setFormData({ ...formData, google_maps_url: e.target.value })}
+                            placeholder="https://maps.app.goo.gl/... ou https://google.com/maps/..."
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-mono text-blue-900"
+                          />
+                          <p className="text-[11px] text-gray-500 mt-1">
+                            Cole o link de compartilhamento do local ou da rota do Google Maps para envio automático em confirmações de agendamento.
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Clinicorp User */}
@@ -746,20 +1066,6 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
                         }
                         placeholder="Ex: inst_gurupi_live"
                         className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs font-mono"
-                      />
-                    </div>
-
-                    {/* Address & City */}
-                    <div className="sm:col-span-2">
-                      <label className="block font-bold text-gray-700 mb-1">
-                        Endereço & Cidade/UF
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="Ex: Av. Goiás, 1500 - Centro, Gurupi, TO"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-amber-400 text-xs"
                       />
                     </div>
 

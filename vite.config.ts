@@ -44,14 +44,15 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          cacheId: 'bertuol-flow-v1.2.0',
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          importScripts: ['/sw-push.js'],
+          importScripts: ['/sw-push.js?v=1.2.0'],
         },
         devOptions: {
-          enabled: process.env.DISABLE_HMR !== 'true',
+          enabled: true,
           type: 'module',
         },
       }),

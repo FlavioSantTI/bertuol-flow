@@ -35,18 +35,43 @@ export const pushSubscriptionService = {
     error?: string;
   }> {
     if (!this.isSupported()) {
-      return { success: false, error: 'Web Push não é suportado neste navegador.' };
+      return {
+        success: false,
+        error: 'Web Push não é suportado neste navegador. As notificações funcionarão dentro do app.',
+      };
     }
 
     try {
+      const currentPerm = this.getPermission();
+
+      if (currentPerm === 'denied') {
+        return {
+          success: false,
+          error:
+            'Permissão bloqueada no navegador. Para ativar: toque no ícone de cadeado/configurações ao lado do link do site e mude Notificações para "Permitir".',
+        };
+      }
+
+      // Tenta solicitar permissão
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        return { success: false, error: 'Permissão de notificação não concedida.' };
+        if (window.self !== window.top) {
+          return {
+            success: false,
+            error:
+              'Para conceder a permissão do navegador, abra o link diretamente em uma nova aba do navegador.',
+          };
+        }
+        return {
+          success: false,
+          error:
+            'Permissão não concedida. Toque no ícone de cadeado na barra de endereço do navegador e selecione "Permitir Notificações".',
+        };
       }
 
       const vapidKey = await this.getVapidPublicKey();
       if (!vapidKey) {
-        return { success: false, error: 'Chave VAPID não configurada no servidor.' };
+        return { success: false, error: 'Chave VAPID de envio não configurada no servidor.' };
       }
 
       const reg = await navigator.serviceWorker.ready;
