@@ -28,6 +28,7 @@ import type { RewardCatalogItem } from '../types/database';
 import { PatientHeader } from './components/PatientHeader';
 import { AppointmentCard } from './components/AppointmentCard';
 import { CheckinScanner } from './components/CheckinScanner';
+import { CheckinTutorialOverlay } from './components/CheckinTutorialOverlay';
 import { RewardsCatalog } from './components/RewardsCatalog';
 import { VouchersDrawer } from './components/VouchersDrawer';
 import { BirthdayGiftModal } from './components/BirthdayGiftModal';
@@ -202,6 +203,9 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   const [isCameraHelpOpen, setIsCameraHelpOpen] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCheckinTutorialOpen, setIsCheckinTutorialOpen] = useState<boolean>(() => {
+    return initialAba === 'checkin' && (urlParams.get('tutorial') === 'true' || urlParams.get('tutorial') === 'checkin');
+  });
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -902,6 +906,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
             onOpenTotemModal={() => setIsTotemModalOpen(true)}
             onOpenHelpModal={() => setIsCameraHelpOpen(true)}
             onManualCheckin={handleCheckin}
+            onOpenTutorial={() => setIsCheckinTutorialOpen(true)}
           />
         )}
 
@@ -1109,6 +1114,16 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         }}
         onUsePhotoCapture={() => fileInputRef.current?.click()}
         errorMessage={cameraError}
+      />
+
+      {/* Interactive Step-by-Step Check-in Tutorial Overlay */}
+      <CheckinTutorialOverlay
+        isOpen={isCheckinTutorialOpen}
+        onClose={() => setIsCheckinTutorialOpen(false)}
+        onSimulateCheckin={() => handleCheckin(clinicId, clinicName)}
+        onTriggerCamera={() => fileInputRef.current?.click()}
+        onOpenTotem={() => setIsTotemModalOpen(true)}
+        isCheckedIn={isCheckedIn}
       />
 
       {/* Birthday Scheduling Modal */}

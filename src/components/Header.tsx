@@ -28,6 +28,7 @@ import {
   Fingerprint,
   MessageSquare,
   SlidersHorizontal,
+  Target,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -54,6 +55,8 @@ interface HeaderProps {
   onOpenAdminGamificationModal?: () => void;
   onOpenMessagingModal?: () => void;
   unreadMessagesCount?: number;
+  onOpenCRMModal?: () => void;
+  crmBadgeCount?: number;
   onLogout?: () => void;
 }
 
@@ -81,6 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdminGamificationModal,
   onOpenMessagingModal,
   unreadMessagesCount,
+  onOpenCRMModal,
+  crmBadgeCount,
   onLogout,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -282,6 +287,23 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* MINI-CRM (Recall 6+ Meses & WhatsApp Pipeline) */}
+          {onOpenCRMModal && (
+            <button
+              onClick={onOpenCRMModal}
+              title="Mini-CRM Bertuol: Recall Preventivo e Pipeline WhatsApp"
+              className="relative flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-102 shrink-0"
+            >
+              <Target className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Mini-CRM</span>
+              {typeof crmBadgeCount === 'number' && crmBadgeCount > 0 && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center shadow-xs">
+                  {crmBadgeCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Quick Shortcut: Admin Clube de Vantagens (Disponível em telas médias/grandes) */}
           {onOpenAdminGamificationModal && (
             <button
@@ -352,6 +374,18 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
                     Gestão & Equipe
                   </span>
+                  {onOpenCRMModal && (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onOpenCRMModal();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-900 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
+                    >
+                      <Target className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Mini-CRM (Recall & WhatsApp)</span>
+                    </button>
+                  )}
                   {canManageUsers && onOpenUserManagementModal && (
                     <button
                       onClick={() => {
@@ -493,6 +527,16 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Central de Ajuda (FAQ)</span>
+                  </a>
+                  <a
+                    href="/slideshow-hyperframes.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsAdminMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors text-left cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Tutorial Interativo (Slideshow)</span>
                   </a>
                 </div>
               </div>
@@ -653,6 +697,23 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Row 3: Secondary Tools Bar (Horizontal Smooth Scroll) */}
         <div className="flex items-center gap-1.5 w-full overflow-x-auto no-scrollbar py-0.5">
+          {/* Mini-CRM Mobile Button */}
+          {onOpenCRMModal && (
+            <button
+              onClick={onOpenCRMModal}
+              title="Mini-CRM Bertuol: Recall & WhatsApp"
+              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-slate-900 text-white text-[11px] font-black shrink-0 transition-colors cursor-pointer shadow-2xs"
+            >
+              <Target className="w-3.5 h-3.5 text-amber-400" />
+              <span>Mini-CRM</span>
+              {typeof crmBadgeCount === 'number' && crmBadgeCount > 0 && (
+                <span className="min-w-4 h-4 px-1 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black flex items-center justify-center">
+                  {crmBadgeCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Totem QR Code Mobile */}
           {onOpenTotemQRModal && (
             <button

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinema Studio • Tutorial Animado Hyperframes & FFmpeg</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body {
+      background: #091314;
+      color: #F1F5F9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px 20px;
+    }
+
+    .container {
+      max-width: 1080px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge {
+      background: rgba(20, 122, 128, 0.3);
+      border: 1px solid #1FB5BD;
+      color: #FFCC29;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #FFCC29 0%, #FFA800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: #94A3B8;
+      font-size: 16px;
+      max-width: 650px;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .grid-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Video Player Frame */
+    .video-card {
+      background: #111D1F;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 36px;
+      padding: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 380px;
+      height: 675px;
+      border-radius: 26px;
+      background: #000;
+      object-fit: contain;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .video-actions {
+      display: flex;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #FFCC29;
+      color: #0E585D;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #f0bd1f;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #FFF;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.14);
+    }
+
+    /* Details Column */
+    .info-column {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .card {
+      background: #111D1F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFCC29;
+    }
+
+    .scene-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scene-item {
+      display: flex;
+      gap: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 4px solid #147A80;
+    }
+
+    .scene-time {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1FB5BD;
+      min-width: 60px;
+    }
+
+    .scene-desc strong {
+      display: block;
+      color: #FFF;
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .scene-desc p {
+      color: #94A3B8;
+      font-size: 13px;
+    }
+
+    pre {
+      background: #070B0C;
+      padding: 14px;
+      border-radius: 12px;
+      color: #38BDF8;
+      font-size: 12px;
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge">Automação de Vídeo • Hyperframes & FFmpeg</div>
+      <h1>Tutorial Animado <span>Bertuol Flow</span></h1>
+      <p class="subtitle">Vídeo vertical de 34s renderizado 100% por código com animação cinética, mockup de iPhone 15 Pro, app real em execução e trilha sonora harmônica via FFmpeg.</p>
+    </header>
+
+    <div class="grid-layout">
+      
+      <!-- Video Player -->
+      <div class="video-card">
+        <video controls autoplay loop playsinline poster="/pwa-512x512.png">
+          <source src="/videos/prototipo_tutorial_animado.mp4" type="video/mp4">
+          Seu navegador não suporta a tag de vídeo.
+        </video>
+        <div class="video-actions">
+          <a href="/videos/prototipo_tutorial_animado.mp4" download="tutorial_bertuol_animado.mp4" class="btn btn-primary">
+            ⬇ Baixar Vídeo MP4
+          </a>
+          <a href="/slideshow-hyperframes.html" class="btn btn-primary" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+            🕹️ Player Interativo Slideshow
+          </a>
+          <a href="/hyperframe-stage.html" target="_blank" class="btn btn-secondary">
+            👁 Ver Palco Web
+          </a>
+        </div>
+      </div>
+
+      <!-- Informações & Arquitetura -->
+      <div class="info-column">
+        
+        <div class="card">
+          <h2>🎬 Storyboard de Cenas (34 segundos)</h2>
+          <div class="scene-list">
+            <div class="scene-item">
+              <div class="scene-time">00 - 04s</div>
+              <div class="scene-desc">
+                <strong>1. Apresentação & Boas-Vindas</strong>
+                <p>Mockup centralizado, mesh gradient em tons Bertuol e título cinético animado.</p>
+              </div>
+            </div>
+            <div class="scene-item">
+              <div class="scene-time">05 - 12s</div>
+              <div class="scene-desc">
+                <strong>2. Confirmação de Consulta em 1 Toque</strong>
+                <p>Simulação do toque de laser dourado, confirmação de horário e selo de presença garantida.</p>
+              </div>
+            </div>
+            <div class="scene-item">
+              <div class="scene-time">13 - 22s</div>
+              <div class="scene-desc">
+                <strong>3. Check-in Silencioso no Totem</strong>
+                <p>Simulação da chegada à unidade Palmas sem filas na recepção.</p>
+              </div>
+            </div>
+            <div class="scene-item">
+              <div class="scene-time">23 - 34s</div>
+              <div class="scene-desc">
+                <strong>4. Clube Sorriso & Vouchers</strong>
+                <p>Extrato de pontos, subida de categoria para Ouro e resgate de benefícios.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>⚙️ Como Regerar a Qualquer Momento</h2>
+          <p style="color: #94A3B8; font-size: 14px; margin-bottom: 12px;">
+            Você pode executar o pipeline diretamente pelo terminal com um único comando:
+          </p>
+          <pre>npm run video:generate</pre>
+          <p style="color: #94A3B8; font-size: 13px; margin-top: 12px;">
+            O script captura o app em tempo real no Chromium a 60 FPS, gera a trilha sonora sintética no FFmpeg e exporta o MP4 pronto para WhatsApp, Reels, Stories e TikTok.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

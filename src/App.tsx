@@ -21,6 +21,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { WebAuthnModal } from './components/WebAuthnModal';
 import { PatientApp } from './patient/PatientApp';
 import { InternalMessagingModal } from './components/InternalMessagingModal';
+import { MiniCRMModal } from './components/crm/MiniCRMModal';
 import { messagingService } from './services/messagingService';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { SkeletonCard } from './components/SkeletonLoader';
@@ -76,6 +77,7 @@ export default function App() {
   const [isAdminGamificationOpen, setIsAdminGamificationOpen] = useState(false);
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
+  const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
@@ -734,6 +736,7 @@ export default function App() {
         onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
         onOpenMessagingModal={() => setIsInternalMessagingOpen(true)}
         unreadMessagesCount={unreadStaffMessagesCount}
+        onOpenCRMModal={() => setIsCRMModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1197,6 +1200,18 @@ export default function App() {
         dentists={dentists}
         clinics={clinics}
         selectedClinicId={selectedClinicId}
+      />
+
+      {/* Mini-CRM Modal (Recall 6+ Meses & Pipeline WhatsApp) */}
+      <MiniCRMModal
+        isOpen={isCRMModalOpen}
+        onClose={() => setIsCRMModalOpen(false)}
+        clinics={clinics}
+        dentists={dentists}
+        patients={dataService.getPatients()}
+        appointments={appointments}
+        userContext={effectiveUserContext}
+        selectedClinicIdFilter={selectedClinicId}
       />
         </div>
       </ClinicLayout>

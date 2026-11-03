@@ -6,6 +6,8 @@ import {
   Camera,
   Info,
   MapPin,
+  Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 
 interface CheckinScannerProps {
@@ -23,6 +25,7 @@ interface CheckinScannerProps {
   onOpenTotemModal: () => void;
   onOpenHelpModal: () => void;
   onManualCheckin: (clinicId: number, clinicName: string) => void;
+  onOpenTutorial?: () => void;
 }
 
 export const CheckinScanner: React.FC<CheckinScannerProps> = ({
@@ -40,10 +43,40 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
   onOpenTotemModal,
   onOpenHelpModal,
   onManualCheckin,
+  onOpenTutorial,
 }) => {
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 text-center space-y-4">
+      {/* Banner de Ajuda / Tutorial Interativo */}
+      {onOpenTutorial && (
+        <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-amber-50 rounded-2xl p-3 border border-teal-200/80 shadow-xs flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[#147A80] text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#147A80] block">
+                Novo por aqui?
+              </span>
+              <p className="text-xs font-bold text-gray-800 truncate">
+                Veja o passo a passo interativo de check-in (+20 pts)
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenTutorial}
+            className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-black text-xs shrink-0 shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+          >
+            <span>Ver Tutorial</span>
+          </button>
+        </div>
+      )}
+
+      <div
+        id="tutorial-step-intro"
+        className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 text-center space-y-4"
+      >
         <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-100 text-[#147A80] mx-auto flex items-center justify-center shadow-xs">
           <QrCode className="w-8 h-8" />
         </div>
@@ -123,6 +156,7 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
 
               {/* Modal to display Totem QR code */}
               <button
+                id="tutorial-step-totem"
                 onClick={onOpenTotemModal}
                 className="w-full py-3.5 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-xs hover:scale-[1.01]"
               >
@@ -142,6 +176,7 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
 
               {/* Native Camera Photo */}
               <button
+                id="tutorial-step-camera"
                 onClick={onTriggerFileCapture}
                 className="w-full py-3 px-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
               >
@@ -151,6 +186,7 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
 
               {/* Live Web Scanner */}
               <button
+                id="tutorial-step-live-camera"
                 onClick={onStartCamera}
                 className="w-full py-2.5 px-4 rounded-2xl bg-gray-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
@@ -158,15 +194,27 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
                 <span>🎥 Escanear com Câmera ao Vivo no Navegador</span>
               </button>
 
-              {/* Camera Permissions Guide */}
-              <button
-                type="button"
-                onClick={onOpenHelpModal}
-                className="text-[11px] text-gray-500 hover:text-[#147A80] font-semibold flex items-center justify-center gap-1 py-0.5 cursor-pointer"
-              >
-                <Info className="w-3.5 h-3.5 text-gray-400" />
-                <span>Como liberar a permissão da câmera no navegador?</span>
-              </button>
+              {/* Camera Permissions Guide & Tutorial link */}
+              <div className="flex items-center justify-center gap-3 py-0.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={onOpenHelpModal}
+                  className="text-[11px] text-gray-500 hover:text-[#147A80] font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Info className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Permissão da câmera?</span>
+                </button>
+                {onOpenTutorial && (
+                  <button
+                    type="button"
+                    onClick={onOpenTutorial}
+                    className="text-[11px] text-teal-700 hover:text-teal-900 font-bold flex items-center justify-center gap-1 cursor-pointer bg-teal-50 px-2 py-0.5 rounded-full"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Ver Tutorial de Passos</span>
+                  </button>
+                )}
+              </div>
 
               <div className="relative py-2 flex items-center justify-center">
                 <div className="border-t border-gray-200 w-full" />
@@ -176,31 +224,33 @@ export const CheckinScanner: React.FC<CheckinScannerProps> = ({
               </div>
 
               {/* Quick 1-click check-in shortcuts */}
-              <button
-                onClick={() => onManualCheckin(1, 'Matriz Palmas')}
-                className="w-full py-3 px-4 rounded-2xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-xs"
-              >
-                <span className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-amber-300" />
-                  <span>Estou na Recepção de <strong>Palmas</strong></span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-black">
-                  +20 pts
-                </span>
-              </button>
+              <div id="tutorial-step-manual" className="space-y-2">
+                <button
+                  onClick={() => onManualCheckin(1, 'Matriz Palmas')}
+                  className="w-full py-3 px-4 rounded-2xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-amber-300" />
+                    <span>Estou na Recepção de <strong>Palmas</strong></span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-black">
+                    +20 pts
+                  </span>
+                </button>
 
-              <button
-                onClick={() => onManualCheckin(2, 'Unidade Paraíso')}
-                className="w-full py-3 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs flex items-center justify-between transition-all cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span>Estou na Recepção de <strong>Paraíso</strong></span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-gray-300 text-gray-800 text-[11px] font-black">
-                  +20 pts
-                </span>
-              </button>
+                <button
+                  onClick={() => onManualCheckin(2, 'Unidade Paraíso')}
+                  className="w-full py-3 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs flex items-center justify-between transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span>Estou na Recepção de <strong>Paraíso</strong></span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-300 text-gray-800 text-[11px] font-black">
+                    +20 pts
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         )}
