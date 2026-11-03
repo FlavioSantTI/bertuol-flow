@@ -1,25 +1,28 @@
 import React from 'react';
-import { CRMLeadOpportunity, CRMStage } from '../../types/crm';
+import { CRMLeadOpportunity, CRMPipelineStage, CRMStage } from '../../types/crm';
 import {
   Phone,
-  Calendar,
   MessageSquare,
   Sparkles,
   User,
   Clock,
   Building2,
-  DollarSign,
-  AlertCircle,
-  MoreHorizontal,
   Trash2,
-  CheckCircle2,
-  ArrowRight,
 } from 'lucide-react';
 import { Clinic } from '../../types/database';
+
+const FALLBACK_STAGES: CRMPipelineStage[] = [
+  { id: 'new', title: 'Novo', color: 'border-blue-400', badgeBg: 'bg-blue-100 text-blue-900', icon: '🆕', kind: 'active' },
+  { id: 'contacted', title: 'Contatado', color: 'border-amber-400', badgeBg: 'bg-amber-100 text-amber-900', icon: '💬', kind: 'active' },
+  { id: 'scheduled', title: 'Agendado', color: 'border-indigo-400', badgeBg: 'bg-indigo-100 text-indigo-900', icon: '📅', kind: 'scheduled' },
+  { id: 'converted', title: 'Convertido', color: 'border-emerald-500', badgeBg: 'bg-emerald-100 text-emerald-900', icon: '✅', kind: 'won' },
+  { id: 'lost', title: 'Perdido', color: 'border-slate-300', badgeBg: 'bg-slate-100 text-slate-700', icon: '❌', kind: 'lost' },
+];
 
 interface CRMLeadCardProps {
   opportunity: CRMLeadOpportunity;
   clinics: Clinic[];
+  stages?: CRMPipelineStage[];
   onOpenQuickContact: (opp: CRMLeadOpportunity) => void;
   onUpdateStage: (id: string, stage: CRMStage) => void;
   onDelete: (id: string) => void;
@@ -29,12 +32,14 @@ interface CRMLeadCardProps {
 export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   opportunity,
   clinics,
+  stages,
   onOpenQuickContact,
   onUpdateStage,
   onDelete,
   viewMode = 'kanban',
 }) => {
   const clinic = clinics.find((c) => c.id === opportunity.clinicId);
+  const availableStages = stages && stages.length > 0 ? stages : FALLBACK_STAGES;
 
   const getPriorityBadge = () => {
     switch (opportunity.priority) {
@@ -59,7 +64,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
       case 'indication':
         return '⭐ Indicação';
       default:
-        return '📌 Outro Oportunidade';
+        return '📌 Oportunidade';
     }
   };
 
@@ -146,11 +151,11 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             onChange={(e) => onUpdateStage(opportunity.id, e.target.value as CRMStage)}
             className="text-xs font-bold bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-2 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80]"
           >
-            <option value="new">🆕 Novo</option>
-            <option value="contacted">💬 Contatado</option>
-            <option value="scheduled">📅 Agendado</option>
-            <option value="converted">✅ Convertido</option>
-            <option value="lost">❌ Perdido</option>
+            {availableStages.map((stg) => (
+              <option key={stg.id} value={stg.id}>
+                {stg.icon || '📌'} {stg.title}
+              </option>
+            ))}
           </select>
 
           {/* Quick WhatsApp Action Button */}
@@ -245,13 +250,13 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
         <select
           value={opportunity.stage}
           onChange={(e) => onUpdateStage(opportunity.id, e.target.value as CRMStage)}
-          className="text-[11px] font-bold bg-slate-100 border border-slate-300 rounded-xl px-2 py-1.5 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80]"
+          className="text-[11px] font-bold bg-slate-100 border border-slate-300 rounded-xl px-2 py-1.5 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80] max-w-[130px] truncate"
         >
-          <option value="new">🆕 Novo</option>
-          <option value="contacted">💬 Contatado</option>
-          <option value="scheduled">📅 Agendado</option>
-          <option value="converted">✅ Convertido</option>
-          <option value="lost">❌ Perdido</option>
+          {availableStages.map((stg) => (
+            <option key={stg.id} value={stg.id}>
+              {stg.icon || '📌'} {stg.title}
+            </option>
+          ))}
         </select>
 
         <button

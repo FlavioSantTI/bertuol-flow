@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { CRMLeadOpportunity, CRMPriority, CRMType } from '../../types/crm';
+import React, { useState, useEffect } from 'react';
+import { CRMLeadOpportunity, CRMPipeline, CRMPriority, CRMStage, CRMType } from '../../types/crm';
 import { Clinic, Dentist } from '../../types/database';
-import { X, Plus, User, Phone, DollarSign, Sparkles, Building2, Stethoscope, FileText } from 'lucide-react';
+import { X, Plus, User, Phone, Sparkles } from 'lucide-react';
 
 interface CRMNewOpportunityModalProps {
   isOpen: boolean;
   onClose: () => void;
   clinics: Clinic[];
   dentists: Dentist[];
+  pipelines?: CRMPipeline[];
+  defaultPipelineId?: string;
   onCreate: (opp: Omit<CRMLeadOpportunity, 'id' | 'createdAt' | 'updatedAt'>) => void;
   defaultClinicId?: number | 'all';
 }
@@ -17,6 +19,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   onClose,
   clinics,
   dentists,
+  pipelines = [],
+  defaultPipelineId,
   onCreate,
   defaultClinicId,
 }) => {
@@ -26,6 +30,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
   const [clinicId, setClinicId] = useState<number>(initialClinicId);
+  const [pipelineId, setPipelineId] = useState<string>(defaultPipelineId || pipelines[0]?.id || 'pipe-default');
+  const [stage, setStage] = useState<CRMStage>('new');
   const [type, setType] = useState<CRMType>('whatsapp_lead');
   const [priority, setPriority] = useState<CRMPriority>('medium');
   const [dentistName, setDentistName] = useState(dentists[0]?.Name || 'Dr. Flávio Santiago');
@@ -33,20 +39,41 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   const [estimatedValue, setEstimatedValue] = useState<string>('');
   const [pointsBonus, setPointsBonus] = useState<string>('50');
   const [notes, setNotes] = useState('');
-  const [source, setSource] = useState('WhatsApp Receptor');
+  const [source] = useState('WhatsApp Receptor');
+
+  useEffect(() => {
+    if (isOpen) {
+      const targetPipeId = defaultPipelineId || pipelines[0]?.id || 'pipe-default';
+      setPipelineId(targetPipeId);
+      const targetPipe = pipelines.find((p) => p.id === targetPipeId) || pipelines[0];
+      setStage(targetPipe?.stages[0]?.id || 'new');
+    }
+  }, [isOpen, defaultPipelineId, pipelines]);
 
   if (!isOpen) return null;
+
+  const selectedPipeline = pipelines.find((p) => p.id === pipelineId) || pipelines[0];
+  const availableStages = selectedPipeline?.stages || [{ id: 'new', title: 'Novo Lead', icon: '🆕' }];
+
+  const handlePipelineChange = (newPipeId: string) => {
+    setPipelineId(newPipeId);
+    const pipe = pipelines.find((p) => p.id === newPipeId);
+    if (pipe && pipe.stages.length > 0) {
+      setStage(pipe.stages[0].id);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientName.trim() || !patientPhone.trim()) return;
 
     onCreate({
+      pipelineId,
       patientName: patientName.trim(),
       patientPhone: patientPhone.trim(),
       clinicId: Number(clinicId),
       type,
-      stage: 'new',
+      stage,
       priority,
       dentistName,
       treatmentDescription: treatmentDescription.trim() || 'Consulta / Avaliação Geral',
@@ -56,6 +83,11 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
       source,
     });
 
+    setPatientName('');
+    setPatientPhone('');
+    setTreatmentDescription('');
+    setEstimatedValue('');
+    setNotes('');
     onClose();
   };
 
@@ -84,6 +116,45 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
+          {/* Pipeline & Stage Selection */}
+          {pipelines.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-teal-50/50 border border-teal-200/80 rounded-2xl p-3">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-teal-900 mb-1">
+                  Funil (Pipeline) *
+                </label>
+                <select
+                  value={pipelineId}
+                  onChange={(e) => handlePipelineChange(e.target.value)}
+                  className="w-full bg-white border border-teal-200 text-slate-900 text-xs font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#147A80]"
+                >
+                  {pipelines.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-teal-900 mb-1">
+                  Etapa Inicial *
+                </label>
+                <select
+                  value={stage}
+                  onChange={(e) => setStage(e.target.value)}
+                  className="w-full bg-white border border-teal-200 text-slate-900 text-xs font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#147A80]"
+                >
+                  {availableStages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.icon || '📌'} {s.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Patient Name & Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

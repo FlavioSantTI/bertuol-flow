@@ -44,12 +44,12 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          cacheId: 'bertuol-flow-v1.2.0',
+          cacheId: 'bertuol-flow-v1.3.0',
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          importScripts: ['/sw-push.js?v=1.2.0'],
+          importScripts: ['/sw-push.js?v=1.3.0'],
         },
         devOptions: {
           enabled: true,

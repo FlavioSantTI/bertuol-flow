@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { CRMLeadOpportunity, CRMMessageTemplate, CRMStage, CRMSummaryStats } from '../../types/crm';
+import {
+  CRMLeadOpportunity,
+  CRMMessageTemplate,
+  CRMPipeline,
+  CRMStage,
+  CRMSummaryStats,
+} from '../../types/crm';
 import { CRMService } from '../../services/crmService';
 import { Clinic, Dentist, Patient, Appointment, AppUserContext } from '../../types/database';
 import { CRMLeadCard } from './CRMLeadCard';
 import { CRMQuickContactModal } from './CRMQuickContactModal';
 import { CRMNewOpportunityModal } from './CRMNewOpportunityModal';
+import { CRMPipelineManagerModal } from './CRMPipelineManagerModal';
 import {
   X,
   Users,
@@ -14,20 +21,18 @@ import {
   Sparkles,
   TrendingUp,
   Search,
-  Filter,
   LayoutGrid,
   List,
   Calendar,
-  Building2,
   Clock,
-  DollarSign,
   CheckCircle2,
   Trash2,
   Edit2,
   FileText,
-  AlertCircle,
   BarChart3,
   Award,
+  Layers,
+  Settings2,
 } from 'lucide-react';
 
 interface MiniCRMModalProps {
@@ -48,12 +53,13 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   dentists,
   patients,
   appointments,
-  userContext,
   selectedClinicIdFilter = 'all',
 }) => {
   const [activeTab, setActiveTab] = useState<'recall' | 'kanban' | 'templates' | 'dashboard'>('recall');
   const [opportunities, setOpportunities] = useState<CRMLeadOpportunity[]>([]);
   const [templates, setTemplates] = useState<CRMMessageTemplate[]>([]);
+  const [pipelines, setPipelines] = useState<CRMPipeline[]>([]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('pipe-default');
   const [selectedClinicId, setSelectedClinicId] = useState<number | 'all'>(selectedClinicIdFilter);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -61,6 +67,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   // Modals
   const [quickContactOpp, setQuickContactOpp] = useState<CRMLeadOpportunity | null>(null);
   const [isNewOppModalOpen, setIsNewOppModalOpen] = useState(false);
+  const [isPipelineManagerOpen, setIsPipelineManagerOpen] = useState(false);
 
   // Template editing
   const [editingTemplate, setEditingTemplate] = useState<CRMMessageTemplate | null>(null);
@@ -86,11 +93,29 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const loadCRMData = () => {
     const opps = CRMService.getOpportunities();
     const tpls = CRMService.getTemplates();
+    const pipes = CRMService.getPipelines();
     setOpportunities(opps);
     setTemplates(tpls);
+    setPipelines(pipes);
+
+    if (!pipes.some((p) => p.id === selectedPipelineId)) {
+      const def = pipes.find((p) => p.isDefault) || pipes[0];
+      if (def) setSelectedPipelineId(def.id);
+    }
   };
 
   if (!isOpen) return null;
+
+  const activePipeline =
+    pipelines.find((p) => p.id === selectedPipelineId) ||
+    pipelines.find((p) => p.isDefault) ||
+    pipelines[0];
+
+  const getStagesForOpportunity = (opp: CRMLeadOpportunity) => {
+    const pipe =
+      pipelines.find((p) => p.id === (opp.pipelineId || 'pipe-default')) || activePipeline;
+    return pipe?.stages || [];
+  };
 
   const handleSyncRecalls = () => {
     const added = CRMService.syncAutomaticRecalls(patients, appointments, clinics);
@@ -116,7 +141,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     }
   };
 
-  // Filtered Opportunities
+  // Filtered Opportunities (general clinic + search filter)
   const filteredOpps = opportunities.filter((o) => {
     const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
     const matchesQuery =
@@ -127,6 +152,12 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       (o.dentistName && o.dentistName.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesClinic && matchesQuery;
+  });
+
+  // Opportunities belonging to the currently selected Pipeline in Kanban tab
+  const pipelineOpps = filteredOpps.filter((o) => {
+    const oppPipeId = o.pipelineId || 'pipe-default';
+    return oppPipeId === activePipeline?.id;
   });
 
   const stats: CRMSummaryStats = CRMService.getStats(opportunities, selectedClinicId);
@@ -170,13 +201,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     setTplCategory(tpl.category);
   };
 
-  const stages: { id: CRMStage; title: string; color: string; badgeBg: string }[] = [
-    { id: 'new', title: 'Novos Leads', color: 'border-blue-400', badgeBg: 'bg-blue-100 text-blue-900' },
-    { id: 'contacted', title: 'Em Contato', color: 'border-amber-400', badgeBg: 'bg-amber-100 text-amber-900' },
-    { id: 'scheduled', title: 'Agendado', color: 'border-indigo-400', badgeBg: 'bg-indigo-100 text-indigo-900' },
-    { id: 'converted', title: 'Convertido', color: 'border-emerald-500', badgeBg: 'bg-emerald-100 text-emerald-900' },
-    { id: 'lost', title: 'Perdido', color: 'border-slate-300', badgeBg: 'bg-slate-100 text-slate-700' },
-  ];
+  const stages = activePipeline?.stages || [];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in">
@@ -197,12 +222,22 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-teal-100">
-                Gestão de Pacientes Inativos, Agendamentos e Oportunidades Integrado ao Clube Sorriso
+                Gestão de Pacientes Inativos, Funis Personalizados e Oportunidades Integrado ao Clube Sorriso
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-center">
+            {/* Manage Pipelines Button */}
+            <button
+              onClick={() => setIsPipelineManagerOpen(true)}
+              title="Criar, editar ou excluir funis (pipelines) e colunas do Kanban"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white font-extrabold text-xs transition-all cursor-pointer"
+            >
+              <Settings2 className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden lg:inline">Gerenciar Funis</span>
+            </button>
+
             {/* Sync Recall Button */}
             <button
               onClick={handleSyncRecalls}
@@ -454,6 +489,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                         key={opp.id}
                         opportunity={opp}
                         clinics={clinics}
+                        stages={getStagesForOpportunity(opp)}
                         onOpenQuickContact={(o) => setQuickContactOpp(o)}
                         onUpdateStage={handleUpdateStage}
                         onDelete={handleDeleteOpportunity}
@@ -467,23 +503,74 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
           {/* TAB 2: PIPELINE & KANBAN */}
           {activeTab === 'kanban' && (
-            <div>
+            <div className="space-y-4">
+              {/* Pipeline Selector & CRUD Bar */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase text-slate-500">
+                    <Layers className="w-4 h-4 text-[#147A80]" />
+                    <span>Funil Ativo:</span>
+                  </div>
+
+                  {/* Pipeline Pills */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {pipelines.map((pipe) => {
+                      const isSelected = pipe.id === activePipeline?.id;
+                      const count = filteredOpps.filter(
+                        (o) => (o.pipelineId || 'pipe-default') === pipe.id
+                      ).length;
+                      return (
+                        <button
+                          key={pipe.id}
+                          onClick={() => setSelectedPipelineId(pipe.id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer border ${
+                            isSelected
+                              ? 'bg-[#147A80] text-white border-[#147A80] shadow-2xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>{pipe.name}</span>
+                          <span
+                            className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                              isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <button
+                    onClick={() => setIsPipelineManagerOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-extrabold text-xs transition-all cursor-pointer"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" />
+                    <span>Configurar Funis e Etapas ({stages.length} colunas)</span>
+                  </button>
+                </div>
+              </div>
+
               {viewMode === 'kanban' ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start pb-4 overflow-x-auto min-w-[900px]">
+                <div className="flex gap-4 items-start pb-4 overflow-x-auto">
                   {stages.map((stg) => {
-                    const stageOpps = filteredOpps.filter((o) => o.stage === stg.id);
+                    const stageOpps = pipelineOpps.filter((o) => o.stage === stg.id);
                     return (
                       <div
                         key={stg.id}
-                        className={`bg-slate-200/60 rounded-2xl p-3 border-t-4 ${stg.color} flex flex-col max-h-[75vh]`}
+                        className={`w-72 shrink-0 bg-slate-200/60 rounded-2xl p-3 border-t-4 ${stg.color} flex flex-col max-h-[70vh]`}
                       >
                         {/* Column Header */}
                         <div className="flex items-center justify-between mb-3 px-1">
-                          <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wide">
-                            {stg.title}
+                          <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wide flex items-center gap-1.5 truncate">
+                            <span>{stg.icon || '📌'}</span>
+                            <span className="truncate">{stg.title}</span>
                           </h3>
                           <span
-                            className={`text-[11px] font-black px-2 py-0.5 rounded-full ${stg.badgeBg}`}
+                            className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 ${stg.badgeBg}`}
                           >
                             {stageOpps.length}
                           </span>
@@ -493,7 +580,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                         <div className="overflow-y-auto space-y-3 pr-1">
                           {stageOpps.length === 0 ? (
                             <div className="bg-white/50 border border-dashed border-slate-300 rounded-xl p-4 text-center text-xs text-slate-400">
-                              Sem leads
+                              Sem leads nesta etapa
                             </div>
                           ) : (
                             stageOpps.map((opp) => (
@@ -501,6 +588,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                                 key={opp.id}
                                 opportunity={opp}
                                 clinics={clinics}
+                                stages={stages}
                                 onOpenQuickContact={(o) => setQuickContactOpp(o)}
                                 onUpdateStage={handleUpdateStage}
                                 onDelete={handleDeleteOpportunity}
@@ -512,19 +600,34 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       </div>
                     );
                   })}
+
+                  {/* Quick Add Column Button */}
+                  <button
+                    onClick={() => setIsPipelineManagerOpen(true)}
+                    className="w-64 shrink-0 border-2 border-dashed border-slate-300 hover:border-[#147A80] bg-white/40 hover:bg-teal-50/40 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-[#147A80] transition-all cursor-pointer min-h-[140px]"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-extrabold">+ Nova Etapa / Coluna</span>
+                    <span className="text-[10px] text-slate-400 text-center">
+                      Personalize as colunas deste funil
+                    </span>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredOpps.length === 0 ? (
+                  {pipelineOpps.length === 0 ? (
                     <div className="bg-white rounded-2xl p-8 text-center text-slate-500 text-xs">
-                      Nenhuma oportunidade encontrada.
+                      Nenhuma oportunidade encontrada neste funil.
                     </div>
                   ) : (
-                    filteredOpps.map((opp) => (
+                    pipelineOpps.map((opp) => (
                       <CRMLeadCard
                         key={opp.id}
                         opportunity={opp}
                         clinics={clinics}
+                        stages={stages}
                         onOpenQuickContact={(o) => setQuickContactOpp(o)}
                         onUpdateStage={handleUpdateStage}
                         onDelete={handleDeleteOpportunity}
@@ -753,7 +856,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       {clinics
                         .filter((c) => c.active)
                         .map((clinic) => {
-                          const clinicOpps = opportunities.filter((o) => o.clinicId === clinic.id);
                           const clinicStats = CRMService.getStats(opportunities, clinic.id);
                           return (
                             <tr key={clinic.id} className="hover:bg-slate-50">
@@ -800,8 +902,19 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         onClose={() => setIsNewOppModalOpen(false)}
         clinics={clinics}
         dentists={dentists}
+        pipelines={pipelines}
+        defaultPipelineId={activePipeline?.id}
         onCreate={handleCreateOpportunity}
         defaultClinicId={selectedClinicId}
+      />
+
+      <CRMPipelineManagerModal
+        isOpen={isPipelineManagerOpen}
+        onClose={() => setIsPipelineManagerOpen(false)}
+        pipelines={pipelines}
+        activePipelineId={activePipeline?.id || 'pipe-default'}
+        onSelectPipeline={(pipeId) => setSelectedPipelineId(pipeId)}
+        onChanged={loadCRMData}
       />
     </div>
   );
