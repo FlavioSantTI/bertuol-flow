@@ -57,6 +57,7 @@ import {
 export interface ComponentAccessRule {
   allowedRoles: UserRole[];
   permissionKey?: keyof UserPermissions;
+  anyPermissionKeys?: (keyof UserPermissions)[];
 }
 
 export const COMPONENT_ACCESS_MAP: Record<string, ComponentAccessRule> = {
@@ -65,8 +66,8 @@ export const COMPONENT_ACCESS_MAP: Record<string, ComponentAccessRule> = {
     permissionKey: 'canAccessCRM',
   },
   userManagement: {
-    allowedRoles: ['admin_root', 'admin', 'admin_clinica'],
-    permissionKey: 'canManageUsers',
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist'],
+    anyPermissionKeys: ['canManageUsers', 'canManageClientAccounts'],
   },
   multiClinic: {
     allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento'],
@@ -129,6 +130,10 @@ export function canAccessComponent(componentKey: string, context: AppUserContext
   if (isSuperAdmin && context.role === 'admin_root') return true;
 
   const roleAllowed = rule.allowedRoles.includes(context.role);
+  if (rule.anyPermissionKeys && rule.anyPermissionKeys.length > 0) {
+    const anyPermAllowed = rule.anyPermissionKeys.some((k) => Boolean(context.permissions?.[k]));
+    return roleAllowed && anyPermAllowed;
+  }
   if (rule.permissionKey) {
     const permKey = rule.permissionKey as keyof UserPermissions;
     const permAllowed = Boolean(context.permissions?.[permKey]);

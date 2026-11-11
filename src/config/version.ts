@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.3.4';
+export const APP_VERSION = '1.3.7';
 export const APP_BUILD = '2026.11.11';
 export const APP_NAME = 'Bertuol Flow';
 export const APP_SUBTITLE = 'Agenda & Gestão Inteligente Multi-Clínicas';

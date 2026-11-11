@@ -47,15 +47,25 @@ export interface SupabasePatient {
   tenant_id: string | null; // Clinic ID FK
   external_id?: string | null;
   name: string;
+  nickname?: string | null;
+  email?: string | null;
   document_id?: string | null;
+  birth_date?: string | null;
+  age?: number | null;
   mobile_phone?: string | null;
+  landline?: string | null;
+  city?: string | null;
+  state?: string | null;
   clinical_record_number?: string | null;
   insurance_plan_name?: string | null;
   is_active: boolean;
+  is_deleted?: boolean | null;
   notes?: string | null;
-  app_access_status?: string | null;
+  app_access_status?: 'active' | 'pending_activation' | 'blocked' | string | null;
   activation_token?: string | null;
   activation_token_expires_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface SupabaseAppointment {
@@ -76,6 +86,27 @@ export interface SupabaseAppointment {
   ai_summary?: string | null;
   ai_summary_created_at?: string | null;
   status?: string;
+}
+
+const LOCAL_PATIENT_ACCOUNTS_KEY = 'bertuol_patient_accounts_v1';
+
+function getLocalPatientAccountOverrides(): Record<string, Partial<SupabasePatient>> {
+  try {
+    const raw = localStorage.getItem(LOCAL_PATIENT_ACCOUNTS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalPatientAccountOverride(id: string, patch: Partial<SupabasePatient>) {
+  try {
+    const current = getLocalPatientAccountOverrides();
+    current[id] = { ...(current[id] || {}), ...patch, updated_at: new Date().toISOString() };
+    localStorage.setItem(LOCAL_PATIENT_ACCOUNTS_KEY, JSON.stringify(current));
+  } catch (e) {
+    console.warn('Falha ao salvar cache local de conta de paciente:', e);
+  }
 }
 
 export async function fetchClinics(): Promise<Clinic[]> {
@@ -119,12 +150,13 @@ export async function fetchDentistas(): Promise<SupabaseDentista[]> {
 }
 
 export async function fetchPatients(clinicId?: string): Promise<SupabasePatient[]> {
+  const localOverrides = getLocalPatientAccountOverrides();
   try {
     let query = supabase
       .from('patients')
-      .select('id, tenant_id, external_id, name, document_id, mobile_phone, clinical_record_number, insurance_plan_name, is_active, notes')
-      .eq('is_active', true)
-      .limit(50);
+      .select('*')
+      .order('name', { ascending: true })
+      .limit(250);
 
     if (clinicId) {
       query = query.eq('tenant_id', clinicId);
@@ -133,14 +165,192 @@ export async function fetchPatients(clinicId?: string): Promise<SupabasePatient[
     const { data, error } = await query;
     if (error) {
       console.warn('Erro ao buscar pacientes:', error);
-      return [];
+      return Object.values(localOverrides).filter((p): p is SupabasePatient => Boolean(p && p.id && p.name));
     }
 
-    return (data as SupabasePatient[]) || [];
+    const dbList: SupabasePatient[] = ((data as SupabasePatient[]) || []).map((p) => ({
+      ...p,
+      ...(localOverrides[p.id] || {}),
+      app_access_status:
+        localOverrides[p.id]?.app_access_status ||
+        p.app_access_status ||
+        (p.is_active === false ? 'blocked' : 'pending_activation'),
+    }));
+
+    // Include any locally created patients not yet in dbList
+    const dbIds = new Set(dbList.map((p) => p.id));
+    Object.values(localOverrides).forEach((localP) => {
+      if (localP && localP.id && localP.name && !dbIds.has(localP.id)) {
+        dbList.unshift(localP as SupabasePatient);
+      }
+    });
+
+    return dbList;
   } catch (err) {
     console.warn('Falha na query de pacientes:', err);
-    return [];
+    return Object.values(localOverrides).filter((p): p is SupabasePatient => Boolean(p && p.id && p.name));
   }
+}
+
+export async function updatePatientInSupabase(
+  patientId: string,
+  updates: Partial<SupabasePatient>
+): Promise<{ success: boolean; data?: SupabasePatient; error?: string }> {
+  saveLocalPatientAccountOverride(patientId, updates);
+  try {
+    const payload = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase
+      .from('patients')
+      .update(payload)
+      .eq('id', patientId)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.warn('Aviso ao atualizar paciente no Supabase (mantido localmente):', error.message);
+      return { success: true };
+    }
+    return { success: true, data: data as SupabasePatient };
+  } catch (err: any) {
+    console.warn('Falha de rede ao atualizar paciente (salvo localmente):', err);
+    return { success: true };
+  }
+}
+
+export async function createPatientInSupabase(
+  newPatient: Omit<Partial<SupabasePatient>, 'id'> & { name: string }
+): Promise<{ success: boolean; data?: SupabasePatient; error?: string }> {
+  const tempId =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `pat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const record: SupabasePatient = {
+    id: tempId,
+    tenant_id: newPatient.tenant_id || null,
+    name: newPatient.name.trim(),
+    email: newPatient.email || null,
+    document_id: newPatient.document_id || null,
+    mobile_phone: newPatient.mobile_phone || null,
+    clinical_record_number: newPatient.clinical_record_number || null,
+    insurance_plan_name: newPatient.insurance_plan_name || 'Particular',
+    is_active: newPatient.is_active ?? true,
+    notes: newPatient.notes || null,
+    app_access_status: newPatient.app_access_status || 'pending_activation',
+    activation_token: newPatient.activation_token || null,
+    activation_token_expires_at: newPatient.activation_token_expires_at || null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  saveLocalPatientAccountOverride(record.id, record);
+
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .insert([
+        {
+          name: record.name,
+          email: record.email,
+          document_id: record.document_id,
+          mobile_phone: record.mobile_phone,
+          clinical_record_number: record.clinical_record_number,
+          insurance_plan_name: record.insurance_plan_name,
+          is_active: record.is_active,
+          notes: record.notes,
+          app_access_status: record.app_access_status,
+          activation_token: record.activation_token,
+          activation_token_expires_at: record.activation_token_expires_at,
+        },
+      ])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.warn('Aviso ao inserir paciente no Supabase (mantido localmente):', error.message);
+      return { success: true, data: record };
+    }
+
+    if (data && data.id) {
+      saveLocalPatientAccountOverride(data.id, data as SupabasePatient);
+    }
+    return { success: true, data: (data as SupabasePatient) || record };
+  } catch (err: any) {
+    console.warn('Erro ao criar paciente no Supabase:', err);
+    return { success: true, data: record };
+  }
+}
+
+export function generatePatientActivationToken(): string {
+  const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const timePart = Date.now().toString(36).slice(-4).toUpperCase();
+  return `BT-${randomPart}-${timePart}`;
+}
+
+export function formatPatientPortalUrl(
+  patient: SupabasePatient,
+  token?: string,
+  customBaseUrl?: string
+): string {
+  const baseUrl =
+    customBaseUrl ||
+    (typeof window !== 'undefined' ? window.location.origin : 'https://bertuolflow.app-bertuol.tech');
+  const params = new URLSearchParams();
+  params.set('portal', 'paciente');
+  if (patient.mobile_phone) {
+    params.set('phone', patient.mobile_phone.replace(/\D/g, ''));
+  }
+  params.set('name', patient.name);
+  if (token || patient.activation_token) {
+    params.set('activation_token', token || patient.activation_token || '');
+  }
+  return `${baseUrl}/paciente.html?${params.toString()}`;
+}
+
+export function formatPatientInviteMessage(
+  patient: SupabasePatient,
+  options: {
+    token: string;
+    tempPassword?: string;
+    isPasswordReset?: boolean;
+    customBaseUrl?: string;
+  }
+): string {
+  const portalUrl = formatPatientPortalUrl(patient, options.token, options.customBaseUrl);
+  const firstName = patient.name.split(' ')[0] || patient.name;
+
+  if (options.isPasswordReset) {
+    return `🦷 *Olá, ${firstName}!*
+
+Sua solicitação de *Renovação de Senha / Acesso* ao aplicativo *Clube Sorriso Bertuol* foi gerada pela nossa recepção.
+
+📲 *Link Direto de Acesso e Redefinição:*
+${portalUrl}
+
+🔑 *Credenciais Temporárias:*
+• *Telefone/Login:* ${patient.mobile_phone || 'Seu celular cadastrado'}
+• *Código / Senha Provisória:* *${options.tempPassword || options.token}*
+
+⏱️ *Validade do link:* 48 horas.
+Qualquer dúvida, nossa equipe de atendimento está à disposição!`;
+  }
+
+  return `🦷 *Olá, ${firstName}! Bem-vindo(a) à Bertuol Odontologia!*
+
+Seu acesso exclusivo ao aplicativo *Clube Sorriso Bertuol* (Consultas, Check-in Rápido e Clube de Vantagens) já está disponível!
+
+📲 *Toque no link abaixo para ativar seu primeiro acesso:*
+${portalUrl}
+
+🔑 *Seus Dados de Ativação:*
+• *Login:* ${patient.mobile_phone || patient.document_id || 'Seu celular'}
+• *Senha Provisória:* *${options.tempPassword || 'Bertuol@2026'}*
+• *Token de Segurança:* ${options.token}
+
+🎁 *Dica:* Ao ativar seu acesso e confirmar suas consultas pelo app, você acumula pontos para trocar por brindes exclusivos na clínica!`;
 }
 
 export async function fetchAppointmentsFromSupabase(

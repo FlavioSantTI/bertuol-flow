@@ -231,8 +231,37 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     loadPatients();
   }, []);
 
+  const effectiveActorPerms = useMemo(
+    () => ({
+      ...getDefaultPermissionsForRole(currentUserContext.role),
+      ...currentUserContext.permissions,
+    }),
+    [currentUserContext.role, currentUserContext.permissions]
+  );
+
+  const canManageInternalUsers =
+    currentUserContext.role === 'admin_root' ||
+    currentUserContext.role === 'admin' ||
+    currentUserContext.role === 'admin_clinica' ||
+    Boolean(effectiveActorPerms.canManageUsers);
+
+  const canManageClientAccounts =
+    currentUserContext.role === 'admin_root' ||
+    currentUserContext.role === 'admin' ||
+    currentUserContext.role === 'admin_clinica' ||
+    Boolean(effectiveActorPerms.canManageClientAccounts);
+
   // Main Tabs: 'users', 'roles' (RBAC CRUD), or 'clients' (Client Accounts)
-  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles' | 'clients'>('users');
+  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles' | 'clients'>(() =>
+    canManageInternalUsers ? 'users' : 'clients'
+  );
+
+  React.useEffect(() => {
+    if (!canManageInternalUsers && canManageClientAccounts && activeMainTab !== 'clients') {
+      setActiveMainTab('clients');
+    }
+  }, [canManageInternalUsers, canManageClientAccounts, activeMainTab]);
+
   const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(() => dataService.getCustomRoles());
 
   // Role CRUD Modal State
@@ -911,44 +940,50 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
             </div>
           </div>
 
-          {/* Main Navigation Tabs: Users vs Roles CRUD */}
-          <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('users')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeMainTab === 'users'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Gerenciamento de Usuários</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('roles')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeMainTab === 'roles'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Perfis & Cargos de Acesso (CRUD RBAC)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('clients')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeMainTab === 'clients'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>Clientes & Pacientes</span>
-            </button>
+          {/* Main Navigation Tabs: Users vs Roles CRUD vs Clients */}
+          <div className="flex items-center gap-2 border-b border-gray-200 pb-3 flex-wrap">
+            {canManageInternalUsers && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('users')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    activeMainTab === 'users'
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Gerenciamento de Usuários Internos</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('roles')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    activeMainTab === 'roles'
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Perfis & Cargos de Acesso (CRUD RBAC)</span>
+                </button>
+              </>
+            )}
+            {canManageClientAccounts && (
+              <button
+                type="button"
+                onClick={() => setActiveMainTab('clients')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  activeMainTab === 'clients'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Clientes & Pacientes ({patients.length})</span>
+              </button>
+            )}
           </div>
 
           {activeMainTab === 'clients' ? (

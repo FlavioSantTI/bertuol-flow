@@ -151,6 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
   const canManageGamification = Boolean(effectivePermissions.canManageGamification);
   const canManageClinics = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClinics);
   const canManageUsers = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageUsers);
+  const canManageClientAccounts = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts);
   const canSwitchDentist = isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda);
   const canAccessTotemConfig = Boolean(effectivePermissions.canAccessTotemConfig);
   const canManageWebAuthn = isAdmin || Boolean(effectivePermissions.canManageWebAuthn);
@@ -398,7 +399,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>CRM (Recall & WhatsApp)</span>
                     </button>
                   )}
-                  {canManageUsers && onOpenUserManagementModal && (
+                  {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
                     <button
                       onClick={() => {
                         setIsAdminMenuOpen(false);
@@ -407,7 +408,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-orange-950 transition-colors text-left cursor-pointer"
                     >
                       <Users className="w-4 h-4 text-orange-600 shrink-0" />
-                      <span>Gestão de Usuários</span>
+                      <span>{canManageUsers ? 'Gestão de Usuários & Clientes' : 'Gestão de Clientes (App)'}</span>
                     </button>
                   )}
                   {canManageUsers && onOpenRolloutReportModal && (
@@ -763,15 +764,15 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* User Management Button (Admins) */}
-          {canManageUsers && onOpenUserManagementModal && (
+          {/* User & Client Management Button */}
+          {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
             <button
               onClick={onOpenUserManagementModal}
-              title="Gestão de Usuários"
+              title={canManageUsers ? 'Gestão de Usuários & Clientes' : 'Gestão de Clientes (App)'}
               className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-orange-600" />
-              <span>Usuários</span>
+              <span>{canManageUsers ? 'Usuários' : 'Clientes'}</span>
             </button>
           )}
 
