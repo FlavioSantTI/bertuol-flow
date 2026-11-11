@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
+import { getDefaultPermissionsForRole } from '../services/dataService';
 import { APP_VERSION } from '../config/version';
 import { BertuolLogo } from './BertuolLogo';
 import { BertuolBotAvatar } from './BertuolBotAvatar';
@@ -141,9 +142,20 @@ export const Header: React.FC<HeaderProps> = ({
     selectedDentist?.id === 6036933394890752 ||
     Boolean(selectedDentist?.Name && selectedDentist.Name.includes('Avaliador'));
 
-  const canManageClinics = isAdmin || isClinicaAdmin || isGerente;
-  const canManageUsers = isAdmin || isClinicaAdmin || !!userContext.permissions?.canManageUsers;
-  const canSwitchDentist = isAdmin || isClinicaAdmin || isGerente;
+  const effectivePermissions = {
+    ...getDefaultPermissionsForRole(userContext.role),
+    ...userContext.permissions,
+  };
+
+  const canAccessCRM = Boolean(effectivePermissions.canAccessCRM);
+  const canManageGamification = Boolean(effectivePermissions.canManageGamification);
+  const canManageClinics = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClinics);
+  const canManageUsers = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageUsers);
+  const canSwitchDentist = isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda);
+  const canAccessTotemConfig = Boolean(effectivePermissions.canAccessTotemConfig);
+  const canManageWebAuthn = isAdmin || Boolean(effectivePermissions.canManageWebAuthn);
+  const canAccessConfig = isAdmin || Boolean(effectivePermissions.canAccessConfig);
+  const canViewClubeSorriso = Boolean(effectivePermissions.canViewClubeSorriso);
   const currentClinic = clinics.find((c) => c.id === selectedClinicId);
 
   const getRoleBadge = () => {
@@ -288,7 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* CRM (Recall 6+ Meses & WhatsApp Pipeline) */}
-          {onOpenCRMModal && (
+          {canAccessCRM && onOpenCRMModal && (
             <button
               onClick={onOpenCRMModal}
               title="CRM Bertuol: Recall Preventivo e Pipeline WhatsApp"
@@ -305,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Quick Shortcut: Admin Clube de Vantagens (Disponível em telas médias/grandes) */}
-          {onOpenAdminGamificationModal && (
+          {canManageGamification && onOpenAdminGamificationModal && (
             <button
               type="button"
               onClick={(e) => {
@@ -374,7 +386,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
                     Gestão & Equipe
                   </span>
-                  {onOpenCRMModal && (
+                  {canAccessCRM && onOpenCRMModal && (
                     <button
                       onClick={() => {
                         setIsAdminMenuOpen(false);
@@ -429,7 +441,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
                     Clube Sorriso & Balcão
                   </span>
-                  {onOpenAdminGamificationModal && (
+                  {canManageGamification && onOpenAdminGamificationModal && (
                     <button
                       onClick={() => {
                         setIsAdminMenuOpen(false);
@@ -441,7 +453,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>Admin Clube & Push</span>
                     </button>
                   )}
-                  {onOpenVoucherModal && (
+                  {(canManageGamification || canViewClubeSorriso) && onOpenVoucherModal && (
                     <button
                       onClick={() => {
                         setIsAdminMenuOpen(false);
@@ -453,7 +465,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>Baixa de Vouchers</span>
                     </button>
                   )}
-                  {onOpenTotemQRModal && (
+                  {canAccessTotemConfig && onOpenTotemQRModal && (
                     <button
                       onClick={() => {
                         setIsAdminMenuOpen(false);
@@ -698,7 +710,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Row 3: Secondary Tools Bar (Horizontal Smooth Scroll) */}
         <div className="flex items-center gap-1.5 w-full overflow-x-auto no-scrollbar py-0.5">
           {/* CRM Mobile Button */}
-          {onOpenCRMModal && (
+          {canAccessCRM && onOpenCRMModal && (
             <button
               onClick={onOpenCRMModal}
               title="CRM Bertuol: Recall & WhatsApp"
@@ -715,7 +727,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Totem QR Code Mobile */}
-          {onOpenTotemQRModal && (
+          {canAccessTotemConfig && onOpenTotemQRModal && (
             <button
               onClick={onOpenTotemQRModal}
               title="Totem QR Code de Balcão"
@@ -727,7 +739,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Vouchers & Prêmios Mobile */}
-          {onOpenVoucherModal && (
+          {(canManageGamification || canViewClubeSorriso) && onOpenVoucherModal && (
             <button
               onClick={onOpenVoucherModal}
               title="Clube Sorriso: Baixa de Vouchers e Prêmios"
@@ -739,7 +751,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Admin Clube Mobile Button */}
-          {onOpenAdminGamificationModal && (
+          {canManageGamification && onOpenAdminGamificationModal && (
             <button
               type="button"
               onClick={onOpenAdminGamificationModal}

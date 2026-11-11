@@ -28,6 +28,7 @@ import {
   AlertCircle,
   BarChart3,
   Award,
+  Lock,
 } from 'lucide-react';
 
 interface MiniCRMModalProps {
@@ -91,6 +92,36 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  const hasCRMAccess =
+    userContext.role === 'admin_root' ||
+    userContext.role === 'admin' ||
+    userContext.role === 'admin_clinica' ||
+    userContext.role === 'gerente_atendimento' ||
+    userContext.permissions?.canAccessCRM === true;
+
+  if (!hasCRMAccess) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+          <div className="w-12 h-12 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6 text-amber-600" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">Acesso Restrito ao CRM</h3>
+          <p className="text-xs text-gray-600">
+            Seu perfil (`{userContext.role}`) não possui autorização para acessar o módulo CRM de Oportunidades & Recalls.
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs cursor-pointer"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSyncRecalls = () => {
     const added = CRMService.syncAutomaticRecalls(patients, appointments, clinics);
