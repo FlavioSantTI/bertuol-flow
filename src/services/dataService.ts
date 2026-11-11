@@ -36,6 +36,7 @@ export const INITIAL_CUSTOM_ROLES: CustomRoleDefinition[] = [
       canManageUsers: false,
       canManageClinics: false,
       canExportData: true,
+      canManageClientAccounts: false,
     },
   },
   {
@@ -68,6 +69,7 @@ export const INITIAL_CUSTOM_ROLES: CustomRoleDefinition[] = [
       canManageUsers: false,
       canManageClinics: false,
       canExportData: false,
+      canManageClientAccounts: false,
     },
   },
 ];
@@ -120,6 +122,7 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
         canManageUsers: true,
         canManageClinics: true,
         canExportData: true,
+        canManageClientAccounts: true,
       };
     case 'admin_clinica':
       return {
@@ -147,6 +150,7 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
         canManageUsers: true,
         canManageClinics: false,
         canExportData: true,
+        canManageClientAccounts: true,
       };
     case 'gerente_atendimento':
       return {
@@ -174,6 +178,7 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
         canManageUsers: false,
         canManageClinics: false,
         canExportData: true,
+        canManageClientAccounts: true,
       };
     case 'receptionist':
       return {
@@ -201,6 +206,7 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
         canManageUsers: false,
         canManageClinics: false,
         canExportData: false,
+        canManageClientAccounts: true,
       };
     case 'dentist':
     default:
@@ -229,6 +235,7 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
         canManageUsers: false,
         canManageClinics: false,
         canExportData: false,
+        canManageClientAccounts: false,
       };
   }
 };

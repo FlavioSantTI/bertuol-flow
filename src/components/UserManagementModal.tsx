@@ -43,6 +43,8 @@ import {
   UserRole,
   CustomRoleDefinition,
 } from '../types/database';
+import { ClientAccountsTab } from './ClientAccountsTab';
+import { fetchPatients, SupabasePatient } from '../services/supabaseService';
 import {
   dataService,
   getDefaultPermissionsForRole,
@@ -163,6 +165,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       { key: 'canManageUsers', label: 'Gerenciar Usuários & Perfis (RBAC)', description: 'Cadastrar membros da equipe e configurar papéis de acesso' },
       { key: 'canManageClinics', label: 'Gerenciar Unidades & Clínicas', description: 'Criar e alterar cadastro de unidades matriz e filiais' },
       { key: 'canExportData', label: 'Exportar Relatórios & Dados', description: 'Exportar relatórios gerais e backups de dados' },
+      { key: 'canManageClientAccounts', label: 'Gerenciar Contas de Clientes/Pacientes', description: 'Ativar acessos, resetar senhas e gerenciar contas' },
     ],
   },
 ];
@@ -192,6 +195,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   canManageUsers: 'Gerenciar Usuários & Perfis (RBAC)',
   canManageClinics: 'Gerenciar Unidades & Clínicas',
   canExportData: 'Exportar Relatórios & Dados',
+  canManageClientAccounts: 'Gerenciar Contas de Clientes/Pacientes',
 };
 
 interface UserManagementModalProps {
@@ -216,8 +220,19 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     dataService.getSystemUsers(currentUserContext)
   );
 
-  // Main Tabs: 'users' or 'roles' (RBAC CRUD)
-  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles'>('users');
+  const [patients, setPatients] = useState<SupabasePatient[]>([]);
+
+  const loadPatients = async () => {
+    const data = await fetchPatients();
+    setPatients(data);
+  };
+
+  React.useEffect(() => {
+    loadPatients();
+  }, []);
+
+  // Main Tabs: 'users', 'roles' (RBAC CRUD), or 'clients' (Client Accounts)
+  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles' | 'clients'>('users');
   const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(() => dataService.getCustomRoles());
 
   // Role CRUD Modal State
@@ -922,9 +937,27 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               <ShieldCheck className="w-4 h-4" />
               <span>Perfis & Cargos de Acesso (CRUD RBAC)</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('clients')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeMainTab === 'clients'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>Clientes & Pacientes</span>
+            </button>
           </div>
 
-          {activeMainTab === 'roles' ? (
+          {activeMainTab === 'clients' ? (
+            <ClientAccountsTab 
+              patients={patients} 
+              refreshPatients={loadPatients}
+              currentUserContext={currentUserContext}
+            />
+          ) : activeMainTab === 'roles' ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>

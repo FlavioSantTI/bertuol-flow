@@ -53,6 +53,9 @@ export interface SupabasePatient {
   insurance_plan_name?: string | null;
   is_active: boolean;
   notes?: string | null;
+  app_access_status?: string | null;
+  activation_token?: string | null;
+  activation_token_expires_at?: string | null;
 }
 
 export interface SupabaseAppointment {

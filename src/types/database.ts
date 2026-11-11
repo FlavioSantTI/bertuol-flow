@@ -103,6 +103,7 @@ export interface UserPermissions {
   canManageUsers: boolean;
   canManageClinics: boolean;
   canExportData: boolean;
+  canManageClientAccounts: boolean;
 }
 
 export interface AppUserContext {
