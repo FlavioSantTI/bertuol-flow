@@ -78,17 +78,120 @@ function applyPhoneMask(value: string | null | undefined): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 
+export interface PermissionItem {
+  key: keyof UserPermissions;
+  label: string;
+  description: string;
+}
+
+export interface PermissionCategory {
+  id: string;
+  title: string;
+  badge: string;
+  permissions: PermissionItem[];
+}
+
+export const PERMISSION_CATEGORIES: PermissionCategory[] = [
+  {
+    id: 'agenda',
+    title: '📅 Agenda & Atendimento Clínico',
+    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    permissions: [
+      { key: 'canViewAgenda', label: 'Visualizar Agenda do Dia / Semanal', description: 'Acessar a grade de horários de consultas' },
+      { key: 'canViewAllDentistsAgenda', label: 'Ver Agenda de Todos os Dentistas', description: 'Se desmarcado, limita a apenas a própria agenda (Dentistas)' },
+      { key: 'canCheckIn', label: 'Realizar Check-in / Troca de Status', description: 'Alterar status de atendimento na fila da recepção' },
+      { key: 'canEditAppointments', label: 'Agendar, Reagendar & Cancelar', description: 'Criar ou modificar consultas no sistema' },
+      { key: 'canGenerateAISummary', label: 'Gerar Resumos Clínicos com IA (Gemini)', description: 'Análise clínica inteligente e resumos de prontuário com IA' },
+    ],
+  },
+  {
+    id: 'crm',
+    title: '📈 CRM, Vendas & Funil de Oportunidades',
+    badge: 'bg-amber-100 text-amber-800 border-amber-200',
+    permissions: [
+      { key: 'canAccessCRM', label: 'Acesso ao CRM de Oportunidades', description: 'Acessar o pipeline visual de vendas e orçamentos' },
+      { key: 'canManageCRMLeads', label: 'Gerenciar Leads & Mover Estágios', description: 'Criar, editar e mover oportunidades no CRM' },
+      { key: 'canExportCRM', label: 'Exportar Relatórios do CRM', description: 'Exportar relatórios de conversão em Excel/CSV' },
+    ],
+  },
+  {
+    id: 'financeiro',
+    title: '💰 Financeiro & Faturamento',
+    badge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    permissions: [
+      { key: 'canViewFinancialDashboard', label: 'Dashboard Financeiro & Métricas', description: 'Visualizar faturamento, ticket médio e gráficos DRE' },
+      { key: 'canExportFinancialReports', label: 'Exportar Relatórios Financeiros', description: 'Exportar relatórios contábeis e de faturamento' },
+    ],
+  },
+  {
+    id: 'mensageria',
+    title: '💬 Mensageria & Notificações',
+    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+    permissions: [
+      { key: 'canReceiveWhatsApp', label: 'Receber Alertas via WhatsApp / WAHA', description: 'Receber notificações e alertas no WhatsApp' },
+      { key: 'canReceivePush', label: 'Push Notifications no Celular', description: 'Alertas push em tempo real no navegador ou PWA' },
+      { key: 'canSendInternalMessages', label: 'Chat Interno & Mensageria de Equipe', description: 'Enviar recados internos para colegas de trabalho' },
+      { key: 'canManageWhatsAppTemplates', label: 'Gerenciar Automações WhatsApp', description: 'Configurar réguas de mensagens automáticas de confirmação' },
+    ],
+  },
+  {
+    id: 'clube_sorriso',
+    title: '🎁 Clube Sorriso & Gamificação',
+    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+    permissions: [
+      { key: 'canViewClubeSorriso', label: 'Leitura do Clube Sorriso & Extrato', description: 'Consultar histórico de pontos e extrato dos pacientes' },
+      { key: 'canManageGamification', label: 'Gerenciar Prêmios & Baixa em Vouchers', description: 'Dar baixa em prêmios no balcão e alterar catálogo' },
+    ],
+  },
+  {
+    id: 'seguranca_lgpd',
+    title: '🔐 Segurança, Totem & LGPD',
+    badge: 'bg-rose-100 text-rose-800 border-rose-200',
+    permissions: [
+      { key: 'canViewPatientPhone', label: 'Visualizar Telefones (LGPD)', description: 'Exibir número de telefone e dados sensíveis de pacientes' },
+      { key: 'canEditPatients', label: 'Cadastrar & Editar Prontuários', description: 'Adicionar e alterar fichas de cadastro de pacientes' },
+      { key: 'canAccessTotemConfig', label: 'Acesso ao Totem de Autoatendimento', description: 'Configurar modo recepção e QR Code no balcão' },
+      { key: 'canManageWebAuthn', label: 'Gerenciar Biometria Facial / WebAuthn', description: 'Cadastrar credenciais biométricas de usuários' },
+    ],
+  },
+  {
+    id: 'administracao',
+    title: '🛠️ Administração & TI',
+    badge: 'bg-slate-100 text-slate-800 border-slate-200',
+    permissions: [
+      { key: 'canAccessConfig', label: 'Configurações Técnicas & Webhooks', description: 'Configurações de integração Clinicorp/WAHA/Supabase' },
+      { key: 'canManageUsers', label: 'Gerenciar Usuários & Perfis (RBAC)', description: 'Cadastrar membros da equipe e configurar papéis de acesso' },
+      { key: 'canManageClinics', label: 'Gerenciar Unidades & Clínicas', description: 'Criar e alterar cadastro de unidades matriz e filiais' },
+      { key: 'canExportData', label: 'Exportar Relatórios & Dados', description: 'Exportar relatórios gerais e backups de dados' },
+    ],
+  },
+];
+
 const PERMISSION_LABELS: Record<string, string> = {
   canViewAgenda: 'Visualizar Agenda do Dia',
+  canViewAllDentistsAgenda: 'Ver Agenda de Todos os Dentistas',
   canCheckIn: 'Realizar Check-in / Troca de Status',
+  canEditAppointments: 'Agendar / Reagendar / Cancelar',
+  canGenerateAISummary: 'Gerar Resumos Clínicos com IA',
+  canAccessCRM: 'Acesso ao CRM de Oportunidades',
+  canManageCRMLeads: 'Gerenciar Leads & Pipeline CRM',
+  canExportCRM: 'Exportar Relatórios do CRM',
+  canViewFinancialDashboard: 'Dashboard Financeiro & Faturamento',
+  canExportFinancialReports: 'Exportar Relatórios Financeiros',
   canReceiveWhatsApp: 'Receber Alertas via WhatsApp',
   canReceivePush: 'Push Notifications no Celular',
-  canViewPatientPhone: 'Visualizar Telefones (LGPD)',
-  canGenerateAISummary: 'Gerar Resumos com IA (Gemini)',
-  canAccessConfig: 'Configurações Técnicas & Webhooks',
-  canManageUsers: 'Gerenciar Usuários da Clínica',
-  canExportData: 'Exportar Relatórios & Dados',
+  canSendInternalMessages: 'Chat Interno & Mensageria',
+  canManageWhatsAppTemplates: 'Gerenciar Automações WhatsApp',
   canViewClubeSorriso: 'Leitura do Clube Sorriso & Vouchers',
+  canManageGamification: 'Gerenciar Gamificação & Vouchers',
+  canViewPatientPhone: 'Visualizar Telefones (LGPD)',
+  canEditPatients: 'Cadastrar & Editar Prontuários',
+  canAccessTotemConfig: 'Acesso ao Totem de Autoatendimento',
+  canManageWebAuthn: 'Gerenciar Biometria / WebAuthn',
+  canAccessConfig: 'Configurações Técnicas & Webhooks',
+  canManageUsers: 'Gerenciar Usuários & Perfis (RBAC)',
+  canManageClinics: 'Gerenciar Unidades & Clínicas',
+  canExportData: 'Exportar Relatórios & Dados',
 };
 
 interface UserManagementModalProps {
@@ -976,10 +1079,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     </div>
                     <p className="text-xs text-gray-600">{cr.description || 'Sem descrição.'}</p>
                     <div className="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-200">
-                      <span className="font-bold block mb-1">Permissões Ativas:</span>
+                      <span className="font-bold block mb-1">Permissões Ativas ({Object.values(cr.defaultPermissions).filter(Boolean).length}):</span>
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(cr.defaultPermissions).map(([k, v]) => v ? (
-                          <span key={k} className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">
+                          <span key={k} className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold text-[10px]">
                             {PERMISSION_LABELS[k] || k}
                           </span>
                         ) : null)}
@@ -987,6 +1090,94 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Matriz Comparativa de Permissões por Perfil (Tabela RBAC) */}
+              <div className="bg-white rounded-3xl border border-gray-200 p-4 sm:p-5 shadow-2xs space-y-4 mt-6">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <div>
+                    <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-purple-600" />
+                      Matriz Comparativa de Permissões por Perfil (RBAC)
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      Visão geral da matriz de privilégios. Verifique o escopo de cada perfil para evitar acessos indevidos.
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 bg-purple-50 text-purple-700 font-bold rounded-full text-xs border border-purple-200">
+                    21 Funcionalidades Mapeadas
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto border border-gray-200 rounded-2xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100/80 text-gray-700 font-bold border-b border-gray-200">
+                        <th className="p-3 min-w-[220px]">Funcionalidade do Sistema</th>
+                        <th className="p-3 text-center min-w-[90px] bg-purple-50 text-purple-900">Root</th>
+                        <th className="p-3 text-center min-w-[100px]">Admin Clínica</th>
+                        <th className="p-3 text-center min-w-[110px]">Gerente Atend.</th>
+                        <th className="p-3 text-center min-w-[90px]">Recepção</th>
+                        <th className="p-3 text-center min-w-[90px]">Dentista</th>
+                        {customRoles.map((cr) => (
+                          <th key={cr.id} className="p-3 text-center min-w-[100px] bg-purple-50/50 text-purple-900">
+                            ✨ {cr.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {PERMISSION_CATEGORIES.map((cat) => (
+                        <React.Fragment key={cat.id}>
+                          <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-200">
+                            <td colSpan={5 + customRoles.length} className="p-2.5 pl-3 text-xs bg-slate-100/80 text-slate-800">
+                              {cat.title}
+                            </td>
+                          </tr>
+                          {cat.permissions.map((perm) => {
+                            const rootPerm = getDefaultPermissionsForRole('admin_root')[perm.key];
+                            const clinicaPerm = getDefaultPermissionsForRole('admin_clinica')[perm.key];
+                            const gerentePerm = getDefaultPermissionsForRole('gerente_atendimento')[perm.key];
+                            const recepPerm = getDefaultPermissionsForRole('receptionist')[perm.key];
+                            const dentPerm = getDefaultPermissionsForRole('dentist')[perm.key];
+
+                            return (
+                              <tr key={perm.key} className="hover:bg-gray-50/80 transition-colors">
+                                <td className="p-3 font-medium text-gray-900">
+                                  <span className="font-bold block">{perm.label}</span>
+                                  <span className="text-[10px] text-gray-400 block">{perm.description}</span>
+                                </td>
+                                <td className="p-3 text-center bg-purple-50/30 font-bold text-emerald-600">
+                                  {rootPerm ? '✓' : '✗'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${clinicaPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                  {clinicaPerm ? '✓' : '✗'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${gerentePerm ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                  {gerentePerm ? '✓' : '✗'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${recepPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                  {recepPerm ? '✓' : '✗'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${dentPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                  {dentPerm ? '✓' : '✗'}
+                                </td>
+                                {customRoles.map((cr) => {
+                                  const cPerm = Boolean((cr.defaultPermissions as any)[perm.key]);
+                                  return (
+                                    <td key={cr.id} className={`p-3 text-center font-bold bg-purple-50/20 ${cPerm ? 'text-purple-600' : 'text-gray-300'}`}>
+                                      {cPerm ? '✓' : '✗'}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Role Form Modal */}
@@ -1044,28 +1235,100 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       </div>
 
                       <div>
-                        <label className="font-bold text-gray-700 block mb-1">Permissões Padrão do Perfil</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {Object.keys(roleFormData.defaultPermissions).map((permKey) => (
-                            <label key={permKey} className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                              <span className="font-semibold text-gray-800">
-                                {PERMISSION_LABELS[permKey] || permKey}
-                              </span>
-                              <input
-                                type="checkbox"
-                                checked={(roleFormData.defaultPermissions as any)[permKey]}
-                                onChange={() =>
-                                  setRoleFormData((prev) => ({
-                                    ...prev,
-                                    defaultPermissions: {
-                                      ...prev.defaultPermissions,
-                                      [permKey]: !(prev.defaultPermissions as any)[permKey],
-                                    },
-                                  }))
-                                }
-                                className="rounded text-purple-600 focus:ring-purple-500"
-                              />
-                            </label>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="font-bold text-gray-700 block text-xs">
+                            Permissões Padrão do Perfil ({Object.values(roleFormData.defaultPermissions).filter(Boolean).length} / {PERMISSION_CATEGORIES.reduce((acc, cat) => acc + cat.permissions.length, 0)} ativas)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allTrue: any = {};
+                                PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allTrue[p.key] = true)));
+                                setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allTrue } }));
+                              }}
+                              className="text-[11px] font-bold text-purple-700 hover:underline cursor-pointer"
+                            >
+                              Marcar Todas
+                            </button>
+                            <span className="text-gray-300">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allFalse: any = {};
+                                PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allFalse[p.key] = false)));
+                                setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allFalse } }));
+                              }}
+                              className="text-[11px] font-bold text-gray-500 hover:underline cursor-pointer"
+                            >
+                              Limpar Todas
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                          {PERMISSION_CATEGORIES.map((cat) => (
+                            <div key={cat.id} className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+                              <div className="flex items-center justify-between border-b border-gray-200 pb-1.5">
+                                <span className="font-bold text-gray-900 text-xs">{cat.title}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = { ...roleFormData.defaultPermissions };
+                                      cat.permissions.forEach((p) => ((updated as any)[p.key] = true));
+                                      setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
+                                    }}
+                                    className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                                  >
+                                    Marcar Categoria
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = { ...roleFormData.defaultPermissions };
+                                      cat.permissions.forEach((p) => ((updated as any)[p.key] = false));
+                                      setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
+                                    }}
+                                    className="text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-200 cursor-pointer"
+                                  >
+                                    Limpar
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {cat.permissions.map((perm) => (
+                                  <label
+                                    key={perm.key}
+                                    className={`p-2 rounded-xl border flex items-start justify-between cursor-pointer transition-all ${
+                                      (roleFormData.defaultPermissions as any)[perm.key]
+                                        ? 'bg-purple-50/80 border-purple-200 shadow-2xs'
+                                        : 'bg-white border-gray-200 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    <div className="pr-2 space-y-0.5">
+                                      <span className="font-bold text-gray-900 text-xs block">{perm.label}</span>
+                                      <span className="text-[10px] text-gray-500 block leading-tight">{perm.description}</span>
+                                    </div>
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean((roleFormData.defaultPermissions as any)[perm.key])}
+                                      onChange={() =>
+                                        setRoleFormData((prev) => ({
+                                          ...prev,
+                                          defaultPermissions: {
+                                            ...prev.defaultPermissions,
+                                            [perm.key]: !(prev.defaultPermissions as any)[perm.key],
+                                          },
+                                        }))
+                                      }
+                                      className="rounded text-purple-600 focus:ring-purple-500 mt-0.5 shrink-0"
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1928,142 +2191,43 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {/* 1. canViewAgenda */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">Visualizar Agenda do Dia</span>
+                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                  {PERMISSION_CATEGORIES.map((cat) => (
+                    <div key={cat.id} className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+                      <div className="flex items-center justify-between border-b border-gray-200 pb-1">
+                        <span className="font-bold text-gray-900 text-xs">{cat.title}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {cat.permissions.map((perm) => {
+                          const isConfigAndNotRoot = perm.key === 'canAccessConfig' && !isAdminRoot;
+                          return (
+                            <label
+                              key={perm.key}
+                              className={`p-2 rounded-xl border flex items-start justify-between transition-all ${
+                                isConfigAndNotRoot
+                                  ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+                                  : formData.permissions[perm.key]
+                                  ? 'bg-amber-50/80 border-amber-200 shadow-2xs cursor-pointer'
+                                  : 'bg-white border-gray-200 hover:bg-gray-100 cursor-pointer'
+                              }`}
+                            >
+                              <div className="pr-2 space-y-0.5">
+                                <span className="font-bold text-gray-900 text-xs block">{perm.label}</span>
+                                <span className="text-[10px] text-gray-500 block leading-tight">{perm.description}</span>
+                              </div>
+                              <input
+                                type="checkbox"
+                                disabled={isConfigAndNotRoot}
+                                checked={Boolean(formData.permissions[perm.key])}
+                                onChange={() => handleTogglePermission(perm.key)}
+                                className="rounded text-amber-600 focus:ring-amber-500 mt-0.5 shrink-0"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canViewAgenda}
-                      onChange={() => handleTogglePermission('canViewAgenda')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 2. canCheckIn */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Realizar Check-in / Troca de Status
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canCheckIn}
-                      onChange={() => handleTogglePermission('canCheckIn')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* canViewClubeSorriso */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Leitura do Clube Sorriso & Vouchers
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canViewClubeSorriso}
-                      onChange={() => handleTogglePermission('canViewClubeSorriso')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 3. canReceiveWhatsApp */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">Alertas via WhatsApp</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canReceiveWhatsApp}
-                      onChange={() => handleTogglePermission('canReceiveWhatsApp')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 4. canReceivePush */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">Push Notifications Celular</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canReceivePush}
-                      onChange={() => handleTogglePermission('canReceivePush')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 5. canViewPatientPhone */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Visualizar Telefones (LGPD)
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canViewPatientPhone}
-                      onChange={() => handleTogglePermission('canViewPatientPhone')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 6. canGenerateAISummary */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Gerar Resumos com IA (Gemini)
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canGenerateAISummary}
-                      onChange={() => handleTogglePermission('canGenerateAISummary')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 7. canManageUsers */}
-                  <label className="p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Gerenciar Usuários da Clínica
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.canManageUsers}
-                      onChange={() => handleTogglePermission('canManageUsers')}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                  </label>
-
-                  {/* 8. canAccessConfig (Admin Root only) */}
-                  <label
-                    className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer ${
-                      isAdminRoot
-                        ? 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        : 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        Configurações Técnicas & Webhooks
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      disabled={!isAdminRoot}
-                      checked={formData.permissions.canAccessConfig}
-                      onChange={() => handleTogglePermission('canAccessConfig')}
-                      className="rounded text-purple-600 focus:ring-purple-500"
-                    />
-                  </label>
+                  ))}
                 </div>
               </div>
 

@@ -66,16 +66,43 @@ export interface PatientPermissions {
 }
 
 export interface UserPermissions {
+  // 1. 📅 Agenda & Atendimento Clínico
   canViewAgenda: boolean;
+  canViewAllDentistsAgenda: boolean;
   canCheckIn: boolean;
+  canEditAppointments: boolean;
+  canGenerateAISummary: boolean;
+
+  // 2. 📈 CRM & Funil de Oportunidades
+  canAccessCRM: boolean;
+  canManageCRMLeads: boolean;
+  canExportCRM: boolean;
+
+  // 3. 💰 Financeiro & Faturamento
+  canViewFinancialDashboard: boolean;
+  canExportFinancialReports: boolean;
+
+  // 4. 💬 Mensageria & Notificações
   canReceiveWhatsApp: boolean;
   canReceivePush: boolean;
+  canSendInternalMessages: boolean;
+  canManageWhatsAppTemplates: boolean;
+
+  // 5. 🎁 Clube Sorriso & Gamificação
+  canViewClubeSorriso: boolean;
+  canManageGamification: boolean;
+
+  // 6. 🔐 Segurança, Totem & LGPD
   canViewPatientPhone: boolean;
-  canGenerateAISummary: boolean;
+  canEditPatients: boolean;
+  canAccessTotemConfig: boolean;
+  canManageWebAuthn: boolean;
+
+  // 7. 🛠️ Administração & TI
   canAccessConfig: boolean;
   canManageUsers: boolean;
+  canManageClinics: boolean;
   canExportData: boolean;
-  canViewClubeSorriso: boolean;
 }
 
 export interface AppUserContext {
