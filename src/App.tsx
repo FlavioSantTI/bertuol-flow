@@ -37,7 +37,7 @@ import {
   fetchAppointmentsFromSupabase,
   updateAppointmentAiSummaryInSupabase,
 } from './services/supabaseService';
-import { Appointment, Category, Dentist, Clinic, AppUserContext, SystemUser, UserRole } from './types/database';
+import { Appointment, Category, Dentist, Clinic, AppUserContext, SystemUser, UserRole, UserPermissions } from './types/database';
 import {
   CalendarX,
   Search,
@@ -53,6 +53,89 @@ import {
   Bell,
   Stethoscope,
 } from 'lucide-react';
+
+export interface ComponentAccessRule {
+  allowedRoles: UserRole[];
+  permissionKey?: keyof UserPermissions;
+}
+
+export const COMPONENT_ACCESS_MAP: Record<string, ComponentAccessRule> = {
+  crm: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist'],
+    permissionKey: 'canAccessCRM',
+  },
+  userManagement: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica'],
+    permissionKey: 'canManageUsers',
+  },
+  multiClinic: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento'],
+    permissionKey: 'canManageClinics',
+  },
+  adminGamification: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist'],
+    permissionKey: 'canManageGamification',
+  },
+  databaseSchema: {
+    allowedRoles: ['admin_root', 'admin', 'admin_tecnico'],
+    permissionKey: 'canAccessConfig',
+  },
+  clinicorpSync: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'admin_tecnico'],
+    permissionKey: 'canAccessConfig',
+  },
+  rolloutReport: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento'],
+    permissionKey: 'canExportData',
+  },
+  voucherRedemption: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist', 'dentist'],
+    permissionKey: 'canViewClubeSorriso',
+  },
+  totemQR: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist'],
+    permissionKey: 'canAccessTotemConfig',
+  },
+  webAuthn: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist', 'dentist'],
+    permissionKey: 'canManageWebAuthn',
+  },
+  internalMessaging: {
+    allowedRoles: ['admin_root', 'admin', 'admin_clinica', 'gerente_atendimento', 'receptionist', 'dentist'],
+    permissionKey: 'canSendInternalMessages',
+  },
+  adminSimulationToolbar: {
+    allowedRoles: ['admin_root', 'admin', 'admin_tecnico'],
+  },
+};
+
+export function canAccessComponent(componentKey: string, context: AppUserContext): boolean {
+  const rule = COMPONENT_ACCESS_MAP[componentKey];
+  if (!rule) return true;
+
+  const isSuperAdmin =
+    context.role === 'admin_root' ||
+    context.role === 'admin' ||
+    Boolean(
+      context.email &&
+        (context.email.toLowerCase() === 'favuca.dias@gmail.com' ||
+          context.email.toLowerCase() === 'flavio.santiago.ti@outlook.com')
+    ) ||
+    Boolean(
+      context.userName &&
+        (context.userName.includes('Flavio') || context.userName.includes('Favuca'))
+    );
+
+  if (isSuperAdmin && context.role === 'admin_root') return true;
+
+  const roleAllowed = rule.allowedRoles.includes(context.role);
+  if (rule.permissionKey) {
+    const permKey = rule.permissionKey as keyof UserPermissions;
+    const permAllowed = Boolean(context.permissions?.[permKey]);
+    return roleAllowed && permAllowed;
+  }
+  return roleAllowed;
+}
 
 export default function App() {
   const [dentists, setDentists] = useState<Dentist[]>([]);
@@ -128,6 +211,14 @@ export default function App() {
           (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
       );
 
+    const baseRole = simulatedRole !== 'none' && isRoot ? simulatedRole : userContext.role;
+    const defaultPerms = getDefaultPermissionsForRole(baseRole);
+
+    const mergedPermissions = {
+      ...defaultPerms,
+      ...(userContext.permissions || {}),
+    };
+
     if (simulatedRole !== 'none' && isRoot) {
       return {
         ...userContext,
@@ -135,8 +226,30 @@ export default function App() {
         permissions: getDefaultPermissionsForRole(simulatedRole),
       };
     }
-    return userContext;
+
+    return {
+      ...userContext,
+      role: baseRole,
+      permissions: mergedPermissions,
+    };
   }, [userContext, simulatedRole]);
+
+  const componentAccess = useMemo(() => {
+    return {
+      crm: canAccessComponent('crm', effectiveUserContext),
+      userManagement: canAccessComponent('userManagement', effectiveUserContext),
+      multiClinic: canAccessComponent('multiClinic', effectiveUserContext),
+      adminGamification: canAccessComponent('adminGamification', effectiveUserContext),
+      databaseSchema: canAccessComponent('databaseSchema', effectiveUserContext),
+      clinicorpSync: canAccessComponent('clinicorpSync', effectiveUserContext),
+      rolloutReport: canAccessComponent('rolloutReport', effectiveUserContext),
+      voucherRedemption: canAccessComponent('voucherRedemption', effectiveUserContext),
+      totemQR: canAccessComponent('totemQR', effectiveUserContext),
+      webAuthn: canAccessComponent('webAuthn', effectiveUserContext),
+      internalMessaging: canAccessComponent('internalMessaging', effectiveUserContext),
+      adminSimulationToolbar: canAccessComponent('adminSimulationToolbar', effectiveUserContext),
+    };
+  }, [effectiveUserContext]);
 
   // Load dentists and check URL query params on initial mount
   useEffect(() => {
@@ -668,19 +781,7 @@ export default function App() {
       </div>
 
       {/* Admin Root Simulation Toolbar (Alternativa A) */}
-      {(userContext.role === 'admin_root' ||
-        userContext.role === 'admin' ||
-        userContext.role === 'admin_tecnico' ||
-        Boolean(
-          userContext.email &&
-            (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
-              userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
-              userContext.email.toLowerCase().includes('flavio.santiago'))
-        ) ||
-        Boolean(
-          userContext.userName &&
-            (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
-        )) && (
+      {componentAccess.adminSimulationToolbar && (
         <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-md shrink-0 z-40 border-b border-purple-500/30">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
@@ -1107,19 +1208,7 @@ export default function App() {
       />
 
       {/* Floating Robot Widget (Chat-style Persona Simulator - Only for Admin Root) */}
-      {(userContext.role === 'admin_root' ||
-        userContext.role === 'admin' ||
-        userContext.role === 'admin_tecnico' ||
-        Boolean(
-          userContext.email &&
-            (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
-              userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
-              userContext.email.toLowerCase().includes('flavio.santiago'))
-        ) ||
-        Boolean(
-          userContext.userName &&
-            (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
-        )) && (
+      {componentAccess.adminSimulationToolbar && (
         <FloatingPersonaBot
           userContext={userContext}
           onUpdateUserContext={handleUpdateUserContext}
@@ -1136,14 +1225,16 @@ export default function App() {
       )}
 
       {/* User Management & RBAC CRUD Modal */}
-      <UserManagementModal
-        isOpen={isUserManagementModalOpen}
-        onClose={() => setIsUserManagementModalOpen(false)}
-        currentUserContext={userContext}
-        onSimulateUser={handleSimulateUser}
-        clinics={clinics}
-        dentists={dentists}
-      />
+      {componentAccess.userManagement && (
+        <UserManagementModal
+          isOpen={isUserManagementModalOpen}
+          onClose={() => setIsUserManagementModalOpen(false)}
+          currentUserContext={userContext}
+          onSimulateUser={handleSimulateUser}
+          clinics={clinics}
+          dentists={dentists}
+        />
+      )}
 
       {/* Self-Service Change Password Modal */}
       <ChangePasswordModal
@@ -1158,61 +1249,75 @@ export default function App() {
       />
 
       {/* Rollout Report & Access Logs Modal */}
-      <RolloutReportModal
-        isOpen={isRolloutReportModalOpen}
-        onClose={() => setIsRolloutReportModalOpen(false)}
-        systemUsers={dataService.getSystemUsers()}
-      />
+      {componentAccess.rolloutReport && (
+        <RolloutReportModal
+          isOpen={isRolloutReportModalOpen}
+          onClose={() => setIsRolloutReportModalOpen(false)}
+          systemUsers={dataService.getSystemUsers()}
+        />
+      )}
 
       {/* Clube Sorriso Voucher & Gamification Modal (RF05, RF06, RF07) */}
-      <VoucherRedemptionModal
-        isOpen={isVoucherModalOpen}
-        onClose={() => setIsVoucherModalOpen(false)}
-        userName={userContext.userName || 'Recepção Bertuol'}
-        clinicId={typeof selectedClinicId === 'number' ? selectedClinicId : 1}
-      />
+      {componentAccess.voucherRedemption && (
+        <VoucherRedemptionModal
+          isOpen={isVoucherModalOpen}
+          onClose={() => setIsVoucherModalOpen(false)}
+          userName={userContext.userName || 'Recepção Bertuol'}
+          clinicId={typeof selectedClinicId === 'number' ? selectedClinicId : 1}
+        />
+      )}
 
       {/* Admin Clube de Vantagens: Painel de Controle e CRUDs (RF05, RF06, RF07) */}
-      <AdminGamificationModal
-        isOpen={isAdminGamificationOpen}
-        onClose={() => setIsAdminGamificationOpen(false)}
-        staffName={userContext.userName || 'Administração Bertuol'}
-      />
+      {componentAccess.adminGamification && (
+        <AdminGamificationModal
+          isOpen={isAdminGamificationOpen}
+          onClose={() => setIsAdminGamificationOpen(false)}
+          staffName={userContext.userName || 'Administração Bertuol'}
+        />
+      )}
 
       {/* Totem QR Code Display Modal (RF03) */}
-      <TotemQRCodeModal
-        isOpen={isTotemModalOpen}
-        onClose={() => setIsTotemModalOpen(false)}
-      />
+      {componentAccess.totemQR && (
+        <TotemQRCodeModal
+          isOpen={isTotemModalOpen}
+          onClose={() => setIsTotemModalOpen(false)}
+        />
+      )}
 
       {/* WebAuthn Biometrics & Passkeys Modal */}
-      <WebAuthnModal
-        isOpen={isWebAuthnModalOpen}
-        onClose={() => setIsWebAuthnModalOpen(false)}
-        userContext={userContext}
-      />
+      {componentAccess.webAuthn && (
+        <WebAuthnModal
+          isOpen={isWebAuthnModalOpen}
+          onClose={() => setIsWebAuthnModalOpen(false)}
+          userContext={userContext}
+        />
+      )}
 
       {/* Internal Staff Messaging Modal (Bertuol Flow) */}
-      <InternalMessagingModal
-        isOpen={isInternalMessagingOpen}
-        onClose={() => setIsInternalMessagingOpen(false)}
-        userContext={effectiveUserContext}
-        dentists={dentists}
-        clinics={clinics}
-        selectedClinicId={selectedClinicId}
-      />
+      {componentAccess.internalMessaging && (
+        <InternalMessagingModal
+          isOpen={isInternalMessagingOpen}
+          onClose={() => setIsInternalMessagingOpen(false)}
+          userContext={effectiveUserContext}
+          dentists={dentists}
+          clinics={clinics}
+          selectedClinicId={selectedClinicId}
+        />
+      )}
 
       {/* CRM Modal (Recall 6+ Meses & Pipeline WhatsApp) */}
-      <MiniCRMModal
-        isOpen={isCRMModalOpen}
-        onClose={() => setIsCRMModalOpen(false)}
-        clinics={clinics}
-        dentists={dentists}
-        patients={dataService.getPatients()}
-        appointments={appointments}
-        userContext={effectiveUserContext}
-        selectedClinicIdFilter={selectedClinicId}
-      />
+      {componentAccess.crm && (
+        <MiniCRMModal
+          isOpen={isCRMModalOpen}
+          onClose={() => setIsCRMModalOpen(false)}
+          clinics={clinics}
+          dentists={dentists}
+          patients={dataService.getPatients()}
+          appointments={appointments}
+          userContext={effectiveUserContext}
+          selectedClinicIdFilter={selectedClinicId}
+        />
+      )}
         </div>
       </ClinicLayout>
     </TenantProvider>
