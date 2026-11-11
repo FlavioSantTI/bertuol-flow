@@ -1,0 +1,102 @@
+[
+  {
+    "id": "evt-adfd9bc1-5a34-4abf-a1d3-5d24ece548ea",
+    "conversation_id": "conv-123993f6-1e29-4249-9f1f-212c575b55e7",
+    "actor_name": "Flavio Admin",
+    "actor_type": "dentist",
+    "event_type": "created",
+    "details": {
+      "subject": "bom dia"
+    },
+    "created_at": "2026-10-15T21:21:08.251Z"
+  },
+  {
+    "id": "evt-4ac188c7-cfbc-427b-a9da-7138c422b3e2",
+    "conversation_id": "conv-3c9bbc47-681f-46bb-9510-ecdfed7b654e",
+    "actor_name": "Flavio Admin",
+    "actor_type": "dentist",
+    "event_type": "created",
+    "details": {
+      "subject": "tetete"
+    },
+    "created_at": "2026-10-15T21:21:45.869Z"
+  },
+  {
+    "id": "evt-63e187a0-8f10-48ce-95e2-046c0028d5c7",
+    "conversation_id": "conv-db6a4583-4aac-4255-aa3c-5ea129309235",
+    "actor_name": "Flavio Admin",
+    "actor_type": "dentist",
+    "event_type": "created",
+    "details": {
+      "subject": "fdfd"
+    },
+    "created_at": "2026-10-15T21:28:20.306Z"
+  },
+  {
+    "id": "evt-2ec2f2d1-b34d-4b28-80c9-6837021848f9",
+    "conversation_id": "conv-7a4d7fea-5e9d-4716-8d77-975a437e5398",
+    "actor_name": "Flavio Admin",
+    "actor_type": "dentist",
+    "event_type": "created",
+    "details": {
+      "subject": "Atendimento Bertuol Flow"
+    },
+    "created_at": "2026-10-15T21:33:22.884Z"
+  },
+  {
+    "id": "evt-bcbbf5b4-68f6-44ab-bdcd-6dec6726e854",
+    "conversation_id": "conv-2afd623d-151d-4c13-aeb0-e70db655ff9e",
+    "actor_name": "Flavio Admin",
+    "actor_type": "dentist",
+    "event_type": "created",
+    "details": {
+      "subject": "Atendimento Bertuol Flow"
+    },
+    "created_at": "2026-10-15T21:36:30.143Z"
+  },
+  {
+    "id": "evt-741c6d2e-92e6-4cb7-842f-ff7616631202",
+    "conversation_id": "conv-9ecc7fa3-d735-4f6e-86b0-6cda56116d76",
+    "actor_name": "Alice Póvoa",
+    "actor_type": "patient",
+    "event_type": "created",
+    "details": {
+      "subject": "Nova dúvida sobre alinhadores"
+    },
+    "created_at": "2026-10-15T21:40:53.887Z"
+  },
+  {
+    "id": "evt-434d674b-6fad-40d6-a1b5-578b6206e3d9",
+    "conversation_id": "c01f44ce-9fc2-4202-9281-5a46a7cdc4f2",
+    "actor_name": "Paciente Teste Ajustes",
+    "actor_type": "patient",
+    "event_type": "created",
+    "details": {
+      "subject": "Dúvida sobre alinhadores e retorno"
+    },
+    "created_at": "2026-10-16T12:10:33.625Z"
+  },
+  {
+    "id": "evt-13ef003d-84b9-441e-8ec4-92d95f113027",
+    "conversation_id": "c01f44ce-9fc2-4202-9281-5a46a7cdc4f2",
+    "actor_name": "Recepção Palmas",
+    "actor_type": "staff",
+    "event_type": "participant_added",
+    "details": {
+      "added_user": "Dra. Ariane Bertuol"
+    },
+    "created_at": "2026-10-16T12:10:34.025Z"
+  },
+  {
+    "id": "evt-baad7c7c-09ce-461c-9897-3592de85b829",
+    "conversation_id": "c01f44ce-9fc2-4202-9281-5a46a7cdc4f2",
+    "actor_name": "Recepção Palmas",
+    "actor_type": "staff",
+    "event_type": "transferred",
+    "details": {
+      "from": "Nenhum",
+      "to": "Dra. Ariane Bertuol"
+    },
+    "created_at": "2026-10-16T12:10:34.231Z"
+  }
+]

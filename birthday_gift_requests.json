@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bday_req_1791309925910",
+    "phone": "6392657183",
+    "patientName": "Angela Maria De Sousa",
+    "giftTitle": "Cortesia de Aniversário: Profilaxia e Diagnóstico Sky Câmera",
+    "preferredDate": "2026-10-11",
+    "preferredPeriod": "Manhã (08h às 12h)",
+    "unit": "Bertuol Odontologia Avançada - Matriz Palmas",
+    "notes": "",
+    "status": "solicitado",
+    "createdAt": "2026-10-06T18:05:25.910Z"
+  },
+  {
+    "id": "bday_req_1791242457513",
+    "phone": "63992474826",
+    "patientName": "Alice Póvoa",
+    "giftTitle": "Cortesia de Aniversário: Profilaxia e Diagnóstico Sky Câmera",
+    "preferredDate": "2026-10-15",
+    "preferredPeriod": "Manhã (08h às 12h)",
+    "unit": "Matriz Palmas",
+    "notes": "",
+    "status": "solicitado",
+    "createdAt": "2026-10-05T23:20:57.513Z"
+  }
+]
