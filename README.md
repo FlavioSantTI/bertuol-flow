@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.3.2
+# 🦷 Bertuol Odontologia Avançada — Versão 1.3.3
 
 > **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, CRM de Reativação & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente e Totem de Recepção com Gamificação.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.3.2-FF981A.svg?style=for-the-badge)](https://github.com)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.3.3-FF981A.svg?style=for-the-badge)](https://github.com)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -24,11 +24,11 @@ As três rotas principais da aplicação estão homologadas e mapeadas no domín
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.3.2
+## 🌟 Visão Geral da Jornada & Versão 1.3.3
 
 O **Bertuol Odontologia Avançada** evoluiu para uma solução corporativa completa de ecossistema odontológico **Multi-Tenant / Multi-Clínicas**, integrando o fluxo do consultório (Dentistas, Gerentes, Atendentes) com o público final (Pacientes e Clube de Vantagens Sorriso) e gestão comercial ativa.
 
-### 🏆 Novidades e Funcionalidades Principais da v1.3.2
+### 🏆 Novidades e Funcionalidades Principais da v1.3.3
 
 #### 1. 🛡️ Homologação & Validação das 3 Rotas Principais (RBAC)
 - **Matriz de Proteção de Rotas (`ProtectedRoute.tsx`)**: Isolamento por contexto (`clinic`, `patient`, `root`) garantindo conformidade LGPD e segurança de acesso.
@@ -139,5 +139,5 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.3.2`
+- **Versão**: `v1.3.3`
 - **Gestão**: Flávio Santiago & Favuca Dias
