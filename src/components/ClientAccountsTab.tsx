@@ -29,6 +29,9 @@ import {
   generatePatientActivationToken,
   formatPatientPortalUrl,
   formatPatientInviteMessage,
+  TENANT_ID_PALMAS,
+  TENANT_ID_PARAISO,
+  resolveClinicTenantUuid,
 } from '../services/supabaseService';
 import {
   dataService,
@@ -74,6 +77,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<SupabasePatient | null>(null);
   const [editForm, setEditForm] = useState({
+    tenant_id: TENANT_ID_PALMAS,
     name: '',
     document_id: '',
     mobile_phone: '',
@@ -92,7 +96,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
     const localPatients = dataService.getPatients();
     return localPatients.map((lp): SupabasePatient => ({
       id: `local_pat_${lp.id}`,
-      tenant_id: String(lp.Clinic_BusinessId || 1),
+      tenant_id: resolveClinicTenantUuid(lp.Clinic_BusinessId),
       external_id: String(lp.id),
       name: lp.Name,
       document_id: lp.cpf || null,
@@ -286,6 +290,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
     if (patient) {
       setEditingPatient(patient);
       setEditForm({
+        tenant_id: resolveClinicTenantUuid(patient.tenant_id),
         name: patient.name || '',
         document_id: patient.document_id || '',
         mobile_phone: patient.mobile_phone || '',
@@ -300,6 +305,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
     } else {
       setEditingPatient(null);
       setEditForm({
+        tenant_id: TENANT_ID_PALMAS,
         name: '',
         document_id: '',
         mobile_phone: '',
@@ -324,6 +330,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
     try {
       if (editingPatient) {
         await updatePatientInSupabase(editingPatient.id, {
+          tenant_id: editForm.tenant_id,
           name: editForm.name.trim(),
           document_id: editForm.document_id.trim() || null,
           mobile_phone: editForm.mobile_phone.trim() || null,
@@ -339,6 +346,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         const token = generatePatientActivationToken();
         const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
         await createPatientInSupabase({
+          tenant_id: editForm.tenant_id,
           name: editForm.name.trim(),
           document_id: editForm.document_id.trim() || null,
           mobile_phone: editForm.mobile_phone.trim() || null,
@@ -892,6 +900,22 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="sm:col-span-2">
+                <label className="block font-bold text-slate-700 mb-1">Unidade / Clínica (tenant_id) *</label>
+                <select
+                  value={editForm.tenant_id}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, tenant_id: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold"
+                >
+                  <option value={TENANT_ID_PALMAS}>
+                    Palmas - TO ({TENANT_ID_PALMAS})
+                  </option>
+                  <option value={TENANT_ID_PARAISO}>
+                    Paraíso do Tocantins - TO ({TENANT_ID_PARAISO})
+                  </option>
+                </select>
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="block font-bold text-slate-700 mb-1">Nome Completo *</label>
                 <input

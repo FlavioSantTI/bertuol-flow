@@ -220,6 +220,18 @@ export async function updatePatientInSupabase(
   }
 }
 
+export const TENANT_ID_PALMAS = 'd176a1c3-9955-4555-87d9-1da0bacb61a5';
+export const TENANT_ID_PARAISO = '5d30567b-ecfc-49a7-903d-f994c6de50f1';
+
+export function resolveClinicTenantUuid(clinicIdOrSlug?: number | string | null): string {
+  if (!clinicIdOrSlug) return TENANT_ID_PALMAS;
+  const s = String(clinicIdOrSlug).toLowerCase();
+  if (s === TENANT_ID_PARAISO || s === '2' || s === '5053762760081409' || s.includes('paraiso')) {
+    return TENANT_ID_PARAISO;
+  }
+  return TENANT_ID_PALMAS;
+}
+
 export async function createPatientInSupabase(
   newPatient: Omit<Partial<SupabasePatient>, 'id'> & { name: string }
 ): Promise<{ success: boolean; data?: SupabasePatient; error?: string }> {
@@ -228,9 +240,11 @@ export async function createPatientInSupabase(
       ? crypto.randomUUID()
       : `pat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+  const resolvedTenantId = resolveClinicTenantUuid(newPatient.tenant_id);
+
   const record: SupabasePatient = {
     id: tempId,
-    tenant_id: newPatient.tenant_id || null,
+    tenant_id: resolvedTenantId,
     name: newPatient.name.trim(),
     email: newPatient.email || null,
     document_id: newPatient.document_id || null,
@@ -253,6 +267,7 @@ export async function createPatientInSupabase(
       .from('patients')
       .insert([
         {
+          tenant_id: record.tenant_id,
           name: record.name,
           email: record.email,
           document_id: record.document_id,
