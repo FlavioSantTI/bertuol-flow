@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tutorial Interativo • Check-in & Resgate de Pontos Bertuol</title>
+  <title>Apresentação Oficial 60 Min & Tutorial Interativo • Bertuol Flow v1.4</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -40,16 +40,18 @@
 
     /* Top Bar */
     header.top-nav {
-      background: rgba(15, 31, 34, 0.85);
+      background: rgba(15, 31, 34, 0.92);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
       position: sticky;
       top: 0;
       z-index: 100;
+      flex-wrap: wrap;
     }
 
     .brand-group {
@@ -73,7 +75,7 @@
     }
 
     .brand-title h1 {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       color: #FFF;
       letter-spacing: -0.3px;
@@ -85,26 +87,57 @@
       font-weight: 600;
     }
 
+    /* Deck Mode Switcher */
+    .mode-switcher {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      background: var(--primary);
+      color: #FFF;
+      box-shadow: 0 2px 10px rgba(20, 122, 128, 0.35);
+    }
+
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-secondary {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: #FFF;
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       transition: all 0.2s;
       text-decoration: none;
+      white-space: nowrap;
     }
 
     .btn-secondary:hover {
@@ -116,16 +149,17 @@
       background: linear-gradient(135deg, var(--gold) 0%, #FFA800 100%);
       color: #0E585D;
       border: none;
-      padding: 9px 18px;
+      padding: 8px 16px;
       border-radius: 10px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       box-shadow: 0 4px 16px rgba(255, 204, 41, 0.3);
       transition: all 0.2s;
+      white-space: nowrap;
     }
 
     .btn-gold:hover {
@@ -137,11 +171,11 @@
     main.studio-layout {
       flex: 1;
       display: grid;
-      grid-template-columns: 1fr 480px;
+      grid-template-columns: 1fr 500px;
       max-width: 1680px;
       margin: 0 auto;
       width: 100%;
-      height: calc(100vh - 69px);
+      height: calc(100vh - 67px);
     }
 
     @media (max-width: 1100px) {
@@ -158,19 +192,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px 24px;
       position: relative;
       overflow: hidden;
     }
 
-    /* Background Animated Glow */
     .stage-glow {
       position: absolute;
       width: 600px;
       height: 600px;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(255, 204, 41, 0.12) 0%, rgba(20, 122, 128, 0) 70%);
-      top: 20%;
+      top: 18%;
       filter: blur(80px);
       pointer-events: none;
       animation: pulseStage 8s infinite alternate ease-in-out;
@@ -184,10 +217,10 @@
     /* Kinetic Headline Over Stage */
     .stage-kinetic-header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       z-index: 20;
-      max-width: 620px;
-      min-height: 80px;
+      max-width: 680px;
+      min-height: 76px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -204,19 +237,18 @@
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.4px;
       padding: 4px 12px;
       border-radius: 100px;
       margin-bottom: 8px;
     }
 
     .kinetic-main-title {
-      font-size: 26px;
+      font-size: 25px;
       font-weight: 900;
       color: #FFFFFF;
       line-height: 1.25;
       letter-spacing: -0.5px;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .kinetic-main-title span {
@@ -226,7 +258,7 @@
     }
 
     .kinetic-desc {
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--text-muted);
       margin-top: 4px;
       font-weight: 500;
@@ -236,8 +268,8 @@
     .mockup-wrapper {
       position: relative;
       z-index: 20;
-      width: 330px;
-      height: 670px;
+      width: 345px;
+      height: 650px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -248,7 +280,7 @@
       width: 100%;
       height: 100%;
       background: #0d1317;
-      border-radius: 46px;
+      border-radius: 44px;
       padding: 10px;
       box-shadow: 
         0 25px 60px rgba(0, 0, 0, 0.7),
@@ -259,17 +291,15 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Dynamic Island */
     .phone-island {
       position: absolute;
-      top: 18px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
-      width: 100px;
-      height: 24px;
+      width: 96px;
+      height: 22px;
       background: #000;
       border-radius: 20px;
       z-index: 40;
@@ -287,11 +317,10 @@
       border: 1px solid #1c2c3d;
     }
 
-    /* Internal Screen */
     .phone-screen {
       width: 100%;
       height: 100%;
-      border-radius: 36px;
+      border-radius: 34px;
       background: #F8FAFC;
       color: #0F172A;
       overflow: hidden;
@@ -300,11 +329,10 @@
       flex-direction: column;
     }
 
-    /* Screen Simulated App UI */
     .screen-header-bar {
       background: linear-gradient(135deg, #147A80 0%, #0E585D 100%);
       color: white;
-      padding: 38px 16px 14px 16px;
+      padding: 36px 16px 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -312,7 +340,7 @@
     }
 
     .patient-greet h2 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
     }
 
@@ -337,10 +365,10 @@
     }
 
     .points-pill.pulse {
-      transform: scale(1.18);
+      transform: scale(1.14);
       background: #FFCC29;
       color: #0E585D;
-      box-shadow: 0 0 20px #FFCC29;
+      box-shadow: 0 0 16px #FFCC29;
     }
 
     .screen-body {
@@ -349,37 +377,35 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       background: #F1F5F9;
       position: relative;
     }
 
-    /* Card de Consulta */
+    /* Card Styles inside Phone */
     .appt-card {
       background: white;
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
       border: 1px solid #E2E8F0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      transition: all 0.3s;
+      gap: 8px;
     }
 
     .appt-card.highlight {
       border: 2px solid var(--primary-light);
-      box-shadow: 0 10px 25px rgba(20, 122, 128, 0.2);
-      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(20, 122, 128, 0.16);
     }
 
     .appt-status {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 9px;
       border-radius: 100px;
       align-self: flex-start;
       background: #FEF3C7;
@@ -397,35 +423,34 @@
     }
 
     .appt-dr {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 800;
       color: #0F172A;
     }
 
     .appt-time {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #64748B;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
-    /* Botão de Ação no App */
     .btn-action-app {
       background: #147A80;
       color: white;
       border: none;
-      border-radius: 12px;
-      padding: 11px;
-      font-size: 13px;
+      border-radius: 11px;
+      padding: 10px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: all 0.2s;
+      gap: 6px;
       width: 100%;
+      text-decoration: none;
     }
 
     .btn-action-app.gold {
@@ -434,27 +459,25 @@
       font-weight: 800;
     }
 
-    /* Card Clube / Recompensas */
     .club-preview-card {
       background: linear-gradient(135deg, #0E585D 0%, #147A80 100%);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 14px;
       color: white;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 8px 20px rgba(14, 88, 93, 0.25);
+      gap: 8px;
+      box-shadow: 0 8px 18px rgba(14, 88, 93, 0.22);
     }
 
     .reward-item-row {
       background: white;
-      border-radius: 14px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border: 1px solid #E2E8F0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
 
     .reward-info h4 {
@@ -464,7 +487,7 @@
     }
 
     .reward-info p {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #64748B;
     }
 
@@ -472,7 +495,7 @@
       background: #ECFDF5;
       border: 2px dashed #10B981;
       border-radius: 16px;
-      padding: 16px;
+      padding: 14px;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -482,18 +505,18 @@
 
     .voucher-code {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       letter-spacing: 2px;
       color: #065F46;
       background: #D1FAE5;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
     }
 
     .qr-mock {
-      width: 110px;
-      height: 110px;
+      width: 100px;
+      height: 100px;
       background: white;
       border: 1px solid #E2E8F0;
       border-radius: 12px;
@@ -501,14 +524,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     /* Touch Pointer Cursor */
     .touch-cursor {
       position: absolute;
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: rgba(255, 204, 41, 0.4);
       border: 2px solid #FFCC29;
@@ -533,22 +555,23 @@
     /* Floating Callout Badge */
     .floating-stage-callout {
       position: absolute;
-      right: 20px;
-      bottom: 80px;
-      background: rgba(14, 88, 93, 0.95);
+      right: 16px;
+      bottom: 78px;
+      background: rgba(14, 88, 93, 0.96);
       backdrop-filter: blur(16px);
       border: 2px solid var(--gold);
-      padding: 14px 22px;
-      border-radius: 20px;
+      padding: 12px 18px;
+      border-radius: 18px;
       color: white;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       z-index: 30;
       transform: translateY(20px) scale(0.9);
       opacity: 0;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 280px;
     }
 
     .floating-stage-callout.show {
@@ -557,38 +580,39 @@
     }
 
     .callout-icon {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: var(--gold);
       color: #0E585D;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 900;
+      flex-shrink: 0;
     }
 
     .callout-text h5 {
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 800;
       color: white;
     }
 
     .callout-text p {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #E2E8F0;
     }
 
     /* Bottom Stage Timeline Controls */
     .stage-timeline {
       width: 100%;
-      max-width: 620px;
-      margin-top: 18px;
+      max-width: 640px;
+      margin-top: 16px;
       z-index: 20;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .timeline-progress-bar {
@@ -597,13 +621,12 @@
       background: rgba(255, 255, 255, 0.12);
       border-radius: 100px;
       overflow: hidden;
-      position: relative;
     }
 
     .timeline-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--primary-light), var(--gold));
-      width: 16.66%;
+      width: 12.5%;
       transition: width 0.4s ease;
     }
 
@@ -648,7 +671,7 @@
       color: var(--gold);
     }
 
-    /* Right Sidebar: Storyboard & Script Breakdown */
+    /* Right Sidebar */
     .storyboard-sidebar {
       background: var(--card-bg);
       border-left: 1px solid var(--border);
@@ -658,7 +681,7 @@
     }
 
     .sidebar-header {
-      padding: 18px 24px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -666,7 +689,7 @@
     }
 
     .sidebar-header h3 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       letter-spacing: -0.2px;
     }
@@ -681,23 +704,22 @@
       border-radius: 6px;
     }
 
-    /* Slides List */
     .slides-accordion {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .slide-card-item {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
+      border-radius: 13px;
+      padding: 12px 14px;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.22s;
       position: relative;
     }
 
@@ -707,65 +729,54 @@
     }
 
     .slide-card-item.active {
-      background: rgba(20, 122, 128, 0.15);
+      background: rgba(20, 122, 128, 0.18);
       border: 2px solid var(--primary-light);
-      box-shadow: 0 4px 18px rgba(20, 122, 128, 0.2);
-    }
-
-    .slide-card-item.active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 14px;
-      bottom: 14px;
-      width: 4px;
-      border-radius: 0 4px 4px 0;
-      background: var(--gold);
+      box-shadow: 0 4px 18px rgba(20, 122, 128, 0.22);
     }
 
     .slide-card-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .slide-num {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 800;
       color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
     }
 
     .slide-duration {
       font-size: 11px;
       font-family: 'JetBrains Mono', monospace;
-      color: var(--text-muted);
+      color: #38BDF8;
+      font-weight: 700;
     }
 
     .slide-item-title {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: #FFF;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .slide-item-desc {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       line-height: 1.4;
     }
 
-    /* Active Script Detail Box */
     .active-script-detail {
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.3);
       border-top: 1px solid var(--border);
-      padding: 18px 24px;
+      padding: 16px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-height: 240px;
+      gap: 10px;
+      max-height: 255px;
       overflow-y: auto;
     }
 
@@ -776,7 +787,7 @@
     }
 
     .detail-label {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 800;
       color: var(--gold);
       text-transform: uppercase;
@@ -784,29 +795,29 @@
     }
 
     .detail-voiceover {
-      font-size: 13px;
+      font-size: 12.5px;
       color: #E2E8F0;
-      font-style: italic;
       line-height: 1.45;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 12px;
       border-radius: 10px;
-      border-left: 3px solid var(--gold);
+      border: 1px solid rgba(255, 204, 41, 0.25);
     }
 
     .detail-sfx {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #A0AEC0;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 6px;
     }
 
     .tag-pill {
       background: rgba(255, 255, 255, 0.08);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
       color: #FFF;
       font-family: 'JetBrains Mono', monospace;
     }
@@ -819,13 +830,23 @@
     <div class="brand-group">
       <div class="logo-badge">B</div>
       <div class="brand-title">
-        <h1>Roteiro Interativo • Check-in & Resgate de Pontos</h1>
-        <p>Slideshow Sincronizado com Hyperframes • Bertuol Odontologia</p>
+        <h1>Estúdio de Apresentação • Bertuol Flow v1.4</h1>
+        <p>Treinamento Oficial de Equipe (60 min) & Jornada Clube Sorriso</p>
       </div>
     </div>
+
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="btnModeStaff" onclick="switchDeckMode('staff')">
+        👥 Treinamento Equipe (60 min)
+      </button>
+      <button class="mode-btn" id="btnModePatient" onclick="switchDeckMode('patient')">
+        📱 Jornada do Paciente (Clube Sorriso)
+      </button>
+    </div>
+
     <div class="nav-actions">
-      <a href="/video-preview.html" class="btn-secondary">
-        🎬 Ver Vídeo Renderizado
+      <a href="/" class="btn-secondary">
+        🚀 Abrir Sistema Ao Vivo
       </a>
       <button class="btn-gold" id="btnAutoplay" onclick="toggleAutoplay()">
         ▶️ Apresentação Automática
@@ -842,12 +863,12 @@
 
       <!-- Kinetic Title -->
       <div class="stage-kinetic-header">
-        <div class="kinetic-badge" id="kineticBadge">Slide 1 • Lembrete & Recepção</div>
-        <h2 class="kinetic-main-title" id="kineticTitle">Confirme sua consulta em <span>1 toque</span></h2>
-        <p class="kinetic-desc" id="kineticDesc">O paciente recebe o aviso no WhatsApp e acessa o PWA sem baixar nada.</p>
+        <div class="kinetic-badge" id="kineticBadge">Bloco 1 • 00 a 15 Min</div>
+        <h2 class="kinetic-main-title" id="kineticTitle">Ecossistema <span>Bertuol Flow v1.4</span></h2>
+        <p class="kinetic-desc" id="kineticDesc">Conexão em tempo real entre Clinicorp, Operação Clínica e Clube Sorriso PWA.</p>
       </div>
 
-      <!-- Phone Mockup Stage -->
+      <!-- Phone / App Mockup Stage -->
       <div class="mockup-wrapper">
         <div class="phone-body" id="phoneBody">
           <div class="phone-island">
@@ -861,11 +882,11 @@
             <!-- App Screen Header -->
             <div class="screen-header-bar">
               <div class="patient-greet">
-                <h2 id="patientNameText">Alice Póvoa</h2>
-                <p id="patientClinicText">Matriz Palmas • 104 Sul</p>
+                <h2 id="patientNameText">Bertuol Flow v1.4</h2>
+                <p id="patientClinicText">Palmas & Paraíso • Multi-Tenant</p>
               </div>
               <div class="points-pill" id="patientPointsPill">
-                ⭐ <span id="pointsValueText">40 pts</span>
+                ⚡ <span id="pointsValueText">v1.4.0</span>
               </div>
             </div>
 
@@ -882,10 +903,10 @@
 
         <!-- Floating Callout Badge -->
         <div class="floating-stage-callout" id="stageCallout">
-          <div class="callout-icon" id="calloutIcon">⚡</div>
+          <div class="callout-icon" id="calloutIcon">👑</div>
           <div class="callout-text">
-            <h5 id="calloutTitle">Presença Confirmada!</h5>
-            <p id="calloutSub">+10 Pontos no Clube Bertuol</p>
+            <h5 id="calloutTitle">Produção v1.4</h5>
+            <p id="calloutSub">6.285+ Clientes Sincronizados</p>
           </div>
         </div>
       </div>
@@ -898,15 +919,15 @@
         <div class="timeline-controls">
           <div class="timeline-btns">
             <button class="btn-icon" onclick="prevSlide()" title="Slide Anterior (Seta Esquerda)">◀</button>
-            <button class="btn-icon" onclick="playCurrentAnimation()" title="Disparar Animação Novamente">🔄</button>
+            <button class="btn-icon" onclick="playCurrentAnimation()" title="Repetir Animação">🔄</button>
             <button class="btn-icon" onclick="nextSlide()" title="Próximo Slide (Seta Direita)">▶</button>
           </div>
           <div class="slide-step-indicator" id="slideStepIndicator">
-            Slide <span id="currentSlideNum">1</span> de 6
+            Slide <span id="currentSlideNum">1</span> de <span id="totalSlidesNum">8</span>
           </div>
           <div>
             <button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="triggerSimulatedTap()">
-              👆 Simular Toque na Tela
+              👆 Destacar Ponto Focal
             </button>
           </div>
         </div>
@@ -914,11 +935,11 @@
 
     </section>
 
-    <!-- Right Sidebar: Interactive Storyboard & Audio Script -->
+    <!-- Right Sidebar: Interactive Storyboard & Presenter Script -->
     <aside class="storyboard-sidebar">
       <div class="sidebar-header">
-        <h3>Roteiro & Decupagem de Cena</h3>
-        <span class="badge-status">Sincronizado</span>
+        <h3 id="sidebarHeaderTitle">Roteiro de 60 Minutos (Plenária + Perfis)</h3>
+        <span class="badge-status" id="sidebarBadgeStatus">v1.4 Oficial</span>
       </div>
 
       <!-- Slides List -->
@@ -926,21 +947,15 @@
         <!-- Rendered by JavaScript -->
       </div>
 
-      <!-- Active Script Detail (Voiceover, SFX, Motion) -->
+      <!-- Active Script Detail (Speaker Notes & Formatting Tips) -->
       <div class="active-script-detail" id="activeScriptDetail">
         <div class="detail-row">
-          <span class="detail-label">🎙️ Narração / Locução (Voiceover)</span>
-          <div class="detail-voiceover" id="scriptVoiceover">
-            "Olá Alice! Seu dia de cuidar do sorriso chegou. Com um simples toque, confirme sua consulta e já comece a pontuar."
-          </div>
+          <span class="detail-label" id="detailLabelPrimary">🎙️ Fala Sugerida (Problema → Clique → Ganho)</span>
+          <div class="detail-voiceover" id="scriptVoiceover"></div>
         </div>
         <div class="detail-row">
-          <span class="detail-label">🎵 Efeitos Sonoros & Movimento Hyperframe</span>
-          <div class="detail-sfx" id="scriptSfx">
-            <span class="tag-pill">SFX: Soft Ding</span>
-            <span class="tag-pill">Câmera: Zoom 1.02x</span>
-            <span class="tag-pill">Touch: (165px, 240px)</span>
-          </div>
+          <span class="detail-label">💡 Dica de Palco & Demonstração Ao Vivo</span>
+          <div class="detail-sfx" id="scriptSfx"></div>
         </div>
       </div>
     </aside>
@@ -948,8 +963,353 @@
   </main>
 
   <script>
-    // Definição Completa dos 6 Slides do Fluxo de Check-in & Resgate de Pontos
-    const SLIDES = [
+    // ============================================================================
+    // MODO 1: ROTEIRO OFICIAL DE 60 MINUTOS PARA COLABORADORES (8 SLIDES)
+    // ============================================================================
+    const STAFF_SLIDES = [
+      {
+        id: 1,
+        title: "Abertura & Ecossistema Bertuol Flow v1.4",
+        titleHtml: "Ecossistema <span>Bertuol Flow v1.4</span>",
+        desc: "Bloco 1 (Plenária Geral) • Como Clinicorp, Agenda Inteligente e Clube Sorriso trabalham juntos.",
+        badge: "Bloco 1 • Minutos 00 a 08 (Plenária)",
+        duration: "00:00 - 08:00 (8 min)",
+        headerTitle: "Bertuol Flow v1.4",
+        headerSub: "Palmas & Paraíso • Produção",
+        points: "6.285+ Pac.",
+        callout: {
+          icon: "🚀",
+          title: "Ecossistema 360°",
+          sub: "Clinicorp + Operação + Paciente",
+          show: true
+        },
+        voiceover: "Bem-vindos ao lançamento oficial do Bertuol Flow v1.4! Não estamos substituindo o Clinicorp; estamos conectando a recepção, os consultórios e os 6.285+ pacientes em tempo real na palma da mão.",
+        sfx: "Tela Cheia (F11) • Zoom 110%",
+        motion: "Mostrar Barra SuperAdmin Root no topo",
+        touchTarget: { x: 170, y: 190 },
+        renderScreen: () => `
+          <div class="club-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:800; color:#FFCC29;">ECOSSISTEMA INTEGRADO v1.4</span>
+              <span style="font-size:10px; background:rgba(255,255,255,0.18); padding:2px 8px; border-radius:99px;">Tempo Real</span>
+            </div>
+            <div style="font-size:16px; font-weight:900;">3 Pontas Conectadas</div>
+            <div style="font-size:11px; opacity:0.92; line-height:1.45;">
+              1. <b>Clinicorp ERP</b>: Agendamentos e profissionais<br/>
+              2. <b>Bertuol Flow</b>: Recepção, Dentistas e CRM<br/>
+              3. <b>Clube Sorriso PWA</b>: App no celular do paciente
+            </div>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">🔒 Isolamento Multi-Unidade (LGPD)</div>
+            <div class="appt-dr">Palmas - TO & Paraíso - TO</div>
+            <p style="font-size:11.5px; color:#475569; line-height:1.4;">
+              Cada colaborador enxerga uma interface limpa, travada automaticamente na sua unidade vinculada e apenas com as ferramentas do seu cargo.
+            </p>
+            <a href="/" target="_blank" class="btn-action-app gold">
+              👑 Demonstrar Barra Root Ao Vivo
+            </a>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "Segurança, Login Institucional & Face ID",
+        titleHtml: "Acesso Rápido com <span>Biometria & Face ID</span>",
+        desc: "Bloco 1 (Plenária Geral) • Troca de senha no 1º acesso e autenticação em 1 segundo no celular.",
+        badge: "Bloco 1 • Minutos 08 a 15 (Plenária)",
+        duration: "08:00 - 15:00 (7 min)",
+        headerTitle: "Segurança & Acesso",
+        headerSub: "WebAuthn • Passkeys • LGPD",
+        points: "1 Toque",
+        callout: {
+          icon: "🔐",
+          title: "Biometria Ativa",
+          sub: "Login sem digitar senha",
+          show: true
+        },
+        voiceover: "No primeiro acesso com a senha inicial Bertuol@2026, o sistema pede para criar sua senha pessoal. Em seguida, ative a Biometria ou Face ID no menu para entrar em 1 segundo todos os dias.",
+        sfx: "Menu → Biometria & Face ID",
+        motion: "Demonstrar modal WebAuthn e ?app=paciente",
+        touchTarget: { x: 170, y: 260 },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status checkedin">🔑 Passo a Passo do Colaborador</div>
+            <div class="appt-dr">1º Acesso & Biometria Facial</div>
+            <div style="font-size:11.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+              <div>✅ <b>Passo 1:</b> Login com e-mail + senha inicial</div>
+              <div>✅ <b>Passo 2:</b> Definir senha pessoal segura</div>
+              <div>✅ <b>Passo 3:</b> Ativar Face ID / Digital do aparelho</div>
+            </div>
+          </div>
+
+          <div class="appt-card" style="background:#FFFBEB; border-color:#FDE68A;">
+            <div class="appt-status">📱 Visão do Paciente (Clube Sorriso)</div>
+            <div class="appt-dr">O que o cliente vê no celular?</div>
+            <p style="font-size:11px; color:#78350F;">
+              Carteira de pontos, roleta premiada, missões de higiene e check-in sem fila.
+            </p>
+            <a href="/?app=paciente" target="_blank" class="btn-action-app">
+              📲 Abrir Portal do Paciente (?app=paciente)
+            </a>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "Trilha Recepção: Totem QR & Check-in",
+        titleHtml: "Recepção: <span>Totem QR & Check-in</span>",
+        desc: "Bloco 2 (Recepção) • Como o paciente faz check-in no balcão, ganha pontos e avisa o consultório.",
+        badge: "Bloco 2 • Minutos 15 a 20 (Recepção)",
+        duration: "15:00 - 20:00 (5 min)",
+        headerTitle: "Perfil: 🛎️ Recepção",
+        headerSub: "🔒 Unidade Vinculada (Palmas/Paraíso)",
+        points: "+30 pts",
+        callout: {
+          icon: "🛎️",
+          title: "Alerta Instantâneo!",
+          sub: "Toque sonoro na tela do Dentista",
+          show: true
+        },
+        voiceover: "Mudando na Barra Root para o perfil Recepção: veja como a unidade já fica travada com cadeado. Quando o paciente chega e escaneia o Totem QR de Balcão, ele ganha pontos e o dentista recebe um aviso sonoro na hora.",
+        sfx: "Simular Perfil: Recepção",
+        motion: "Abrir botão Totem QR Code de Balcão",
+        touchTarget: { x: 170, y: 210 },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">📍 Totem QR Code de Balcão</div>
+            <div class="appt-dr">Zero Fila na Recepção</div>
+            <p style="font-size:11.5px; color:#475569;">
+              O paciente aponta a câmera para o acrílico na recepção → confirma chegada → ganha <b>+30 pontos</b> de pontualidade.
+            </p>
+            <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:10px; font-size:11px; color:#1E40AF; font-weight:700;">
+              🔔 O consultório recebe o alerta visual + som suave imediatamente!
+            </div>
+          </div>
+
+          <div class="reward-item-row">
+            <div class="reward-info">
+              <h4>Baixa de Vouchers no Balcão</h4>
+              <p>Valide o código do prêmio resgatado pelo cliente</p>
+            </div>
+            <span style="font-size:11px; font-weight:800; color:#147A80;">1 Clique</span>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "Central de Credenciais (6.285+ Clientes)",
+        titleHtml: "Busca Instantânea em <span>6.285+ Clientes</span>",
+        desc: "Bloco 2 (Recepção) • Nova barra compacta no topo para achar qualquer paciente por nome em 1 segundo.",
+        badge: "Bloco 2 • Minutos 20 a 30 (Recepção)",
+        duration: "20:00 - 30:00 (10 min)",
+        headerTitle: "Central de Credenciais",
+        headerSub: "6.285+ Pacientes • Busca por Nome",
+        points: "Busca A-Z",
+        callout: {
+          icon: "⚡",
+          title: "Busca no Topo!",
+          sub: "Sem rolar a tela • Envio WhatsApp",
+          show: true
+        },
+        voiceover: "Antes, achar um paciente na base grande dava trabalho. Agora, na Central de Credenciais reorganizada, a busca por nome fica no topo! Digite o nome, filtre de A a Z e envie o acesso pronto direto no WhatsApp do cliente.",
+        sfx: "Menu → Central de Credenciais",
+        motion: "Buscar 'Maria' ou 'Silva' ao vivo no modal",
+        touchTarget: { x: 170, y: 165 },
+        renderScreen: () => `
+          <div class="appt-card highlight" style="gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="appt-status confirmed">🔎 Barra de Comando Compacta</span>
+              <span style="font-size:10px; font-weight:800; color:#0F766E;">6.285+ Clientes</span>
+            </div>
+            <div style="background:#F8FAFC; border:2px solid #147A80; border-radius:10px; padding:8px 10px; font-size:12px; font-weight:700; color:#0F172A;">
+              🔍 Buscar paciente por NOME (ex: Maria Silva)...
+            </div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:2px;">
+              <span style="background:#0F172A; color:#FFF; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Todos</span>
+              <span style="background:#D1FAE5; color:#065F46; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Ativos</span>
+              <span style="background:#FEF3C7; color:#92400E; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Pendentes</span>
+              <span style="background:#E2E8F0; color:#334155; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Filtro A–Z</span>
+            </div>
+          </div>
+
+          <div class="appt-card">
+            <div class="appt-dr">Envio de Credencial via WhatsApp</div>
+            <p style="font-size:11px; color:#64748B;">
+              Gere ou resete a senha temporária do paciente e envie a mensagem formatada com link direto para o Clube Sorriso.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "Trilha Dentista: Agenda & Alerta de Chegada",
+        titleHtml: "Dentista: <span>Visão Clínica & Alertas</span>",
+        desc: "Bloco 3 (Corpo Clínico) • Interface limpa, travada no profissional, com aviso sonoro de paciente na recepção.",
+        badge: "Bloco 3 • Minutos 30 a 37 (Dentistas)",
+        duration: "30:00 - 37:00 (7 min)",
+        headerTitle: "Perfil: 🩺 Dentista",
+        headerSub: "Agenda Pessoal • Foco Clínico",
+        points: "Clinicorp Sync",
+        callout: {
+          icon: "🩺",
+          title: "Visão Enxuta",
+          sub: "Sem menus administrativos extras",
+          show: true
+        },
+        voiceover: "Agora simulando o perfil Dentista: percebam como o cabeçalho fica 100% focado na clínica. O doutor vê apenas sua própria agenda, navega pelos dias e categorias, e recebe o alerta no topo assim que o paciente chega.",
+        sfx: "Simular Perfil: Dentista + Moldura Mobile",
+        motion: "Clicar no ícone de Smartphone no topo para mostrar visão Mobile",
+        touchTarget: { x: 170, y: 200 },
+        renderScreen: () => `
+          <div style="background:#ECFDF5; border:2px solid #10B981; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">🔔</span>
+            <div>
+              <div style="font-size:11.5px; font-weight:800; color:#065F46;">Paciente chegou na recepção!</div>
+              <div style="font-size:10.5px; color:#047857;">Check-in confirmado via Totem • Sala pronta</div>
+            </div>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status">Hoje • 14:30 • Ortodontia</div>
+            <div class="appt-dr">Paciente agendado no Clinicorp</div>
+            <div class="appt-time">📍 Unidade Vinculada • Sincronização Automática</div>
+            <p style="font-size:11px; color:#475569;">
+              Filtre sua agenda do dia por categoria (Avaliação, Implante, Ortodontia, Urgência) com 1 toque.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "Resumo Clínico IA, Vouchers & Chat Interno",
+        titleHtml: "Resumo com <span>Inteligência Artificial</span>",
+        desc: "Bloco 3 (Corpo Clínico) • Síntese clínica do paciente antes de sentar na cadeira + consulta ao Clube Sorriso.",
+        badge: "Bloco 3 • Minutos 37 a 45 (Dentistas)",
+        duration: "37:00 - 45:00 (8 min)",
+        headerTitle: "Prontuário & IA",
+        headerSub: "Resumo Executivo • Clube Sorriso",
+        points: "IA Ativa",
+        callout: {
+          icon: "✨",
+          title: "Resumo em 3 Segundos",
+          sub: "Histórico + Clube Sorriso no cabeçalho",
+          show: true
+        },
+        voiceover: "Ao tocar no card do paciente, o dentista lê o Resumo Executivo gerado por IA com o histórico e observações importantes. E novidade da v1.4: o dentista também tem o botão Clube Sorriso no cabeçalho para consultar vouchers do seu paciente!",
+        sfx: "Clicar num Agendamento + Botão Clube Sorriso",
+        motion: "Abrir Ficha do Paciente e Chat Interno com áudio",
+        touchTarget: { x: 170, y: 240 },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status checkedin">✨ Resumo Executivo com IA</div>
+            <div class="appt-dr">Preparação antes de chamar o paciente</div>
+            <p style="font-size:11px; color:#334155; background:#F8FAFC; padding:8px; border-radius:8px; border:1px solid #E2E8F0;">
+              "Paciente em manutenção ortodôntica mensal. Sensibilidade relatada no quadrante inferior direito na última sessão."
+            </p>
+          </div>
+
+          <div class="reward-item-row" style="border-color:#F59E0B; background:#FFFBEB;">
+            <div class="reward-info">
+              <h4>🎁 Atalho Clube Sorriso & Vouchers</h4>
+              <p>Acesso de leitura liberado no topo para o Dentista</p>
+            </div>
+            <span style="font-size:10.5px; font-weight:800; color:#B45309;">NOVO v1.4</span>
+          </div>
+
+          <div class="reward-item-row">
+            <div class="reward-info">
+              <h4>💬 Mensageria Interna (Texto e Áudio)</h4>
+              <p>Fale com a recepção sem usar WhatsApp pessoal</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 7,
+        title: "Trilha Gerência Multiclínica & CRM Recall",
+        titleHtml: "Gerência: <span>Multi-Unidade & CRM 6m+</span>",
+        desc: "Bloco 4 (Gestão) • Visão global Palmas + Paraíso e reativação de pacientes ausentes há mais de 6 meses.",
+        badge: "Bloco 4 • Minutos 45 a 52 (Gerência)",
+        duration: "45:00 - 52:00 (7 min)",
+        headerTitle: "Perfil: 👔 Gerência",
+        headerSub: "Palmas + Paraíso • CRM Comercial",
+        points: "Multi-Clínica",
+        callout: {
+          icon: "🎯",
+          title: "CRM de Recall Ativo",
+          sub: "Reativação automática via WhatsApp",
+          show: true
+        },
+        voiceover: "Para a Gerência Multiclínica, o seletor de unidades fica totalmente liberado entre Palmas, Paraíso e Visão Global. No botão CRM, identificamos todos os pacientes que não retornam há mais de 6 meses para disparo imediato de retorno.",
+        sfx: "Simular Perfil: Gerente Multiclínica",
+        motion: "Abrir modal CRM (Recall & WhatsApp)",
+        touchTarget: { x: 170, y: 185 },
+        renderScreen: () => `
+          <div class="club-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:800; color:#FFCC29;">VISÃO GLOBAL MULTICLÍNICA</span>
+              <span style="font-size:10px; font-weight:800;">Palmas + Paraíso</span>
+            </div>
+            <div style="font-size:15px; font-weight:900;">Controle Consolidado de Agendas</div>
+            <p style="font-size:11px; opacity:0.9;">
+              Alterne entre todas as unidades e todos os dentistas sem expor ferramentas técnicas de código ou banco.
+            </p>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status">🎯 CRM • Recall Preventivo (6+ Meses)</div>
+            <div class="appt-dr">Pipeline de Reativação no WhatsApp</div>
+            <p style="font-size:11px; color:#475569;">
+              Filtre pacientes inativos por unidade, acompanhe o funil comercial e envie convites de profilaxia e check-up em 1 clique.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 8,
+        title: "Mão na Massa: Instalação PWA & Dúvidas",
+        titleHtml: "Prática Ao Vivo: <span>Instale no Celular</span>",
+        desc: "Bloco 4 (Encerramento) • Todos os colaboradores instalam o Web App, ativam biometria e conhecem o FAQ.",
+        badge: "Bloco 4 • Minutos 52 a 60 (Prática & Q&A)",
+        duration: "52:00 - 60:00 (8 min)",
+        headerTitle: "Onboarding Ao Vivo",
+        headerSub: "PWA • Face ID • Central de Ajuda",
+        points: "100% Equipe",
+        callout: {
+          icon: "📲",
+          title: "Todos Conectados!",
+          sub: "Ícone instalado na tela inicial",
+          show: true
+        },
+        voiceover: "Agora é mão na massa! Peguem seus celulares, acessem o link oficial, façam login trocando a senha inicial, adicionem o Bertuol Flow à Tela de Início e ativem o Face ID. Qualquer dúvida futura está a 1 clique na Central de Ajuda FAQ!",
+        sfx: "Interação coletiva com a equipe",
+        motion: "Abrir /faq.html e acompanhar login da equipe",
+        touchTarget: { x: 170, y: 260 },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">📲 Checklist Final (5 Minutos)</div>
+            <div class="appt-dr">Faça agora no seu celular:</div>
+            <div style="font-size:11.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+              <div>1️⃣ Acessar <b>bertuolflow.app-bertuol.tech</b></div>
+              <div>2️⃣ Trocar senha inicial <b>Bertuol@2026</b></div>
+              <div>3️⃣ Instalar na <b>Tela de Início (PWA)</b></div>
+              <div>4️⃣ Ativar <b>Biometria / Face ID</b> no menu</div>
+            </div>
+          </div>
+
+          <a href="/faq.html" target="_blank" class="btn-action-app gold">
+            ❓ Abrir Central de Ajuda (FAQ Interativo)
+          </a>
+        `
+      }
+    ];
+
+    // ============================================================================
+    // MODO 2: JORNADA DO PACIENTE NO CLUBE SORRISO (6 SLIDES ORIGINAIS)
+    // ============================================================================
+    const PATIENT_SLIDES = [
       {
         id: 1,
         title: "Confirme sua consulta em 1 toque",
@@ -957,8 +1317,9 @@
         desc: "O paciente recebe o aviso no WhatsApp e acessa o PWA instantaneamente sem baixar nada.",
         badge: "Slide 1 • Lembrete & Acesso Rápido",
         duration: "00:00 - 00:04 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "40 pts",
-        pointsNum: 40,
         callout: {
           icon: "📅",
           title: "Consulta Hoje às 18:00",
@@ -966,7 +1327,7 @@
           show: true
         },
         voiceover: "Olá Alice! Seu dia de cuidar do sorriso chegou. Sem filas nem telefonemas: com um simples toque, você confirma sua presença e já começa a acumular vantagens.",
-        sfx: "Upbeat instrumental suave • Ding suave de notificação",
+        sfx: "Upbeat instrumental suave • Ding suave",
         motion: "Zoom in suave na tela do smartphone (1.02x)",
         touchTarget: { x: 165, y: 250 },
         renderScreen: () => `
@@ -975,7 +1336,7 @@
             <div class="appt-dr">Dra. Ariane Bertuol</div>
             <div class="appt-time">📍 Matriz Palmas • Ortodontia & Alinhadores</div>
             <div style="font-size: 11px; color: #64748B;">Procedimento: Consulta Odontológica & Retorno</div>
-            <button class="btn-action-app gold" id="btnConfirmAppt">
+            <button class="btn-action-app gold">
               ✅ Confirmar Presença (+10 pts)
             </button>
           </div>
@@ -985,7 +1346,7 @@
               <span style="font-size:12px; font-weight:700;">Clube Sorriso Bertuol</span>
               <span style="font-size:11px; color:#FFCC29; font-weight:800;">Nível Bronze</span>
             </div>
-            <div style="font-size:22px; font-weight:900;">40 Pontos Acumulados</div>
+            <div style="font-size:20px; font-weight:900;">40 Pontos Acumulados</div>
             <div style="font-size:11px; opacity:0.85;">Faltam apenas 60 pontos para o seu primeiro resgate!</div>
           </div>
         `
@@ -997,8 +1358,9 @@
         desc: "A presença é registrada no sistema e o paciente ganha +10 pontos na hora.",
         badge: "Slide 2 • Gamificação na Confirmação",
         duration: "00:04 - 00:08 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "50 pts",
-        pointsNum: 50,
         callout: {
           icon: "⭐",
           title: "Presença Confirmada!",
@@ -1006,8 +1368,8 @@
           show: true
         },
         voiceover: "Ao confirmar, sua vaga é garantida e o sistema credita 10 pontos instantaneamente no seu Clube Sorriso. É a clínica valorizando a sua pontualidade.",
-        sfx: "Efeito chime de moedas mágicas • Badge lateral pulsante",
-        motion: "Vibração tátil simulada e pulso dourado na pílula de pontos",
+        sfx: "Efeito chime de moedas mágicas",
+        motion: "Pulso dourado na pílula de pontos",
         touchTarget: { x: 165, y: 230 },
         renderScreen: () => `
           <div class="appt-card" style="border: 2px solid #10B981; background: #F0FDF4;">
@@ -1024,7 +1386,7 @@
               <span style="font-size:12px; font-weight:700;">Saldo Atualizado</span>
               <span style="font-size:11px; color:#FFCC29; font-weight:800;">50 pts</span>
             </div>
-            <div style="font-size:22px; font-weight:900;">Você subiu para 50 Pontos!</div>
+            <div style="font-size:20px; font-weight:900;">Você subiu para 50 Pontos!</div>
             <div style="font-size:11px; opacity:0.9;">Próximo passo: faça seu check-in ao chegar para ganhar +20 pts.</div>
           </div>
         `
@@ -1036,8 +1398,9 @@
         desc: "Basta aproximar o celular no Totem ou tocar no botão para avisar a recepção e o dentista.",
         badge: "Slide 3 • Check-in sem Fila",
         duration: "00:08 - 00:13 (5s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "70 pts",
-        pointsNum: 70,
         callout: {
           icon: "⚡",
           title: "Check-in Realizado!",
@@ -1045,15 +1408,15 @@
           show: true
         },
         voiceover: "Chegando à clínica Bertuol em Palmas ou Paraíso, esqueça filas na recepção. Com um toque no app ou aproximando o QR Code no totem, seu dentista já recebe o alerta na sala clínica.",
-        sfx: "Beep de Totem QR Code • Som de transição tecnológica",
-        motion: "Leve rotação angular no celular (1deg) e destaque no botão de Check-in",
+        sfx: "Beep de Totem QR Code",
+        motion: "Destaque no botão de Check-in",
         touchTarget: { x: 165, y: 220 },
         renderScreen: () => `
           <div class="appt-card highlight" style="background: #F8FAFC;">
             <div class="appt-status checkedin">📍 Totem de Entrada Ativo</div>
             <div class="appt-dr">Unidade Matriz Palmas • JK</div>
             <p style="font-size: 11px; color: #64748B;">Aproxime do leitor óptico do Totem ou toque abaixo:</p>
-            <button class="btn-action-app" id="btnDoCheckin" style="background: #0E585D;">
+            <button class="btn-action-app" style="background: #0E585D;">
               📱 Confirmar Chegada no Totem (+20 pts)
             </button>
           </div>
@@ -1076,8 +1439,9 @@
         desc: "O paciente acessa o Clube Sorriso e escolhe entre profilaxia, kits e descontos.",
         badge: "Slide 4 • Catálogo & Recompensas",
         duration: "00:13 - 00:17 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "120 pts",
-        pointsNum: 120,
         callout: {
           icon: "🎁",
           title: "Catálogo Liberado!",
@@ -1085,8 +1449,8 @@
           show: true
         },
         voiceover: "Seu saldo cresceu! Na aba Recompensas, você escolhe entre profilaxia gratuita com Sky Câmera, kits especiais de higiene e descontos exclusivos.",
-        sfx: "Pop suave de card expandindo • Brilho sonoro",
-        motion: "Slide lateral do catálogo e destaque no prêmio mais desejado",
+        sfx: "Pop suave de card expandindo",
+        motion: "Destaque no prêmio mais desejado",
         touchTarget: { x: 165, y: 160 },
         renderScreen: () => `
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1100,7 +1464,7 @@
               <p>Limpeza profunda e diagnóstico digital</p>
               <span style="font-size: 10px; font-weight: 800; color: #D97706;">100 PONTOS</span>
             </div>
-            <button class="btn-action-app gold" style="width: auto; padding: 6px 12px; font-size: 11px;" id="btnRedeemItem">
+            <button class="btn-action-app gold" style="width: auto; padding: 6px 12px; font-size: 11px;">
               Resgatar
             </button>
           </div>
@@ -1124,8 +1488,9 @@
         desc: "O sistema debita os pontos e gera um Voucher com QR Code pronto para uso.",
         badge: "Slide 5 • Voucher Digital Instantâneo",
         duration: "00:17 - 00:22 (5s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "20 pts",
-        pointsNum: 20,
         callout: {
           icon: "🎟️",
           title: "Voucher Gerado!",
@@ -1133,8 +1498,8 @@
           show: true
         },
         voiceover: "Com um único toque, seu voucher é gerado na hora com QR Code seguro. Não precisa imprimir papel nem mandar e-mail: fica salvo no seu próprio app.",
-        sfx: "Som de 'Success Chime' triunfal • Efeito de carimbo digital",
-        motion: "Zoom in no QR Code e transição para o estado de sucesso",
+        sfx: "Som de 'Success Chime' triunfal",
+        motion: "Zoom in no QR Code",
         touchTarget: { x: 165, y: 310 },
         renderScreen: () => `
           <div class="voucher-card-active">
@@ -1143,7 +1508,7 @@
             </span>
             <div class="voucher-code">PROFI-SKY-8426</div>
             <div class="qr-mock">
-              <svg width="90" height="90" viewBox="0 0 24 24" fill="#0E585D">
+              <svg width="84" height="84" viewBox="0 0 24 24" fill="#0E585D">
                 <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h-4v2h2v2h-2v2h4v-2h2v-4h-2zm-4-2h2v2h-2v-2zm4 0h2v2h-2v-2zm-2 6h2v2h-2v-2zM6 6h2v2H6V6zm12 0h2v2h-2V6zM6 18h2v2H6v-2z"/>
               </svg>
             </div>
@@ -1159,21 +1524,22 @@
         desc: "Pontualidade, fidelização e saúde bucal integradas em uma única jornada moderna.",
         badge: "Slide 6 • Encerramento & Retenção",
         duration: "00:22 - 00:26 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
         points: "Nível Ouro",
-        pointsNum: 20,
         callout: {
           icon: "🏆",
           title: "Parabéns, Paciente Ouro!",
           sub: "Próxima consulta com benefícios premium",
           show: true
         },
-        voiceover: "Assim é a Bertuol Odontologia: o cuidado de uma equipe de excelência com a conveniência da melhor tecnologia na palma da sua mão. Acesse bertuol.com.br e viva essa experiência.",
-        sfx: "Trilha final com fade out e assinatura sonora Bertuol",
-        motion: "Afastamento elegante da câmera (zoom out suave) e selo Ouro",
+        voiceover: "Assim é a Bertuol Odontologia: o cuidado de uma equipe de excelência com a conveniência da melhor tecnologia na palma da sua mão.",
+        sfx: "Assinatura sonora Bertuol",
+        motion: "Selo Paciente VIP Ouro",
         touchTarget: { x: 165, y: 200 },
         renderScreen: () => `
           <div style="background: linear-gradient(135deg, #147A80 0%, #0A4346 100%); border-radius: 18px; padding: 20px; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-            <div style="width: 50px; height: 50px; border-radius: 50%; background: #FFCC29; color: #0E585D; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; box-shadow: 0 4px 16px rgba(255, 204, 41, 0.4);">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #FFCC29; color: #0E585D; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;">
               👑
             </div>
             <h3 style="font-size: 15px; font-weight: 800;">Você é Paciente VIP Bertuol</h3>
@@ -1181,29 +1547,54 @@
               Check-in automático, lembretes pontuais e pontos que viram saúde e estética para o seu sorriso.
             </p>
             <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 100px; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #FFCC29;">
-              📲 bertuol.com.br/paciente
+              📲 bertuolflow.app-bertuol.tech/?app=paciente
             </div>
           </div>
         `
       }
     ];
 
+    let activeDeckMode = 'staff'; // 'staff' | 'patient'
     let currentSlideIndex = 0;
     let autoplayInterval = null;
     let isAutoplayRunning = false;
 
+    function getActiveSlides() {
+      return activeDeckMode === 'staff' ? STAFF_SLIDES : PATIENT_SLIDES;
+    }
+
+    function switchDeckMode(mode) {
+      activeDeckMode = mode;
+      currentSlideIndex = 0;
+      document.getElementById('btnModeStaff').classList.toggle('active', mode === 'staff');
+      document.getElementById('btnModePatient').classList.toggle('active', mode === 'patient');
+
+      document.getElementById('sidebarHeaderTitle').innerText =
+        mode === 'staff'
+          ? 'Roteiro de 60 Minutos (Plenária + Perfis)'
+          : 'Jornada do Paciente (Clube Sorriso)';
+      document.getElementById('sidebarBadgeStatus').innerText =
+        mode === 'staff' ? '60 Min • v1.4' : '6 Cenas';
+
+      renderSlide(0);
+    }
+
     function renderSlide(index) {
-      if (index < 0 || index >= SLIDES.length) return;
+      const slides = getActiveSlides();
+      if (index < 0 || index >= slides.length) return;
       currentSlideIndex = index;
-      const slide = SLIDES[index];
+      const slide = slides[index];
 
       // Update Headings
       document.getElementById('kineticBadge').innerText = slide.badge;
       document.getElementById('kineticTitle').innerHTML = slide.titleHtml;
       document.getElementById('kineticDesc').innerText = slide.desc;
       document.getElementById('currentSlideNum').innerText = slide.id;
+      document.getElementById('totalSlidesNum').innerText = slides.length;
 
       // Update App Bar
+      document.getElementById('patientNameText').innerText = slide.headerTitle || 'Bertuol Flow v1.4';
+      document.getElementById('patientClinicText').innerText = slide.headerSub || 'Palmas & Paraíso';
       document.getElementById('pointsValueText').innerText = slide.points;
       const pointsPill = document.getElementById('patientPointsPill');
       pointsPill.classList.add('pulse');
@@ -1215,7 +1606,7 @@
 
       // Update Floating Callout
       const callout = document.getElementById('stageCallout');
-      if (slide.callout.show) {
+      if (slide.callout && slide.callout.show) {
         document.getElementById('calloutIcon').innerText = slide.callout.icon;
         document.getElementById('calloutTitle').innerText = slide.callout.title;
         document.getElementById('calloutSub').innerText = slide.callout.sub;
@@ -1225,7 +1616,7 @@
       }
 
       // Update Timeline Progress
-      const fillPercent = ((index + 1) / SLIDES.length) * 100;
+      const fillPercent = ((index + 1) / slides.length) * 100;
       document.getElementById('timelineFill').style.width = fillPercent + '%';
 
       // Update Storyboard Accordion
@@ -1234,8 +1625,8 @@
       // Update Script Details
       document.getElementById('scriptVoiceover').innerText = `"${slide.voiceover}"`;
       document.getElementById('scriptSfx').innerHTML = `
-        <span class="tag-pill">🎵 ${slide.sfx}</span>
-        <span class="tag-pill">🎥 ${slide.motion}</span>
+        <span class="tag-pill">🎯 ${slide.sfx}</span>
+        <span class="tag-pill">🎬 ${slide.motion}</span>
         <span class="tag-pill">⏱️ ${slide.duration}</span>
       `;
 
@@ -1246,12 +1637,13 @@
     }
 
     function renderAccordion() {
+      const slides = getActiveSlides();
       const container = document.getElementById('slidesAccordion');
-      container.innerHTML = SLIDES.map((slide, i) => `
+      container.innerHTML = slides.map((slide, i) => `
         <div class="slide-card-item ${i === currentSlideIndex ? 'active' : ''}" onclick="goToSlide(${i})">
           <div class="slide-card-top">
-            <span class="slide-num">SLIDE 0${slide.id}</span>
-            <span class="slide-duration">${slide.duration.split(' ')[0]}</span>
+            <span class="slide-num">ETAPA 0${slide.id}</span>
+            <span class="slide-duration">${slide.duration}</span>
           </div>
           <h4 class="slide-item-title">${slide.title}</h4>
           <p class="slide-item-desc">${slide.desc}</p>
@@ -1264,18 +1656,20 @@
     }
 
     function nextSlide() {
-      if (currentSlideIndex < SLIDES.length - 1) {
+      const slides = getActiveSlides();
+      if (currentSlideIndex < slides.length - 1) {
         renderSlide(currentSlideIndex + 1);
       } else {
-        renderSlide(0); // Loop
+        renderSlide(0);
       }
     }
 
     function prevSlide() {
+      const slides = getActiveSlides();
       if (currentSlideIndex > 0) {
         renderSlide(currentSlideIndex - 1);
       } else {
-        renderSlide(SLIDES.length - 1);
+        renderSlide(slides.length - 1);
       }
     }
 
@@ -1306,6 +1700,7 @@
         isAutoplayRunning = false;
         btn.innerText = '▶️ Apresentação Automática';
         btn.style.background = 'linear-gradient(135deg, var(--gold) 0%, #FFA800 100%)';
+        btn.style.color = '#0E585D';
       } else {
         isAutoplayRunning = true;
         btn.innerText = '⏸️ Pausar Apresentação';
@@ -1314,11 +1709,11 @@
 
         autoplayInterval = setInterval(() => {
           nextSlide();
-        }, 5500);
+        }, 6500);
       }
     }
 
-    // Keyboard Shortcuts (Arrow Left / Right & Space)
+    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === 'PageDown') {
         nextSlide();
@@ -1330,7 +1725,6 @@
       }
     });
 
-    // Initialize first slide
     window.addEventListener('DOMContentLoaded', () => {
       renderSlide(0);
     });
