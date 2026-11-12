@@ -210,6 +210,34 @@ export async function fetchPatients(clinicId?: string): Promise<SupabasePatient[
   }
 }
 
+export async function searchPatientsByNameInSupabase(searchQuery: string): Promise<SupabasePatient[]> {
+  const trimmed = searchQuery.trim();
+  if (!trimmed) return [];
+  const localOverrides = getLocalPatientAccountOverrides();
+  try {
+    const tokens = trimmed.split(/\s+/).filter(Boolean);
+    let query = supabase.from('patients').select('*').order('name', { ascending: true }).limit(250);
+
+    for (const token of tokens) {
+      query = query.ilike('name', `%${token}%`);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) return [];
+
+    return (data as SupabasePatient[]).map((p) => ({
+      ...p,
+      ...(localOverrides[p.id] || {}),
+      app_access_status:
+        localOverrides[p.id]?.app_access_status ||
+        p.app_access_status ||
+        (p.is_active === false ? 'blocked' : 'pending_activation'),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function updatePatientInSupabase(
   patientId: string,
   updates: Partial<SupabasePatient>

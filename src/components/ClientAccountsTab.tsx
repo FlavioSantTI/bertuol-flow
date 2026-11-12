@@ -32,6 +32,7 @@ import {
   TENANT_ID_PALMAS,
   TENANT_ID_PARAISO,
   resolveClinicTenantUuid,
+  searchPatientsByNameInSupabase,
 } from '../services/supabaseService';
 import {
   dataService,
@@ -40,6 +41,17 @@ import {
   sanitizePhoneForStorage,
 } from '../services/dataService';
 import { AppUserContext } from '../types/database';
+
+function normalizeSearchText(value: string | null | undefined): string {
+  if (!value) return '';
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+const ALPHABET_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 interface ClientAccountsTabProps {
   patients: SupabasePatient[];
@@ -52,7 +64,11 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   refreshPatients,
   currentUserContext,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [nameSearchTerm, setNameSearchTerm] = useState('');
+  const [secondarySearchTerm, setSecondarySearchTerm] = useState('');
+  const [selectedInitialLetter, setSelectedInitialLetter] = useState<string>('ALL');
+  const [remoteMatchedPatients, setRemoteMatchedPatients] = useState<SupabasePatient[]>([]);
+  const [isSearchingRemote, setIsSearchingRemote] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending_activation' | 'blocked'>('all');
   const [tenantFilter, setTenantFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -61,6 +77,31 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   const [feedbackBanner, setFeedbackBanner] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(
     null
   );
+
+  // Busca em tempo real direto no Supabase quando o usuário digita um nome
+  React.useEffect(() => {
+    const q = nameSearchTerm.trim();
+    if (q.length < 2) {
+      setRemoteMatchedPatients([]);
+      setIsSearchingRemote(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchingRemote(true);
+    const timer = setTimeout(async () => {
+      const results = await searchPatientsByNameInSupabase(q);
+      if (!cancelled) {
+        setRemoteMatchedPatients(results);
+        setIsSearchingRemote(false);
+      }
+    }, 220);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [nameSearchTerm]);
 
   // Modal 1: Envio de Link de Primeiro Acesso / Ativação
   const [selectedForActivation, setSelectedForActivation] = useState<SupabasePatient | null>(null);
@@ -93,9 +134,20 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   });
   const [isSavingForm, setIsSavingForm] = useState(false);
 
-  // Merge Supabase patients with local fallback patients if list is empty
+  // Merge Supabase patients with remote search matches and local fallback patients
   const mergedPatients = useMemo((): SupabasePatient[] => {
-    if (patients.length > 0) return patients;
+    const map = new Map<string, SupabasePatient>();
+    patients.forEach((p) => {
+      if (p && p.id) map.set(p.id, p);
+    });
+    remoteMatchedPatients.forEach((p) => {
+      if (p && p.id && !map.has(p.id)) map.set(p.id, p);
+    });
+
+    if (map.size > 0) {
+      return Array.from(map.values());
+    }
+
     const localPatients = dataService.getPatients();
     return localPatients.map((lp): SupabasePatient => ({
       id: `local_pat_${lp.id}`,
@@ -109,7 +161,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
       notes: lp.Notes || null,
       app_access_status: 'pending_activation',
     }));
-  }, [patients]);
+  }, [patients, remoteMatchedPatients]);
 
   const stats = useMemo(() => {
     const total = mergedPatients.length;
@@ -126,24 +178,88 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   }, [mergedPatients]);
 
   const filteredPatients = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return mergedPatients.filter((p) => {
+    const normalizedNameQuery = normalizeSearchText(nameSearchTerm);
+    const nameTokens = normalizedNameQuery.split(/\s+/).filter(Boolean);
+    const normalizedSecondary = normalizeSearchText(secondarySearchTerm);
+    const secondaryDigits = secondarySearchTerm.replace(/\D/g, '');
+
+    const matches = mergedPatients.filter((p) => {
       const status = p.app_access_status || (p.is_active === false ? 'blocked' : 'pending_activation');
       const matchesStatus = statusFilter === 'all' || status === statusFilter;
       if (!matchesStatus) return false;
       if (tenantFilter !== 'all' && resolveClinicTenantUuid(p.tenant_id) !== tenantFilter) {
         return false;
       }
-      if (!q) return true;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        (p.mobile_phone && p.mobile_phone.toLowerCase().includes(q)) ||
-        (p.document_id && p.document_id.toLowerCase().includes(q)) ||
-        (p.email && p.email.toLowerCase().includes(q)) ||
-        (p.clinical_record_number && p.clinical_record_number.toLowerCase().includes(q))
-      );
+
+      const normalizedPatientName = normalizeSearchText(p.name);
+
+      // Filtro por letra inicial (A-Z)
+      if (selectedInitialLetter !== 'ALL') {
+        if (!normalizedPatientName.startsWith(selectedInitialLetter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Busca dedicada por Nome do Cliente (ignora acentos e permite múltiplos nomes ex: "Maria Silva")
+      if (nameTokens.length > 0) {
+        const matchesAllTokens = nameTokens.every((token) => normalizedPatientName.includes(token));
+        // Se digitou números no campo de nome, permite achar também por telefone/CPF/prontuário
+        const isNumericQuery = /^\d+$/.test(normalizedNameQuery);
+        if (!matchesAllTokens) {
+          if (isNumericQuery) {
+            const phoneDigits = (p.mobile_phone || '').replace(/\D/g, '');
+            const docDigits = (p.document_id || '').replace(/\D/g, '');
+            const recNumber = normalizeSearchText(p.clinical_record_number || p.external_id);
+            if (
+              !phoneDigits.includes(normalizedNameQuery) &&
+              !docDigits.includes(normalizedNameQuery) &&
+              !recNumber.includes(normalizedNameQuery)
+            ) {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }
+      }
+
+      // Filtro complementar (CPF, Telefone/WhatsApp, Prontuário ou E-mail)
+      if (normalizedSecondary) {
+        const phoneDigits = (p.mobile_phone || '').replace(/\D/g, '');
+        const docDigits = (p.document_id || '').replace(/\D/g, '');
+        const emailNorm = normalizeSearchText(p.email);
+        const recNorm = normalizeSearchText(p.clinical_record_number || p.external_id);
+
+        const matchesDigits =
+          secondaryDigits.length > 0 &&
+          (phoneDigits.includes(secondaryDigits) || docDigits.includes(secondaryDigits));
+        const matchesText =
+          emailNorm.includes(normalizedSecondary) ||
+          recNorm.includes(normalizedSecondary) ||
+          normalizedPatientName.includes(normalizedSecondary);
+
+        if (!matchesDigits && !matchesText) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [mergedPatients, searchTerm, statusFilter, tenantFilter]);
+
+    // Se houver busca por nome ativa, prioriza nomes que começam exatamente com o termo buscado
+    if (normalizedNameQuery) {
+      return [...matches].sort((a, b) => {
+        const aName = normalizeSearchText(a.name);
+        const bName = normalizeSearchText(b.name);
+        const aStarts = aName.startsWith(normalizedNameQuery) ? 0 : 1;
+        const bStarts = bName.startsWith(normalizedNameQuery) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+        return aName.localeCompare(bName, 'pt-BR');
+      });
+    }
+
+    return matches;
+  }, [mergedPatients, nameSearchTerm, secondarySearchTerm, selectedInitialLetter, statusFilter, tenantFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -410,36 +526,156 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Header Contextual & Resumo Operacional */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
-        <div>
-          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-[#147A80]" />
-            <span>Central de Credenciais & Acessos de Clientes (Clube Sorriso PWA)</span>
-          </h4>
-          <p className="text-xs text-slate-600 mt-0.5">
-            Ative contas de pacientes, envie links seguros por WhatsApp/SMS, renove senhas e gerencie dados cadastrais
-            diretamente na tabela <code className="font-mono text-slate-800">public.patients</code>.
-          </p>
+      {/* Header Contextual & Busca Direta por Nome */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3.5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-[#147A80]" />
+              <span>Central de Credenciais & Acessos de Clientes (Clube Sorriso PWA)</span>
+            </h4>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Ative contas de pacientes, envie links seguros por WhatsApp/SMS, renove senhas e gerencie dados cadastrais
+              diretamente na tabela <code className="font-mono text-slate-800">public.patients</code>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#147A80]' : 'text-slate-600'}`} />
+              <span>Sincronizar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenEditModal()}
+              className="px-3.5 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Novo Cliente</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#147A80]' : 'text-slate-600'}`} />
-            <span>Sincronizar</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenEditModal()}
-            className="px-3.5 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Novo Cliente</span>
-          </button>
+
+        {/* Busca Principal Destacada por Nome do Cliente */}
+        <div className="bg-white border-2 border-[#147A80]/30 focus-within:border-[#147A80] rounded-xl p-3 shadow-2xs transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+            <label
+              htmlFor="client-name-search-input"
+              className="text-xs font-bold text-slate-900 flex items-center gap-1.5"
+            >
+              <Search className="w-4 h-4 text-[#147A80]" />
+              <span>Busca Rápida por Nome do Cliente / Paciente</span>
+            </label>
+            <div className="flex items-center gap-2 text-[11px]">
+              {isSearchingRemote && (
+                <span className="text-[#147A80] font-semibold flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Consultando Supabase...
+                </span>
+              )}
+              <span className="font-mono tabular-nums font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                {filteredPatients.length.toLocaleString('pt-BR')} de {stats.total.toLocaleString('pt-BR')} clientes
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-[#147A80] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="client-name-search-input"
+                type="text"
+                autoFocus
+                value={nameSearchTerm}
+                onChange={(e) => {
+                  setNameSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Digite o nome ou sobrenome do cliente (ex: Maria Silva, João, Flávio)..."
+                className="w-full pl-10 pr-24 py-2.5 rounded-lg border border-slate-300 bg-slate-50/60 focus:bg-white text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
+              />
+              {nameSearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameSearchTerm('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Limpar</span>
+                </button>
+              )}
+            </div>
+
+            {/* Busca complementar por CPF / WhatsApp / Prontuário */}
+            <div className="relative md:w-72">
+              <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={secondarySearchTerm}
+                onChange={(e) => {
+                  setSecondarySearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Filtrar por CPF, WhatsApp ou Prontuário..."
+                className="w-full pl-8 pr-8 py-2.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
+              />
+              {secondarySearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSecondarySearchTerm('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Barra de Índice Alfabético A-Z */}
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1 overflow-x-auto pb-1">
+            <span className="text-[11px] font-bold text-slate-500 mr-1 shrink-0">Inicial:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedInitialLetter('ALL');
+                setCurrentPage(1);
+              }}
+              className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer shrink-0 ${
+                selectedInitialLetter === 'ALL'
+                  ? 'bg-[#147A80] text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Todas
+            </button>
+            {ALPHABET_LETTERS.map((letter) => (
+              <button
+                key={letter}
+                type="button"
+                onClick={() => {
+                  setSelectedInitialLetter((prev) => (prev === letter ? 'ALL' : letter));
+                  setCurrentPage(1);
+                }}
+                className={`w-6 h-6 rounded text-[11px] font-mono font-bold flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                  selectedInitialLetter === letter
+                    ? 'bg-[#147A80] text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -485,22 +721,8 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         </div>
       )}
 
-      {/* Barra de Busca e Filtros de Status / Unidade */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder={`Buscar entre ${stats.total.toLocaleString('pt-BR')} clientes por nome, celular/WhatsApp, CPF ou prontuário...`}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
-          />
-        </div>
-
+      {/* Filtros de Unidade e Status */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={tenantFilter}
@@ -515,6 +737,26 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
             <option value={TENANT_ID_PARAISO}>Unidade Paraíso - TO</option>
           </select>
 
+          {(nameSearchTerm || secondarySearchTerm || selectedInitialLetter !== 'ALL' || tenantFilter !== 'all' || statusFilter !== 'all') && (
+            <button
+              type="button"
+              onClick={() => {
+                setNameSearchTerm('');
+                setSecondarySearchTerm('');
+                setSelectedInitialLetter('ALL');
+                setTenantFilter('all');
+                setStatusFilter('all');
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Limpar todos os filtros</span>
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           {/* Segmented Filter Controls */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0 overflow-x-auto">
             {(
