@@ -114,20 +114,12 @@ export function canAccessComponent(componentKey: string, context: AppUserContext
   const rule = COMPONENT_ACCESS_MAP[componentKey];
   if (!rule) return true;
 
-  const isSuperAdmin =
+  const isSuperAdminRole =
     context.role === 'admin_root' ||
     context.role === 'admin' ||
-    Boolean(
-      context.email &&
-        (context.email.toLowerCase() === 'favuca.dias@gmail.com' ||
-          context.email.toLowerCase() === 'flavio.santiago.ti@outlook.com')
-    ) ||
-    Boolean(
-      context.userName &&
-        (context.userName.includes('Flavio') || context.userName.includes('Favuca'))
-    );
+    context.role === 'admin_tecnico';
 
-  if (isSuperAdmin && context.role === 'admin_root') return true;
+  if (isSuperAdminRole) return true;
 
   const roleAllowed = rule.allowedRoles.includes(context.role);
   if (rule.anyPermissionKeys && rule.anyPermissionKeys.length > 0) {
@@ -200,8 +192,8 @@ export default function App() {
   // Admin Root Simulation state (Alternativa A)
   const [simulatedRole, setSimulatedRole] = useState<UserRole | 'none'>('none');
 
-  const effectiveUserContext = useMemo(() => {
-    const isRoot =
+  const realUserIsRoot = useMemo(() => {
+    return (
       userContext.role === 'admin_root' ||
       userContext.role === 'admin' ||
       userContext.role === 'admin_tecnico' ||
@@ -214,9 +206,12 @@ export default function App() {
       Boolean(
         userContext.userName &&
           (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
-      );
+      )
+    );
+  }, [userContext]);
 
-    const baseRole = simulatedRole !== 'none' && isRoot ? simulatedRole : userContext.role;
+  const effectiveUserContext = useMemo(() => {
+    const baseRole = simulatedRole !== 'none' && realUserIsRoot ? simulatedRole : userContext.role;
     const defaultPerms = getDefaultPermissionsForRole(baseRole);
 
     const mergedPermissions = {
@@ -224,10 +219,15 @@ export default function App() {
       ...(userContext.permissions || {}),
     };
 
-    if (simulatedRole !== 'none' && isRoot) {
+    if (simulatedRole !== 'none' && realUserIsRoot) {
+      const boundClinicId = selectedClinicId !== 'all' ? selectedClinicId : userContext.clinicId || 1;
+      const boundAllowedClinics =
+        simulatedRole === 'gerente_atendimento' ? [1, 2] : [boundClinicId];
       return {
         ...userContext,
         role: simulatedRole,
+        clinicId: boundClinicId,
+        allowedClinicIds: boundAllowedClinics,
         permissions: getDefaultPermissionsForRole(simulatedRole),
       };
     }
@@ -237,7 +237,7 @@ export default function App() {
       role: baseRole,
       permissions: mergedPermissions,
     };
-  }, [userContext, simulatedRole]);
+  }, [userContext, simulatedRole, realUserIsRoot, selectedClinicId]);
 
   const componentAccess = useMemo(() => {
     return {
@@ -252,9 +252,9 @@ export default function App() {
       totemQR: canAccessComponent('totemQR', effectiveUserContext),
       webAuthn: canAccessComponent('webAuthn', effectiveUserContext),
       internalMessaging: canAccessComponent('internalMessaging', effectiveUserContext),
-      adminSimulationToolbar: canAccessComponent('adminSimulationToolbar', effectiveUserContext),
+      adminSimulationToolbar: realUserIsRoot,
     };
-  }, [effectiveUserContext]);
+  }, [effectiveUserContext, realUserIsRoot]);
 
   // Load dentists and check URL query params on initial mount
   useEffect(() => {
@@ -772,43 +772,83 @@ export default function App() {
     <TenantProvider>
       <ClinicLayout userContext={effectiveUserContext}>
         <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
-      {/* Test Switcher Bar (when in Dentist View) */}
-      <div className="bg-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-xs border-b border-slate-700 shrink-0 sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-          <span className="font-bold text-slate-200">
-            Bertuol Flow • Painel do Profissional (Agenda & IA)
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400 text-[11px]">Sistema Profissional</span>
-        </div>
-      </div>
-
-      {/* Admin Root Simulation Toolbar (Alternativa A) */}
+      {/* Barra Compacta Exclusiva do SuperAdmin Root (Unificando Simulação de Perfil + Escopo de Unidade) */}
       {componentAccess.adminSimulationToolbar && (
-        <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex items-center justify-between shadow-md shrink-0 z-40 border-b border-purple-500/30">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
-            <span className="font-black tracking-tight truncate">👑 Painel Admin Root • Simulação de Perfil:</span>
+        <div className="bg-slate-900 text-white px-3 sm:px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-2 shadow-sm shrink-0 z-40 border-b border-slate-800">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span className="font-bold text-slate-100 truncate">
+              👑 MODO SUPERADMIN ROOT
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 text-[10px] font-mono font-bold border border-slate-700 shrink-0">
+              v{APP_VERSION}
+            </span>
+            {simulatedRole !== 'none' && (
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[11px] font-bold shrink-0">
+                Simulando Perfil Restrito
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <select
-              value={simulatedRole}
-              onChange={(e) => setSimulatedRole(e.target.value as any)}
-              className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-2.5 py-1 text-xs font-bold text-white focus:outline-hidden focus:ring-2 focus:ring-purple-400 cursor-pointer"
-            >
-              <option value="none" className="text-gray-900">👑 Visão Real Admin Root</option>
-              <option value="admin_clinica" className="text-gray-900">🏢 Admin Clínica</option>
-              <option value="gerente_atendimento" className="text-gray-900">👔 Gerente Atendimento</option>
-              <option value="dentist" className="text-gray-900">🩺 Dentista</option>
-              <option value="receptionist" className="text-gray-900">🛎️ Recepção</option>
-            </select>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Seletor de Escopo de Unidade Global do Root */}
+            <div className="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
+              <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="text-[11px] text-slate-300 font-semibold hidden md:inline">Unidade:</span>
+              <select
+                value={String(selectedClinicId)}
+                onChange={(e) => {
+                  const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                  handleSelectClinic(val);
+                }}
+                className="bg-transparent text-amber-300 text-xs font-bold focus:outline-hidden cursor-pointer"
+              >
+                <option value="all" className="text-slate-900">Todas as Unidades (Global)</option>
+                {clinics
+                  .filter((c) => c.active)
+                  .map((c) => (
+                    <option key={c.id} value={c.id} className="text-slate-900">
+                      📍 {c.shortName}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Seletor de Simulação de Perfil RBAC */}
+            <div className="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
+              <Users className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+              <span className="text-[11px] text-slate-300 font-semibold hidden md:inline">Visão:</span>
+              <select
+                value={simulatedRole}
+                onChange={(e) => {
+                  const nextRole = e.target.value as UserRole | 'none';
+                  setSimulatedRole(nextRole);
+                  // Ao simular perfil de unidade fixa, seleciona Palmas (1) se estiver em 'all'
+                  if (
+                    (nextRole === 'receptionist' || nextRole === 'dentist' || nextRole === 'admin_clinica') &&
+                    selectedClinicId === 'all'
+                  ) {
+                    handleSelectClinic(1);
+                  }
+                }}
+                className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
+              >
+                <option value="none" className="text-slate-900">👑 Visão Total Admin Root</option>
+                <option value="admin_clinica" className="text-slate-900">🏢 Admin Clínica (Unidade)</option>
+                <option value="gerente_atendimento" className="text-slate-900">👔 Gerente Multiclínica</option>
+                <option value="receptionist" className="text-slate-900">🛎️ Recepção (Unidade Local)</option>
+                <option value="dentist" className="text-slate-900">🩺 Dentista (Agenda + Vouchers)</option>
+              </select>
+            </div>
+
             {simulatedRole !== 'none' && (
               <button
                 type="button"
-                onClick={() => setSimulatedRole('none')}
-                className="px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] shadow-xs cursor-pointer transition-all"
+                onClick={() => {
+                  setSimulatedRole('none');
+                  handleSelectClinic('all');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[11px] cursor-pointer transition-colors"
               >
                 Restaurar Root
               </button>

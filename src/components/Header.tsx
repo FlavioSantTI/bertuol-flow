@@ -125,17 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isAdmin =
     userContext.role === 'admin_root' ||
     userContext.role === 'admin' ||
-    userContext.role === 'admin_tecnico' ||
-    Boolean(
-      userContext.email &&
-        (userContext.email.toLowerCase() === 'favuca.dias@gmail.com' ||
-          userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' ||
-          userContext.email.toLowerCase().includes('flavio.santiago'))
-    ) ||
-    Boolean(
-      userContext.userName &&
-        (userContext.userName.includes('Flavio') || userContext.userName.includes('Favuca'))
-    );
+    userContext.role === 'admin_tecnico';
   const isAvaliador =
     userContext.dentistId === 6036933394890752 ||
     Boolean(userContext.userName && userContext.userName.includes('Avaliador')) ||
@@ -147,17 +137,25 @@ export const Header: React.FC<HeaderProps> = ({
     ...userContext.permissions,
   };
 
-  const canAccessCRM = Boolean(effectivePermissions.canAccessCRM);
-  const canManageGamification = Boolean(effectivePermissions.canManageGamification);
+  const canAccessCRM = !isDentist && Boolean(effectivePermissions.canAccessCRM);
+  const canManageGamification = !isDentist && Boolean(effectivePermissions.canManageGamification);
   const canManageClinics = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClinics);
   const canManageUsers = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageUsers);
-  const canManageClientAccounts = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts);
-  const canSwitchDentist = isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda);
-  const canAccessTotemConfig = Boolean(effectivePermissions.canAccessTotemConfig);
+  const canManageClientAccounts = !isDentist && (isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts));
+  const canSwitchDentist = !isDentist && (isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda));
+  const canSwitchAllClinics =
+    isAdmin ||
+    isGerente ||
+    (isClinicaAdmin && Array.isArray(userContext.allowedClinicIds) && userContext.allowedClinicIds.length > 1);
+  const canAccessTotemConfig = !isDentist && Boolean(effectivePermissions.canAccessTotemConfig);
   const canManageWebAuthn = isAdmin || Boolean(effectivePermissions.canManageWebAuthn);
   const canAccessConfig = isAdmin || Boolean(effectivePermissions.canAccessConfig);
   const canViewClubeSorriso = Boolean(effectivePermissions.canViewClubeSorriso);
-  const currentClinic = clinics.find((c) => c.id === selectedClinicId);
+  const boundClinic =
+    clinics.find((c) => c.id === selectedClinicId) ||
+    clinics.find((c) => c.id === userContext.clinicId) ||
+    clinics[0];
+  const currentClinic = clinics.find((c) => c.id === selectedClinicId) || boundClinic;
 
   const getRoleBadge = () => {
     switch (userContext.role) {
@@ -202,15 +200,15 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Clinic Selector Dropdown */}
-          {isReceptionist ? (
+          {/* Clinic Selector Dropdown (Global only for Root & Gerente Multiclínica; Locked for single-unit profiles) */}
+          {!canSwitchAllClinics ? (
             <div
-              title="Acesso local restrito à sua unidade (LGPD)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold shrink-0 min-h-[44px]"
+              title="Acesso restrito à sua unidade vinculada (LGPD)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold shrink-0 min-h-[44px]"
             >
-              <Lock className="w-3.5 h-3.5 text-blue-600" />
-              <span className="truncate max-w-[130px]">
-                {currentClinic?.shortName || 'Unidade Local'}
+              <Lock className="w-3.5 h-3.5 text-[#147A80]" />
+              <span className="truncate max-w-[140px]">
+                {boundClinic?.shortName || 'Unidade Palmas'}
               </span>
             </div>
           ) : (
@@ -317,6 +315,19 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* Atalho Direto para Dentista: Clube Sorriso & Consulta de Vouchers */}
+          {isDentist && canViewClubeSorriso && onOpenVoucherModal && (
+            <button
+              type="button"
+              onClick={onOpenVoucherModal}
+              title="Clube Sorriso: Consultar Pontos e Vouchers dos Pacientes"
+              className="flex items-center gap-1.5 px-3.5 min-h-[44px] rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-950 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
+            >
+              <Gift className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Clube Sorriso & Vouchers</span>
+            </button>
+          )}
+
           {/* Quick Shortcut: Admin Clube de Vantagens (Disponível em telas médias/grandes) */}
           {canManageGamification && onOpenAdminGamificationModal && (
             <button
@@ -334,15 +345,15 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Quick Shortcut: Gestão de Usuários (Telas grandes) */}
-          {canManageUsers && onOpenUserManagementModal && (
+          {/* Quick Shortcut: Gestão de Usuários / Clientes (Telas grandes) */}
+          {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
             <button
               onClick={onOpenUserManagementModal}
-              title={isAdmin ? 'Gestão de Usuários e Permissões' : 'Usuários da sua Clínica'}
+              title={canManageUsers ? 'Gestão de Usuários e Clientes' : 'Central de Credenciais de Clientes'}
               className="hidden 2xl:flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-orange-50 hover:bg-orange-100/90 border border-orange-200 text-orange-950 text-xs font-bold transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Users className="w-4 h-4 text-orange-600 shrink-0" />
-              <span>Usuários</span>
+              <span>{canManageUsers ? 'Usuários & Clientes' : 'Clientes App'}</span>
             </button>
           )}
 
@@ -382,65 +393,67 @@ export const Header: React.FC<HeaderProps> = ({
 
             {isAdminMenuOpen && (
               <div className="absolute right-0 top-full mt-1.5 w-68 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 divide-y divide-gray-100">
-                {/* Grupo 1: Gestão Principal */}
-                <div className="px-2 py-1 space-y-0.5">
-                  <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                    Gestão & Equipe
-                  </span>
-                  {canAccessCRM && onOpenCRMModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenCRMModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-900 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
-                    >
-                      <Target className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>CRM (Recall & WhatsApp)</span>
-                    </button>
-                  )}
-                  {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenUserManagementModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-orange-950 transition-colors text-left cursor-pointer"
-                    >
-                      <Users className="w-4 h-4 text-orange-600 shrink-0" />
-                      <span>{canManageUsers ? 'Gestão de Usuários & Clientes' : 'Gestão de Clientes (App)'}</span>
-                    </button>
-                  )}
-                  {canManageUsers && onOpenRolloutReportModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenRolloutReportModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 transition-colors text-left cursor-pointer"
-                    >
-                      <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Relatório de Implantação</span>
-                    </button>
-                  )}
-                  {canManageClinics && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenMultiClinicModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
-                    >
-                      <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Gestão Multi-Clínicas</span>
-                    </button>
-                  )}
-                </div>
+                {/* Grupo 1: Gestão Principal (Apenas para Perfis de Gestão / Recepção) */}
+                {(canAccessCRM || canManageUsers || canManageClientAccounts || canManageClinics) && (
+                  <div className="px-2 py-1 space-y-0.5">
+                    <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
+                      Gestão & Equipe
+                    </span>
+                    {canAccessCRM && onOpenCRMModal && (
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenCRMModal();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-900 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
+                      >
+                        <Target className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>CRM (Recall & WhatsApp)</span>
+                      </button>
+                    )}
+                    {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenUserManagementModal();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-orange-950 transition-colors text-left cursor-pointer"
+                      >
+                        <Users className="w-4 h-4 text-orange-600 shrink-0" />
+                        <span>{canManageUsers ? 'Gestão de Usuários & Clientes' : 'Central de Credenciais de Clientes'}</span>
+                      </button>
+                    )}
+                    {isAdmin && onOpenRolloutReportModal && (
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenRolloutReportModal();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 transition-colors text-left cursor-pointer"
+                      >
+                        <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Relatório de Implantação</span>
+                      </button>
+                    )}
+                    {canManageClinics && (
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenMultiClinicModal();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
+                      >
+                        <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Gestão Multi-Clínicas</span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Grupo 2: Clube Sorriso e Totem */}
                 <div className="px-2 py-1 space-y-0.5">
                   <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                    Clube Sorriso & Balcão
+                    Clube Sorriso & Pacientes
                   </span>
                   {canManageGamification && onOpenAdminGamificationModal && (
                     <button
@@ -463,7 +476,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
                     >
                       <Gift className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Baixa de Vouchers</span>
+                      <span>{isDentist ? 'Consultar Clube Sorriso & Vouchers' : 'Baixa & Consulta de Vouchers'}</span>
                     </button>
                   )}
                   {canAccessTotemConfig && onOpenTotemQRModal && (
@@ -480,10 +493,10 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                 </div>
 
-                {/* Grupo 3: Segurança e Ferramentas */}
+                {/* Grupo 3: Segurança e Minha Conta */}
                 <div className="px-2 py-1 space-y-0.5">
                   <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                    Segurança & Atalhos
+                    Segurança & Minha Conta
                   </span>
                   {isAdmin && (
                     <button
@@ -521,16 +534,18 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>Alterar Minha Senha</span>
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      setIsAdminMenuOpen(false);
-                      handleCopyLink();
-                    }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors text-left cursor-pointer"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <Share2 className="w-4 h-4 text-gray-600 shrink-0" />}
-                    <span>{copied ? 'Link Copiado!' : 'Copiar Link da Agenda'}</span>
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        handleCopyLink();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors text-left cursor-pointer"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <Share2 className="w-4 h-4 text-gray-600 shrink-0" />}
+                      <span>{copied ? 'Link Copiado!' : 'Copiar Link da Agenda'}</span>
+                    </button>
+                  )}
                   <a
                     href="/faq.html"
                     target="_blank"
@@ -541,33 +556,37 @@ export const Header: React.FC<HeaderProps> = ({
                     <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Central de Ajuda (FAQ)</span>
                   </a>
-                  <a
-                    href="/slideshow-hyperframes.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsAdminMenuOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors text-left cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Tutorial Interativo (Slideshow)</span>
-                  </a>
+                  {isAdmin && (
+                    <a
+                      href="/slideshow-hyperframes.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsAdminMenuOpen(false)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors text-left cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Tutorial Interativo (Slideshow)</span>
+                    </a>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* View Mode Toggle */}
-          <button
-            onClick={onToggleView}
-            title={isMobileView ? 'Mudar para modo tela cheia' : 'Mudar para modo moldura móvel'}
-            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors cursor-pointer shrink-0"
-          >
-            {isMobileView ? (
-              <Monitor className="w-4 h-4 text-gray-700" />
-            ) : (
-              <Smartphone className="w-4 h-4 text-[#4BBCBE]" />
-            )}
-          </button>
+          {/* View Mode Toggle (Exclusivo Admin Root) */}
+          {isAdmin && (
+            <button
+              onClick={onToggleView}
+              title={isMobileView ? 'Mudar para modo tela cheia' : 'Mudar para modo moldura móvel'}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors cursor-pointer shrink-0"
+            >
+              {isMobileView ? (
+                <Monitor className="w-4 h-4 text-gray-700" />
+              ) : (
+                <Smartphone className="w-4 h-4 text-[#4BBCBE]" />
+              )}
+            </button>
+          )}
 
           {/* Logout Button */}
           {onLogout && (
@@ -638,11 +657,11 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Row 2: Selectors Bar (Side-by-side 50/50 in mobile) */}
         <div className="flex items-center gap-1.5 w-full min-w-0">
-          {/* Clinic Selector */}
-          {isReceptionist ? (
-            <div className="flex-1 min-w-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold h-10">
-              <Lock className="w-3 h-3 text-blue-600 shrink-0" />
-              <span className="truncate">{currentClinic?.shortName || 'Unidade Local'}</span>
+          {/* Clinic Selector Mobile */}
+          {!canSwitchAllClinics ? (
+            <div className="flex-1 min-w-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold h-10">
+              <Lock className="w-3 h-3 text-[#147A80] shrink-0" />
+              <span className="truncate">{boundClinic?.shortName || 'Unidade Palmas'}</span>
             </div>
           ) : (
             <div className="relative flex-1 min-w-0">

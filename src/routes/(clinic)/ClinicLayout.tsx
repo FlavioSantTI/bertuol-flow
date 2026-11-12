@@ -1,6 +1,5 @@
 import React from 'react';
 import { ProtectedRoute } from '../guards/ProtectedRoute';
-import { RootTenantSwitcherBanner } from '../../components/RootTenantSwitcherBanner';
 import { AppUserContext } from '../../types/database';
 
 interface ClinicLayoutProps {
@@ -11,10 +10,7 @@ interface ClinicLayoutProps {
 export const ClinicLayout: React.FC<ClinicLayoutProps> = ({ userContext, children }) => {
   return (
     <ProtectedRoute allowedContext="clinic" userContext={userContext}>
-      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
-        {/* Banner do SuperAdmin quando ativo */}
-        <RootTenantSwitcherBanner userContext={userContext} />
-
+      <div className="min-h-screen bg-[#F8F9FA] text-slate-900 font-sans flex flex-col">
         {/* Conteúdo do Sistema Interno da Clínica */}
         <div className="flex-1 flex flex-col">{children}</div>
       </div>
