@@ -152,23 +152,41 @@ export async function fetchDentistas(): Promise<SupabaseDentista[]> {
 export async function fetchPatients(clinicId?: string): Promise<SupabasePatient[]> {
   const localOverrides = getLocalPatientAccountOverrides();
   try {
-    let query = supabase
-      .from('patients')
-      .select('*')
-      .order('name', { ascending: true })
-      .limit(250);
+    const PAGE_SIZE = 1000;
+    const allRows: SupabasePatient[] = [];
+    let offset = 0;
 
-    if (clinicId) {
-      query = query.eq('tenant_id', clinicId);
+    while (true) {
+      let query = supabase
+        .from('patients')
+        .select('*')
+        .order('name', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (clinicId) {
+        query = query.eq('tenant_id', clinicId);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('Erro ao buscar lote de pacientes:', error);
+        if (allRows.length > 0) break;
+        return Object.values(localOverrides).filter((p): p is SupabasePatient => Boolean(p && p.id && p.name));
+      }
+
+      const batch = (data as SupabasePatient[]) || [];
+      allRows.push(...batch);
+
+      if (batch.length < PAGE_SIZE) {
+        break;
+      }
+      offset += PAGE_SIZE;
+
+      // Safety guard for up to 50,000 records
+      if (offset >= 50000) break;
     }
 
-    const { data, error } = await query;
-    if (error) {
-      console.warn('Erro ao buscar pacientes:', error);
-      return Object.values(localOverrides).filter((p): p is SupabasePatient => Boolean(p && p.id && p.name));
-    }
-
-    const dbList: SupabasePatient[] = ((data as SupabasePatient[]) || []).map((p) => ({
+    const dbList: SupabasePatient[] = allRows.map((p) => ({
       ...p,
       ...(localOverrides[p.id] || {}),
       app_access_status:

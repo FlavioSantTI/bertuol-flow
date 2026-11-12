@@ -54,6 +54,9 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending_activation' | 'blocked'>('all');
+  const [tenantFilter, setTenantFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(100);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [feedbackBanner, setFeedbackBanner] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(
     null
@@ -128,6 +131,9 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
       const status = p.app_access_status || (p.is_active === false ? 'blocked' : 'pending_activation');
       const matchesStatus = statusFilter === 'all' || status === statusFilter;
       if (!matchesStatus) return false;
+      if (tenantFilter !== 'all' && resolveClinicTenantUuid(p.tenant_id) !== tenantFilter) {
+        return false;
+      }
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
@@ -137,7 +143,15 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         (p.clinical_record_number && p.clinical_record_number.toLowerCase().includes(q))
       );
     });
-  }, [mergedPatients, searchTerm, statusFilter]);
+  }, [mergedPatients, searchTerm, statusFilter, tenantFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedPatients = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredPatients.slice(start, start + pageSize);
+  }, [filteredPatients, safeCurrentPage, pageSize]);
 
   const showToast = (type: 'success' | 'error' | 'info', text: string) => {
     setFeedbackBanner({ type, text });
@@ -471,42 +485,63 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         </div>
       )}
 
-      {/* Barra de Busca e Filtros de Status */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* Barra de Busca e Filtros de Status / Unidade */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar cliente por nome, celular/WhatsApp, CPF ou prontuário..."
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder={`Buscar entre ${stats.total.toLocaleString('pt-BR')} clientes por nome, celular/WhatsApp, CPF ou prontuário...`}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
           />
         </div>
 
-        {/* Segmented Filter Controls */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0 overflow-x-auto">
-          {(
-            [
-              { id: 'all', label: `Todos (${stats.total})` },
-              { id: 'active', label: `Ativos (${stats.active})` },
-              { id: 'pending_activation', label: `Pendentes (${stats.pending})` },
-              { id: 'blocked', label: `Bloqueados (${stats.blocked})` },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                statusFilter === tab.id
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={tenantFilter}
+            onChange={(e) => {
+              setTenantFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700"
+          >
+            <option value="all">Todas as Unidades</option>
+            <option value={TENANT_ID_PALMAS}>Unidade Palmas - TO</option>
+            <option value={TENANT_ID_PARAISO}>Unidade Paraíso - TO</option>
+          </select>
+
+          {/* Segmented Filter Controls */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0 overflow-x-auto">
+            {(
+              [
+                { id: 'all', label: `Todos (${stats.total.toLocaleString('pt-BR')})` },
+                { id: 'active', label: `Ativos (${stats.active.toLocaleString('pt-BR')})` },
+                { id: 'pending_activation', label: `Pendentes (${stats.pending.toLocaleString('pt-BR')})` },
+                { id: 'blocked', label: `Bloqueados (${stats.blocked.toLocaleString('pt-BR')})` },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(tab.id);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  statusFilter === tab.id
+                    ? 'bg-white text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -524,14 +559,14 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {filteredPatients.length === 0 ? (
+              {paginatedPatients.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     Nenhum cliente encontrado para os filtros selecionados.
                   </td>
                 </tr>
               ) : (
-                filteredPatients.map((patient) => {
+                paginatedPatients.map((patient) => {
                   const currentStatus =
                     patient.app_access_status || (patient.is_active === false ? 'blocked' : 'pending_activation');
                   return (
@@ -636,6 +671,82 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Rodapé de Paginação da Tabela */}
+        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+          <div className="flex items-center gap-2">
+            <span>
+              Exibindo{' '}
+              <strong className="font-mono tabular-nums text-slate-900">
+                {filteredPatients.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1}
+              </strong>{' '}
+              a{' '}
+              <strong className="font-mono tabular-nums text-slate-900">
+                {Math.min(safeCurrentPage * pageSize, filteredPatients.length)}
+              </strong>{' '}
+              de{' '}
+              <strong className="font-mono tabular-nums text-slate-900">
+                {filteredPatients.length.toLocaleString('pt-BR')}
+              </strong>{' '}
+              clientes
+            </span>
+            <span className="text-slate-300">·</span>
+            <label className="flex items-center gap-1.5">
+              <span>Por página:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 rounded border border-slate-300 bg-white text-slate-800 font-mono font-semibold"
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={250}>250</option>
+                <option value={500}>500</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage(1)}
+              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold cursor-pointer"
+            >
+              Primeira
+            </button>
+            <button
+              type="button"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold cursor-pointer"
+            >
+              Anterior
+            </button>
+            <span className="px-3 py-1 font-mono tabular-nums font-bold text-slate-800">
+              Página {safeCurrentPage} de {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold cursor-pointer"
+            >
+              Próxima
+            </button>
+            <button
+              type="button"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold cursor-pointer"
+            >
+              Última
+            </button>
+          </div>
         </div>
       </div>
 
