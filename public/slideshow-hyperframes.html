@@ -3,10 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apresentação Oficial 60 Min & Tutorial Interativo • Bertuol Flow v1.4</title>
+  <title>Estúdio 3D • Apresentação Oficial 60 Min • Bertuol Flow v1.4</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
   <style>
     :root {
       --primary: #147A80;
@@ -14,9 +22,9 @@
       --primary-light: #1FB5BD;
       --gold: #FFCC29;
       --gold-dark: #D97706;
-      --dark: #071214;
-      --card-bg: #0F1F22;
-      --border: rgba(255, 255, 255, 0.12);
+      --dark: #061012;
+      --card-bg: #0C1B1E;
+      --border: rgba(255, 255, 255, 0.13);
       --text: #F8FAFC;
       --text-muted: #94A3B8;
     }
@@ -40,8 +48,7 @@
 
     /* Top Bar */
     header.top-nav {
-      background: rgba(15, 31, 34, 0.92);
-      backdrop-filter: blur(16px);
+      background: #0A171A;
       border-bottom: 1px solid var(--border);
       padding: 12px 24px;
       display: flex;
@@ -71,7 +78,7 @@
       color: white;
       font-weight: 900;
       font-size: 20px;
-      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.4);
+      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.45);
     }
 
     .brand-title h1 {
@@ -91,7 +98,7 @@
     .mode-switcher {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.06);
+      background: #061012;
       border: 1px solid var(--border);
       padding: 4px;
       border-radius: 12px;
@@ -124,7 +131,7 @@
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
+      background: #112428;
       border: 1px solid var(--border);
       color: #FFF;
       padding: 8px 14px;
@@ -141,8 +148,8 @@
     }
 
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.25);
+      background: #173136;
+      border-color: rgba(255, 255, 255, 0.28);
     }
 
     .btn-gold {
@@ -171,8 +178,8 @@
     main.studio-layout {
       flex: 1;
       display: grid;
-      grid-template-columns: 1fr 500px;
-      max-width: 1680px;
+      grid-template-columns: 1fr 490px;
+      max-width: 1720px;
       margin: 0 auto;
       width: 100%;
       height: calc(100vh - 67px);
@@ -185,70 +192,69 @@
       }
     }
 
-    /* Left Stage: Hyperframes Viewport */
+    /* Left Stage: 3D WebGL + Hyperframes Viewport */
     .stage-container {
-      background: radial-gradient(circle at 50% 25%, #123e42 0%, #081a1c 55%, #051012 100%);
+      background: radial-gradient(circle at 50% 25%, #103539 0%, #07171A 60%, #040C0E 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px 24px;
+      justify-content: space-between;
+      padding: 18px 24px;
       position: relative;
       overflow: hidden;
+      user-select: none;
     }
 
-    .stage-glow {
+    /* Three.js WebGL Mount */
+    #threeStageMount {
       position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 204, 41, 0.12) 0%, rgba(20, 122, 128, 0) 70%);
-      top: 18%;
-      filter: blur(80px);
-      pointer-events: none;
-      animation: pulseStage 8s infinite alternate ease-in-out;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
     }
 
-    @keyframes pulseStage {
-      0% { transform: scale(0.9) translate(-10px, 0); opacity: 0.6; }
-      100% { transform: scale(1.15) translate(10px, -20px); opacity: 1; }
+    #threeStageMount:active {
+      cursor: grabbing;
     }
 
-    /* Kinetic Headline Over Stage */
+    /* Kinetic Headline Over Stage (Solid surface — no backdrop-filter over WebGL) */
     .stage-kinetic-header {
       text-align: center;
-      margin-bottom: 16px;
       z-index: 20;
-      max-width: 680px;
-      min-height: 76px;
+      max-width: 720px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      pointer-events: none;
     }
 
     .kinetic-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      gap: 8px;
+      background: #0D2428;
+      border: 1px solid rgba(255, 204, 41, 0.4);
       color: var(--gold);
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.4px;
-      padding: 4px 12px;
+      padding: 4px 14px;
       border-radius: 100px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
     }
 
     .kinetic-main-title {
       font-size: 25px;
       font-weight: 900;
       color: #FFFFFF;
-      line-height: 1.25;
+      line-height: 1.2;
       letter-spacing: -0.5px;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
     }
 
     .kinetic-main-title span {
@@ -258,22 +264,24 @@
     }
 
     .kinetic-desc {
-      font-size: 13.5px;
-      color: var(--text-muted);
+      font-size: 13px;
+      color: #CBD5E1;
       margin-top: 4px;
       font-weight: 500;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
     }
 
-    /* Phone Mockup Canvas */
+    /* 3D Phone Mockup Canvas */
     .mockup-wrapper {
       position: relative;
       z-index: 20;
-      width: 345px;
-      height: 650px;
+      width: 340px;
+      height: 610px;
       display: flex;
       align-items: center;
       justify-content: center;
-      perspective: 1000px;
+      perspective: 1400px;
+      pointer-events: auto;
     }
 
     .phone-body {
@@ -282,15 +290,17 @@
       background: #0d1317;
       border-radius: 44px;
       padding: 10px;
-      box-shadow: 
-        0 25px 60px rgba(0, 0, 0, 0.7),
-        0 10px 25px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(255, 255, 255, 0.18),
+      box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.78),
+        0 10px 30px rgba(20, 122, 128, 0.28),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.22),
         inset 0 0 0 5px #1e252b;
       position: relative;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
     }
 
     .phone-island {
@@ -361,14 +371,13 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      transition: all 0.3s;
+      transition: transform 0.3s, background-color 0.3s, color 0.3s;
     }
 
-    .points-pill.pulse {
-      transform: scale(1.14);
+    .points-pill.flash {
+      transform: scale(1.12);
       background: #FFCC29;
       color: #0E585D;
-      box-shadow: 0 0 16px #FFCC29;
     }
 
     .screen-body {
@@ -552,26 +561,26 @@
       background: rgba(255, 204, 41, 0.85);
     }
 
-    /* Floating Callout Badge */
+    /* Floating Callout Badge (Solid surface over WebGL) */
     .floating-stage-callout {
       position: absolute;
-      right: 16px;
-      bottom: 78px;
-      background: rgba(14, 88, 93, 0.96);
-      backdrop-filter: blur(16px);
+      right: 20px;
+      bottom: 92px;
+      background: #0D3B40;
       border: 2px solid var(--gold);
       padding: 12px 18px;
       border-radius: 18px;
       color: white;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
       display: flex;
       align-items: center;
       gap: 12px;
       z-index: 30;
       transform: translateY(20px) scale(0.9);
       opacity: 0;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
       max-width: 280px;
+      pointer-events: none;
     }
 
     .floating-stage-callout.show {
@@ -604,19 +613,35 @@
       color: #E2E8F0;
     }
 
-    /* Bottom Stage Timeline Controls */
+    /* Unified Bottom Stage Control Dock (Collapsible) */
     .stage-timeline {
       width: 100%;
-      max-width: 640px;
-      margin-top: 16px;
-      z-index: 20;
+      max-width: 760px;
+      z-index: 25;
+      background: rgba(10, 23, 26, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .stage-timeline.collapsed {
+      transform: translateY(calc(100% - 28px));
+    }
+
+    .dock-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .timeline-progress-bar {
-      width: 100%;
+      flex: 1;
       height: 6px;
       background: rgba(255, 255, 255, 0.12);
       border-radius: 100px;
@@ -630,34 +655,50 @@
       transition: width 0.4s ease;
     }
 
+    .btn-collapse-dock {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-collapse-dock:hover {
+      color: #FFF;
+    }
+
     .timeline-controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .timeline-btns {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.08);
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: #132A2E;
       border: 1px solid var(--border);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.2s, border-color 0.2s;
     }
 
     .btn-icon:hover {
-      background: rgba(255, 255, 255, 0.18);
+      background: #1B3B40;
       border-color: rgba(255, 255, 255, 0.3);
     }
 
@@ -665,9 +706,36 @@
       font-size: 12px;
       font-weight: 700;
       color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
     }
 
     .slide-step-indicator span {
+      color: var(--gold);
+    }
+
+    /* 3D Camera & Actor Toggles */
+    .controls-3d-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-3d-chip {
+      background: #112428;
+      border: 1px solid var(--border);
+      color: #CBD5E1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-3d-chip.active {
+      background: rgba(255, 204, 41, 0.16);
+      border-color: var(--gold);
       color: var(--gold);
     }
 
@@ -678,6 +746,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      z-index: 30;
     }
 
     .sidebar-header {
@@ -719,7 +788,7 @@
       border-radius: 13px;
       padding: 12px 14px;
       cursor: pointer;
-      transition: all 0.22s;
+      transition: background-color 0.2s, border-color 0.2s;
       position: relative;
     }
 
@@ -729,7 +798,7 @@
     }
 
     .slide-card-item.active {
-      background: rgba(20, 122, 128, 0.18);
+      background: rgba(20, 122, 128, 0.2);
       border: 2px solid var(--primary-light);
       box-shadow: 0 4px 18px rgba(20, 122, 128, 0.22);
     }
@@ -770,7 +839,7 @@
     }
 
     .active-script-detail {
-      background: rgba(0, 0, 0, 0.3);
+      background: #071214;
       border-top: 1px solid var(--border);
       padding: 16px 20px;
       display: flex;
@@ -830,16 +899,16 @@
     <div class="brand-group">
       <div class="logo-badge">B</div>
       <div class="brand-title">
-        <h1>Estúdio de Apresentação • Bertuol Flow v1.4</h1>
-        <p>Treinamento Oficial de Equipe (60 min) & Jornada Clube Sorriso</p>
+        <h1>Estúdio 3D • Apresentação Bertuol Flow v1.4</h1>
+        <p>Palco Three.js + Rede Neural 3D, Dente Cristalino & Escudo Clube Sorriso</p>
       </div>
     </div>
 
     <div class="mode-switcher">
-      <button class="mode-btn active" id="btnModeStaff" onclick="switchDeckMode('staff')">
+      <button class="mode-btn active" id="btnModeStaff" onclick="window.switchDeckMode('staff')">
         👥 Treinamento Equipe (60 min)
       </button>
-      <button class="mode-btn" id="btnModePatient" onclick="switchDeckMode('patient')">
+      <button class="mode-btn" id="btnModePatient" onclick="window.switchDeckMode('patient')">
         📱 Jornada do Paciente (Clube Sorriso)
       </button>
     </div>
@@ -848,7 +917,7 @@
       <a href="/" class="btn-secondary">
         🚀 Abrir Sistema Ao Vivo
       </a>
-      <button class="btn-gold" id="btnAutoplay" onclick="toggleAutoplay()">
+      <button class="btn-gold" id="btnAutoplay" onclick="window.toggleAutoplay()">
         ▶️ Apresentação Automática
       </button>
     </div>
@@ -857,9 +926,10 @@
   <!-- Main Grid -->
   <main class="studio-layout">
 
-    <!-- Left Stage: Interactive Hyperframe Canvas -->
-    <section class="stage-container">
-      <div class="stage-glow"></div>
+    <!-- Left Stage: 3D WebGL Canvas + Interactive Phone Rig -->
+    <section class="stage-container" id="stageContainer">
+      <!-- Dedicated Three.js WebGL Mount -->
+      <div id="threeStageMount"></div>
 
       <!-- Kinetic Title -->
       <div class="stage-kinetic-header">
@@ -868,7 +938,7 @@
         <p class="kinetic-desc" id="kineticDesc">Conexão em tempo real entre Clinicorp, Operação Clínica e Clube Sorriso PWA.</p>
       </div>
 
-      <!-- Phone / App Mockup Stage -->
+      <!-- 3D Phone Mockup Stage -->
       <div class="mockup-wrapper">
         <div class="phone-body" id="phoneBody">
           <div class="phone-island">
@@ -911,23 +981,37 @@
         </div>
       </div>
 
-      <!-- Stage Timeline & Controls -->
-      <div class="stage-timeline">
-        <div class="timeline-progress-bar">
-          <div class="timeline-fill" id="timelineFill"></div>
+      <!-- Collapsible Unified Bottom Control Dock -->
+      <div class="stage-timeline" id="stageTimelineDock">
+        <div class="dock-header-row">
+          <div class="timeline-progress-bar">
+            <div class="timeline-fill" id="timelineFill"></div>
+          </div>
+          <button class="btn-collapse-dock" id="btnToggleDock" onclick="window.toggleStageDock()">
+            ▾ Ocultar Controles (Tecla H)
+          </button>
         </div>
+
         <div class="timeline-controls">
           <div class="timeline-btns">
-            <button class="btn-icon" onclick="prevSlide()" title="Slide Anterior (Seta Esquerda)">◀</button>
-            <button class="btn-icon" onclick="playCurrentAnimation()" title="Repetir Animação">🔄</button>
-            <button class="btn-icon" onclick="nextSlide()" title="Próximo Slide (Seta Direita)">▶</button>
+            <button class="btn-icon" onclick="window.prevSlide()" title="Slide Anterior (Seta Esquerda)">◀</button>
+            <button class="btn-icon" onclick="window.playCurrentAnimation()" title="Repetir Coreografia 3D">🔄</button>
+            <button class="btn-icon" onclick="window.nextSlide()" title="Próximo Slide (Seta Direita)">▶</button>
           </div>
+
           <div class="slide-step-indicator" id="slideStepIndicator">
             Slide <span id="currentSlideNum">1</span> de <span id="totalSlidesNum">8</span>
           </div>
-          <div>
-            <button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="triggerSimulatedTap()">
-              👆 Destacar Ponto Focal
+
+          <div class="controls-3d-group">
+            <button class="btn-3d-chip active" id="btnCamAuto" onclick="window.setCameraMode('auto')" title="Coreografia 3D sincronizada com o slide + paralaxe do mouse">
+              🌐 3D Sincronizado
+            </button>
+            <button class="btn-3d-chip" id="btnCamOrbit" onclick="window.setCameraMode('orbit')" title="Arraste com o mouse no palco para girar em 360 graus">
+              🖱️ Giro Livre 3D
+            </button>
+            <button class="btn-3d-chip" onclick="window.triggerSpin360()" title="Dar um giro 360 graus nos elementos 3D e celular">
+              ✨ Giro 360°
             </button>
           </div>
         </div>
@@ -939,7 +1023,7 @@
     <aside class="storyboard-sidebar">
       <div class="sidebar-header">
         <h3 id="sidebarHeaderTitle">Roteiro de 60 Minutos (Plenária + Perfis)</h3>
-        <span class="badge-status" id="sidebarBadgeStatus">v1.4 Oficial</span>
+        <span class="badge-status" id="sidebarBadgeStatus">Palco 3D Ativo</span>
       </div>
 
       <!-- Slides List -->
@@ -954,7 +1038,7 @@
           <div class="detail-voiceover" id="scriptVoiceover"></div>
         </div>
         <div class="detail-row">
-          <span class="detail-label">💡 Dica de Palco & Demonstração Ao Vivo</span>
+          <span class="detail-label">💡 Coreografia 3D & Demonstração Ao Vivo</span>
           <div class="detail-sfx" id="scriptSfx"></div>
         </div>
       </div>
@@ -964,14 +1048,14 @@
 
   <script>
     // ============================================================================
-    // MODO 1: ROTEIRO OFICIAL DE 60 MINUTOS PARA COLABORADORES (8 SLIDES)
+    // DEFINIÇÃO DOS SLIDES COM COREOGRAFIA 3D (MODO EQUIPE 60M & MODO PACIENTE)
     // ============================================================================
-    const STAFF_SLIDES = [
+    window.STAFF_SLIDES = [
       {
         id: 1,
         title: "Abertura & Ecossistema Bertuol Flow v1.4",
         titleHtml: "Ecossistema <span>Bertuol Flow v1.4</span>",
-        desc: "Bloco 1 (Plenária Geral) • Como Clinicorp, Agenda Inteligente e Clube Sorriso trabalham juntos.",
+        desc: "Bloco 1 (Plenária Geral) • Rede Neural 3D conectando Clinicorp, Operação Clínica e Clube Sorriso.",
         badge: "Bloco 1 • Minutos 00 a 08 (Plenária)",
         duration: "00:00 - 08:00 (8 min)",
         headerTitle: "Bertuol Flow v1.4",
@@ -979,14 +1063,25 @@
         points: "6.285+ Pac.",
         callout: {
           icon: "🚀",
-          title: "Ecossistema 360°",
+          title: "Ecossistema 360° em 3D",
           sub: "Clinicorp + Operação + Paciente",
           show: true
         },
-        voiceover: "Bem-vindos ao lançamento oficial do Bertuol Flow v1.4! Não estamos substituindo o Clinicorp; estamos conectando a recepção, os consultórios e os 6.285+ pacientes em tempo real na palma da mão.",
-        sfx: "Tela Cheia (F11) • Zoom 110%",
-        motion: "Mostrar Barra SuperAdmin Root no topo",
+        voiceover: "Bem-vindos ao lançamento oficial do Bertuol Flow v1.4! Veja no palco 3D como conectamos as 3 pontas em tempo real: o Clinicorp ERP, a operação clínica e os 6.285+ pacientes do Clube Sorriso.",
+        sfx: "3D: Rede Neural 3 Pontas + Escudo e Dente",
+        motion: "Pose Frontal Imponente • Feixes de Dados",
         touchTarget: { x: 170, y: 190 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: -6, rotZ: 0, scale: 1.0 },
+          cameraPos: { x: 0, y: 0.4, z: 9.2 },
+          showTooth: true,
+          toothPos: { x: -4.1, y: 0.5, z: 0.8, scale: 1.05 },
+          showShield: true,
+          shieldPos: { x: 4.1, y: 0.5, z: 0.8, scale: 1.05 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.2
+        },
         renderScreen: () => `
           <div class="club-preview-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1017,7 +1112,7 @@
         id: 2,
         title: "Segurança, Login Institucional & Face ID",
         titleHtml: "Acesso Rápido com <span>Biometria & Face ID</span>",
-        desc: "Bloco 1 (Plenária Geral) • Troca de senha no 1º acesso e autenticação em 1 segundo no celular.",
+        desc: "Bloco 1 (Plenária Geral) • Troca de senha no 1º acesso e autenticação biométrica em 1 segundo.",
         badge: "Bloco 1 • Minutos 08 a 15 (Plenária)",
         duration: "08:00 - 15:00 (7 min)",
         headerTitle: "Segurança & Acesso",
@@ -1030,9 +1125,20 @@
           show: true
         },
         voiceover: "No primeiro acesso com a senha inicial Bertuol@2026, o sistema pede para criar sua senha pessoal. Em seguida, ative a Biometria ou Face ID no menu para entrar em 1 segundo todos os dias.",
-        sfx: "Menu → Biometria & Face ID",
-        motion: "Demonstrar modal WebAuthn e ?app=paciente",
+        sfx: "3D: Feixes Ciano de Segurança LGPD",
+        motion: "Tilt Lateral Esquerdo (-14°) + Escudo Protetor",
         touchTarget: { x: 170, y: 260 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: 14, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: -1.1, y: 0.6, z: 8.8 },
+          showTooth: false,
+          toothPos: { x: -6.0, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.7, z: 1.4, scale: 1.25 },
+          neuralColor: 0x38BDF8,
+          beamColor: 0x10B981,
+          pulseSpeed: 1.6
+        },
         renderScreen: () => `
           <div class="appt-card highlight">
             <div class="appt-status checkedin">🔑 Passo a Passo do Colaborador</div>
@@ -1060,7 +1166,7 @@
         id: 3,
         title: "Trilha Recepção: Totem QR & Check-in",
         titleHtml: "Recepção: <span>Totem QR & Check-in</span>",
-        desc: "Bloco 2 (Recepção) • Como o paciente faz check-in no balcão, ganha pontos e avisa o consultório.",
+        desc: "Bloco 2 (Recepção) • Escudo Dourado 3D do Clube Sorriso gira ao confirmar +30 pontos no balcão.",
         badge: "Bloco 2 • Minutos 15 a 20 (Recepção)",
         duration: "15:00 - 20:00 (5 min)",
         headerTitle: "Perfil: 🛎️ Recepção",
@@ -1072,10 +1178,21 @@
           sub: "Toque sonoro na tela do Dentista",
           show: true
         },
-        voiceover: "Mudando na Barra Root para o perfil Recepção: veja como a unidade já fica travada com cadeado. Quando o paciente chega e escaneia o Totem QR de Balcão, ele ganha pontos e o dentista recebe um aviso sonoro na hora.",
-        sfx: "Simular Perfil: Recepção",
-        motion: "Abrir botão Totem QR Code de Balcão",
+        voiceover: "Mudando na Barra Root para o perfil Recepção: veja como a unidade já fica travada com cadeado. Quando o paciente chega e escaneia o Totem QR de Balcão, o Escudo Dourado credita os pontos e o dentista recebe um aviso sonoro na hora.",
+        sfx: "3D: Escudo Dourado Clube Sorriso em Destaque",
+        motion: "Perspectiva de Balcão (-12°) + Satélites de Ouro",
         touchTarget: { x: 170, y: 210 },
+        scene3D: {
+          phonePose: { rotX: 7, rotY: -13, rotZ: 1, scale: 1.02 },
+          cameraPos: { x: 1.2, y: 0.3, z: 8.6 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: -3.8, y: 0.5, z: 1.6, scale: 1.4 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.0
+        },
         renderScreen: () => `
           <div class="appt-card highlight">
             <div class="appt-status confirmed">📍 Totem QR Code de Balcão</div>
@@ -1101,7 +1218,7 @@
         id: 4,
         title: "Central de Credenciais (6.285+ Clientes)",
         titleHtml: "Busca Instantânea em <span>6.285+ Clientes</span>",
-        desc: "Bloco 2 (Recepção) • Nova barra compacta no topo para achar qualquer paciente por nome em 1 segundo.",
+        desc: "Bloco 2 (Recepção) • Constelação de dados 3D converge enquanto a busca acha qualquer cliente por nome.",
         badge: "Bloco 2 • Minutos 20 a 30 (Recepção)",
         duration: "20:00 - 30:00 (10 min)",
         headerTitle: "Central de Credenciais",
@@ -1114,9 +1231,20 @@
           show: true
         },
         voiceover: "Antes, achar um paciente na base grande dava trabalho. Agora, na Central de Credenciais reorganizada, a busca por nome fica no topo! Digite o nome, filtre de A a Z e envie o acesso pronto direto no WhatsApp do cliente.",
-        sfx: "Menu → Central de Credenciais",
-        motion: "Buscar 'Maria' ou 'Silva' ao vivo no modal",
+        sfx: "3D: Constelação de 6.285+ Nós Convergindo",
+        motion: "Zoom Focado no Topo + Feixes Esmeralda",
         touchTarget: { x: 170, y: 165 },
+        scene3D: {
+          phonePose: { rotX: -5, rotY: 5, rotZ: 0, scale: 1.05 },
+          cameraPos: { x: 0, y: 0.8, z: 8.2 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 4.1, y: -0.3, z: 0.9, scale: 1.0 },
+          neuralColor: 0x10B981,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 2.4
+        },
         renderScreen: () => `
           <div class="appt-card highlight" style="gap:6px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1144,24 +1272,35 @@
       },
       {
         id: 5,
-        title: "Trilha Dentista: Agenda & Alerta de Chegada",
+        title: "Trilha Dentista: Agenda & Dente 3D Cristalino",
         titleHtml: "Dentista: <span>Visão Clínica & Alertas</span>",
-        desc: "Bloco 3 (Corpo Clínico) • Interface limpa, travada no profissional, com aviso sonoro de paciente na recepção.",
+        desc: "Bloco 3 (Corpo Clínico) • Dente 3D Cristalino entra em cena destacando o foco 100% odontológico.",
         badge: "Bloco 3 • Minutos 30 a 37 (Dentistas)",
         duration: "30:00 - 37:00 (7 min)",
         headerTitle: "Perfil: 🩺 Dentista",
         headerSub: "Agenda Pessoal • Foco Clínico",
         points: "Clinicorp Sync",
         callout: {
-          icon: "🩺",
-          title: "Visão Enxuta",
-          sub: "Sem menus administrativos extras",
+          icon: "🦷",
+          title: "Dente 3D Cristalino",
+          sub: "Foco total na excelência clínica",
           show: true
         },
-        voiceover: "Agora simulando o perfil Dentista: percebam como o cabeçalho fica 100% focado na clínica. O doutor vê apenas sua própria agenda, navega pelos dias e categorias, e recebe o alerta no topo assim que o paciente chega.",
-        sfx: "Simular Perfil: Dentista + Moldura Mobile",
-        motion: "Clicar no ícone de Smartphone no topo para mostrar visão Mobile",
+        voiceover: "Agora simulando o perfil Dentista: o Dente 3D Cristalino assume o palco! Percebam como o cabeçalho fica 100% focado na clínica: o doutor vê apenas sua própria agenda e recebe o alerta no topo assim que o paciente chega.",
+        sfx: "3D: Dente Cristalino Óptico + Anéis de Diagnóstico",
+        motion: "Inclinação Clínica (12°) + Rotação Molar 3D",
         touchTarget: { x: 170, y: 200 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: 13, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: -0.9, y: 0.3, z: 8.6 },
+          showTooth: true,
+          toothPos: { x: -3.7, y: 0.4, z: 1.7, scale: 1.45 },
+          showShield: false,
+          shieldPos: { x: 6.5, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0x38BDF8,
+          pulseSpeed: 1.3
+        },
         renderScreen: () => `
           <div style="background:#ECFDF5; border:2px solid #10B981; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px;">
             <span style="font-size:20px;">🔔</span>
@@ -1185,7 +1324,7 @@
         id: 6,
         title: "Resumo Clínico IA, Vouchers & Chat Interno",
         titleHtml: "Resumo com <span>Inteligência Artificial</span>",
-        desc: "Bloco 3 (Corpo Clínico) • Síntese clínica do paciente antes de sentar na cadeira + consulta ao Clube Sorriso.",
+        desc: "Bloco 3 (Corpo Clínico) • Dente 3D Cristalino + Escudo Dourado + Sinapses IA antes de chamar o paciente.",
         badge: "Bloco 3 • Minutos 37 a 45 (Dentistas)",
         duration: "37:00 - 45:00 (8 min)",
         headerTitle: "Prontuário & IA",
@@ -1193,14 +1332,25 @@
         points: "IA Ativa",
         callout: {
           icon: "✨",
-          title: "Resumo em 3 Segundos",
+          title: "Sinapse Clínica IA",
           sub: "Histórico + Clube Sorriso no cabeçalho",
           show: true
         },
-        voiceover: "Ao tocar no card do paciente, o dentista lê o Resumo Executivo gerado por IA com o histórico e observações importantes. E novidade da v1.4: o dentista também tem o botão Clube Sorriso no cabeçalho para consultar vouchers do seu paciente!",
-        sfx: "Clicar num Agendamento + Botão Clube Sorriso",
-        motion: "Abrir Ficha do Paciente e Chat Interno com áudio",
+        voiceover: "Ao tocar no card do paciente, o dentista lê o Resumo Executivo gerado por IA com o histórico clínico. E na v1.4, o Dente Cristalino e o Escudo Dourado se unem: o dentista também consulta os vouchers do seu paciente direto no cabeçalho!",
+        sfx: "3D: Dente Cristalino + Escudo Ouro + Feixes IA",
+        motion: "Paralaxe Dupla + Anéis Orbitais Rápidos",
         touchTarget: { x: 170, y: 240 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: -10, rotZ: 1.2, scale: 1.03 },
+          cameraPos: { x: 0.4, y: 0.5, z: 8.7 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.6, z: 1.3, scale: 1.25 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.4, z: 1.3, scale: 1.15 },
+          neuralColor: 0x818CF8,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.2
+        },
         renderScreen: () => `
           <div class="appt-card highlight">
             <div class="appt-status checkedin">✨ Resumo Executivo com IA</div>
@@ -1230,7 +1380,7 @@
         id: 7,
         title: "Trilha Gerência Multiclínica & CRM Recall",
         titleHtml: "Gerência: <span>Multi-Unidade & CRM 6m+</span>",
-        desc: "Bloco 4 (Gestão) • Visão global Palmas + Paraíso e reativação de pacientes ausentes há mais de 6 meses.",
+        desc: "Bloco 4 (Gestão) • Ponte 3D conectando Palmas e Paraíso + reativação comercial no WhatsApp.",
         badge: "Bloco 4 • Minutos 45 a 52 (Gerência)",
         duration: "45:00 - 52:00 (7 min)",
         headerTitle: "Perfil: 👔 Gerência",
@@ -1238,14 +1388,25 @@
         points: "Multi-Clínica",
         callout: {
           icon: "🎯",
-          title: "CRM de Recall Ativo",
+          title: "Ponte Palmas ↔ Paraíso",
           sub: "Reativação automática via WhatsApp",
           show: true
         },
         voiceover: "Para a Gerência Multiclínica, o seletor de unidades fica totalmente liberado entre Palmas, Paraíso e Visão Global. No botão CRM, identificamos todos os pacientes que não retornam há mais de 6 meses para disparo imediato de retorno.",
-        sfx: "Simular Perfil: Gerente Multiclínica",
-        motion: "Abrir modal CRM (Recall & WhatsApp)",
+        sfx: "3D: Rede Neural Multi-Clínica Dourada",
+        motion: "Visão Panorâmica Executiva (rotX: 10°)",
         touchTarget: { x: 170, y: 185 },
+        scene3D: {
+          phonePose: { rotX: 9, rotY: 8, rotZ: 0, scale: 1.01 },
+          cameraPos: { x: 0, y: 1.1, z: 9.4 },
+          showTooth: true,
+          toothPos: { x: -4.3, y: -0.2, z: 0.6, scale: 1.0 },
+          showShield: true,
+          shieldPos: { x: 4.3, y: -0.2, z: 0.6, scale: 1.2 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x38BDF8,
+          pulseSpeed: 1.8
+        },
         renderScreen: () => `
           <div class="club-preview-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1271,22 +1432,33 @@
         id: 8,
         title: "Mão na Massa: Instalação PWA & Dúvidas",
         titleHtml: "Prática Ao Vivo: <span>Instale no Celular</span>",
-        desc: "Bloco 4 (Encerramento) • Todos os colaboradores instalam o Web App, ativam biometria e conhecem o FAQ.",
+        desc: "Bloco 4 (Encerramento) • Giro triunfal 3D com Dente Cristalino, Escudo Ouro e Rede Neural Completa.",
         badge: "Bloco 4 • Minutos 52 a 60 (Prática & Q&A)",
         duration: "52:00 - 60:00 (8 min)",
         headerTitle: "Onboarding Ao Vivo",
         headerSub: "PWA • Face ID • Central de Ajuda",
         points: "100% Equipe",
         callout: {
-          icon: "📲",
+          icon: "🏆",
           title: "Todos Conectados!",
           sub: "Ícone instalado na tela inicial",
           show: true
         },
         voiceover: "Agora é mão na massa! Peguem seus celulares, acessem o link oficial, façam login trocando a senha inicial, adicionem o Bertuol Flow à Tela de Início e ativem o Face ID. Qualquer dúvida futura está a 1 clique na Central de Ajuda FAQ!",
-        sfx: "Interação coletiva com a equipe",
-        motion: "Abrir /faq.html e acompanhar login da equipe",
+        sfx: "3D: Celebração Completa + Giro 360°",
+        motion: "Todos os Elementos 3D em Órbita Sincronizada",
         touchTarget: { x: 170, y: 260 },
+        scene3D: {
+          phonePose: { rotX: 3, rotY: 0, rotZ: 0, scale: 1.04 },
+          cameraPos: { x: 0, y: 0.2, z: 8.5 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.5, z: 1.5, scale: 1.3 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.5, z: 1.5, scale: 1.3 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x10B981,
+          pulseSpeed: 2.5
+        },
         renderScreen: () => `
           <div class="appt-card highlight">
             <div class="appt-status confirmed">📲 Checklist Final (5 Minutos)</div>
@@ -1306,10 +1478,7 @@
       }
     ];
 
-    // ============================================================================
-    // MODO 2: JORNADA DO PACIENTE NO CLUBE SORRISO (6 SLIDES ORIGINAIS)
-    // ============================================================================
-    const PATIENT_SLIDES = [
+    window.PATIENT_SLIDES = [
       {
         id: 1,
         title: "Confirme sua consulta em 1 toque",
@@ -1327,9 +1496,20 @@
           show: true
         },
         voiceover: "Olá Alice! Seu dia de cuidar do sorriso chegou. Sem filas nem telefonemas: com um simples toque, você confirma sua presença e já começa a acumular vantagens.",
-        sfx: "Upbeat instrumental suave • Ding suave",
-        motion: "Zoom in suave na tela do smartphone (1.02x)",
+        sfx: "3D: Dente Cristalino + Rede de Lembrete",
+        motion: "Tilt Suave 3D + Anéis Turquesa",
         touchTarget: { x: 165, y: 250 },
+        scene3D: {
+          phonePose: { rotX: 5, rotY: -10, rotZ: 0, scale: 1.0 },
+          cameraPos: { x: -0.5, y: 0.3, z: 8.8 },
+          showTooth: true,
+          toothPos: { x: -3.8, y: 0.4, z: 1.4, scale: 1.3 },
+          showShield: false,
+          shieldPos: { x: 6, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.4
+        },
         renderScreen: () => `
           <div class="appt-card highlight">
             <div class="appt-status">Hoje • 18:00</div>
@@ -1368,9 +1548,20 @@
           show: true
         },
         voiceover: "Ao confirmar, sua vaga é garantida e o sistema credita 10 pontos instantaneamente no seu Clube Sorriso. É a clínica valorizando a sua pontualidade.",
-        sfx: "Efeito chime de moedas mágicas",
-        motion: "Pulso dourado na pílula de pontos",
+        sfx: "3D: Escudo Dourado Clube Sorriso Ativado",
+        motion: "Giro Dourado + Feixes de Pontuação",
         touchTarget: { x: 165, y: 230 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: 11, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: 0.7, y: 0.4, z: 8.6 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 3.8, y: 0.5, z: 1.5, scale: 1.35 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x10B981,
+          pulseSpeed: 2.0
+        },
         renderScreen: () => `
           <div class="appt-card" style="border: 2px solid #10B981; background: #F0FDF4;">
             <div class="appt-status confirmed">✅ Presença Garantida</div>
@@ -1408,9 +1599,20 @@
           show: true
         },
         voiceover: "Chegando à clínica Bertuol em Palmas ou Paraíso, esqueça filas na recepção. Com um toque no app ou aproximando o QR Code no totem, seu dentista já recebe o alerta na sala clínica.",
-        sfx: "Beep de Totem QR Code",
-        motion: "Destaque no botão de Check-in",
+        sfx: "3D: Ponte Recepção → Consultório",
+        motion: "Dente 3D + Escudo em Sincronia",
         touchTarget: { x: 165, y: 220 },
+        scene3D: {
+          phonePose: { rotX: 7, rotY: -12, rotZ: 1, scale: 1.02 },
+          cameraPos: { x: 0, y: 0.5, z: 8.7 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.4, z: 1.2, scale: 1.2 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.4, z: 1.2, scale: 1.2 },
+          neuralColor: 0x38BDF8,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.8
+        },
         renderScreen: () => `
           <div class="appt-card highlight" style="background: #F8FAFC;">
             <div class="appt-status checkedin">📍 Totem de Entrada Ativo</div>
@@ -1449,9 +1651,20 @@
           show: true
         },
         voiceover: "Seu saldo cresceu! Na aba Recompensas, você escolhe entre profilaxia gratuita com Sky Câmera, kits especiais de higiene e descontos exclusivos.",
-        sfx: "Pop suave de card expandindo",
-        motion: "Destaque no prêmio mais desejado",
+        sfx: "3D: Escudo de Ouro + Satélites de Prêmios",
+        motion: "Destaque no Prêmio Profilaxia + Sky Câmera",
         touchTarget: { x: 165, y: 160 },
+        scene3D: {
+          phonePose: { rotX: -4, rotY: 12, rotZ: 0, scale: 1.03 },
+          cameraPos: { x: 0.8, y: 0.3, z: 8.5 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: -3.7, y: 0.5, z: 1.6, scale: 1.45 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.1
+        },
         renderScreen: () => `
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size: 13px; font-weight: 800; color: #0F172A;">Prêmios Disponíveis</span>
@@ -1498,9 +1711,20 @@
           show: true
         },
         voiceover: "Com um único toque, seu voucher é gerado na hora com QR Code seguro. Não precisa imprimir papel nem mandar e-mail: fica salvo no seu próprio app.",
-        sfx: "Som de 'Success Chime' triunfal",
-        motion: "Zoom in no QR Code",
+        sfx: "3D: Dente Cristalino + Feixes Esmeralda",
+        motion: "Zoom no Voucher QR Code",
         touchTarget: { x: 165, y: 310 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: -8, rotZ: 0, scale: 1.04 },
+          cameraPos: { x: -0.6, y: 0.4, z: 8.4 },
+          showTooth: true,
+          toothPos: { x: 3.8, y: 0.5, z: 1.5, scale: 1.35 },
+          showShield: false,
+          shieldPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x10B981,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.9
+        },
         renderScreen: () => `
           <div class="voucher-card-active">
             <span style="font-size: 11px; font-weight: 800; color: #065F46; text-transform: uppercase;">
@@ -1534,9 +1758,20 @@
           show: true
         },
         voiceover: "Assim é a Bertuol Odontologia: o cuidado de uma equipe de excelência com a conveniência da melhor tecnologia na palma da sua mão.",
-        sfx: "Assinatura sonora Bertuol",
-        motion: "Selo Paciente VIP Ouro",
+        sfx: "3D: Dente Cristalino + Escudo Ouro VIP",
+        motion: "Celebração 3D Completa",
         touchTarget: { x: 165, y: 200 },
+        scene3D: {
+          phonePose: { rotX: 3, rotY: 0, rotZ: 0, scale: 1.03 },
+          cameraPos: { x: 0, y: 0.3, z: 8.6 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.5, z: 1.4, scale: 1.3 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.5, z: 1.4, scale: 1.3 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.3
+        },
         renderScreen: () => `
           <div style="background: linear-gradient(135deg, #147A80 0%, #0A4346 100%); border-radius: 18px; padding: 20px; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
             <div style="width: 50px; height: 50px; border-radius: 50%; background: #FFCC29; color: #0E585D; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;">
@@ -1554,18 +1789,22 @@
       }
     ];
 
-    let activeDeckMode = 'staff'; // 'staff' | 'patient'
-    let currentSlideIndex = 0;
-    let autoplayInterval = null;
-    let isAutoplayRunning = false;
+    // ============================================================================
+    // CONTROLE DE INTERFACE DOS SLIDES
+    // ============================================================================
+    window.activeDeckMode = 'staff';
+    window.currentSlideIndex = 0;
+    window.autoplayInterval = null;
+    window.isAutoplayRunning = false;
+    window.targetScene3DState = window.STAFF_SLIDES[0].scene3D;
 
-    function getActiveSlides() {
-      return activeDeckMode === 'staff' ? STAFF_SLIDES : PATIENT_SLIDES;
-    }
+    window.getActiveSlides = function() {
+      return window.activeDeckMode === 'staff' ? window.STAFF_SLIDES : window.PATIENT_SLIDES;
+    };
 
-    function switchDeckMode(mode) {
-      activeDeckMode = mode;
-      currentSlideIndex = 0;
+    window.switchDeckMode = function(mode) {
+      window.activeDeckMode = mode;
+      window.currentSlideIndex = 0;
       document.getElementById('btnModeStaff').classList.toggle('active', mode === 'staff');
       document.getElementById('btnModePatient').classList.toggle('active', mode === 'patient');
 
@@ -1574,16 +1813,24 @@
           ? 'Roteiro de 60 Minutos (Plenária + Perfis)'
           : 'Jornada do Paciente (Clube Sorriso)';
       document.getElementById('sidebarBadgeStatus').innerText =
-        mode === 'staff' ? '60 Min • v1.4' : '6 Cenas';
+        mode === 'staff' ? '60 Min • 3D' : '6 Cenas • 3D';
 
-      renderSlide(0);
-    }
+      window.renderSlide(0);
+    };
 
-    function renderSlide(index) {
-      const slides = getActiveSlides();
+    window.renderSlide = function(index) {
+      const slides = window.getActiveSlides();
       if (index < 0 || index >= slides.length) return;
-      currentSlideIndex = index;
+      window.currentSlideIndex = index;
       const slide = slides[index];
+
+      // Update 3D Target State
+      if (slide.scene3D) {
+        window.targetScene3DState = slide.scene3D;
+        if (window.onSlide3DTargetChange) {
+          window.onSlide3DTargetChange(slide.scene3D);
+        }
+      }
 
       // Update Headings
       document.getElementById('kineticBadge').innerText = slide.badge;
@@ -1597,8 +1844,8 @@
       document.getElementById('patientClinicText').innerText = slide.headerSub || 'Palmas & Paraíso';
       document.getElementById('pointsValueText').innerText = slide.points;
       const pointsPill = document.getElementById('patientPointsPill');
-      pointsPill.classList.add('pulse');
-      setTimeout(() => pointsPill.classList.remove('pulse'), 600);
+      pointsPill.classList.add('flash');
+      setTimeout(() => pointsPill.classList.remove('flash'), 500);
 
       // Render Screen Content
       const screenBody = document.getElementById('screenBody');
@@ -1620,27 +1867,27 @@
       document.getElementById('timelineFill').style.width = fillPercent + '%';
 
       // Update Storyboard Accordion
-      renderAccordion();
+      window.renderAccordion();
 
       // Update Script Details
       document.getElementById('scriptVoiceover').innerText = `"${slide.voiceover}"`;
       document.getElementById('scriptSfx').innerHTML = `
-        <span class="tag-pill">🎯 ${slide.sfx}</span>
+        <span class="tag-pill">🌐 ${slide.sfx}</span>
         <span class="tag-pill">🎬 ${slide.motion}</span>
         <span class="tag-pill">⏱️ ${slide.duration}</span>
       `;
 
       // Trigger automatic motion touch
       setTimeout(() => {
-        triggerSimulatedTap(slide.touchTarget.x, slide.touchTarget.y);
-      }, 400);
-    }
+        window.triggerSimulatedTap(slide.touchTarget.x, slide.touchTarget.y);
+      }, 380);
+    };
 
-    function renderAccordion() {
-      const slides = getActiveSlides();
+    window.renderAccordion = function() {
+      const slides = window.getActiveSlides();
       const container = document.getElementById('slidesAccordion');
       container.innerHTML = slides.map((slide, i) => `
-        <div class="slide-card-item ${i === currentSlideIndex ? 'active' : ''}" onclick="goToSlide(${i})">
+        <div class="slide-card-item ${i === window.currentSlideIndex ? 'active' : ''}" onclick="window.goToSlide(${i})">
           <div class="slide-card-top">
             <span class="slide-num">ETAPA 0${slide.id}</span>
             <span class="slide-duration">${slide.duration}</span>
@@ -1649,35 +1896,36 @@
           <p class="slide-item-desc">${slide.desc}</p>
         </div>
       `).join('');
-    }
+    };
 
-    function goToSlide(index) {
-      renderSlide(index);
-    }
+    window.goToSlide = function(index) {
+      window.renderSlide(index);
+    };
 
-    function nextSlide() {
-      const slides = getActiveSlides();
-      if (currentSlideIndex < slides.length - 1) {
-        renderSlide(currentSlideIndex + 1);
+    window.nextSlide = function() {
+      const slides = window.getActiveSlides();
+      if (window.currentSlideIndex < slides.length - 1) {
+        window.renderSlide(window.currentSlideIndex + 1);
       } else {
-        renderSlide(0);
+        window.renderSlide(0);
       }
-    }
+    };
 
-    function prevSlide() {
-      const slides = getActiveSlides();
-      if (currentSlideIndex > 0) {
-        renderSlide(currentSlideIndex - 1);
+    window.prevSlide = function() {
+      const slides = window.getActiveSlides();
+      if (window.currentSlideIndex > 0) {
+        window.renderSlide(window.currentSlideIndex - 1);
       } else {
-        renderSlide(slides.length - 1);
+        window.renderSlide(slides.length - 1);
       }
-    }
+    };
 
-    function playCurrentAnimation() {
-      renderSlide(currentSlideIndex);
-    }
+    window.playCurrentAnimation = function() {
+      window.renderSlide(window.currentSlideIndex);
+      if (window.triggerSpin360) window.triggerSpin360();
+    };
 
-    function triggerSimulatedTap(x = 165, y = 240) {
+    window.triggerSimulatedTap = function(x = 165, y = 240) {
       const cursor = document.getElementById('touchCursor');
       cursor.style.left = x + 'px';
       cursor.style.top = y + 'px';
@@ -1685,49 +1933,545 @@
 
       setTimeout(() => {
         cursor.classList.add('tap');
-      }, 250);
+      }, 220);
 
       setTimeout(() => {
         cursor.classList.remove('tap');
         cursor.classList.remove('active');
-      }, 700);
-    }
+      }, 650);
+    };
 
-    function toggleAutoplay() {
+    window.toggleAutoplay = function() {
       const btn = document.getElementById('btnAutoplay');
-      if (isAutoplayRunning) {
-        clearInterval(autoplayInterval);
-        isAutoplayRunning = false;
+      if (window.isAutoplayRunning) {
+        clearInterval(window.autoplayInterval);
+        window.isAutoplayRunning = false;
         btn.innerText = '▶️ Apresentação Automática';
         btn.style.background = 'linear-gradient(135deg, var(--gold) 0%, #FFA800 100%)';
         btn.style.color = '#0E585D';
       } else {
-        isAutoplayRunning = true;
+        window.isAutoplayRunning = true;
         btn.innerText = '⏸️ Pausar Apresentação';
         btn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
         btn.style.color = '#FFF';
 
-        autoplayInterval = setInterval(() => {
-          nextSlide();
+        window.autoplayInterval = setInterval(() => {
+          window.nextSlide();
         }, 6500);
       }
-    }
+    };
 
-    // Keyboard Shortcuts
+    window.toggleStageDock = function() {
+      const dock = document.getElementById('stageTimelineDock');
+      const btn = document.getElementById('btnToggleDock');
+      const isCollapsed = dock.classList.toggle('collapsed');
+      btn.innerText = isCollapsed ? '▴ Mostrar Controles (Tecla H)' : '▾ Ocultar Controles (Tecla H)';
+    };
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        nextSlide();
+        window.nextSlide();
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        prevSlide();
+        window.prevSlide();
       } else if (e.key === ' ') {
         e.preventDefault();
-        toggleAutoplay();
+        window.toggleAutoplay();
+      } else if (e.key === 'h' || e.key === 'H') {
+        window.toggleStageDock();
       }
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      renderSlide(0);
+      window.renderSlide(0);
     });
+  </script>
+
+  <!-- ============================================================================
+       MOTOR 3D THREE.JS (REDE NEURAL 3D + DENTE CRISTALINO + ESCUDO CLUBE SORRISO)
+       ============================================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const mount = document.getElementById('threeStageMount');
+    const stageContainer = document.getElementById('stageContainer');
+    const phoneBody = document.getElementById('phoneBody');
+
+    // 1. Software WebGL Guard (Three.js Skill Standard)
+    const isSoftwareGl = (() => {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      if (!gl) return true;
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
+      const gpu = String(gl.getParameter(param));
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+    })();
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x051215, 0.055);
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      mount.clientWidth / Math.max(mount.clientHeight, 1),
+      0.1,
+      100
+    );
+    camera.position.set(0, 0.4, 9.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: !isSoftwareGl,
+      alpha: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    mount.appendChild(renderer.domElement);
+
+    // 2. Mandatory Studio Environment Reflection (RoomEnvironment)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmremGenerator.dispose();
+
+    // 3. Balanced 3-Point Studio Lighting Rig
+    const hemiLight = new THREE.HemisphereLight(0x1FB5BD, 0x051012, 0.85);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xFFFBEB, 2.2);
+    keyLight.position.set(6, 8, 7);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.PointLight(0x1FB5BD, 3.5, 22, 1.8);
+    rimLight.position.set(-5, 3, -3);
+    scene.add(rimLight);
+
+    const goldAccentLight = new THREE.PointLight(0xFFCC29, 2.8, 20, 1.8);
+    goldAccentLight.position.set(5, -2, 4);
+    scene.add(goldAccentLight);
+
+    // ============================================================================
+    // ATOR 1: DENTE 3D CRISTALINO PROCEDURAL (COMPOSITE 7-PART THREE.GROUP)
+    // ============================================================================
+    const crystalToothGroup = new THREE.Group();
+
+    const crystalMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xE0F2FE,
+      metalness: 0.05,
+      roughness: 0.08,
+      transmission: isSoftwareGl ? 0 : 0.92,
+      transparent: true,
+      opacity: isSoftwareGl ? 0.82 : 1.0,
+      ior: 1.58,
+      thickness: 1.6,
+      attenuationColor: new THREE.Color(0x1FB5BD),
+      attenuationDistance: 2.2,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.06,
+    });
+
+    const coreEmissiveMat = new THREE.MeshStandardMaterial({
+      color: 0x1FB5BD,
+      emissive: 0x147A80,
+      emissiveIntensity: 1.4,
+      roughness: 0.25,
+      metalness: 0.4,
+    });
+
+    const ringCyanMat = new THREE.MeshStandardMaterial({
+      color: 0x38BDF8,
+      emissive: 0x0284C7,
+      emissiveIntensity: 0.7,
+      metalness: 0.85,
+      roughness: 0.2,
+    });
+
+    // Part 1: Sculpted Molar Crown (LatheGeometry)
+    const crownPoints = [
+      new THREE.Vector2(0.0, -0.35),
+      new THREE.Vector2(0.52, -0.32),
+      new THREE.Vector2(0.76, 0.05),
+      new THREE.Vector2(0.82, 0.48),
+      new THREE.Vector2(0.66, 0.82),
+      new THREE.Vector2(0.28, 0.72),
+      new THREE.Vector2(0.0, 0.65),
+    ];
+    const crownGeo = new THREE.LatheGeometry(crownPoints, 32);
+    const crownMesh = new THREE.Mesh(crownGeo, crystalMaterial);
+    crownMesh.position.y = 0.25;
+    crystalToothGroup.add(crownMesh);
+
+    // Part 2-5: 4 Anatomical Occlusal Cusps on Top of Crown
+    const cuspGeo = new THREE.SphereGeometry(0.34, 20, 20);
+    const cuspOffsets = [
+      [0.32, 0.82, 0.32],
+      [-0.32, 0.82, 0.32],
+      [0.32, 0.82, -0.32],
+      [-0.32, 0.82, -0.32],
+    ];
+    cuspOffsets.forEach(([cx, cy, cz]) => {
+      const cusp = new THREE.Mesh(cuspGeo, crystalMaterial);
+      cusp.scale.set(1, 0.78, 1);
+      cusp.position.set(cx, cy, cz);
+      crystalToothGroup.add(cusp);
+    });
+
+    // Part 6-8: 3 Tapered Anatomical Roots
+    const rootGeo = new THREE.ConeGeometry(0.24, 1.15, 20);
+    const rootConfigs = [
+      { pos: [-0.26, -0.58, 0.18], rot: [0.12, 0, -0.18] },
+      { pos: [0.26, -0.58, 0.18], rot: [0.12, 0, 0.18] },
+      { pos: [0.0, -0.58, -0.24], rot: [-0.16, 0, 0] },
+    ];
+    rootConfigs.forEach((rc) => {
+      const rootMesh = new THREE.Mesh(rootGeo, crystalMaterial);
+      rootMesh.position.set(rc.pos[0], rc.pos[1], rc.pos[2]);
+      rootMesh.rotation.set(rc.rot[0], rc.rot[1], Math.PI + rc.rot[2]);
+      crystalToothGroup.add(rootMesh);
+    });
+
+    // Part 9: Glowing Inner Bio-Crystal Pulp Core
+    const pulpCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 2), coreEmissiveMat);
+    pulpCore.position.y = 0.42;
+    crystalToothGroup.add(pulpCore);
+
+    // Part 10-11: Orbiting Diagnostic Rings
+    const diagRing1 = new THREE.Mesh(new THREE.TorusGeometry(1.22, 0.022, 16, 64), ringCyanMat);
+    diagRing1.rotation.x = Math.PI / 2.4;
+    crystalToothGroup.add(diagRing1);
+
+    const diagRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.015, 16, 64), ringCyanMat);
+    diagRing2.rotation.y = Math.PI / 3;
+    diagRing2.rotation.x = -Math.PI / 3;
+    crystalToothGroup.add(diagRing2);
+
+    crystalToothGroup.position.set(-4.1, 0.5, 0.8);
+    scene.add(crystalToothGroup);
+
+    // ============================================================================
+    // ATOR 2: ESCUDO DOURADO 3D DO CLUBE SORRISO (COMPOSITE 6-PART THREE.GROUP)
+    // ============================================================================
+    const goldShieldGroup = new THREE.Group();
+
+    const brushedGoldMat = new THREE.MeshPhysicalMaterial({
+      color: 0xFFCC29,
+      metalness: 0.94,
+      roughness: 0.16,
+      anisotropy: 0.75,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.15,
+    });
+
+    const tealEnamelMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0E585D,
+      metalness: 0.35,
+      roughness: 0.22,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08,
+    });
+
+    // Part 1: Outer Beveled Gold Championship Torus
+    const outerRim = new THREE.Mesh(new THREE.TorusGeometry(1.02, 0.13, 24, 64), brushedGoldMat);
+    goldShieldGroup.add(outerRim);
+
+    // Part 2: Inner Filigree Ring
+    const innerRim = new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.04, 16, 48), brushedGoldMat);
+    goldShieldGroup.add(innerRim);
+
+    // Part 3: Deep Teal Enamel Medallion Core
+    const medalDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.96, 0.96, 0.14, 48), tealEnamelMat);
+    medalDisc.rotation.x = Math.PI / 2;
+    goldShieldGroup.add(medalDisc);
+
+    // Part 4: Extruded 3D 5-Point Star (Clube Sorriso Emblem)
+    const starShape = new THREE.Shape();
+    const numPts = 5;
+    const outerR = 0.52;
+    const innerR = 0.23;
+    for (let i = 0; i < numPts * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = (i / (numPts * 2)) * Math.PI * 2 - Math.PI / 2;
+      const sx = Math.cos(angle) * r;
+      const sy = Math.sin(angle) * r;
+      if (i === 0) starShape.moveTo(sx, sy);
+      else starShape.lineTo(sx, sy);
+    }
+    starShape.closePath();
+
+    const starGeo = new THREE.ExtrudeGeometry(starShape, {
+      depth: 0.24,
+      bevelEnabled: true,
+      bevelSegments: 3,
+      steps: 1,
+      bevelSize: 0.04,
+      bevelThickness: 0.04,
+    });
+    starGeo.center();
+    const starMesh = new THREE.Mesh(starGeo, brushedGoldMat);
+    goldShieldGroup.add(starMesh);
+
+    // Part 5: 12 Orbiting Golden Reward Satellites (InstancedMesh)
+    const satCount = 12;
+    const satInstanced = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(0.055, 12, 12),
+      brushedGoldMat,
+      satCount
+    );
+    const _dummy = new THREE.Object3D();
+    for (let i = 0; i < satCount; i++) {
+      const a = (i / satCount) * Math.PI * 2;
+      _dummy.position.set(Math.cos(a) * 1.32, Math.sin(a) * 1.32, 0);
+      _dummy.updateMatrix();
+      satInstanced.setMatrixAt(i, _dummy.matrix);
+    }
+    satInstanced.instanceMatrix.needsUpdate = true;
+    satInstanced.computeBoundingSphere();
+    goldShieldGroup.add(satInstanced);
+
+    goldShieldGroup.position.set(4.1, 0.5, 0.8);
+    scene.add(goldShieldGroup);
+
+    // ============================================================================
+    // ATOR 3: REDE NEURAL 3D & CONSTELAÇÃO DE DADOS (CLINICORP ↔ CLÍNICA ↔ PACIENTE)
+    // ============================================================================
+    const neuralGroup = new THREE.Group();
+    const NODE_COUNT = 110;
+    const nodePositions = [];
+
+    const nodeMat = new THREE.MeshStandardMaterial({
+      color: 0x1FB5BD,
+      emissive: 0x147A80,
+      emissiveIntensity: 0.9,
+      roughness: 0.3,
+      metalness: 0.6,
+    });
+
+    const nodesInstanced = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(0.065, 10, 10),
+      nodeMat,
+      NODE_COUNT
+    );
+
+    for (let i = 0; i < NODE_COUNT; i++) {
+      const px = (Math.random() - 0.5) * 18;
+      const py = (Math.random() - 0.5) * 10;
+      const pz = -1.5 - Math.random() * 6.5;
+      nodePositions.push(new THREE.Vector3(px, py, pz));
+
+      const scale = 0.65 + Math.random() * 0.9;
+      _dummy.position.set(px, py, pz);
+      _dummy.scale.set(scale, scale, scale);
+      _dummy.updateMatrix();
+      nodesInstanced.setMatrixAt(i, _dummy.matrix);
+    }
+    nodesInstanced.instanceMatrix.needsUpdate = true;
+    nodesInstanced.computeBoundingSphere();
+    neuralGroup.add(nodesInstanced);
+
+    // Synaptic Connection Beams between nearby nodes
+    const lineVertices = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      for (let j = i + 1; j < NODE_COUNT; j++) {
+        if (nodePositions[i].distanceTo(nodePositions[j]) < 3.1) {
+          lineVertices.push(
+            nodePositions[i].x, nodePositions[i].y, nodePositions[i].z,
+            nodePositions[j].x, nodePositions[j].y, nodePositions[j].z
+          );
+        }
+      }
+    }
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineVertices, 3));
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0xFFCC29,
+      transparent: true,
+      opacity: 0.22,
+    });
+    const neuralLines = new THREE.LineSegments(lineGeo, lineMat);
+    neuralGroup.add(neuralLines);
+    scene.add(neuralGroup);
+
+    // ============================================================================
+    // CONTROLES DE CÂMERA, DAMPING E INTERAÇÃO COM MOUSE
+    // ============================================================================
+    let cameraMode = 'auto'; // 'auto' | 'orbit'
+    let pointerX = 0;
+    let pointerY = 0;
+    let isDragging = false;
+    let dragPrevX = 0;
+    let dragPrevY = 0;
+    let orbitYaw = 0;
+    let orbitPitch = 0;
+    let spinBonusAngle = 0;
+
+    // Current interpolated state
+    const currentPhone = { rotX: 4, rotY: -6, rotZ: 0, scale: 1.0 };
+    const currentTooth = { x: -4.1, y: 0.5, z: 0.8, scale: 1.05 };
+    const currentShield = { x: 4.1, y: 0.5, z: 0.8, scale: 1.05 };
+    const targetNeuralColor = new THREE.Color(0x1FB5BD);
+    const targetBeamColor = new THREE.Color(0xFFCC29);
+
+    window.setCameraMode = function(mode) {
+      cameraMode = mode;
+      document.getElementById('btnCamAuto').classList.toggle('active', mode === 'auto');
+      document.getElementById('btnCamOrbit').classList.toggle('active', mode === 'orbit');
+      if (mode === 'auto') {
+        orbitYaw = 0;
+        orbitPitch = 0;
+      }
+    };
+
+    window.triggerSpin360 = function() {
+      spinBonusAngle += Math.PI * 2;
+    };
+
+    window.onSlide3DTargetChange = function(newTarget) {
+      targetNeuralColor.setHex(newTarget.neuralColor || 0x1FB5BD);
+      targetBeamColor.setHex(newTarget.beamColor || 0xFFCC29);
+    };
+
+    stageContainer.addEventListener('pointermove', (e) => {
+      const rect = stageContainer.getBoundingClientRect();
+      pointerX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+
+      if (isDragging && cameraMode === 'orbit') {
+        const dx = e.clientX - dragPrevX;
+        const dy = e.clientY - dragPrevY;
+        orbitYaw += dx * 0.008;
+        orbitPitch = THREE.MathUtils.clamp(orbitPitch + dy * 0.006, -0.6, 0.6);
+        dragPrevX = e.clientX;
+        dragPrevY = e.clientY;
+      }
+    });
+
+    stageContainer.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      dragPrevX = e.clientX;
+      dragPrevY = e.clientY;
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+      const w = mount.clientWidth;
+      const h = Math.max(mount.clientHeight, 1);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    // Software WebGL Fence-Synced Loop Helper
+    const clock = new THREE.Clock();
+    let frameId = 0;
+
+    function afterDraw(cb) {
+      const gl = renderer.getContext();
+      if (!gl || !gl.fenceSync) {
+        frameId = window.setTimeout(cb, 80);
+        return;
+      }
+      const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      gl.flush();
+      const poll = () => {
+        const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
+        if (state === gl.UNSIGNALED) {
+          frameId = window.setTimeout(poll, 5);
+        } else {
+          gl.deleteSync(sync);
+          frameId = window.setTimeout(cb, 80);
+        }
+      };
+      frameId = window.setTimeout(poll, 5);
+    }
+
+    function tick() {
+      const dt = Math.min(clock.getDelta(), 0.1);
+      const elapsed = clock.getElapsedTime();
+      const target = window.targetScene3DState || window.STAFF_SLIDES[0].scene3D;
+
+      // Decay spin bonus smoothly
+      spinBonusAngle = THREE.MathUtils.damp(spinBonusAngle, 0, 3.5, dt);
+
+      // 1. Smoothly Interpolate CSS 3D Phone Pose + Mouse Parallax
+      const mouseTiltY = pointerX * (cameraMode === 'orbit' ? 18 : 7);
+      const mouseTiltX = -pointerY * (cameraMode === 'orbit' ? 12 : 5);
+
+      currentPhone.rotX = THREE.MathUtils.damp(currentPhone.rotX, target.phonePose.rotX + mouseTiltX, 4.5, dt);
+      currentPhone.rotY = THREE.MathUtils.damp(
+        currentPhone.rotY,
+        target.phonePose.rotY + mouseTiltY + THREE.MathUtils.radToDeg(spinBonusAngle * 0.5),
+        4.5,
+        dt
+      );
+      currentPhone.rotZ = THREE.MathUtils.damp(currentPhone.rotZ, target.phonePose.rotZ, 4.5, dt);
+      currentPhone.scale = THREE.MathUtils.damp(currentPhone.scale, target.phonePose.scale, 4.5, dt);
+
+      phoneBody.style.transform = `rotateX(${currentPhone.rotX.toFixed(2)}deg) rotateY(${currentPhone.rotY.toFixed(2)}deg) rotateZ(${currentPhone.rotZ.toFixed(2)}deg) scale(${currentPhone.scale.toFixed(3)})`;
+
+      // 2. Smoothly Interpolate Crystal Tooth 3D Position, Scale & Rotation
+      const toothTargetScale = target.showTooth ? target.toothPos.scale : 0.001;
+      currentTooth.x = THREE.MathUtils.damp(currentTooth.x, target.toothPos.x, 4.0, dt);
+      currentTooth.y = THREE.MathUtils.damp(currentTooth.y, target.toothPos.y + Math.sin(elapsed * 1.8) * 0.18, 4.0, dt);
+      currentTooth.z = THREE.MathUtils.damp(currentTooth.z, target.toothPos.z, 4.0, dt);
+      currentTooth.scale = THREE.MathUtils.damp(currentTooth.scale, toothTargetScale, 4.5, dt);
+
+      crystalToothGroup.visible = currentTooth.scale > 0.02;
+      crystalToothGroup.position.set(currentTooth.x, currentTooth.y, currentTooth.z);
+      crystalToothGroup.scale.setScalar(currentTooth.scale);
+      crystalToothGroup.rotation.y = elapsed * 0.65 + spinBonusAngle;
+      crystalToothGroup.rotation.z = Math.sin(elapsed * 1.1) * 0.12;
+      diagRing1.rotation.z = elapsed * 1.2;
+      diagRing2.rotation.x = -elapsed * 0.9;
+
+      // 3. Smoothly Interpolate Clube Sorriso Gold Shield 3D
+      const shieldTargetScale = target.showShield ? target.shieldPos.scale : 0.001;
+      currentShield.x = THREE.MathUtils.damp(currentShield.x, target.shieldPos.x, 4.0, dt);
+      currentShield.y = THREE.MathUtils.damp(currentShield.y, target.shieldPos.y + Math.cos(elapsed * 1.7) * 0.18, 4.0, dt);
+      currentShield.z = THREE.MathUtils.damp(currentShield.z, target.shieldPos.z, 4.0, dt);
+      currentShield.scale = THREE.MathUtils.damp(currentShield.scale, shieldTargetScale, 4.5, dt);
+
+      goldShieldGroup.visible = currentShield.scale > 0.02;
+      goldShieldGroup.position.set(currentShield.x, currentShield.y, currentShield.z);
+      goldShieldGroup.scale.setScalar(currentShield.scale);
+      goldShieldGroup.rotation.y = -elapsed * 0.75 - spinBonusAngle;
+      goldShieldGroup.rotation.x = Math.sin(elapsed * 1.3) * 0.15;
+      satInstanced.rotation.z = elapsed * 0.9;
+
+      // 4. Neural Network Cloud Motion & Color Transitions
+      nodeMat.color.lerp(targetNeuralColor, dt * 3.0);
+      lineMat.color.lerp(targetBeamColor, dt * 3.0);
+      neuralGroup.rotation.y = THREE.MathUtils.damp(
+        neuralGroup.rotation.y,
+        pointerX * 0.25 + orbitYaw + Math.sin(elapsed * 0.25) * 0.12,
+        3.0,
+        dt
+      );
+      neuralGroup.rotation.x = THREE.MathUtils.damp(
+        neuralGroup.rotation.x,
+        -pointerY * 0.15 + orbitPitch,
+        3.0,
+        dt
+      );
+
+      // 5. Camera Position Damping
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, target.cameraPos.x + pointerX * 0.45, 3.5, dt);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, target.cameraPos.y + pointerY * 0.3, 3.5, dt);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, target.cameraPos.z, 3.5, dt);
+      camera.lookAt(0, 0.1, 0);
+
+      renderer.render(scene, camera);
+
+      if (isSoftwareGl) afterDraw(tick);
+      else frameId = requestAnimationFrame(tick);
+    }
+
+    tick();
   </script>
 </body>
 </html>
