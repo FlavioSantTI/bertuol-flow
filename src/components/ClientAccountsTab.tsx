@@ -525,34 +525,71 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header Contextual & Busca Direta por Nome */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3.5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-[#147A80]" />
-              <span>Central de Credenciais & Acessos de Clientes (Clube Sorriso PWA)</span>
+    <div className="space-y-2.5">
+      {/* Barra de Comando Unificada & Compacta no Topo */}
+      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2.5">
+        {/* Linha 1: Título + Filtros de Status com Contadores + Ações */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Smartphone className="w-4 h-4 text-[#147A80] shrink-0" />
+            <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+              Central de Credenciais & Acessos de Clientes (Clube Sorriso PWA)
             </h4>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Ative contas de pacientes, envie links seguros por WhatsApp/SMS, renove senhas e gerencie dados cadastrais
-              diretamente na tabela <code className="font-mono text-slate-800">public.patients</code>.
-            </p>
+            <span className="hidden xl:inline-block text-[11px] font-mono tabular-nums font-bold text-[#147A80] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md shrink-0">
+              {filteredPatients.length.toLocaleString('pt-BR')} / {stats.total.toLocaleString('pt-BR')}
+            </span>
+            {isSearchingRemote && (
+              <span className="text-[11px] text-[#147A80] font-semibold flex items-center gap-1 shrink-0">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>Buscando...</span>
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Abas de Status Integrando os KPIs em Uma Única Linha */}
+            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg overflow-x-auto">
+              {(
+                [
+                  { id: 'all', label: `Todos (${stats.total.toLocaleString('pt-BR')})` },
+                  { id: 'active', label: `Ativos (${stats.active.toLocaleString('pt-BR')})` },
+                  { id: 'pending_activation', label: `Pendentes (${stats.pending.toLocaleString('pt-BR')})` },
+                  { id: 'blocked', label: `Bloqueados (${stats.blocked.toLocaleString('pt-BR')})` },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(tab.id);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    statusFilter === tab.id
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+              title="Sincronizar com Supabase"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#147A80]' : 'text-slate-600'}`} />
-              <span>Sincronizar</span>
+              <span className="hidden sm:inline">Sincronizar</span>
             </button>
+
             <button
               type="button"
               onClick={() => handleOpenEditModal()}
-              className="px-3.5 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+              className="px-3 py-1.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Novo Cliente</span>
@@ -560,149 +597,123 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
           </div>
         </div>
 
-        {/* Busca Principal Destacada por Nome do Cliente */}
-        <div className="bg-white border-2 border-[#147A80]/30 focus-within:border-[#147A80] rounded-xl p-3 shadow-2xs transition-colors">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
-            <label
-              htmlFor="client-name-search-input"
-              className="text-xs font-bold text-slate-900 flex items-center gap-1.5"
-            >
-              <Search className="w-4 h-4 text-[#147A80]" />
-              <span>Busca Rápida por Nome do Cliente / Paciente</span>
-            </label>
-            <div className="flex items-center gap-2 text-[11px]">
-              {isSearchingRemote && (
-                <span className="text-[#147A80] font-semibold flex items-center gap-1">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  Consultando Supabase...
-                </span>
-              )}
-              <span className="font-mono tabular-nums font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                {filteredPatients.length.toLocaleString('pt-BR')} de {stats.total.toLocaleString('pt-BR')} clientes
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-[#147A80] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                id="client-name-search-input"
-                type="text"
-                autoFocus
-                value={nameSearchTerm}
-                onChange={(e) => {
-                  setNameSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Digite o nome ou sobrenome do cliente (ex: Maria Silva, João, Flávio)..."
-                className="w-full pl-10 pr-24 py-2.5 rounded-lg border border-slate-300 bg-slate-50/60 focus:bg-white text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
-              />
-              {nameSearchTerm && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNameSearchTerm('');
-                    setCurrentPage(1);
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                  <span>Limpar</span>
-                </button>
-              )}
-            </div>
-
-            {/* Busca complementar por CPF / WhatsApp / Prontuário */}
-            <div className="relative md:w-72">
-              <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={secondarySearchTerm}
-                onChange={(e) => {
-                  setSecondarySearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Filtrar por CPF, WhatsApp ou Prontuário..."
-                className="w-full pl-8 pr-8 py-2.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
-              />
-              {secondarySearchTerm && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSecondarySearchTerm('');
-                    setCurrentPage(1);
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Barra de Índice Alfabético A-Z */}
-          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1 overflow-x-auto pb-1">
-            <span className="text-[11px] font-bold text-slate-500 mr-1 shrink-0">Inicial:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedInitialLetter('ALL');
+        {/* Linha 2: Busca por Nome em Destaque + CPF/WhatsApp + Unidade + Inicial A-Z */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+          {/* Campo Principal: Busca por Nome */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-[#147A80] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              id="client-name-search-input"
+              type="text"
+              autoFocus
+              value={nameSearchTerm}
+              onChange={(e) => {
+                setNameSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer shrink-0 ${
-                selectedInitialLetter === 'ALL'
-                  ? 'bg-[#147A80] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Todas
-            </button>
-            {ALPHABET_LETTERS.map((letter) => (
+              placeholder="Buscar cliente pelo NOME ou SOBRENOME (ex: Maria Silva, João, Flávio)..."
+              className="w-full pl-9 pr-20 py-2 rounded-lg border-2 border-[#147A80]/40 focus:border-[#147A80] bg-teal-50/20 focus:bg-white text-xs sm:text-sm font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-hidden"
+            />
+            {nameSearchTerm && (
               <button
-                key={letter}
                 type="button"
                 onClick={() => {
-                  setSelectedInitialLetter((prev) => (prev === letter ? 'ALL' : letter));
+                  setNameSearchTerm('');
                   setCurrentPage(1);
                 }}
-                className={`w-6 h-6 rounded text-[11px] font-mono font-bold flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-                  selectedInitialLetter === letter
-                    ? 'bg-[#147A80] text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
               >
-                {letter}
+                <X className="w-3 h-3" />
+                <span>Limpar</span>
               </button>
-            ))}
+            )}
           </div>
-        </div>
-      </div>
 
-      {/* KPI Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl border border-slate-200 bg-white">
-          <span className="text-[11px] font-medium text-slate-500 block">Total de Clientes</span>
-          <span className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-0.5 block">{stats.total}</span>
-        </div>
-        <div className="p-3 rounded-xl border border-slate-200 bg-white">
-          <span className="text-[11px] font-medium text-emerald-700 block">Acessos Ativos</span>
-          <span className="text-xl font-bold text-emerald-700 font-mono tabular-nums mt-0.5 block">{stats.active}</span>
-        </div>
-        <div className="p-3 rounded-xl border border-slate-200 bg-white">
-          <span className="text-[11px] font-medium text-amber-700 block">Aguardando Ativação</span>
-          <span className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-0.5 block">{stats.pending}</span>
-        </div>
-        <div className="p-3 rounded-xl border border-slate-200 bg-white">
-          <span className="text-[11px] font-medium text-red-700 block">Contas Bloqueadas</span>
-          <span className="text-xl font-bold text-red-700 font-mono tabular-nums mt-0.5 block">{stats.blocked}</span>
+          {/* Campo Secundário: CPF / WhatsApp / Prontuário */}
+          <div className="relative lg:w-56">
+            <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={secondarySearchTerm}
+              onChange={(e) => {
+                setSecondarySearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="CPF, WhatsApp ou Prontuário..."
+              className="w-full pl-8 pr-7 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
+            />
+            {secondarySearchTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSecondarySearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Filtros Compactos: Unidade + Inicial A-Z */}
+          <div className="flex items-center gap-2 shrink-0">
+            <select
+              value={tenantFilter}
+              onChange={(e) => {
+                setTenantFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700"
+            >
+              <option value="all">Todas as Unidades</option>
+              <option value={TENANT_ID_PALMAS}>Palmas - TO</option>
+              <option value={TENANT_ID_PARAISO}>Paraíso - TO</option>
+            </select>
+
+            <select
+              value={selectedInitialLetter}
+              onChange={(e) => {
+                setSelectedInitialLetter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 font-mono"
+              title="Filtrar pela letra inicial do nome"
+            >
+              <option value="ALL">Inicial: A–Z</option>
+              {ALPHABET_LETTERS.map((letter) => (
+                <option key={letter} value={letter}>
+                  Letra {letter}
+                </option>
+              ))}
+            </select>
+
+            {(nameSearchTerm || secondarySearchTerm || selectedInitialLetter !== 'ALL' || tenantFilter !== 'all' || statusFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNameSearchTerm('');
+                  setSecondarySearchTerm('');
+                  setSelectedInitialLetter('ALL');
+                  setTenantFilter('all');
+                  setStatusFilter('all');
+                  setCurrentPage(1);
+                }}
+                title="Limpar todos os filtros"
+                className="px-2.5 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Limpar</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Feedback Toast Banner */}
       {feedbackBanner && (
         <div
-          className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
+          className={`px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
             feedbackBanner.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
               : feedbackBanner.type === 'error'
@@ -721,83 +732,17 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         </div>
       )}
 
-      {/* Filtros de Unidade e Status */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={tenantFilter}
-            onChange={(e) => {
-              setTenantFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700"
-          >
-            <option value="all">Todas as Unidades</option>
-            <option value={TENANT_ID_PALMAS}>Unidade Palmas - TO</option>
-            <option value={TENANT_ID_PARAISO}>Unidade Paraíso - TO</option>
-          </select>
-
-          {(nameSearchTerm || secondarySearchTerm || selectedInitialLetter !== 'ALL' || tenantFilter !== 'all' || statusFilter !== 'all') && (
-            <button
-              type="button"
-              onClick={() => {
-                setNameSearchTerm('');
-                setSecondarySearchTerm('');
-                setSelectedInitialLetter('ALL');
-                setTenantFilter('all');
-                setStatusFilter('all');
-                setCurrentPage(1);
-              }}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Limpar todos os filtros</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Segmented Filter Controls */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0 overflow-x-auto">
-            {(
-              [
-                { id: 'all', label: `Todos (${stats.total.toLocaleString('pt-BR')})` },
-                { id: 'active', label: `Ativos (${stats.active.toLocaleString('pt-BR')})` },
-                { id: 'pending_activation', label: `Pendentes (${stats.pending.toLocaleString('pt-BR')})` },
-                { id: 'blocked', label: `Bloqueados (${stats.blocked.toLocaleString('pt-BR')})` },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setStatusFilter(tab.id);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  statusFilter === tab.id
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabela de Clientes */}
-      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-        <div className="overflow-x-auto">
+      {/* Tabela de Clientes Posicionada Imediatamente Abaixo da Busca */}
+      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+        <div className="overflow-x-auto max-h-[58vh] overflow-y-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
-                <th className="px-4 py-3">Cliente / Paciente</th>
-                <th className="px-4 py-3">WhatsApp & Contato</th>
-                <th className="px-4 py-3">CPF / Convênio</th>
-                <th className="px-4 py-3">Status App & Token</th>
-                <th className="px-4 py-3 text-right">Ações de Acesso & Senha</th>
+            <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-slate-700 font-bold shadow-2xs">
+              <tr>
+                <th className="px-4 py-2.5">Cliente / Paciente ({filteredPatients.length.toLocaleString('pt-BR')})</th>
+                <th className="px-4 py-2.5">WhatsApp & Contato</th>
+                <th className="px-4 py-2.5">CPF / Convênio</th>
+                <th className="px-4 py-2.5">Status App & Token</th>
+                <th className="px-4 py-2.5 text-right">Ações de Acesso & Senha</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
