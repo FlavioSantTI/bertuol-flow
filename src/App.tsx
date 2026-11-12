@@ -158,6 +158,7 @@ export default function App() {
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
   const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
+  const [isSlideshowModalOpen, setIsSlideshowModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
@@ -853,6 +854,17 @@ export default function App() {
                 Restaurar Root
               </button>
             )}
+
+            {/* Atalho Direto para o Estúdio de Apresentação de 60 Minutos */}
+            <button
+              type="button"
+              onClick={() => setIsSlideshowModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
+              title="Abrir Estúdio de Apresentação 60 Minutos (Slides + Roteiro)"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span>🎬 Apresentação 60m</span>
+            </button>
           </div>
         </div>
       )}
@@ -1362,6 +1374,33 @@ export default function App() {
           userContext={effectiveUserContext}
           selectedClinicIdFilter={selectedClinicId}
         />
+      )}
+
+      {/* Modal Tela Cheia do Estúdio de Apresentação 60 Minutos (/slideshow-hyperframes.html) */}
+      {isSlideshowModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+          <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-white shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="font-bold">Estúdio de Apresentação 60 Minutos • Bertuol Flow v{APP_VERSION}</span>
+              <span className="text-slate-400 hidden sm:inline">
+                (Alterne entre os slides aqui e clique em "Voltar ao App Ao Vivo" para demonstrar na prática)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSlideshowModalOpen(false)}
+              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
+            >
+              ✕ Fechar Slides & Voltar ao App Ao Vivo
+            </button>
+          </div>
+          <iframe
+            src="/slideshow-hyperframes.html"
+            title="Estúdio de Apresentação Bertuol Flow"
+            className="w-full flex-1 border-0"
+          />
+        </div>
       )}
         </div>
       </ClinicLayout>
