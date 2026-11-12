@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratório 3D • Dente Low-Poly Cristalino (Página de Teste Isolada)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-dark: #050B11;
+      --panel-bg: rgba(10, 22, 34, 0.78);
+      --border-glass: rgba(56, 189, 248, 0.22);
+      --teal: #1FB5BD;
+      --gold: #FFCC29;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 35%, #0D2538 0%, #050B11 70%, #020508 100%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* Top Header */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(5, 11, 17, 0.75);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-test {
+      background: rgba(31, 181, 189, 0.16);
+      border: 1px solid rgba(31, 181, 189, 0.45);
+      color: #5EEAD4;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .title-main {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #F8FAFC;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: rgba(31, 181, 189, 0.2);
+      border-color: var(--teal);
+    }
+
+    .btn.active {
+      background: linear-gradient(135deg, #147A80 0%, #1FB5BD 100%);
+      border-color: #5EEAD4;
+      color: #FFFFFF;
+      box-shadow: 0 0 20px rgba(31, 181, 189, 0.35);
+    }
+
+    /* Left Controls Dock */
+    .controls-panel {
+      position: absolute;
+      top: 76px;
+      left: 24px;
+      z-index: 10;
+      width: 320px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #38BDF8;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .preset-btn {
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preset-btn:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(30, 41, 59, 0.85);
+    }
+
+    .preset-btn.active {
+      background: rgba(20, 122, 128, 0.32);
+      border-color: #2DD4BF;
+      box-shadow: inset 0 0 12px rgba(45, 212, 191, 0.2);
+    }
+
+    .preset-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .preset-desc {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: block;
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #CBD5E1;
+      font-weight: 600;
+    }
+
+    .slider-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: #5EEAD4;
+      font-size: 11px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #1FB5BD;
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: #E2E8F0;
+      padding: 6px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #1FB5BD;
+      cursor: pointer;
+    }
+
+    /* Bottom Hint Pill */
+    .bottom-hud {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(10, 22, 34, 0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glass);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #CBD5E1;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .bottom-hud span b {
+      color: #5EEAD4;
+    }
+
+    @media (max-width: 768px) {
+      .controls-panel {
+        width: calc(100vw - 24px);
+        left: 12px;
+        top: auto;
+        bottom: 12px;
+        max-height: 48vh;
+        overflow-y: auto;
+      }
+      .bottom-hud {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="brand-group">
+      <span class="badge-test">LAB 3D ISOLADO</span>
+      <div>
+        <div class="title-main">Dente 3D Low-Poly • Vidro Cristalino</div>
+        <div class="subtitle">Página de teste independente — não altera a apresentação principal</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="btnResetCam">🎥 Centralizar Câmera</button>
+      <a href="/" class="btn">⬅ Voltar ao App</a>
+    </div>
+  </header>
+
+  <aside class="controls-panel">
+    <div>
+      <span class="section-label">1. Geometria Low-Poly (Forma do Dente)</span>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-geom="molar">
+          <div>
+            <span class="preset-title">🦷 Molar Low-Poly Esculpido</span>
+            <span class="preset-desc">Coroa com 4 cúspides suaves + 2 raízes cônicas</span>
+          </div>
+          <span>●</span>
+        </button>
+        <button class="preset-btn" data-geom="gem">
+          <div>
+            <span class="preset-title">💎 Molar Lapidado Minimalista</span>
+            <span class="preset-desc">Blocos facetados puros estilo origami 3D</span>
+          </div>
+          <span>○</span>
+        </button>
+        <button class="preset-btn" data-geom="premolar">
+          <div>
+            <span class="preset-title">✨ Pré-Molar Compacto (Micro-Ícone)</span>
+            <span class="preset-desc">Silhueta limpa ideal para escalas pequenas</span>
+          </div>
+          <span>○</span>
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <span class="section-label">2. Acabamento de Vidro Cristalino</span>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-mat="crystal">
+          <div>
+            <span class="preset-title">Cristal Óptico Puro (Swarovski)</span>
+            <span class="preset-desc">Alta refração (IOR 1.55) + reflexos de estúdio</span>
+          </div>
+        </button>
+        <button class="preset-btn" data-mat="sapphire">
+          <div>
+            <span class="preset-title">Safira Clínica Bertuol (#1FB5BD)</span>
+            <span class="preset-desc">Vidro ciano translúcido com borda especular</span>
+          </div>
+        </button>
+        <button class="preset-btn" data-mat="gold">
+          <div>
+            <span class="preset-title">Quartzo Dourado Clube Sorriso</span>
+            <span class="preset-desc">Cristal champanhe com brilho interno dourado</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <span class="section-label">3. Ajustes em Tempo Real</span>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>Tamanho (Testar Pequeno vs Grande)</span>
+          <span class="slider-val" id="valScale">1.0x</span>
+        </div>
+        <input type="range" id="sliderScale" min="0.25" max="1.6" step="0.05" value="1.0" />
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>Rugosidade do Vidro (Fosco ↔ Polido)</span>
+          <span class="slider-val" id="valRough">0.06</span>
+        </div>
+        <input type="range" id="sliderRough" min="0.0" max="0.45" step="0.01" value="0.06" />
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>Refração Óptica (IOR)</span>
+          <span class="slider-val" id="valIor">1.55</span>
+        </div>
+        <input type="range" id="sliderIor" min="1.15" max="2.20" step="0.05" value="1.55" />
+      </div>
+
+      <div class="toggle-row">
+        <span>Facetas Low-Poly Marcadas (Flat Shading)</span>
+        <input type="checkbox" class="checkbox" id="chkFlat" checked />
+      </div>
+
+      <div class="toggle-row">
+        <span>Arestas de Cristal (Linhas de Luz)</span>
+        <input type="checkbox" class="checkbox" id="chkEdges" checked />
+      </div>
+
+      <div class="toggle-row">
+        <span>Núcleo Luminoso Interno</span>
+        <input type="checkbox" class="checkbox" id="chkCore" checked />
+      </div>
+
+      <div class="toggle-row">
+        <span>Rotação Automática Suave</span>
+        <input type="checkbox" class="checkbox" id="chkSpin" checked />
+      </div>
+    </div>
+  </aside>
+
+  <div class="bottom-hud">
+    <span>🖱️ <b>Arraste</b> para girar o dente em 360°</span>
+    <span>🔍 <b>Scroll</b> para dar zoom</span>
+    <span>🧪 <b>Página Isolada:</b> /tooth-3d-test.html</span>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const container = document.getElementById('canvas-container');
+
+    // 1. Scene, Camera & Renderer
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+      40,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 0.6, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    container.appendChild(renderer.domElement);
+
+    // Studio Environment Map (Crucial for real glass refraction & specular highlights)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    // 2. OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0, 0);
+
+    // 3. Studio Lighting for Crystalline Facets
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(4, 6, 5);
+    scene.add(keyLight);
+
+    const rimLightCyan = new THREE.PointLight(0x1FB5BD, 6.0, 15);
+    rimLightCyan.position.set(-4, 2, -3);
+    scene.add(rimLightCyan);
+
+    const rimLightGold = new THREE.PointLight(0xFFCC29, 3.5, 15);
+    rimLightGold.position.set(3, -3, 3);
+    scene.add(rimLightGold);
+
+    // Subtle floating pedestal ring below the tooth
+    const pedestalGroup = new THREE.Group();
+    pedestalGroup.position.y = -1.75;
+    const ringGeo = new THREE.RingGeometry(0.95, 1.0, 6);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x1FB5BD,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide
+    });
+    pedestalGroup.add(new THREE.Mesh(ringGeo, ringMat));
+    scene.add(pedestalGroup);
+
+    // 4. Shared Crystalline Glass Material
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(0xE8F9FF),
+      transmission: 0.96,
+      opacity: 1,
+      transparent: true,
+      metalness: 0.02,
+      roughness: 0.06,
+      ior: 1.55,
+      thickness: 2.2,
+      attenuationColor: new THREE.Color(0x38BDF8),
+      attenuationDistance: 2.8,
+      specularIntensity: 1.0,
+      specularColor: new THREE.Color(0xFFFFFF),
+      envMapIntensity: 2.2,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04,
+      flatShading: true
+    });
+
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0x7DD3FC,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.AdditiveBlending
+    });
+
+    const coreMaterial = new THREE.MeshBasicMaterial({
+      color: 0x38BDF8,
+      transparent: true,
+      opacity: 0.28
+    });
+
+    // Helper: Deform a low-poly box/cylinder vertex buffer into an unmistakable low-poly Molar Crown
+    function createSculptedLowPolyCrownGeometry(radialSegments = 8) {
+      // Base cylinder with low segments so facets are crisp & geometric
+      const geo = new THREE.CylinderGeometry(0.88, 0.62, 1.15, radialSegments, 4, false);
+      const pos = geo.attributes.position;
+      const v = new THREE.Vector3();
+
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        const ny = (v.y + 0.575) / 1.15; // 0 at bottom (neck), 1 at top (occlusal)
+
+        // Make cross-section squarish-rounded like a real molar (4 corners = 4 cusps)
+        const angle = Math.atan2(v.z, v.x);
+        const r = Math.sqrt(v.x * v.x + v.z * v.z);
+        const squareFactor = 1.0 + 0.12 * Math.cos(4 * angle);
+
+        // Belly bulge in the middle of the crown (anatomical equator)
+        const belly = Math.sin(ny * Math.PI) * 0.22;
+        const scaleR = squareFactor + belly;
+
+        v.x *= scaleR;
+        v.z *= scaleR;
+
+        // Sculpt the 4 occlusal cusps on the top face and a central pit
+        if (ny > 0.72) {
+          const distFromCenter = Math.min(1.0, r / 0.88);
+          if (distFromCenter < 0.25) {
+            // Central occlusal fossa (pit)
+            v.y -= 0.16 * (1.0 - distFromCenter / 0.25);
+          } else {
+            // 4 prominent anatomical cusps at the 4 quadrants
+            const cuspLift = Math.max(0, Math.cos(2 * angle) * Math.sin(2 * angle) * 2.0);
+            const fourCuspWave = 0.5 + 0.5 * Math.cos(4 * (angle - Math.PI / 4));
+            v.y += (0.22 * fourCuspWave + 0.05 * cuspLift) * distFromCenter;
+          }
+        }
+
+        pos.setXYZ(i, v.x, v.y, v.z);
+      }
+
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Helper: Low-poly tapered root with subtle natural curvature
+    function createLowPolyRootGeometry(sides = 6, height = 1.18, topRadius = 0.36, bottomRadius = 0.06, curveDir = 1) {
+      const geo = new THREE.CylinderGeometry(topRadius, bottomRadius, height, sides, 4, false);
+      const pos = geo.attributes.position;
+      const v = new THREE.Vector3();
+
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        // t goes from 0 at top (neck) to 1 at bottom (root tip)
+        const t = (height / 2 - v.y) / height;
+        // Slight inward anatomical curve near the apex
+        v.x += curveDir * Math.pow(t, 1.8) * 0.14;
+        // Slightly flatten root front-to-back
+        v.z *= 0.82;
+        pos.setXYZ(i, v.x, v.y, v.z);
+      }
+
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    let currentToothGroup = new THREE.Group();
+    scene.add(currentToothGroup);
+
+    let edgeMeshes = [];
+    let coreMesh = null;
+
+    function buildToothModel(type = 'molar') {
+      // Clear previous
+      while (currentToothGroup.children.length > 0) {
+        currentToothGroup.remove(currentToothGroup.children[0]);
+      }
+      edgeMeshes = [];
+      coreMesh = null;
+
+      const addPartWithEdges = (geometry, position, rotation = [0, 0, 0], scale = [1, 1, 1]) => {
+        const mesh = new THREE.Mesh(geometry, glassMaterial);
+        mesh.position.set(...position);
+        mesh.rotation.set(...rotation);
+        mesh.scale.set(...scale);
+        currentToothGroup.add(mesh);
+
+        // Crisp crystalline facet edges
+        const edgesGeo = new THREE.EdgesGeometry(geometry, 18);
+        const line = new THREE.LineSegments(edgesGeo, edgeMaterial);
+        line.position.copy(mesh.position);
+        line.rotation.copy(mesh.rotation);
+        line.scale.copy(mesh.scale);
+        line.visible = document.getElementById('chkEdges').checked;
+        currentToothGroup.add(line);
+        edgeMeshes.push(line);
+      };
+
+      if (type === 'molar') {
+        // 1. Sculpted Low-Poly Molar Crown (10 radial segments for crisp low-poly look)
+        const crownGeo = createSculptedLowPolyCrownGeometry(8);
+        addPartWithEdges(crownGeo, [0, 0.45, 0]);
+
+        // 2. Left & Right Bifurcated Low-Poly Roots
+        const leftRootGeo = createLowPolyRootGeometry(6, 1.22, 0.36, 0.06, 1);
+        addPartWithEdges(leftRootGeo, [-0.34, -0.58, 0], [0, 0, -0.14]);
+
+        const rightRootGeo = createLowPolyRootGeometry(6, 1.22, 0.36, 0.06, -1);
+        addPartWithEdges(rightRootGeo, [0.34, -0.58, 0], [0, 0, 0.14]);
+
+      } else if (type === 'gem') {
+        // Ultra-Minimalist Geometric Origami / Cut-Crystal Tooth
+        // Crown base: 6-sided faceted prism
+        const crownGeo = createSculptedLowPolyCrownGeometry(6);
+        addPartWithEdges(crownGeo, [0, 0.46, 0], [0, Math.PI / 6, 0]);
+
+        // Two sharp 5-sided low-poly pyramidal roots
+        const leftGemRoot = createLowPolyRootGeometry(5, 1.15, 0.34, 0.04, 0.6);
+        addPartWithEdges(leftGemRoot, [-0.32, -0.55, 0], [0, 0, -0.11]);
+
+        const rightGemRoot = createLowPolyRootGeometry(5, 1.15, 0.34, 0.04, -0.6);
+        addPartWithEdges(rightGemRoot, [0.32, -0.55, 0], [0, 0, 0.11]);
+
+      } else if (type === 'premolar') {
+        // Compact Premolar (Ideal for small floating icon)
+        const crownGeo = createSculptedLowPolyCrownGeometry(8);
+        addPartWithEdges(crownGeo, [0, 0.42, 0], [0, 0, 0], [0.85, 0.92, 0.85]);
+
+        // Twin fused roots tapering cleanly
+        const rootLeft = createLowPolyRootGeometry(6, 1.05, 0.30, 0.05, 0.7);
+        addPartWithEdges(rootLeft, [-0.22, -0.50, 0], [0, 0, -0.08]);
+
+        const rootRight = createLowPolyRootGeometry(6, 1.05, 0.30, 0.05, -0.7);
+        addPartWithEdges(rootRight, [0.22, -0.50, 0], [0, 0, 0.08]);
+      }
+
+      // Inner Crystalline Pulp Core (Subtle glowing low-poly octahedron inside the crown)
+      const coreGeo = new THREE.OctahedronGeometry(0.32, 0);
+      coreMesh = new THREE.Mesh(coreGeo, coreMaterial);
+      coreMesh.position.set(0, 0.42, 0);
+      coreMesh.scale.set(1.1, 0.85, 0.9);
+      coreMesh.visible = document.getElementById('chkCore').checked;
+      currentToothGroup.add(coreMesh);
+    }
+
+    // Initialize default model
+    buildToothModel('molar');
+
+    // UI Controls Wiring
+    document.querySelectorAll('[data-geom]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-geom]').forEach(b => {
+          b.classList.remove('active');
+          b.querySelector('span:last-child').textContent = '○';
+        });
+        btn.classList.add('active');
+        btn.querySelector('span:last-child').textContent = '●';
+        buildToothModel(btn.dataset.geom);
+      });
+    });
+
+    const materialPresets = {
+      crystal: {
+        color: 0xE8F9FF,
+        attenuation: 0x38BDF8,
+        edgeColor: 0x7DD3FC,
+        coreColor: 0x38BDF8,
+        roughness: 0.06,
+        ior: 1.55
+      },
+      sapphire: {
+        color: 0x99F6E4,
+        attenuation: 0x147A80,
+        edgeColor: 0x2DD4BF,
+        coreColor: 0x1FB5BD,
+        roughness: 0.12,
+        ior: 1.65
+      },
+      gold: {
+        color: 0xFEF3C7,
+        attenuation: 0xF59E0B,
+        edgeColor: 0xFDE047,
+        coreColor: 0xFFCC29,
+        roughness: 0.08,
+        ior: 1.60
+      }
+    };
+
+    document.querySelectorAll('[data-mat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mat]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const p = materialPresets[btn.dataset.mat];
+        glassMaterial.color.setHex(p.color);
+        glassMaterial.attenuationColor.setHex(p.attenuation);
+        glassMaterial.roughness = p.roughness;
+        glassMaterial.ior = p.ior;
+        edgeMaterial.color.setHex(p.edgeColor);
+        coreMaterial.color.setHex(p.coreColor);
+
+        document.getElementById('sliderRough').value = p.roughness;
+        document.getElementById('valRough').textContent = p.roughness.toFixed(2);
+        document.getElementById('sliderIor').value = p.ior;
+        document.getElementById('valIor').textContent = p.ior.toFixed(2);
+      });
+    });
+
+    const sliderScale = document.getElementById('sliderScale');
+    sliderScale.addEventListener('input', (e) => {
+      const s = parseFloat(e.target.value);
+      currentToothGroup.scale.setScalar(s);
+      document.getElementById('valScale').textContent = s.toFixed(2) + 'x';
+    });
+
+    const sliderRough = document.getElementById('sliderRough');
+    sliderRough.addEventListener('input', (e) => {
+      const r = parseFloat(e.target.value);
+      glassMaterial.roughness = r;
+      document.getElementById('valRough').textContent = r.toFixed(2);
+    });
+
+    const sliderIor = document.getElementById('sliderIor');
+    sliderIor.addEventListener('input', (e) => {
+      const ior = parseFloat(e.target.value);
+      glassMaterial.ior = ior;
+      document.getElementById('valIor').textContent = ior.toFixed(2);
+    });
+
+    document.getElementById('chkFlat').addEventListener('change', (e) => {
+      glassMaterial.flatShading = e.target.checked;
+      glassMaterial.needsUpdate = true;
+    });
+
+    document.getElementById('chkEdges').addEventListener('change', (e) => {
+      edgeMeshes.forEach(m => (m.visible = e.target.checked));
+    });
+
+    document.getElementById('chkCore').addEventListener('change', (e) => {
+      if (coreMesh) coreMesh.visible = e.target.checked;
+    });
+
+    document.getElementById('btnResetCam').addEventListener('click', () => {
+      camera.position.set(0, 0.6, 6.2);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    });
+
+    // 5. Animation Loop
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      if (document.getElementById('chkSpin').checked) {
+        currentToothGroup.rotation.y = t * 0.55;
+      }
+
+      // Gentle vertical levitation
+      currentToothGroup.position.y = Math.sin(t * 1.8) * 0.12;
+      currentToothGroup.rotation.z = Math.sin(t * 1.1) * 0.04;
+
+      if (coreMesh) {
+        coreMesh.rotation.y = -t * 1.2;
+        coreMesh.scale.setScalar(0.95 + Math.sin(t * 3.0) * 0.08);
+      }
+
+      pedestalGroup.rotation.y = -t * 0.3;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

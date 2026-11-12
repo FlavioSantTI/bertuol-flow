@@ -159,6 +159,7 @@ export default function App() {
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
   const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
   const [isSlideshowModalOpen, setIsSlideshowModalOpen] = useState(false);
+  const [isToothTestModalOpen, setIsToothTestModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
@@ -865,6 +866,16 @@ export default function App() {
               <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
               <span>🎬 Apresentação 60m</span>
             </button>
+
+            {/* Atalho Isolado para Página de Teste do Dente 3D Low-Poly (/tooth-3d-test.html) */}
+            <button
+              type="button"
+              onClick={() => setIsToothTestModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
+              title="Abrir Página Isolada de Teste do Dente 3D Low-Poly (/tooth-3d-test.html)"
+            >
+              <span>🦷 Teste Dente 3D</span>
+            </button>
           </div>
         </div>
       )}
@@ -1398,6 +1409,33 @@ export default function App() {
           <iframe
             src="/slideshow-hyperframes.html"
             title="Estúdio de Apresentação Bertuol Flow"
+            className="w-full flex-1 border-0"
+          />
+        </div>
+      )}
+
+      {/* Modal Isolado da Página de Teste do Dente 3D Low-Poly (/tooth-3d-test.html) */}
+      {isToothTestModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+          <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-white shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🦷</span>
+              <span className="font-bold">Laboratório Isolado • Dente 3D Low-Poly Cristalino (/tooth-3d-test.html)</span>
+              <span className="text-slate-400 hidden sm:inline">
+                (Página 100% separada para avaliação de geometria e vidro)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsToothTestModalOpen(false)}
+              className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
+            >
+              ✕ Fechar Teste 3D
+            </button>
+          </div>
+          <iframe
+            src="/tooth-3d-test.html"
+            title="Teste Dente 3D Low-Poly Cristalino"
             className="w-full flex-1 border-0"
           />
         </div>
