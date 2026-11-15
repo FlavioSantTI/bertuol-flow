@@ -17,16 +17,19 @@ As rotas principais da aplicação estão homologadas e mapeadas no domínio ofi
 
 | Rota / Perfil | URL de Acesso Direto | Descrição & Recursos |
 | :--- | :--- | :--- |
-| **🩺 App do Profissional (Dentistas)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Agenda cronológica diária, Resumos de prontuários com IA Gemini Flash, Biometria WebAuthn e Alertas do Totem. |
-| **🏢 Gestão & Recepção (CRM, Atendentes, Gerentes & Admin)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Central de Credenciais de Clientes (`6.285+`), CRM de Recall 6+ meses, Recepção, Totem QR Code, Resgate de Vouchers e Gestão de Usuários. |
-| **👑 SuperAdmin Root & Simulador de Perfis** | [`https://bertuolflow.app-bertuol.tech/?role=admin_root`](https://bertuolflow.app-bertuol.tech/?role=admin_root) | Controle irrestrito Multi-Clínicas (Palmas & Paraíso) com barra de simulação instantânea de perfis. |
-| **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente.html`](https://bertuolflow.app-bertuol.tech/paciente.html) *(ou `?app=paciente`)* | PWA instalável com suporte offline, Scanner QR Code de Check-in no Totem, Tutorial Interativo e Extrato de Pontos. |
+| **🩺 App do Profissional (Dentistas)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Agenda cronológica diária sincronizada com Clinicorp, Resumos de prontuários com IA Gemini Flash, Alerta Sonoro de chegada, Consulta ao **Clube Sorriso & Vouchers**, Biometria WebAuthn e Chat Interno. |
+| **🏢 Gestão & Recepção (CRM, Atendentes, Gerentes & Admin)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Central de Credenciais de Clientes (`6.285+`), CRM de Recall 6+ meses, Totem QR Code (`/totem-imprimir`), Resgate e Baixa de Vouchers, Mensageria Unificada e Gestão de Usuários. |
+| **👑 SuperAdmin Root & Simulador de Perfis** | [`https://bertuolflow.app-bertuol.tech/?role=admin_root`](https://bertuolflow.app-bertuol.tech/?role=admin_root) | Barra unificada Multi-Clínicas (`Palmas` & `Paraíso`), simulador instantâneo de perfis RBAC e atalhos diretos para **`🎬 Apresentação 60m`** e **`🎙️ Roteiros HeyGen`**. |
+| **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente.html`](https://bertuolflow.app-bertuol.tech/paciente.html) *(ou `?app=paciente`)* | PWA instalável com confirmação em 1 toque (`+10 pts`), Scanner QR Code de Check-in no Totem (`+30 pts`), Catálogo de Recompensas, Vouchers `BRT-XXXX`, Presente de Aniversário e Chat com a Clínica. |
+| **🎬 Estúdio 3D de Treinamento (Modo Completo / Telão / Trilha)** | [`https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html`](https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html) | Palco Three.js 3D (Cápsulas de Vidro Flutuantes + Rede Neural) com separação em duas telas sincronizadas via `BroadcastChannel` + SSE: **`?mode=projector`** (Só Telão) e **`?mode=presenter`** (Só Trilha + Teleprompter + Cronômetro 60m). |
+| **🎙️ Central de Roteiros HeyGen & Mapa Técnico** | [`https://bertuolflow.app-bertuol.tech/roteiros-heygen.html`](https://bertuolflow.app-bertuol.tech/roteiros-heygen.html) | 3 roteiros completos de 2 minutos (6 cenas cada: Paciente + Clube, Dentista, Recepção) com cópia em 1 clique, prompts B-roll para Veo/Flow e tabela de mapeamento real dos 16 módulos do código. |
+| **❓ Central de Ajuda (FAQ Interativo)** | [`https://bertuolflow.app-bertuol.tech/faq.html`](https://bertuolflow.app-bertuol.tech/faq.html) | Guia rápido interativo para toda a equipe (Recepção, Dentistas, Gerência e Instalação PWA/Face ID). |
 
 ---
 
 ## 🌟 Visão Geral da Jornada & Versão 1.4.0
 
-O **Bertuol Flow** evoluiu na **Versão 1.4.0** para entregar a gestão completa de credenciais e acessos da base real de pacientes (**6.285+ clientes importados** do Clinicorp para o Supabase), além de busca instantânea otimizada para o balcão de atendimento.
+O **Bertuol Flow** evoluiu na **Versão 1.4.0** para entregar a gestão completa de credenciais e acessos da base real de pacientes (**6.285+ clientes importados** do Clinicorp para o Supabase), isolamento estrito Multi-Tenant por perfil, além de um **Estúdio de Apresentação 3D com Modo Duas Telas** e **Central de Roteiros HeyGen**.
 
 ### 🏆 Novidades e Funcionalidades Principais da v1.4.0
 
@@ -38,16 +41,32 @@ O **Bertuol Flow** evoluiu na **Versão 1.4.0** para entregar a gestão completa
   - Modal de **Renovação de Senha de Balcão** e alternância de status (`Ativo no App`, `Pendente de Ativação`, `Bloqueado`) com 1 clique.
 - **Permissão RBAC Dedicada (`canManageClientAccounts`)**: Permite que o perfil **Recepção / Atendente (`receptionist`)** gerencie cadastros, senhas e acessos de clientes/pacientes sem expor as abas administrativas de usuários internos ou cargos.
 
-#### 2. 🛡️ Homologação & Validação das Rotas Principais (RBAC)
-- **Matriz de Proteção de Rotas (`ProtectedRoute.tsx` & `COMPONENT_ACCESS_MAP`)**: Isolamento por contexto (`clinic`, `patient`, `root`) garantindo conformidade LGPD e segurança de acesso.
-- **Auditoria 100% OK**: Validação automatizada de permissões para Dentistas, Recepcionistas, Gerentes, Admins e Pacientes.
+#### 2. 🎬 Estúdio de Apresentação 3D & Modo Duas Telas Sincronizadas (`/slideshow-hyperframes.html`)
+- **Palco WebGL Three.js + Mockup 3D**:
+  - Fundo espacial com **Rede Neural 3D interativa**, **4 Cápsulas de Vidro Fosco Flutuantes (`MeshPhysicalMaterial`)** com bordas luminosas e **celular em perspectiva 3D** que inclina a cada etapa.
+  - Suporte a modo automático sincronizado, giro 360° e rotação livre pelo mouse.
+- **Separação Telão (Projetor) + Trilha (Apresentador) em Tempo Real**:
+  - **`?mode=projector` (Só Telão)**: Exibe apenas o palco visual 3D limpo em tela cheia para projetor ou TV, ocultando a trilha lateral e o teleprompter.
+  - **`?mode=presenter` (Só Trilha)**: Painel exclusivo para o notebook ou celular do apresentador, com **Teleprompter em fonte grande**, **Cronômetro de 60 minutos**, **Prévia da próxima etapa**, lista clicável dos 8 blocos e botões para projetar o sistema ao vivo (`/` ou `/?app=paciente`) diretamente no Telão.
+  - **Sincronização Dupla (`BroadcastChannel` + Server-Sent Events `/api/presentation/events`)**: Mudanças de slide entre janelas no mesmo computador ocorrem em `< 2ms` e também sincronizam entre celular e computador via servidor.
 
-#### 3. 🎯 Módulo CRM (Recall Preventivo & Funil de WhatsApp)
-- **Varredura Inteligente de Recalls (6+ Meses)**: Varredura automática de pacientes sem consulta há mais de 6 meses para reativação preventiva.
-- **Pipeline Kanban & Tabela de Oportunidades**: Organização visual por estágios (`Novos Leads`, `Em Contato`, `Agendado`, `Convertido`, `Perdido`).
-- **Templates de Mensagem com 1 Clique**: Disparo rápido para WhatsApp com variáveis dinâmicas e oferta de bônus de pontos do Clube Sorriso.
+#### 3. 🎙️ Central de Roteiros HeyGen & Mapeamento Técnico (`/roteiros-heygen.html`)
+- **3 Roteiros Estruturados de 2 Minutos (6 Cenas cada)**:
+  1. **Vídeo 1:** Jornada do Paciente & Clube Sorriso (`/?app=paciente`).
+  2. **Vídeo 2:** Jornada do Dentista & Corpo Clínico (`/` no perfil `dentist`).
+  3. **Vídeo 3:** Jornada da Atendente / Recepção (`/` no perfil `receptionist`).
+- **Mapeamento Técnico Auditado**: Tabela completa dos **16 módulos reais** encontrados no código-fonte com rotas, arquivos, endpoints e impacto operacional, além de botões de cópia em 1 clique para o **HeyGen AI Studio** e prompts B-roll para **Google Flow / Veo**.
 
-#### 4. 🏢 Gestão Multi-Clínicas (Multi-Tenant)
+#### 4. 🛡️ Homologação RBAC, Travamento de Unidade & Clube para Dentistas
+- **Barra Root Unificada (`👑 MODO SUPERADMIN ROOT`)**: Controle de Escopo de Unidade (`Global / Palmas / Paraíso`), Simulador de Perfis RBAC e atalhos para o Estúdio 3D e Roteiros HeyGen.
+- **Isolamento Estrito de Unidade**: Perfis de unidade única (`receptionist`, `dentist`, `admin_clinica` local) exibem automaticamente cadeado fixo (`🔒 Palmas - TO` / `🔒 Paraíso - TO`), enquanto `admin_root` e `gerente_atendimento` possuem alternância multi-clínica.
+- **Acesso Clube Sorriso para Dentistas**: Botão **Clube Sorriso** habilitado no cabeçalho do perfil `dentist` para consulta de pontos e vouchers dos pacientes, mantendo ferramentas técnicas restritas ao SuperAdmin Root.
+
+#### 5. 🎯 Módulo CRM (Recall Preventivo & Funil de WhatsApp) & Mensageria Interna
+- **Varredura Inteligente de Recalls (6+ Meses)**: Identificação automática de pacientes sem consulta há mais de 6 meses para reativação preventiva com funil Kanban e disparo no WhatsApp.
+- **Mensageria Interna Multi-Unidade**: Chat em tempo real entre recepção, dentistas e pacientes com gravação de áudio no navegador, envio de fotos/mídia e contador de mensagens não lidas.
+
+#### 6. 🏢 Gestão Multi-Clínicas (Multi-Tenant)
 - **Unidades Mapeadas no Supabase (`public.clinics`)**:
   - **Unidade Palmas - TO**: `d176a1c3-9955-4555-87d9-1da0bacb61a5` (`external_id`: `5053762760081408`)
   - **Unidade Paraíso do Tocantins - TO**: `5d30567b-ecfc-49a7-903d-f994c6de50f1` (`external_id`: `5053762760081409`)
@@ -58,8 +77,13 @@ O **Bertuol Flow** evoluiu na **Versão 1.4.0** para entregar a gestão completa
 
 ```
 ├── client (Vite + React 19 + TypeScript + Tailwind CSS v4)
+│   ├── public/
+│   │   ├── slideshow-hyperframes.html  # Estúdio 3D 60m (Completo, ?mode=projector e ?mode=presenter)
+│   │   ├── roteiros-heygen.html        # Central dos 3 Roteiros HeyGen + Mapeamento Técnico Real
+│   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
+│   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Componentes Modulares (ClientAccountsTab, UserManagementModal, Header, etc.)
+│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, MiniCRM, etc.)
 │   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.4.0)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
@@ -68,7 +92,7 @@ O **Bertuol Flow** evoluiu na **Versão 1.4.0** para entregar a gestão completa
 │   │   ├── types/            # Tipagem TypeScript (database.ts, Clinic, UserRole, UserPermissions)
 │   │   └── utils/            # Scripts SQL, Formatadores e Auxiliares
 ├── server (Node.js Express + TSX Proxy Server)
-│   └── server.ts             # API endpoints (/api/clinics, /api/login, /api/webhooks, Gemini Proxy)
+│   └── server.ts             # APIs REST & SSE (/api/clinics, /api/login, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
 ```
 
 ---
@@ -149,3 +173,4 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
 - **Versão**: `v1.4.0`
 - **Gestão**: Flávio Santiago & Favuca Dias
+
