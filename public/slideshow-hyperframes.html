@@ -890,9 +890,310 @@
       color: #FFF;
       font-family: 'JetBrains Mono', monospace;
     }
+
+    /* ==========================================================================
+       DUAL-SCREEN MODES: PROJECTOR (SÓ TELÃO) & PRESENTER (SÓ TRILHA)
+       ========================================================================== */
+    .view-mode-switcher {
+      display: flex;
+      align-items: center;
+      background: #040B0D;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .view-mode-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .view-mode-btn.active {
+      background: linear-gradient(135deg, #0E7490 0%, #1FB5BD 100%);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px rgba(31, 181, 189, 0.35);
+    }
+
+    .sync-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* 1. MODO TELÃO / PROJETOR (?mode=projector) — 100% IMAGEM LIMPA */
+    body.view-mode-projector header.top-nav {
+      display: none !important;
+    }
+
+    body.view-mode-projector main.studio-layout {
+      grid-template-columns: 1fr !important;
+      max-width: 100vw !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    body.view-mode-projector aside.storyboard-sidebar {
+      display: none !important;
+    }
+
+    body.view-mode-projector .stage-timeline {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    body.view-mode-projector .stage-container:hover .stage-timeline {
+      opacity: 1;
+    }
+
+    .projector-floating-bar {
+      display: none;
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      z-index: 250;
+      background: rgba(6, 16, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 6px 10px;
+      border-radius: 10px;
+      gap: 8px;
+      align-items: center;
+      opacity: 0.2;
+      transition: opacity 0.25s ease;
+    }
+
+    .projector-floating-bar:hover {
+      opacity: 1;
+    }
+
+    body.view-mode-projector .projector-floating-bar {
+      display: flex;
+    }
+
+    /* Live App Overlay on Projector when triggered from Presenter Trail */
+    .projector-live-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #061012;
+      flex-direction: column;
+    }
+
+    .projector-live-overlay.active {
+      display: flex;
+    }
+
+    .projector-live-bar {
+      background: #0A171A;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #FFF;
+    }
+
+    /* 2. MODO TRILHA / APRESENTADOR (?mode=presenter) — PAINEL EXCLUSIVO DE COMANDO */
+    .presenter-command-bar {
+      display: none;
+      background: #081518;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      gap: 14px;
+      flex-direction: column;
+    }
+
+    body.view-mode-presenter .stage-container {
+      display: none !important;
+    }
+
+    body.view-mode-presenter main.studio-layout {
+      grid-template-columns: 1fr !important;
+      max-width: 1180px !important;
+      height: calc(100vh - 67px) !important;
+    }
+
+    body.view-mode-presenter aside.storyboard-sidebar {
+      border-left: none !important;
+      display: grid !important;
+      grid-template-columns: 1.15fr 1fr;
+      grid-template-rows: auto 1fr;
+      height: calc(100vh - 67px);
+      overflow: hidden;
+    }
+
+    body.view-mode-presenter .presenter-command-bar {
+      display: flex !important;
+      grid-column: 1 / -1;
+    }
+
+    body.view-mode-presenter .sidebar-header {
+      display: none !important;
+    }
+
+    body.view-mode-presenter .active-script-detail {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+      max-height: none !important;
+      height: 100%;
+      border-top: none !important;
+      border-right: 1px solid var(--border);
+      padding: 24px !important;
+      justify-content: space-between;
+    }
+
+    body.view-mode-presenter .detail-voiceover {
+      font-size: 21px !important;
+      line-height: 1.55 !important;
+      padding: 20px !important;
+      color: #FFFFFF !important;
+      background: rgba(20, 122, 128, 0.16) !important;
+      border: 2px solid var(--gold) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    body.view-mode-presenter .slides-accordion {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      height: 100%;
+      padding: 18px !important;
+    }
+
+    @media (max-width: 900px) {
+      body.view-mode-presenter aside.storyboard-sidebar {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto 1fr !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      body.view-mode-presenter .active-script-detail {
+        grid-column: 1 / -1;
+        grid-row: 2 / 3;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+      }
+      body.view-mode-presenter .slides-accordion {
+        grid-column: 1 / -1;
+        grid-row: 3 / 4;
+      }
+      body.view-mode-presenter .detail-voiceover {
+        font-size: 17px !important;
+      }
+    }
+
+    .presenter-top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .presenter-big-btns {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-presenter-nav {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #FFFFFF;
+      border: 1px solid #5EEAD4;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.35);
+    }
+
+    .btn-presenter-nav:hover {
+      filter: brightness(1.1);
+    }
+
+    .timer-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #040B0D;
+      border: 1px solid rgba(255, 204, 41, 0.4);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .timer-digits {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+    }
   </style>
 </head>
 <body>
+
+  <!-- Floating Mini-Bar visible only in Projector Mode (?mode=projector) -->
+  <div class="projector-floating-bar">
+    <span class="sync-indicator"><span class="sync-dot"></span> TELÃO SINCRONIZADO</span>
+    <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setViewLayoutMode('studio')">
+      🎛️ Mostrar Trilha Lateral
+    </button>
+    <a href="/slideshow-hyperframes.html?mode=presenter" target="_blank" class="btn-secondary" style="padding:5px 10px; font-size:11px;">
+      🪟 Abrir Trilha em Outra Janela
+    </a>
+  </div>
+
+  <!-- Live System Overlay on Projector when triggered remotely from Presenter Trail -->
+  <div class="projector-live-overlay" id="projectorLiveOverlay">
+    <div class="projector-live-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="sync-indicator"><span class="sync-dot"></span> DEMONSTRAÇÃO AO VIVO NO TELÃO</span>
+        <span id="projectorLiveTitle" style="font-weight:700; color:#E2E8F0;">Bertuol Flow v1.4</span>
+      </div>
+      <button class="btn-gold" style="padding:5px 12px; font-size:11px;" onclick="window.setLiveOverlayUrl(null)">
+        ✕ Voltar para os Slides 3D
+      </button>
+    </div>
+    <iframe id="projectorLiveIframe" src="about:blank" style="width:100%; flex:1; border:0; background:#FFF;"></iframe>
+  </div>
 
   <!-- Top Bar -->
   <header class="top-nav">
@@ -900,25 +1201,41 @@
       <div class="logo-badge">B</div>
       <div class="brand-title">
         <h1>Estúdio 3D • Apresentação Bertuol Flow v1.4</h1>
-        <p>Palco Three.js + Cápsulas de Vidro Flutuantes 3D & Rede Neural</p>
+        <p>Separação Telão (Projetor) + Trilha (Apresentador) em Tempo Real</p>
       </div>
+    </div>
+
+    <!-- Seletor de Separação de Telas (Form Imagem vs Form Trilha) -->
+    <div class="view-mode-switcher">
+      <button class="view-mode-btn active" id="btnViewStudio" onclick="window.setViewLayoutMode('studio')" title="Mostrar Palco 3D + Trilha juntos na mesma tela">
+        🎛️ Completo
+      </button>
+      <button class="view-mode-btn" id="btnViewProjector" onclick="window.setViewLayoutMode('projector')" title="Deixar APENAS a Imagem/Palco 3D em tela cheia para o Projetor/TV">
+        🖥️ Só Telão (Imagem)
+      </button>
+      <button class="view-mode-btn" id="btnViewPresenter" onclick="window.setViewLayoutMode('presenter')" title="Deixar APENAS a Trilha + Teleprompter Gigante para o Apresentador">
+        🎙️ Só Trilha (Controle)
+      </button>
+      <a href="/slideshow-hyperframes.html?mode=presenter" target="_blank" class="view-mode-btn" style="color:#FFCC29;" title="Abrir a Trilha do Apresentador em uma janela separada para colocar no segundo monitor">
+        🪟 Destacar Trilha ↗
+      </a>
     </div>
 
     <div class="mode-switcher">
       <button class="mode-btn active" id="btnModeStaff" onclick="window.switchDeckMode('staff')">
-        👥 Treinamento Equipe (60 min)
+        👥 Equipe (60m)
       </button>
       <button class="mode-btn" id="btnModePatient" onclick="window.switchDeckMode('patient')">
-        📱 Jornada do Paciente (Clube Sorriso)
+        📱 Paciente
       </button>
     </div>
 
     <div class="nav-actions">
-      <a href="/" class="btn-secondary">
-        🚀 Abrir Sistema Ao Vivo
-      </a>
+      <span class="sync-indicator" title="Sincronizado em tempo real com outras janelas e dispositivos">
+        <span class="sync-dot"></span> Sync Ativo
+      </span>
       <button class="btn-gold" id="btnAutoplay" onclick="window.toggleAutoplay()">
-        ▶️ Apresentação Automática
+        ▶️ Auto
       </button>
     </div>
   </header>
@@ -1021,6 +1338,55 @@
 
     <!-- Right Sidebar: Interactive Storyboard & Presenter Script -->
     <aside class="storyboard-sidebar">
+      <!-- Dedicated Command Bar shown when in Presenter Trail Mode (?mode=presenter) -->
+      <div class="presenter-command-bar">
+        <div class="presenter-top-controls">
+          <div class="presenter-big-btns">
+            <button class="btn-presenter-nav" onclick="window.prevSlide()">
+              ◀ Slide Anterior
+            </button>
+            <button class="btn-presenter-nav" onclick="window.nextSlide()">
+              Próximo Slide ▶
+            </button>
+            <button class="btn-secondary" onclick="window.triggerRemoteSpin360()">
+              ✨ Girar 3D no Telão
+            </button>
+          </div>
+
+          <div class="timer-box">
+            <span style="font-size:11px; color:#94A3B8;">⏱️ CRONÔMETRO 60M:</span>
+            <span class="timer-digits" id="presenterTimerText">00:00</span>
+            <button class="btn-secondary" style="padding:4px 9px; font-size:11px;" id="btnTimerToggle" onclick="window.togglePresenterTimer()">
+              ▶ Iniciar
+            </button>
+            <button class="btn-secondary" style="padding:4px 9px; font-size:11px;" onclick="window.resetPresenterTimer()">
+              ↺
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:12px; color:#5EEAD4; font-weight:700;">
+            🖥️ <span id="presenterCurrentSlideBanner">Slide 1 no Telão</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11px; color:#94A3B8; font-weight:700;">Projetar no Telão:</span>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl(null)">
+              🎬 Palco 3D (Slides)
+            </button>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/')">
+              🩺 Painel Clínica Ao Vivo
+            </button>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/?app=paciente')">
+              📱 Portal Paciente Ao Vivo
+            </button>
+            <a href="/slideshow-hyperframes.html?mode=projector" target="_blank" class="btn-gold" style="padding:5px 10px; font-size:11px;">
+              🖥️ Abrir Janela do Telão ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div class="sidebar-header">
         <h3 id="sidebarHeaderTitle">Roteiro de 60 Minutos (Plenária + Perfis)</h3>
         <span class="badge-status" id="sidebarBadgeStatus">Palco 3D Ativo</span>
@@ -1034,12 +1400,16 @@
       <!-- Active Script Detail (Speaker Notes & Formatting Tips) -->
       <div class="active-script-detail" id="activeScriptDetail">
         <div class="detail-row">
-          <span class="detail-label" id="detailLabelPrimary">🎙️ Fala Sugerida (Problema → Clique → Ganho)</span>
+          <span class="detail-label" id="detailLabelPrimary">🎙️ Teleprompter • Fala do Apresentador (Sincronizada com o Telão)</span>
           <div class="detail-voiceover" id="scriptVoiceover"></div>
         </div>
         <div class="detail-row">
           <span class="detail-label">💡 Coreografia 3D & Demonstração Ao Vivo</span>
           <div class="detail-sfx" id="scriptSfx"></div>
+        </div>
+        <div class="detail-row" id="nextSlidePreviewRow" style="margin-top:4px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.12);">
+          <span class="detail-label" style="color:#38BDF8;">⏭️ Próxima Etapa na Trilha:</span>
+          <div id="nextSlidePreviewText" style="font-size:12px; color:#94A3B8; font-weight:600;"></div>
         </div>
       </div>
     </aside>
@@ -1798,11 +2168,183 @@
     window.isAutoplayRunning = false;
     window.targetScene3DState = window.STAFF_SLIDES[0].scene3D;
 
+    // ============================================================================
+    // SINCRONIZAÇÃO EM TEMPO REAL ENTRE TELÃO (?mode=projector) E TRILHA (?mode=presenter)
+    // ============================================================================
+    window.instanceSenderId = 'tab_' + Math.random().toString(36).slice(2, 10);
+    window.isApplyingRemoteSync = false;
+    window.presentationChannel = typeof BroadcastChannel !== 'undefined'
+      ? new BroadcastChannel('bertuol_presentation_sync')
+      : null;
+
+    window.broadcastPresentationState = function(extra = {}) {
+      if (window.isApplyingRemoteSync) return;
+      const payload = {
+        deckMode: window.activeDeckMode,
+        slideIndex: window.currentSlideIndex,
+        senderId: window.instanceSenderId,
+        updatedAt: Date.now(),
+        ...extra,
+      };
+
+      // 1. Instant same-browser sync (< 1ms)
+      if (window.presentationChannel) {
+        try {
+          window.presentationChannel.postMessage(payload);
+        } catch (e) {}
+      }
+
+      // 2. Server-authoritative sync across devices (e.g., Smartphone Presenter -> Projector PC)
+      fetch('/api/presentation/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    };
+
+    window.applyIncomingSyncState = function(state) {
+      if (!state || state.senderId === window.instanceSenderId) return;
+      window.isApplyingRemoteSync = true;
+      try {
+        if (state.deckMode && state.deckMode !== window.activeDeckMode) {
+          window.switchDeckMode(state.deckMode, true);
+        }
+        if (typeof state.slideIndex === 'number' && state.slideIndex !== window.currentSlideIndex) {
+          window.renderSlide(state.slideIndex, true);
+        }
+        if (state.spinTrigger && state.spinTrigger !== window.lastSpinTrigger) {
+          window.lastSpinTrigger = state.spinTrigger;
+          if (window.triggerSpin360) window.triggerSpin360();
+        }
+        if (state.liveOverlayUrl !== undefined) {
+          window.applyLiveOverlayDom(state.liveOverlayUrl);
+        }
+      } finally {
+        window.isApplyingRemoteSync = false;
+      }
+    };
+
+    if (window.presentationChannel) {
+      window.presentationChannel.onmessage = (ev) => {
+        window.applyIncomingSyncState(ev.data);
+      };
+    }
+
+    // Connect to Server-Sent Events (SSE) for cross-device real-time sync
+    try {
+      const evtSource = new EventSource('/api/presentation/events');
+      evtSource.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data);
+          window.applyIncomingSyncState(data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+
+    window.applyLiveOverlayDom = function(url) {
+      const overlay = document.getElementById('projectorLiveOverlay');
+      const iframe = document.getElementById('projectorLiveIframe');
+      const title = document.getElementById('projectorLiveTitle');
+      if (!overlay || !iframe) return;
+      if (url) {
+        if (iframe.getAttribute('src') !== url) {
+          iframe.setAttribute('src', url);
+        }
+        title.innerText = url.includes('paciente')
+          ? 'Portal do Paciente & Clube Sorriso (/?app=paciente)'
+          : 'Painel da Clínica • Bertuol Flow v1.4 (/)';
+        overlay.classList.add('active');
+      } else {
+        overlay.classList.remove('active');
+        iframe.setAttribute('src', 'about:blank');
+      }
+    };
+
+    window.setLiveOverlayUrl = function(url) {
+      window.applyLiveOverlayDom(url);
+      window.broadcastPresentationState({ liveOverlayUrl: url });
+    };
+
+    window.triggerRemoteSpin360 = function() {
+      if (window.triggerSpin360) window.triggerSpin360();
+      const stamp = Date.now();
+      window.lastSpinTrigger = stamp;
+      window.broadcastPresentationState({ spinTrigger: stamp });
+    };
+
+    // View Layout Mode ('studio' | 'projector' | 'presenter')
+    window.setViewLayoutMode = function(viewMode) {
+      document.body.classList.remove('view-mode-projector', 'view-mode-presenter');
+      if (viewMode === 'projector') {
+        document.body.classList.add('view-mode-projector');
+      } else if (viewMode === 'presenter') {
+        document.body.classList.add('view-mode-presenter');
+      }
+
+      document.getElementById('btnViewStudio')?.classList.toggle('active', viewMode === 'studio');
+      document.getElementById('btnViewProjector')?.classList.toggle('active', viewMode === 'projector');
+      document.getElementById('btnViewPresenter')?.classList.toggle('active', viewMode === 'presenter');
+
+      // Update URL parameter cleanly without reload
+      try {
+        const url = new URL(window.location.href);
+        if (viewMode === 'studio') {
+          url.searchParams.delete('mode');
+        } else {
+          url.searchParams.set('mode', viewMode);
+        }
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      } catch (e) {}
+
+      // Trigger resize so Three.js canvas adjusts immediately when switching to Projector Mode
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 60);
+    };
+
+    // 60-Minute Presenter Stopwatch
+    window.presenterTimerSeconds = 0;
+    window.presenterTimerInterval = null;
+
+    window.formatTimerMMSS = function(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    };
+
+    window.togglePresenterTimer = function() {
+      const btn = document.getElementById('btnTimerToggle');
+      if (window.presenterTimerInterval) {
+        clearInterval(window.presenterTimerInterval);
+        window.presenterTimerInterval = null;
+        if (btn) btn.innerText = '▶ Retomar';
+      } else {
+        if (btn) btn.innerText = '⏸ Pausar';
+        window.presenterTimerInterval = setInterval(() => {
+          window.presenterTimerSeconds++;
+          const el = document.getElementById('presenterTimerText');
+          if (el) el.innerText = window.formatTimerMMSS(window.presenterTimerSeconds);
+        }, 1000);
+      }
+    };
+
+    window.resetPresenterTimer = function() {
+      if (window.presenterTimerInterval) {
+        clearInterval(window.presenterTimerInterval);
+        window.presenterTimerInterval = null;
+      }
+      window.presenterTimerSeconds = 0;
+      const el = document.getElementById('presenterTimerText');
+      if (el) el.innerText = '00:00';
+      const btn = document.getElementById('btnTimerToggle');
+      if (btn) btn.innerText = '▶ Iniciar';
+    };
+
     window.getActiveSlides = function() {
       return window.activeDeckMode === 'staff' ? window.STAFF_SLIDES : window.PATIENT_SLIDES;
     };
 
-    window.switchDeckMode = function(mode) {
+    window.switchDeckMode = function(mode, skipBroadcast = false) {
       window.activeDeckMode = mode;
       window.currentSlideIndex = 0;
       document.getElementById('btnModeStaff').classList.toggle('active', mode === 'staff');
@@ -1815,10 +2357,10 @@
       document.getElementById('sidebarBadgeStatus').innerText =
         mode === 'staff' ? '60 Min • 3D' : '6 Cenas • 3D';
 
-      window.renderSlide(0);
+      window.renderSlide(0, skipBroadcast);
     };
 
-    window.renderSlide = function(index) {
+    window.renderSlide = function(index, skipBroadcast = false) {
       const slides = window.getActiveSlides();
       if (index < 0 || index >= slides.length) return;
       window.currentSlideIndex = index;
@@ -1838,6 +2380,11 @@
       document.getElementById('kineticDesc').innerText = slide.desc;
       document.getElementById('currentSlideNum').innerText = slide.id;
       document.getElementById('totalSlidesNum').innerText = slides.length;
+
+      const presenterBanner = document.getElementById('presenterCurrentSlideBanner');
+      if (presenterBanner) {
+        presenterBanner.innerText = `No Telão Agora: Etapa 0${slide.id}/${slides.length} — ${slide.title} (${slide.duration})`;
+      }
 
       // Update App Bar
       document.getElementById('patientNameText').innerText = slide.headerTitle || 'Bertuol Flow v1.4';
@@ -1877,10 +2424,21 @@
         <span class="tag-pill">⏱️ ${slide.duration}</span>
       `;
 
+      // Update Next Slide Preview for Presenter Mode
+      const nextSlide = slides[(index + 1) % slides.length];
+      const nextEl = document.getElementById('nextSlidePreviewText');
+      if (nextEl && nextSlide) {
+        nextEl.innerText = `Etapa 0${nextSlide.id}: ${nextSlide.title} (${nextSlide.duration})`;
+      }
+
       // Trigger automatic motion touch
       setTimeout(() => {
         window.triggerSimulatedTap(slide.touchTarget.x, slide.touchTarget.y);
       }, 380);
+
+      if (!skipBroadcast) {
+        window.broadcastPresentationState();
+      }
     };
 
     window.renderAccordion = function() {
@@ -1922,7 +2480,7 @@
 
     window.playCurrentAnimation = function() {
       window.renderSlide(window.currentSlideIndex);
-      if (window.triggerSpin360) window.triggerSpin360();
+      window.triggerRemoteSpin360();
     };
 
     window.triggerSimulatedTap = function(x = 165, y = 240) {
@@ -1946,12 +2504,12 @@
       if (window.isAutoplayRunning) {
         clearInterval(window.autoplayInterval);
         window.isAutoplayRunning = false;
-        btn.innerText = '▶️ Apresentação Automática';
+        btn.innerText = '▶️ Auto';
         btn.style.background = 'linear-gradient(135deg, var(--gold) 0%, #FFA800 100%)';
         btn.style.color = '#0E585D';
       } else {
         window.isAutoplayRunning = true;
-        btn.innerText = '⏸️ Pausar Apresentação';
+        btn.innerText = '⏸️ Pausar';
         btn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
         btn.style.color = '#FFF';
 
@@ -1982,7 +2540,12 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      window.renderSlide(0);
+      const params = new URLSearchParams(window.location.search);
+      const initialMode = params.get('mode');
+      if (initialMode === 'projector' || initialMode === 'presenter') {
+        window.setViewLayoutMode(initialMode);
+      }
+      window.renderSlide(0, true);
     });
   </script>
 

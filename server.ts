@@ -834,6 +834,78 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
+// ============================================================================
+// REAL-TIME DUAL-SCREEN PRESENTATION SYNC (TELÃO PROJETOR + TRILHA APRESENTADOR)
+// ============================================================================
+interface PresentationSyncState {
+  deckMode: 'staff' | 'patient';
+  slideIndex: number;
+  spinTrigger: number;
+  liveOverlayUrl: string | null;
+  updatedAt: number;
+  senderId: string;
+}
+
+let presentationSyncState: PresentationSyncState = {
+  deckMode: 'staff',
+  slideIndex: 0,
+  spinTrigger: 0,
+  liveOverlayUrl: null,
+  updatedAt: Date.now(),
+  senderId: 'init',
+};
+
+const presentationSseClients = new Set<Response>();
+
+app.get('/api/presentation/state', (_req: Request, res: Response) => {
+  res.json({ success: true, state: presentationSyncState });
+});
+
+app.get('/api/presentation/events', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  res.write(`data: ${JSON.stringify(presentationSyncState)}\n\n`);
+  presentationSseClients.add(res);
+
+  req.on('close', () => {
+    presentationSseClients.delete(res);
+  });
+});
+
+app.post('/api/presentation/state', (req: Request, res: Response) => {
+  const { deckMode, slideIndex, spinTrigger, liveOverlayUrl, senderId } = req.body || {};
+
+  if (deckMode === 'staff' || deckMode === 'patient') {
+    presentationSyncState.deckMode = deckMode;
+  }
+  if (typeof slideIndex === 'number' && slideIndex >= 0) {
+    presentationSyncState.slideIndex = slideIndex;
+  }
+  if (typeof spinTrigger === 'number') {
+    presentationSyncState.spinTrigger = spinTrigger;
+  }
+  if (liveOverlayUrl !== undefined) {
+    presentationSyncState.liveOverlayUrl = liveOverlayUrl;
+  }
+  presentationSyncState.updatedAt = Date.now();
+  presentationSyncState.senderId = String(senderId || 'unknown');
+
+  const payload = `data: ${JSON.stringify(presentationSyncState)}\n\n`;
+  presentationSseClients.forEach((clientRes) => {
+    try {
+      clientRes.write(payload);
+    } catch {
+      presentationSseClients.delete(clientRes);
+    }
+  });
+
+  res.json({ success: true, state: presentationSyncState });
+});
+
+
 // Multi-Tenant Clinics Registry with per-clinic credentials and webhooks
 let MULTI_TENANT_CLINICS = [
   {
