@@ -501,53 +501,7 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
 ];
 
-export const INITIAL_PATIENTS: Patient[] = [
-  {
-    id: 101,
-    Name: 'Claudiana Lima Leite',
-    MobilePhone: '(63) 98100-1007',
-    Age: 35,
-    insurancePlanName: 'Particular',
-    Notes: 'Paciente com sensibilidade térmica e ansiedade odontológica. Alinhadores invisíveis em andamento.',
-    Clinic_BusinessId: CLINIC_BUSINESS_ID_PALMAS,
-  },
-  {
-    id: 102,
-    Name: 'Nelson Freiberger',
-    MobilePhone: '(63) 99260-3418',
-    Age: 48,
-    insurancePlanName: 'Bradesco Dental',
-    Notes: 'Elemento 16 preparado para coroa cerâmica. Alérgico comprovado a látex. Usar luvas de nitrilo.',
-    Clinic_BusinessId: CLINIC_BUSINESS_ID_PALMAS,
-  },
-  {
-    id: 103,
-    Name: 'Esther Oliveira Duarte',
-    MobilePhone: '(63) 99213-9180',
-    Age: 24,
-    insurancePlanName: 'Particular',
-    Notes: 'Paciente jovem. Queixa de apinhamento ântero-inferior. Deseja opções estéticas com alinhadores.',
-    Clinic_BusinessId: CLINIC_BUSINESS_ID_PALMAS,
-  },
-  {
-    id: 104,
-    Name: 'Juscelino Kubitschek Oliveira',
-    MobilePhone: '(63) 98417-3097',
-    Age: 52,
-    insurancePlanName: 'SulAmérica Odonto',
-    Notes: 'Manutenção preventiva semestral e implante cone morse. Histórico de gengivite leve.',
-    Clinic_BusinessId: CLINIC_BUSINESS_ID_PALMAS,
-  },
-  {
-    id: 105,
-    Name: 'Zuzu Scarlat Test',
-    MobilePhone: '(63) 98555-5555',
-    Age: 29,
-    insurancePlanName: 'Unimed Odonto',
-    Notes: 'Avaliação de facetas em resina composta nos incisivos centrais.',
-    Clinic_BusinessId: CLINIC_BUSINESS_ID_PALMAS,
-  },
-];
+export const INITIAL_PATIENTS: Patient[] = [];
 
 export const INITIAL_APPOINTMENTS: Appointment[] = [];
 
@@ -1276,7 +1230,17 @@ class DataService {
       } else {
         this.dentists = JSON.parse(storedDentists);
         this.categories = storedCats ? JSON.parse(storedCats) : INITIAL_CATEGORIES;
-        this.patients = storedPatients ? JSON.parse(storedPatients) : INITIAL_PATIENTS;
+        const parsedPatients: Patient[] = storedPatients ? JSON.parse(storedPatients) : INITIAL_PATIENTS;
+        const FICTIONAL_PATIENT_NAMES = new Set([
+          'claudiana lima leite',
+          'nelson freiberger',
+          'esther oliveira duarte',
+          'juscelino kubitschek oliveira',
+          'zuzu scarlat test',
+        ]);
+        this.patients = parsedPatients.filter(
+          (p) => ![101, 102, 103, 104, 105].includes(Number(p.id)) && !FICTIONAL_PATIENT_NAMES.has((p.Name || '').trim().toLowerCase())
+        );
         this.appointments = storedAppts ? JSON.parse(storedAppts) : INITIAL_APPOINTMENTS;
       }
 

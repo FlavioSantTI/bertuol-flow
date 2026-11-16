@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CRMLeadOpportunity, CRMMessageTemplate, CRMStage, CRMSummaryStats } from '../../types/crm';
-import { CRMService } from '../../services/crmService';
+import { CRMService, N8nSyncMetadata } from '../../services/crmService';
 import { Clinic, Dentist, Patient, Appointment, AppUserContext } from '../../types/database';
 import { CRMLeadCard } from './CRMLeadCard';
 import { CRMQuickContactModal } from './CRMQuickContactModal';
@@ -14,21 +14,22 @@ import {
   Sparkles,
   TrendingUp,
   Search,
-  Filter,
   LayoutGrid,
   List,
   Calendar,
-  Building2,
   Clock,
-  DollarSign,
   CheckCircle2,
   Trash2,
   Edit2,
   FileText,
-  AlertCircle,
   BarChart3,
   Award,
   Lock,
+  Webhook,
+  Copy,
+  Check,
+  Upload,
+  Download,
 } from 'lucide-react';
 
 interface MiniCRMModalProps {
@@ -52,7 +53,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   userContext,
   selectedClinicIdFilter = 'all',
 }) => {
-  const [activeTab, setActiveTab] = useState<'recall' | 'kanban' | 'templates' | 'dashboard'>('recall');
+  const [activeTab, setActiveTab] = useState<'recall' | 'kanban' | 'n8n' | 'templates' | 'dashboard'>('recall');
   const [opportunities, setOpportunities] = useState<CRMLeadOpportunity[]>([]);
   const [templates, setTemplates] = useState<CRMMessageTemplate[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState<number | 'all'>(selectedClinicIdFilter);
@@ -69,8 +70,20 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [tplContent, setTplContent] = useState('');
   const [tplCategory, setTplCategory] = useState<CRMMessageTemplate['category']>('recall');
 
-  // Sync state
-  const [syncCount, setSyncCount] = useState<number | null>(null);
+  // Sync & n8n state
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [n8nMeta, setN8nMeta] = useState<N8nSyncMetadata>({
+    lastN8nSyncAt: null,
+    lastN8nSyncCount: 0,
+    n8nWebhookPullUrl: '',
+  });
+  const [n8nPullUrlInput, setN8nPullUrlInput] = useState('');
+  const [n8nManualJson, setN8nManualJson] = useState('');
+  const [replaceExistingNew, setReplaceExistingNew] = useState(false);
+  const [isSyncingN8n, setIsSyncingN8n] = useState(false);
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [copiedSample, setCopiedSample] = useState(false);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -84,11 +97,19 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     }
   }, [selectedClinicIdFilter]);
 
-  const loadCRMData = () => {
-    const opps = CRMService.getOpportunities();
+  const loadCRMData = async () => {
+    const localOpps = CRMService.getOpportunities();
     const tpls = CRMService.getTemplates();
-    setOpportunities(opps);
+    setOpportunities(localOpps);
     setTemplates(tpls);
+
+    // Sincroniza com o servidor (que recebe os leads de 180+ dias do n8n às 06:00h)
+    const { opportunities: syncedOpps, meta } = await CRMService.fetchFromServer();
+    setOpportunities(syncedOpps);
+    setN8nMeta(meta);
+    if (meta.n8nWebhookPullUrl && !n8nPullUrlInput) {
+      setN8nPullUrlInput(meta.n8nWebhookPullUrl);
+    }
   };
 
   if (!isOpen) return null;
@@ -123,11 +144,119 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     );
   }
 
-  const handleSyncRecalls = () => {
-    const added = CRMService.syncAutomaticRecalls(patients, appointments, clinics);
-    setSyncCount(added);
-    loadCRMData();
-    setTimeout(() => setSyncCount(null), 4000);
+  const showToast = (msg: string) => {
+    setSyncMessage(msg);
+    setTimeout(() => setSyncMessage(null), 5000);
+  };
+
+  const handleSyncRecalls = async () => {
+    setIsSyncingN8n(true);
+    const { opportunities: serverOpps, meta } = await CRMService.fetchFromServer();
+    const addedFromLocal = CRMService.syncAutomaticRecalls(patients, appointments, clinics);
+    const finalOpps = CRMService.getOpportunities();
+    setOpportunities(finalOpps);
+    setN8nMeta(meta);
+    setIsSyncingN8n(false);
+
+    showToast(
+      `Sincronizado com servidor n8n (${serverOpps.length} leads no servidor${addedFromLocal > 0 ? ` + ${addedFromLocal} da agenda local` : ''}).`
+    );
+  };
+
+  const handlePullFromN8n = async () => {
+    if (!n8nPullUrlInput.trim()) {
+      showToast('Informe a URL do Webhook do n8n para buscar os leads de 180+ dias.');
+      return;
+    }
+    setIsSyncingN8n(true);
+    const result = await CRMService.pullLeadsFromN8nWebhook(n8nPullUrlInput.trim(), 'GET');
+    await loadCRMData();
+    setIsSyncingN8n(false);
+
+    if (result.success) {
+      showToast(
+        `n8n Sincronizado! ${result.importedCount} novos leads (180+ dias) importados e ${result.updatedCount} atualizados.`
+      );
+      setActiveTab('recall');
+    } else {
+      showToast(`Erro ao buscar do n8n: ${result.error}`);
+    }
+  };
+
+  const handleManualImportN8n = async () => {
+    const rawText = n8nManualJson.trim();
+    if (!rawText) {
+      showToast('Cole o JSON ou CSV exportado pelo seu processo do n8n.');
+      return;
+    }
+
+    setIsSyncingN8n(true);
+    let parsedPayload: any = null;
+
+    try {
+      parsedPayload = JSON.parse(rawText);
+    } catch {
+      // Se não for JSON, tenta interpretar como CSV (nome;telefone;ultima_visita;dentista;unidade;procedimento;valor)
+      const lines = rawText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (lines.length > 0) {
+        const sep = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].split(sep).map((h) => h.trim().replace(/^"|"$/g, '').toLowerCase());
+        const hasHeader =
+          headers.some((h) => h.includes('nome') || h.includes('name') || h.includes('tel') || h.includes('phone'));
+
+        const startIdx = hasHeader ? 1 : 0;
+        const items: any[] = [];
+        for (let i = startIdx; i < lines.length; i++) {
+          const cols = lines[i].split(sep).map((c) => c.trim().replace(/^"|"$/g, ''));
+          if (hasHeader) {
+            const obj: any = {};
+            headers.forEach((h, cIdx) => {
+              obj[h] = cols[cIdx] || '';
+            });
+            items.push(obj);
+          } else if (cols.length >= 2) {
+            items.push({
+              nome: cols[0],
+              telefone: cols[1],
+              ultima_visita: cols[2] || '',
+              dentista: cols[3] || 'Corpo Clínico Bertuol',
+              unidade: cols[4] || 'Palmas',
+              procedimento: cols[5] || 'Check-in Preventivo Semestral + Profilaxia',
+              valor: cols[6] || 280,
+            });
+          }
+        }
+        parsedPayload = { leads: items };
+      }
+    }
+
+    if (!parsedPayload) {
+      setIsSyncingN8n(false);
+      showToast('Formato inválido. Cole um JSON válido ou CSV separado por vírgula/ponto-e-vírgula.');
+      return;
+    }
+
+    const result = await CRMService.importLeadsFromN8n(parsedPayload, replaceExistingNew);
+    await loadCRMData();
+    setIsSyncingN8n(false);
+
+    if (result.success) {
+      setN8nManualJson('');
+      showToast(result.message);
+      setActiveTab('recall');
+    } else {
+      showToast(result.error || 'Erro ao importar dados.');
+    }
+  };
+
+  const handleClearAllCRM = async () => {
+    await CRMService.clearOpportunities(false);
+    await loadCRMData();
+    setConfirmClearAll(false);
+    showToast('Base do CRM limpa com sucesso! Pronta para receber os dados reais do n8n.');
   };
 
   const handleCreateOpportunity = (data: Omit<CRMLeadOpportunity, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -141,10 +270,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   };
 
   const handleDeleteOpportunity = (id: string) => {
-    if (confirm('Deseja realmente excluir esta oportunidade?')) {
-      CRMService.deleteOpportunity(id);
-      loadCRMData();
-    }
+    CRMService.deleteOpportunity(id);
+    loadCRMData();
   };
 
   // Filtered Opportunities
@@ -188,10 +315,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   };
 
   const handleDeleteTemplate = (id: string) => {
-    if (confirm('Excluir este modelo de mensagem?')) {
-      CRMService.deleteTemplate(id);
-      loadCRMData();
-    }
+    CRMService.deleteTemplate(id);
+    loadCRMData();
   };
 
   const startEditTemplate = (tpl: CRMMessageTemplate) => {
@@ -200,6 +325,30 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     setTplContent(tpl.content);
     setTplCategory(tpl.category);
   };
+
+  const webhookDestinationUrl = `${window.location.origin}/api/webhooks/n8n/crm-recalls`;
+  const prodWebhookUrl = 'https://bertuolflow.app-bertuol.tech/api/webhooks/n8n/crm-recalls';
+
+  const sampleN8nJson = JSON.stringify(
+    {
+      leads: [
+        {
+          nome: 'Nome Real do Paciente Clinicorp',
+          telefone: '63992001122',
+          unidade: 'Palmas',
+          dentista: 'Dr. Flávio Santiago',
+          ultima_visita: '2025-08-10',
+          dias_inativo: 215,
+          procedimento: 'Check-in Preventivo Semestral + Profilaxia',
+          valor: 280,
+          pontos: 50,
+          prioridade: 'high',
+        },
+      ],
+    },
+    null,
+    2
+  );
 
   const stages: { id: CRMStage; title: string; color: string; badgeBg: string }[] = [
     { id: 'new', title: 'Novos Leads', color: 'border-blue-400', badgeBg: 'bg-blue-100 text-blue-900' },
@@ -219,36 +368,49 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <Users className="w-6 h-6 text-amber-300" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-extrabold text-base sm:text-lg text-white">
-                  CRM Bertuol
-                </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-extrabold text-base sm:text-lg text-white">CRM Bertuol</h2>
                 <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-400 text-slate-950">
-                  Recall & WhatsApp
+                  Recall 180+ Dias • n8n 06:00h
                 </span>
+                {n8nMeta.lastN8nSyncAt && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-300/40 text-emerald-100">
+                    Último Sync n8n: {new Date(n8nMeta.lastN8nSyncAt).toLocaleString('pt-BR')}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-teal-100">
-                Gestão de Pacientes Inativos, Agendamentos e Oportunidades Integrado ao Clube Sorriso
+                Base Limpa de Produção • Importação Automática de Inativos (180+ dias) via n8n
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            {/* Sync Recall Button */}
+          <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+            {/* Botão Integração n8n 06h */}
+            <button
+              onClick={() => setActiveTab('n8n')}
+              title="Configurar ou importar leads do processo das 06:00h do n8n"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-all shadow-xs cursor-pointer"
+            >
+              <Webhook className="w-3.5 h-3.5 text-slate-950" />
+              <span>Importar n8n (06:00h)</span>
+            </button>
+
+            {/* Sync Server Button */}
             <button
               onClick={handleSyncRecalls}
-              title="Executar varredura automática de pacientes sem consulta há mais de 6 meses"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-all shadow-xs cursor-pointer hover:scale-102"
+              disabled={isSyncingN8n}
+              title="Atualizar lista de leads recebidos pelo servidor"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-slate-950 animate-spin-hover" />
-              <span className="hidden md:inline">Varredura Recall 6+ Meses</span>
-              <span className="md:hidden">Varredura</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingN8n ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline">Atualizar</span>
             </button>
 
             {/* New Lead Button */}
             <button
               onClick={() => setIsNewOppModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs transition-all shadow-xs cursor-pointer hover:scale-102"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Lead</span>
@@ -256,7 +418,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -264,15 +426,13 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         </div>
 
         {/* Sync notification toast */}
-        {syncCount !== null && (
+        {syncMessage && (
           <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 text-xs font-extrabold text-amber-950 flex items-center justify-between animate-in fade-in">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>
-                Varredura Inteligente Concluída: {syncCount > 0 ? `${syncCount} novos pacientes inativos (6+ meses) adicionados à fila de recall!` : 'Nenhum novo paciente inativo encontrado. Todos já estão no CRM!'}
-              </span>
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{syncMessage}</span>
             </div>
-            <button onClick={() => setSyncCount(null)} className="text-amber-800 font-bold hover:underline">
+            <button onClick={() => setSyncMessage(null)} className="text-amber-800 font-bold hover:underline cursor-pointer">
               Fechar
             </button>
           </div>
@@ -295,7 +455,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase text-amber-800 block">Recall 6+ Meses</span>
+              <span className="text-[10px] font-black uppercase text-amber-800 block">Recall 180+ Dias</span>
               <span className="text-base font-extrabold text-amber-950">{stats.totalRecallDue}</span>
             </div>
           </div>
@@ -336,7 +496,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               }`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Recall Preventivo (6+m)</span>
+              <span>Recall 180+ Dias</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-slate-950 font-black">
                 {stats.totalRecallDue}
               </span>
@@ -351,7 +511,19 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Pipeline & Oportunidades</span>
+              <span>Pipeline & Kanban</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('n8n')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === 'n8n'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+              }`}
+            >
+              <Webhook className="w-3.5 h-3.5" />
+              <span>⚡ Conector n8n (06:00h)</span>
             </button>
 
             <button
@@ -375,13 +547,12 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" />
-              <span>Métricas de Conversão</span>
+              <span>Métricas</span>
             </button>
           </div>
 
           {/* Search, Clinic Filter & Kanban/List View toggle */}
           <div className="flex items-center gap-2 w-full md:w-auto">
-            {/* Search */}
             <div className="relative flex-1 md:w-48">
               <input
                 type="text"
@@ -393,7 +564,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             </div>
 
-            {/* Clinic Filter */}
             <div className="relative shrink-0">
               <select
                 value={selectedClinicId}
@@ -413,13 +583,12 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               </select>
             </div>
 
-            {/* View Mode Toggle (only for Kanban tab) */}
             {activeTab === 'kanban' && (
               <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shrink-0">
                 <button
                   onClick={() => setViewMode('kanban')}
                   title="Modo Kanban"
-                  className={`p-1.5 rounded-lg transition-all ${
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'kanban' ? 'bg-white shadow-xs text-[#147A80]' : 'text-slate-500'
                   }`}
                 >
@@ -428,7 +597,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <button
                   onClick={() => setViewMode('list')}
                   title="Modo Lista"
-                  className={`p-1.5 rounded-lg transition-all ${
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'list' ? 'bg-white shadow-xs text-[#147A80]' : 'text-slate-500'
                   }`}
                 >
@@ -441,41 +610,79 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
         {/* Tab Contents */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50">
-          {/* TAB 1: RECALL PREVENTIVO 6+ MESES */}
+          {/* TAB 1: RECALL PREVENTIVO 180+ DIAS */}
           {activeTab === 'recall' && (
             <div className="space-y-4">
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
+                    <Webhook className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-extrabold text-amber-950 text-sm">
-                      Pilar 1: Recuperação de Pacientes Inativos (Recall Preventivo)
+                      Fila Oficial de Recall Preventivo (Pacientes 180+ Dias sem Consulta)
                     </h3>
                     <p className="text-xs text-amber-800">
-                      Pacientes sem consulta há mais de 180 dias recebem convite de retorno com +50 pontos bônus no Clube Sorriso Bertuol.
+                      Leads fictícios foram removidos. Esta fila recebe os pacientes reais enviados diariamente às 06:00h pelo seu processo do n8n.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSyncRecalls}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-xs cursor-pointer transition-all hover:scale-102 shrink-0"
-                >
-                  Executar Nova Varredura
-                </button>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <button
+                    onClick={() => setActiveTab('n8n')}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-xs cursor-pointer transition-all"
+                  >
+                    ⚡ Configurar / Importar do n8n
+                  </button>
+                  {opportunities.length > 0 && !confirmClearAll && (
+                    <button
+                      onClick={() => setConfirmClearAll(true)}
+                      className="px-3 py-2 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs cursor-pointer"
+                    >
+                      Limpar Base
+                    </button>
+                  )}
+                  {confirmClearAll && (
+                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 px-2.5 py-1.5 rounded-xl">
+                      <span className="text-[11px] font-bold text-red-800">Zerar todos?</span>
+                      <button
+                        onClick={handleClearAllCRM}
+                        className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-extrabold cursor-pointer"
+                      >
+                        Sim, Limpar
+                      </button>
+                      <button
+                        onClick={() => setConfirmClearAll(false)}
+                        className="px-2 py-1 rounded-lg bg-white text-slate-600 text-[11px] font-bold cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Recall List */}
               <div className="space-y-3">
                 {filteredOpps.filter((o) => o.type === 'recall_6m').length === 0 ? (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                    <h4 className="font-bold text-slate-800 text-sm">Nenhum recall pendente nesta busca!</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Clique em &quot;Executar Nova Varredura&quot; para atualizar com a base de dados mais recente.
-                    </p>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-3">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-sm">
+                        Base Limpa — Nenhum lead fictício presente!
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-lg mx-auto">
+                        Os dados de teste (Esther Oliveira Duarte, Nelson Freiberger, etc.) foram eliminados. Conecte o seu workflow das 06:00h do n8n ou importe os pacientes de 180+ dias abaixo.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('n8n')}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-extrabold text-xs shadow-sm cursor-pointer"
+                    >
+                      <Webhook className="w-4 h-4 text-amber-300" />
+                      <span>Abrir Conector n8n (Processo das 06:00h)</span>
+                    </button>
                   </div>
                 ) : (
                   filteredOpps
@@ -496,6 +703,177 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             </div>
           )}
 
+          {/* TAB: CONECTOR N8N (06:00H • LEADS 180+ DIAS) */}
+          {activeTab === 'n8n' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Coluna 1: Webhook Automático das 06:00h + Pull Ativo */}
+              <div className="space-y-5">
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+                        <Webhook className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-900 text-sm">
+                          1. Recebimento Automático às 06:00h (Push do n8n)
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Adicione um nó <strong>HTTP Request (POST)</strong> no final do seu workflow das 06:00h no n8n apontando para:
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* URL de Produção */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-slate-500 block">
+                      Endpoint Oficial de Produção (POST):
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={prodWebhookUrl}
+                        className="flex-1 bg-slate-900 text-emerald-300 font-mono text-xs px-3 py-2.5 rounded-xl border border-slate-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(prodWebhookUrl);
+                          setCopiedWebhook(true);
+                          setTimeout(() => setCopiedWebhook(false), 2500);
+                        }}
+                        className="px-3.5 py-2.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                      >
+                        {copiedWebhook ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        <span>{copiedWebhook ? 'Copiado!' : 'Copiar URL'}</span>
+                      </button>
+                    </div>
+                    {window.location.origin !== 'https://bertuolflow.app-bertuol.tech' && (
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        URL deste ambiente: <span className="text-slate-700 font-bold">{webhookDestinationUrl}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Exemplo de Payload JSON aceito */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-black uppercase text-slate-500">
+                        Formato JSON aceito pelo Webhook (Array direto ou objeto):
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(sampleN8nJson);
+                          setCopiedSample(true);
+                          setTimeout(() => setCopiedSample(false), 2500);
+                        }}
+                        className="text-[11px] font-bold text-[#147A80] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedSample ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedSample ? 'Exemplo Copiado' : 'Copiar Exemplo JSON'}</span>
+                      </button>
+                    </div>
+                    <pre className="bg-slate-900 text-slate-200 p-3 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed">
+                      {sampleN8nJson}
+                    </pre>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      💡 <strong>Mapeamento Inteligente:</strong> O endpoint reconhece automaticamente os nomes de colunas do Clinicorp/n8n (<code>Name</code>, <code>PatientName</code>, <code>nome</code>, <code>MobilePhone</code>, <code>telefone</code>, <code>ultima_visita</code>, <code>lastVisitDate</code>, <code>dias_inativo</code>, <code>dentista</code>, <code>Clinic_BusinessId</code> ou <code>unidade</code>) e evita duplicatas pelo celular.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Pull Ativo a partir de uma URL de Webhook do n8n */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+                  <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <Download className="w-4 h-4 text-[#147A80]" />
+                    <span>2. Buscar de um Webhook do n8n Agora (Pull Sob Demanda)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Se o seu workflow no n8n também tiver um gatilho Webhook que retorna a lista de inativos (180+ dias), informe a URL abaixo para puxar os dados imediatamente:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://seu-n8n.dominio.com/webhook/leads-180-dias"
+                      value={n8nPullUrlInput}
+                      onChange={(e) => setN8nPullUrlInput(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#147A80]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePullFromN8n}
+                      disabled={isSyncingN8n}
+                      className="px-4 py-2.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingN8n ? 'animate-spin' : ''}`} />
+                      <span>Buscar do n8n Agora</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna 2: Importação Manual de Lote JSON ou CSV do n8n */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-amber-600" />
+                      <span>3. Importar Lote JSON ou CSV do n8n (Imediato)</span>
+                    </h3>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-teal-50 text-[#147A80] border border-teal-200">
+                      JSON ou CSV
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Cole abaixo a saída JSON do nó do n8n (ou linhas em CSV: <code>nome;telefone;ultima_visita;dentista;unidade;procedimento;valor</code>) para carregar a fila de 180+ dias agora mesmo:
+                  </p>
+
+                  <textarea
+                    rows={11}
+                    placeholder={`Cole aqui o JSON do n8n ou linhas CSV, exemplo:\nMaria Aparecida Silva;63992112233;2025-07-14;Dr. Flávio Santiago;Palmas;Recall Preventivo 180+ Dias;280`}
+                    value={n8nManualJson}
+                    onChange={(e) => setN8nManualJson(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                  />
+
+                  <label className="flex items-center gap-2 text-xs text-slate-700 font-semibold cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={replaceExistingNew}
+                      onChange={(e) => setReplaceExistingNew(e.target.checked)}
+                      className="rounded border-slate-300 text-[#147A80] focus:ring-[#147A80]"
+                    />
+                    <span>Substituir leads com status &quot;Novo&quot; anteriores (mantém os que já estão Em Contato/Agendados)</span>
+                  </label>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleClearAllCRM}
+                    className="px-3.5 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Zerar Base Atual ({opportunities.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleManualImportN8n}
+                    disabled={isSyncingN8n}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Importar Leads de 180+ Dias para o CRM</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 2: PIPELINE & KANBAN */}
           {activeTab === 'kanban' && (
             <div>
@@ -508,7 +886,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                         key={stg.id}
                         className={`bg-slate-200/60 rounded-2xl p-3 border-t-4 ${stg.color} flex flex-col max-h-[75vh]`}
                       >
-                        {/* Column Header */}
                         <div className="flex items-center justify-between mb-3 px-1">
                           <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wide">
                             {stg.title}
@@ -520,7 +897,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                           </span>
                         </div>
 
-                        {/* Card List */}
                         <div className="overflow-y-auto space-y-3 pr-1">
                           {stageOpps.length === 0 ? (
                             <div className="bg-white/50 border border-dashed border-slate-300 rounded-xl p-4 text-center text-xs text-slate-400">
@@ -571,7 +947,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           {/* TAB 3: MODELOS DE MENSAGENS */}
           {activeTab === 'templates' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column: Template Form Editor */}
               <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
                 <h3 className="font-extrabold text-slate-900 text-sm mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[#147A80]" />
@@ -622,7 +997,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                     />
                   </div>
 
-                  {/* Variable Pills help */}
                   <div>
                     <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">
                       Variáveis Dinâmicas Disponíveis:
@@ -665,7 +1039,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: Existing Templates List */}
               <div className="lg:col-span-2 space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-sm mb-2">
                   Modelos Prontos Cadastrados ({templates.length})
@@ -697,7 +1070,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => startEditTemplate(tpl)}
-                          className="px-2.5 py-1 rounded-lg text-slate-600 hover:text-[#147A80] hover:bg-teal-50 font-bold flex items-center gap-1 transition-colors"
+                          className="px-2.5 py-1 rounded-lg text-slate-600 hover:text-[#147A80] hover:bg-teal-50 font-bold flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           <span>Editar</span>
@@ -705,7 +1078,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
                         <button
                           onClick={() => handleDeleteTemplate(tpl.id)}
-                          className="px-2.5 py-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 font-bold flex items-center gap-1 transition-colors"
+                          className="px-2.5 py-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 font-bold flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Excluir</span>
@@ -721,7 +1094,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           {/* TAB 4: MÉTRICAS DE CONVERSÃO & PAINEL */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Header metrics */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-extrabold text-xl shrink-0">
@@ -762,7 +1134,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 </div>
               </div>
 
-              {/* Conversion Breakdown Table */}
               <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
                 <h3 className="font-extrabold text-slate-900 text-base mb-3">
                   Detalhamento de Desempenho por Unidade
@@ -784,7 +1155,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       {clinics
                         .filter((c) => c.active)
                         .map((clinic) => {
-                          const clinicOpps = opportunities.filter((o) => o.clinicId === clinic.id);
                           const clinicStats = CRMService.getStats(opportunities, clinic.id);
                           return (
                             <tr key={clinic.id} className="hover:bg-slate-50">

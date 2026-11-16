@@ -3831,6 +3831,452 @@ app.post('/api/gamification/patients/credit', (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// CRM BERTUOL & INTEGRAÇÃO N8N (RECALL 180+ DIAS - PROCESSO DAS 06:00H)
+// ============================================================================
+const CRM_STORAGE_FILE = path.join(process.cwd(), 'crm_opportunities.json');
+
+const FICTIONAL_CRM_NAMES = new Set([
+  'esther oliveira duarte',
+  'nelson freiberger',
+  'claudiana lima leite',
+  'juscelino kubitschek oliveira',
+  'zuzu scarlat test',
+  'ana paula silveira',
+  'carlos eduardo mendes',
+  'mariana costa rocha',
+  'roberto alves de oliveira',
+  'fernanda lima nogueira',
+]);
+
+const FICTIONAL_CRM_IDS = new Set([
+  'opp-101',
+  'opp-102',
+  'opp-103',
+  'opp-104',
+  'opp-105',
+]);
+
+interface ServerCRMState {
+  opportunities: any[];
+  lastN8nSyncAt: string | null;
+  lastN8nSyncCount: number;
+  n8nWebhookPullUrl?: string;
+}
+
+function loadServerCRMState(): ServerCRMState {
+  try {
+    if (fs.existsSync(CRM_STORAGE_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(CRM_STORAGE_FILE, 'utf-8'));
+      const rawList = Array.isArray(parsed?.opportunities) ? parsed.opportunities : [];
+      const cleaned = rawList.filter((o: any) => {
+        const nameLower = String(o?.patientName || '').trim().toLowerCase();
+        const idStr = String(o?.id || '');
+        return !FICTIONAL_CRM_NAMES.has(nameLower) && !FICTIONAL_CRM_IDS.has(idStr);
+      });
+      return {
+        opportunities: cleaned,
+        lastN8nSyncAt: parsed?.lastN8nSyncAt || null,
+        lastN8nSyncCount: Number(parsed?.lastN8nSyncCount || 0),
+        n8nWebhookPullUrl: parsed?.n8nWebhookPullUrl || '',
+      };
+    }
+  } catch (err) {
+    console.warn('Erro ao ler crm_opportunities.json:', err);
+  }
+  return {
+    opportunities: [],
+    lastN8nSyncAt: null,
+    lastN8nSyncCount: 0,
+    n8nWebhookPullUrl: '',
+  };
+}
+
+function saveServerCRMState(state: ServerCRMState): void {
+  try {
+    fs.writeFileSync(CRM_STORAGE_FILE, JSON.stringify(state, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Erro ao salvar crm_opportunities.json:', err);
+  }
+}
+
+function normalizeClinicIdFromPayload(rawClinic: any): number {
+  if (rawClinic === 2 || rawClinic === '2' || String(rawClinic) === '5982257501405184') return 2;
+  const str = String(rawClinic || '').toLowerCase();
+  if (str.includes('paraiso') || str.includes('paraíso')) return 2;
+  return 1; // Default: Palmas (Matriz)
+}
+
+function normalizeN8nLeadItem(item: any, index: number): any | null {
+  if (!item || typeof item !== 'object') return null;
+
+  const rawName =
+    item.patientName ||
+    item.PatientName ||
+    item.Name ||
+    item.nome ||
+    item.nome_paciente ||
+    item.patient_name ||
+    item.full_name ||
+    item.cliente ||
+    '';
+
+  const patientName = String(rawName).trim();
+  if (!patientName || FICTIONAL_CRM_NAMES.has(patientName.toLowerCase())) {
+    return null;
+  }
+
+  const rawPhone =
+    item.patientPhone ||
+    item.MobilePhone ||
+    item.telefone ||
+    item.celular ||
+    item.phone ||
+    item.whatsapp ||
+    item.Tel ||
+    item.mobile_phone ||
+    '';
+  const patientPhone = String(rawPhone).trim();
+
+  const clinicId = normalizeClinicIdFromPayload(
+    item.clinicId ?? item.clinic_id ?? item.tenant_id ?? item.Clinic_BusinessId ?? item.unidade ?? item.clinica
+  );
+
+  // Data da última visita
+  let lastVisitDate =
+    item.lastVisitDate ||
+    item.ultima_visita ||
+    item.data_ultima_consulta ||
+    item.last_visit ||
+    item.DataUltimaConsulta ||
+    item.lastAppointmentDate ||
+    item.date ||
+    '';
+  if (typeof lastVisitDate === 'string' && lastVisitDate.includes('T')) {
+    lastVisitDate = lastVisitDate.split('T')[0];
+  }
+
+  const daysInactive = Number(
+    item.daysInactive ?? item.dias_inativo ?? item.dias_sem_consulta ?? item.dias ?? item.days_since_last_visit ?? 0
+  );
+
+  const dentistName = String(
+    item.dentistName ||
+      item.DentistName ||
+      item.dentista ||
+      item.doutor ||
+      item.ultimo_dentista ||
+      item.professional_name ||
+      item.Profissional ||
+      'Corpo Clínico Bertuol'
+  ).trim();
+
+  const treatmentDescription = String(
+    item.treatmentDescription ||
+      item.Procedures ||
+      item.procedimento ||
+      item.ultimo_procedimento ||
+      item.tratamento ||
+      item.description ||
+      'Check-in Preventivo Semestral + Profilaxia (180+ dias)'
+  ).trim();
+
+  const estimatedValue = Number(item.estimatedValue ?? item.valor ?? item.valor_estimado ?? item.value ?? 280) || 280;
+  const pointsBonus = Number(item.pointsBonus ?? item.pontos ?? 50) || 50;
+
+  const rawPriority = String(item.priority || item.prioridade || 'high').toLowerCase();
+  const priority =
+    rawPriority === 'low' || rawPriority === 'baixa'
+      ? 'low'
+      : rawPriority === 'medium' || rawPriority === 'media' || rawPriority === 'média'
+      ? 'medium'
+      : 'high';
+
+  const rawStage = String(item.stage || item.status || 'new').toLowerCase();
+  const validStages = new Set(['new', 'contacted', 'scheduled', 'converted', 'lost']);
+  const stage = validStages.has(rawStage) ? rawStage : 'new';
+
+  const rawType = String(item.type || item.tipo || 'recall_6m').toLowerCase();
+  const validTypes = new Set(['recall_6m', 'treatment_pending', 'whatsapp_lead', 'indication', 'other']);
+  const type = validTypes.has(rawType) ? rawType : 'recall_6m';
+
+  const notes =
+    item.notes ||
+    item.observacoes ||
+    item.Notes ||
+    (daysInactive > 0
+      ? `Paciente há ${daysInactive} dias sem consulta (Importado via n8n às 06:00h).`
+      : 'Importado via automação n8n (Recall 180+ dias).');
+
+  const nowIso = new Date().toISOString();
+  const externalId = item.id || item.Patient_PersonId || item.patient_id || `${Date.now()}-${index}`;
+
+  return {
+    id: String(externalId).startsWith('opp-') ? String(externalId) : `opp-n8n-${externalId}`,
+    patientName,
+    patientPhone: patientPhone || '63999999999',
+    clinicId,
+    type,
+    stage,
+    priority,
+    lastVisitDate: lastVisitDate || undefined,
+    dentistName,
+    treatmentDescription,
+    estimatedValue,
+    pointsBonus,
+    notes: String(notes),
+    createdAt: item.createdAt || nowIso,
+    updatedAt: nowIso,
+    source: item.source || 'n8n Recall 180+ Dias (06:00h)',
+  };
+}
+
+function extractLeadsArrayFromBody(body: any): any[] {
+  if (!body) return [];
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body.leads)) return body.leads;
+  if (Array.isArray(body.opportunities)) return body.opportunities;
+  if (Array.isArray(body.data)) return body.data;
+  if (Array.isArray(body.items)) return body.items;
+  if (Array.isArray(body.patients)) return body.patients;
+  if (Array.isArray(body.pacientes)) return body.pacientes;
+  if (Array.isArray(body.results)) return body.results;
+  if (typeof body === 'object' && (body.patientName || body.Name || body.PatientName || body.nome || body.cliente)) {
+    return [body];
+  }
+  return [];
+}
+
+// 1. Listar oportunidades reais do CRM (sem dados fictícios)
+app.get('/api/crm/opportunities', (_req: Request, res: Response) => {
+  const state = loadServerCRMState();
+  return res.json({
+    opportunities: state.opportunities,
+    lastN8nSyncAt: state.lastN8nSyncAt,
+    lastN8nSyncCount: state.lastN8nSyncCount,
+    n8nWebhookPullUrl: state.n8nWebhookPullUrl || '',
+    totalCount: state.opportunities.length,
+  });
+});
+
+// 2. Webhook receptor para o processo do n8n das 06:00h (busca leads de 180+ dias)
+app.post(
+  ['/api/webhooks/n8n/crm-recalls', '/api/crm/n8n-import', '/api/crm/opportunities/batch'],
+  (req: Request, res: Response) => {
+    try {
+      const state = loadServerCRMState();
+      const rawItems = extractLeadsArrayFromBody(req.body);
+      const replaceMode = req.body?.mode === 'replace' || req.query.replace === 'true';
+
+      if (rawItems.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error:
+            'Nenhum lead válido encontrado no payload. Envie um array JSON ou objeto { leads: [...] } com nome e telefone.',
+        });
+      }
+
+      let currentOpps = replaceMode
+        ? state.opportunities.filter((o) => o.stage !== 'new') // Mantém leads já trabalhados pela equipe
+        : [...state.opportunities];
+
+      let importedCount = 0;
+      let updatedCount = 0;
+
+      rawItems.forEach((rawItem, idx) => {
+        const normalized = normalizeN8nLeadItem(rawItem, idx);
+        if (!normalized) return;
+
+        const cleanPhone = normalized.patientPhone.replace(/\D/g, '');
+        const existingIndex = currentOpps.findIndex((o) => {
+          const existingPhone = String(o.patientPhone || '').replace(/\D/g, '');
+          const samePhone = cleanPhone.length >= 8 && existingPhone.length >= 8 && existingPhone.endsWith(cleanPhone.slice(-8));
+          const sameName =
+            String(o.patientName || '').trim().toLowerCase() === normalized.patientName.toLowerCase() &&
+            Number(o.clinicId) === Number(normalized.clinicId);
+          return samePhone || sameName;
+        });
+
+        if (existingIndex >= 0) {
+          // Atualiza os dados clínicos preservando o estágio de atendimento caso a recepção já tenha contatado
+          const prev = currentOpps[existingIndex];
+          currentOpps[existingIndex] = {
+            ...prev,
+            patientPhone: normalized.patientPhone || prev.patientPhone,
+            lastVisitDate: normalized.lastVisitDate || prev.lastVisitDate,
+            dentistName: normalized.dentistName || prev.dentistName,
+            treatmentDescription: normalized.treatmentDescription || prev.treatmentDescription,
+            estimatedValue: normalized.estimatedValue || prev.estimatedValue,
+            notes: normalized.notes || prev.notes,
+            updatedAt: new Date().toISOString(),
+            source: normalized.source,
+          };
+          updatedCount++;
+        } else {
+          currentOpps.unshift(normalized);
+          importedCount++;
+        }
+      });
+
+      state.opportunities = currentOpps;
+      state.lastN8nSyncAt = new Date().toISOString();
+      state.lastN8nSyncCount = importedCount + updatedCount;
+      saveServerCRMState(state);
+
+      return res.json({
+        success: true,
+        importedCount,
+        updatedCount,
+        totalProcessed: importedCount + updatedCount,
+        totalInCRM: state.opportunities.length,
+        lastN8nSyncAt: state.lastN8nSyncAt,
+        message: `Sincronização n8n concluída: ${importedCount} novos leads (180+ dias) adicionados e ${updatedCount} atualizados.`,
+      });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: error?.message || 'Erro ao importar leads do n8n' });
+    }
+  }
+);
+
+// 3. Puxar dados ativamente de um Webhook do n8n sob demanda (Pull manual ou agendado)
+app.post('/api/crm/n8n-pull', async (req: Request, res: Response) => {
+  try {
+    const state = loadServerCRMState();
+    const targetUrl = String(req.body?.webhookUrl || state.n8nWebhookPullUrl || process.env.N8N_CRM_RECALL_WEBHOOK_URL || '').trim();
+
+    if (!targetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Informe a URL do Webhook do seu workflow n8n para buscar os leads de 180+ dias.',
+      });
+    }
+
+    state.n8nWebhookPullUrl = targetUrl;
+    saveServerCRMState(state);
+
+    const response = await fetch(targetUrl, {
+      method: req.body?.method === 'POST' ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      ...(req.body?.method === 'POST' ? { body: JSON.stringify({ daysInactiveMin: 180, source: 'bertuol-flow' }) } : {}),
+    });
+
+    if (!response.ok) {
+      return res.status(502).json({
+        success: false,
+        error: `O servidor n8n retornou status HTTP ${response.status}`,
+      });
+    }
+
+    const payload = await response.json();
+    const rawItems = extractLeadsArrayFromBody(payload);
+
+    let importedCount = 0;
+    let updatedCount = 0;
+    const currentOpps = [...state.opportunities];
+
+    rawItems.forEach((rawItem, idx) => {
+      const normalized = normalizeN8nLeadItem(rawItem, idx);
+      if (!normalized) return;
+
+      const cleanPhone = normalized.patientPhone.replace(/\D/g, '');
+      const existingIndex = currentOpps.findIndex((o) => {
+        const existingPhone = String(o.patientPhone || '').replace(/\D/g, '');
+        const samePhone = cleanPhone.length >= 8 && existingPhone.length >= 8 && existingPhone.endsWith(cleanPhone.slice(-8));
+        const sameName =
+          String(o.patientName || '').trim().toLowerCase() === normalized.patientName.toLowerCase() &&
+          Number(o.clinicId) === Number(normalized.clinicId);
+        return samePhone || sameName;
+      });
+
+      if (existingIndex >= 0) {
+        const prev = currentOpps[existingIndex];
+        currentOpps[existingIndex] = {
+          ...prev,
+          lastVisitDate: normalized.lastVisitDate || prev.lastVisitDate,
+          dentistName: normalized.dentistName || prev.dentistName,
+          updatedAt: new Date().toISOString(),
+        };
+        updatedCount++;
+      } else {
+        currentOpps.unshift(normalized);
+        importedCount++;
+      }
+    });
+
+    state.opportunities = currentOpps;
+    state.lastN8nSyncAt = new Date().toISOString();
+    state.lastN8nSyncCount = importedCount + updatedCount;
+    saveServerCRMState(state);
+
+    return res.json({
+      success: true,
+      importedCount,
+      updatedCount,
+      totalInCRM: state.opportunities.length,
+      lastN8nSyncAt: state.lastN8nSyncAt,
+      opportunities: state.opportunities,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: `Falha ao conectar ao n8n: ${error?.message || 'Erro desconhecido'}`,
+    });
+  }
+});
+
+// 4. Criar / Atualizar / Excluir / Limpar oportunidades no servidor
+app.post('/api/crm/opportunities', (req: Request, res: Response) => {
+  const state = loadServerCRMState();
+  const normalized = normalizeN8nLeadItem(req.body, 0);
+  if (!normalized) {
+    return res.status(400).json({ error: 'Dados do lead inválidos ou nome fictício bloqueado.' });
+  }
+  state.opportunities.unshift(normalized);
+  saveServerCRMState(state);
+  return res.json({ success: true, opportunity: normalized, opportunities: state.opportunities });
+});
+
+app.put('/api/crm/opportunities/:id', (req: Request, res: Response) => {
+  const state = loadServerCRMState();
+  const idx = state.opportunities.findIndex((o) => String(o.id) === String(req.params.id));
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Oportunidade não encontrada.' });
+  }
+  state.opportunities[idx] = {
+    ...state.opportunities[idx],
+    ...req.body,
+    updatedAt: new Date().toISOString(),
+  };
+  saveServerCRMState(state);
+  return res.json({ success: true, opportunity: state.opportunities[idx] });
+});
+
+app.delete('/api/crm/opportunities/:id', (req: Request, res: Response) => {
+  const state = loadServerCRMState();
+  state.opportunities = state.opportunities.filter((o) => String(o.id) !== String(req.params.id));
+  saveServerCRMState(state);
+  return res.json({ success: true, totalInCRM: state.opportunities.length });
+});
+
+app.delete('/api/crm/opportunities', (req: Request, res: Response) => {
+  const state = loadServerCRMState();
+  const onlyFictional = req.query.only_fictional === 'true';
+  if (onlyFictional) {
+    state.opportunities = state.opportunities.filter((o) => {
+      const nameLower = String(o?.patientName || '').trim().toLowerCase();
+      return !FICTIONAL_CRM_NAMES.has(nameLower) && !FICTIONAL_CRM_IDS.has(String(o?.id || ''));
+    });
+  } else {
+    state.opportunities = [];
+  }
+  saveServerCRMState(state);
+  return res.json({
+    success: true,
+    opportunities: state.opportunities,
+    message: onlyFictional ? 'Leads fictícios removidos com sucesso.' : 'Base de leads do CRM limpa com sucesso.',
+  });
+});
+
 // Rota dedicada de impressão do Totem (formato A4 para recepção, abre impressora do Windows)
 app.get('/totem-imprimir', async (req: Request, res: Response) => {
   try {
