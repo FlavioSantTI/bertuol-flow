@@ -3,6 +3,7 @@ import { ProtectedRoute } from '../guards/ProtectedRoute';
 import { RootTenantSwitcherBanner } from '../../components/RootTenantSwitcherBanner';
 import { useTenant } from '../../contexts/TenantContext';
 import { AppUserContext } from '../../types/database';
+import { APP_VERSION } from '../../config/version';
 import {
   Building2,
   Users,
@@ -13,21 +14,128 @@ import {
   Server,
   ArrowRight,
   ExternalLink,
+  Sparkles,
+  BookOpen,
+  Monitor,
+  Mic,
+  Video,
+  HelpCircle,
+  Smartphone,
+  QrCode,
+  CheckCircle2,
+  Play,
+  X,
 } from 'lucide-react';
 
 interface RootLayoutProps {
   userContext: AppUserContext;
   onNavigateToApp: () => void;
   onNavigateToPatient: () => void;
+  initialTab?: 'tutorials' | 'tenants' | 'logs' | 'users';
 }
+
+interface TutorialResource {
+  id: string;
+  badge: string;
+  title: string;
+  description: string;
+  url: string;
+  category: 'apresentacao' | 'roteiros' | 'equipe' | 'paciente';
+  accentColor: string;
+}
+
+const ROOT_TUTORIAL_RESOURCES: TutorialResource[] = [
+  {
+    id: 'studio-3d-full',
+    badge: 'PALCO 3D + TRILHA 60M',
+    title: 'Estúdio de Apresentação 60m (Modo Completo)',
+    description:
+      'Apresentação interativa com celular 3D, Cápsulas de Vidro Flutuantes, Rede Neural e roteiro lateral para treinamento geral da equipe.',
+    url: '/slideshow-hyperframes.html',
+    category: 'apresentacao',
+    accentColor: 'from-emerald-500 to-teal-600',
+  },
+  {
+    id: 'studio-3d-projector',
+    badge: 'MODO TELÃO / PROJETOR',
+    title: 'Só Telão 3D Limpo (?mode=projector)',
+    description:
+      'Exibe exclusivamente o palco visual 3D em 100% da tela para o projetor/TV, sem barra lateral nem teleprompter, sincronizado em tempo real.',
+    url: '/slideshow-hyperframes.html?mode=projector',
+    category: 'apresentacao',
+    accentColor: 'from-cyan-500 to-blue-600',
+  },
+  {
+    id: 'studio-3d-presenter',
+    badge: 'MODO APRESENTADOR',
+    title: 'Só Trilha & Teleprompter (?mode=presenter)',
+    description:
+      'Painel de comando para o seu notebook ou celular com Teleprompter em letras grandes, Cronômetro de 60m e controle remoto do Telão.',
+    url: '/slideshow-hyperframes.html?mode=presenter',
+    category: 'apresentacao',
+    accentColor: 'from-amber-500 to-orange-600',
+  },
+  {
+    id: 'heygen-scripts',
+    badge: '3 VÍDEOS DE 2 MIN + MAPA',
+    title: 'Central de Roteiros HeyGen & Mapeamento Técnico',
+    description:
+      'Os 3 roteiros de 6 cenas (1. Paciente + Clube, 2. Dentista, 3. Recepção) com cópia em 1 clique, prompts Veo e tabela dos 16 módulos reais.',
+    url: '/roteiros-heygen.html',
+    category: 'roteiros',
+    accentColor: 'from-teal-500 to-emerald-600',
+  },
+  {
+    id: 'faq-equipe',
+    badge: 'GUIA DA EQUIPE',
+    title: 'Central de Ajuda & FAQ Interativo (/faq.html)',
+    description:
+      'Perguntas e respostas rápidas separadas por perfil (Recepção, Dentistas, Gerência, Senhas e Biometria Face ID).',
+    url: '/faq.html',
+    category: 'equipe',
+    accentColor: 'from-indigo-500 to-purple-600',
+  },
+  {
+    id: 'totem-print',
+    badge: 'BALCÃO RECEPÇÃO',
+    title: 'Folha Oficial do Totem QR Code (/totem-imprimir)',
+    description:
+      'Arte oficial em formato A4 pronta para impressão com QR Code dinâmico de Check-in das unidades Palmas e Paraíso.',
+    url: '/totem-imprimir',
+    category: 'equipe',
+    accentColor: 'from-amber-500 to-yellow-600',
+  },
+  {
+    id: 'tutorial-paciente',
+    badge: 'ONBOARDING PACIENTE',
+    title: 'Tutorial do Paciente & Clube Sorriso',
+    description:
+      'Passo a passo visual para o paciente aprender a confirmar presença, escanear o Totem QR e resgatar vouchers.',
+    url: '/tutorial-paciente.html',
+    category: 'paciente',
+    accentColor: 'from-pink-500 to-rose-600',
+  },
+  {
+    id: 'manual-pwa',
+    badge: 'INSTALAÇÃO MOBILE',
+    title: 'Manual de Instalação PWA & Notificações Push',
+    description:
+      'Instruções visuais para Android (Chrome) e iPhone (Safari) para adicionar à Tela de Início e ativar alertas.',
+    url: '/manual-instalacao.html',
+    category: 'paciente',
+    accentColor: 'from-sky-500 to-cyan-600',
+  },
+];
 
 export const RootLayout: React.FC<RootLayoutProps> = ({
   userContext,
   onNavigateToApp,
   onNavigateToPatient,
+  initialTab = 'tutorials',
 }) => {
   const { availableClinics, activeClinicId, switchClinic } = useTenant();
-  const [activeTab, setActiveTab] = useState<'tenants' | 'logs' | 'users'>('tenants');
+  const [activeTab, setActiveTab] = useState<'tutorials' | 'tenants' | 'logs' | 'users'>(initialTab);
+  const [embeddedResource, setEmbeddedResource] = useState<TutorialResource | null>(null);
 
   return (
     <ProtectedRoute allowedContext="root" userContext={userContext}>
@@ -44,12 +152,12 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
             <div>
               <h1 className="text-base font-extrabold text-white flex items-center gap-2">
                 <span>Painel Global SuperAdmin (Root)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300">
-                  Acesso Restrito
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono">
+                  v{APP_VERSION} • Exclusivo Root
                 </span>
               </h1>
               <p className="text-xs text-slate-400">
-                Governança Multi-Tenant, Auditoria e Simulação de Contextos
+                Central de Tutoriais, Apresentação 3D, Roteiros HeyGen e Governança Multi-Tenant
               </p>
             </div>
           </div>
@@ -61,7 +169,7 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
               className="px-3.5 py-2 rounded-xl bg-[#147A80] hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <LayoutDashboard className="w-4 h-4" />
-              <span>Navegar pela Clínica (/app)</span>
+              <span>Voltar para a Agenda Limpa (/)</span>
             </button>
 
             <button
@@ -76,11 +184,12 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
         </header>
 
         {/* Sub-Header de Navegação Root */}
-        <div className="bg-slate-900/60 border-b border-slate-800 px-6 py-2 flex items-center gap-2 overflow-x-auto">
+        <div className="bg-slate-900/60 border-b border-slate-800 px-6 py-2.5 flex items-center gap-2 overflow-x-auto">
           {[
-            { id: 'tenants', label: 'Gestão de Clínicas (Tenants)', icon: Building2 },
-            { id: 'users', label: 'Usuários Globais', icon: Users },
-            { id: 'logs', label: 'Logs de Auditoria & Sistema', icon: FileText },
+            { id: 'tutorials', label: '🎬 Central de Tutoriais & Apresentação 3D', icon: Sparkles },
+            { id: 'tenants', label: '🏢 Gestão de Clínicas (Tenants)', icon: Building2 },
+            { id: 'users', label: '👥 Usuários Globais', icon: Users },
+            { id: 'logs', label: '📋 Auditoria & Checklist Quarta-Feira', icon: FileText },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -88,8 +197,11 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  setEmbeddedResource(null);
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                   isActive
                     ? 'bg-amber-500 text-slate-950 shadow-sm'
                     : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -102,8 +214,130 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
           })}
         </div>
 
+        {/* Visualizador Embutido em Tela Cheia quando o Admin Root abre um Tutorial/Estúdio */}
+        {embeddedResource && (
+          <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+            <div className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs text-white shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[10px] font-bold">
+                  {embeddedResource.badge}
+                </span>
+                <span className="font-extrabold text-sm">{embeddedResource.title}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={embeddedResource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold text-xs flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Abrir em Nova Janela</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setEmbeddedResource(null)}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Fechar Visualizador</span>
+                </button>
+              </div>
+            </div>
+            <iframe
+              src={embeddedResource.url}
+              title={embeddedResource.title}
+              className="w-full flex-1 border-0 bg-slate-950"
+            />
+          </div>
+        )}
+
         {/* Conteúdo Principal do Root */}
         <main className="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
+          {activeTab === 'tutorials' && (
+            <div className="space-y-6">
+              {/* Banner de Lançamento Oficial de Quarta-Feira */}
+              <div className="bg-gradient-to-r from-slate-900 via-teal-950/60 to-slate-900 border border-teal-500/30 rounded-3xl p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-xl">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-extrabold">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>AMBIENTE PRINCIPAL LIMPO PARA O LANÇAMENTO DE QUARTA-FEIRA</span>
+                  </div>
+                  <h2 className="text-lg font-black text-white">
+                    Central Exclusiva de Tutoriais, Apresentação 3D & Roteiros HeyGen
+                  </h2>
+                  <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+                    Todos os materiais de apresentação, roteiros de vídeo e guias de implantação foram concentrados aqui na rota restrita do <strong>Admin Root (`/root` ou `/?app=tutoriais`)</strong>, mantendo a tela principal da clínica 100% limpa para dentistas, recepção e gerência.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <a
+                    href="/slideshow-hyperframes.html?mode=projector"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all"
+                  >
+                    <Monitor className="w-4 h-4" />
+                    <span>Abrir Telão 3D ↗</span>
+                  </a>
+                  <a
+                    href="/slideshow-hyperframes.html?mode=presenter"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs flex items-center gap-2 shadow-md transition-all"
+                  >
+                    <Mic className="w-4 h-4" />
+                    <span>Abrir Trilha / Controle ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Grid de Módulos de Treinamento, Apresentação e Roteiros */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ROOT_TUTORIAL_RESOURCES.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md bg-gradient-to-r ${item.accentColor} text-white font-mono text-[10px] font-extrabold uppercase tracking-wider`}
+                        >
+                          {item.badge}
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-500">{item.url}</span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-white">{item.title}</h3>
+                      <p className="text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-800/80">
+                      <button
+                        type="button"
+                        onClick={() => setEmbeddedResource(item)}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-teal-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Play className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Abrir Aqui no Painel</span>
+                      </button>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-3.5 rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Nova Aba</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'tenants' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -197,7 +431,7 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
                 <span>Gestão Global de Usuários e Permissões</span>
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Visualização consolidada de todos os usuários cadastrados nas unidades e seus papéis no sistema (`admin_clinica`, `dentista`, `recepcao`, `financeiro`, `paciente`, `superadmin`).
+                Visualização consolidada de todos os usuários cadastrados nas unidades e seus papéis no sistema (`admin_clinica`, `dentist`, `receptionist`, `gerente_atendimento`, `admin_root`).
               </p>
             </div>
           )}
@@ -205,12 +439,39 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
           {activeTab === 'logs' && (
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-teal-400" />
-                <span>Logs de Auditoria & Atividade Multi-Tenant</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Checklist Oficial de Prontidão para Quarta-Feira (v{APP_VERSION})</span>
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Registro síncrono de operações, trocas de status de atendimento, sincronizações e acessos do SuperAdmin.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
+                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block">6.285+ Pacientes Sincronizados (Supabase)</strong>
+                    Busca instantânea por nome no topo da Central de Credenciais para Palmas e Paraíso.
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block">Isolamento Multi-Tenant & RBAC</strong>
+                    Unidade travada com cadeado para Recepção e Dentistas; visão global apenas para Root e Gerência.
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block">Interface Principal 100% Limpa</strong>
+                    Botões de apresentação e roteiros movidos exclusivamente para `/root` (`?app=tutoriais`).
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block">Clube Sorriso & Totem QR Operacionais</strong>
+                    Consulta de vouchers liberada para Dentistas e baixa em 1 clique na Recepção.
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </main>

@@ -556,18 +556,6 @@ export const Header: React.FC<HeaderProps> = ({
                     <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Central de Ajuda (FAQ)</span>
                   </a>
-                  {isAdmin && (
-                    <a
-                      href="/slideshow-hyperframes.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setIsAdminMenuOpen(false)}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors text-left cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Tutorial Interativo (Slideshow)</span>
-                    </a>
-                  )}
                 </div>
               </div>
             )}

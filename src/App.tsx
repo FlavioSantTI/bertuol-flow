@@ -158,8 +158,6 @@ export default function App() {
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
   const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
-  const [isSlideshowModalOpen, setIsSlideshowModalOpen] = useState(false);
-  const [isHeygenScriptsModalOpen, setIsHeygenScriptsModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
@@ -174,7 +172,13 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const appParam = params.get('app')?.toLowerCase();
 
-    if (pathname.startsWith('/root') || appParam === 'root' || appParam === 'admin') {
+    if (
+      pathname.startsWith('/root') ||
+      pathname.startsWith('/tutoriais') ||
+      appParam === 'root' ||
+      appParam === 'admin' ||
+      appParam === 'tutoriais'
+    ) {
       return 'root';
     }
     if (pathname.startsWith('/portal') || appParam === 'paciente' || appParam === 'patient') {
@@ -856,25 +860,15 @@ export default function App() {
               </button>
             )}
 
-            {/* Atalho Direto para o Estúdio de Apresentação de 60 Minutos */}
+            {/* Acesso Exclusivo Admin Root à Rota Dedicada de Tutoriais & Apresentações (/root) */}
             <button
               type="button"
-              onClick={() => setIsSlideshowModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
-              title="Abrir Estúdio de Apresentação 60 Minutos (Slides + Roteiro)"
+              onClick={handleSwitchToRoot}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
+              title="Abrir Rota Exclusiva Admin Root com Tutoriais, Apresentação 3D e Roteiros HeyGen (/root)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-              <span>🎬 Apresentação 60m</span>
-            </button>
-
-            {/* Atalho para os 3 Roteiros HeyGen & Mapeamento Técnico (/roteiros-heygen.html) */}
-            <button
-              type="button"
-              onClick={() => setIsHeygenScriptsModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
-              title="Abrir Central com os 3 Roteiros HeyGen (Paciente, Dentista, Recepção) e Mapeamento Técnico"
-            >
-              <span>🎙️ Roteiros HeyGen</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>📚 Central Root & Tutoriais</span>
             </button>
           </div>
         </div>
@@ -1385,57 +1379,6 @@ export default function App() {
           userContext={effectiveUserContext}
           selectedClinicIdFilter={selectedClinicId}
         />
-      )}
-
-      {/* Modal Tela Cheia do Estúdio de Apresentação 60 Minutos (/slideshow-hyperframes.html) */}
-      {isSlideshowModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
-          <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-white shrink-0">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="font-bold">Estúdio de Apresentação 60 Minutos • Bertuol Flow v{APP_VERSION}</span>
-              <span className="text-slate-400 hidden sm:inline">
-                (Alterne entre os slides aqui e clique em "Voltar ao App Ao Vivo" para demonstrar na prática)
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsSlideshowModalOpen(false)}
-              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
-            >
-              ✕ Fechar Slides & Voltar ao App Ao Vivo
-            </button>
-          </div>
-          <iframe
-            src="/slideshow-hyperframes.html"
-            title="Estúdio de Apresentação Bertuol Flow"
-            className="w-full flex-1 border-0"
-          />
-        </div>
-      )}
-
-      {/* Modal Tela Cheia da Central de Roteiros HeyGen & Mapeamento Técnico (/roteiros-heygen.html) */}
-      {isHeygenScriptsModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
-          <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-white shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🎙️</span>
-              <span className="font-bold">Central de Roteiros HeyGen (3 Vídeos de 2 Min) & Mapa Técnico • Bertuol Flow v{APP_VERSION}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsHeygenScriptsModalOpen(false)}
-              className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
-            >
-              ✕ Fechar Roteiros & Voltar ao App
-            </button>
-          </div>
-          <iframe
-            src="/roteiros-heygen.html"
-            title="Central de Roteiros HeyGen Bertuol Flow"
-            className="w-full flex-1 border-0"
-          />
-        </div>
       )}
         </div>
       </ClinicLayout>
