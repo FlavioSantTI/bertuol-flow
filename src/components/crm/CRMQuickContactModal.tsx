@@ -13,6 +13,8 @@ interface CRMQuickContactModalProps {
   onAfterSend?: (id: string, newStage: CRMStage) => void;
 }
 
+const SUPABASE_PREFILLED_TEMPLATE_ID = '__supabase_mensagem_whatsapp__';
+
 export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
   isOpen,
   onClose,
@@ -26,8 +28,16 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (opportunity && templates.length > 0) {
-      // Pick template matching type or fallback to first
+    if (!opportunity) return;
+
+    // Se o registro possui mensagem_whatsapp pronta no Supabase, usa ela como padrão
+    if (opportunity.mensagemWhatsapp && opportunity.mensagemWhatsapp.trim().length > 0) {
+      setSelectedTemplateId(SUPABASE_PREFILLED_TEMPLATE_ID);
+      setCustomMessage(opportunity.mensagemWhatsapp.trim());
+      return;
+    }
+
+    if (templates.length > 0) {
       let defaultTpl = templates.find((t) => {
         if (opportunity.type === 'recall_6m' && t.category === 'recall') return true;
         if (opportunity.type === 'treatment_pending' && t.category === 'budget') return true;
@@ -49,9 +59,10 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
   const clinic = clinics.find((c) => c.id === opportunity.clinicId) || clinics[0];
 
   const fillMessageFromTemplate = (tpl: CRMMessageTemplate, opp: CRMLeadOpportunity) => {
+    const displayName = opp.primeiroNome || opp.patientName;
     const text = CRMService.replaceTemplateVariables(tpl.content, {
-      nome: opp.patientName,
-      doutor: opp.dentistName || 'Dr. Flávio Santiago',
+      nome: displayName,
+      doutor: opp.dentistName || 'Corpo Clínico Bertuol',
       clinica: clinic?.shortName ? `Clínica Bertuol (${clinic.shortName})` : 'Clínica Bertuol Odontologia',
       pontos: opp.pointsBonus || 50,
     });
@@ -60,6 +71,10 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
 
   const handleTemplateChange = (tplId: string) => {
     setSelectedTemplateId(tplId);
+    if (tplId === SUPABASE_PREFILLED_TEMPLATE_ID && opportunity.mensagemWhatsapp) {
+      setCustomMessage(opportunity.mensagemWhatsapp.trim());
+      return;
+    }
     const tpl = templates.find((t) => t.id === tplId);
     if (tpl && opportunity) {
       fillMessageFromTemplate(tpl, opportunity);
@@ -70,7 +85,6 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
     const waUrl = CRMService.formatWhatsAppUrl(opportunity.patientPhone, customMessage);
     window.open(waUrl, '_blank', 'noopener,noreferrer');
 
-    // Automatically update stage to 'contacted' if it was 'new'
     if (opportunity.stage === 'new') {
       CRMService.updateStage(opportunity.id, 'contacted');
       if (onAfterSend) {
@@ -106,7 +120,7 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -124,6 +138,15 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
               <span className="text-slate-400 block text-[10px] font-bold uppercase">Unidade</span>
               <span className="font-bold text-slate-800">{clinic?.shortName || 'Palmas'}</span>
             </div>
+            {opportunity.lastVisitDate && (
+              <div>
+                <span className="text-slate-400 block text-[10px] font-bold uppercase">Última Consulta</span>
+                <span className="font-bold text-amber-800">
+                  {opportunity.lastVisitDate}
+                  {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
+                </span>
+              </div>
+            )}
             {opportunity.pointsBonus ? (
               <div>
                 <span className="text-slate-400 block text-[10px] font-bold uppercase">Bônus Clube</span>
@@ -142,8 +165,13 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
             <select
               value={selectedTemplateId}
               onChange={(e) => handleTemplateChange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold text-xs rounded-xl p-3 focus:ring-2 focus:ring-[#147A80] focus:bg-white transition-all"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold text-xs rounded-xl p-3 focus:ring-2 focus:ring-[#147A80] focus:bg-white transition-all cursor-pointer"
             >
+              {opportunity.mensagemWhatsapp && (
+                <option value={SUPABASE_PREFILLED_TEMPLATE_ID}>
+                  ✨ Mensagem Personalizada do Paciente {opportunity.tipoMensagem ? `(Tipo ${opportunity.tipoMensagem})` : ''} — Padrão
+                </option>
+              )}
               {templates.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>
                   {tpl.title}
@@ -156,7 +184,7 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-black uppercase text-slate-500">
-                Texto Personalizado (Editável):
+                Texto da Mensagem (Editável):
               </label>
               <button
                 onClick={handleCopyMessage}
@@ -175,9 +203,8 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
             />
           </div>
 
-          {/* Variables help */}
           <p className="text-[11px] text-slate-400 italic">
-            * O sistema substitui automaticamente nome, doutor, unidade e pontos bônus.
+            * A mensagem personalizada do paciente já vem preenchida por padrão, mas você pode alternar para outro modelo acima.
           </p>
         </div>
 

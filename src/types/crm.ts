@@ -6,15 +6,20 @@ export type CRMPriority = 'high' | 'medium' | 'low';
 
 export interface CRMLeadOpportunity {
   id: string;
-  patientName: string;
-  patientPhone: string;
+  patientId?: number; // patient_id do Clinicorp / Supabase crm_leads_recall
+  patientName: string; // patient_name
+  primeiroNome?: string; // primeiro_nome
+  patientPhone: string; // mobile_phone
   clinicId: number; // 1 = Palmas, 2 = Paraíso, etc.
   type: CRMType;
   stage: CRMStage;
   priority: CRMPriority;
-  lastVisitDate?: string;
+  lastVisitDate?: string; // data_ultimo_agendamento
   dentistName?: string;
-  treatmentDescription?: string;
+  treatmentDescription?: string; // ultimo_procedimento
+  diasDesdeUltimo?: number; // dias_desde_ultimo
+  tipoMensagem?: string; // tipo_mensagem ('A', 'B', 'C')
+  mensagemWhatsapp?: string; // mensagem_whatsapp gerada pelo n8n
   estimatedValue?: number;
   pointsBonus?: number; // Pontos do Clube Sorriso Bertuol oferecidos no agendamento
   notes?: string;

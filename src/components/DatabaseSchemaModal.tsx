@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Database, RefreshCw, Layers, MessageSquare, ExternalLink } from 'lucide-react';
-import { SUPABASE_DDL_SCRIPT, SUPABASE_MESSAGING_DDL } from '../utils/supabaseSql';
+import { X, Copy, Check, Database, RefreshCw, Layers, MessageSquare, ExternalLink, Users } from 'lucide-react';
+import { SUPABASE_DDL_SCRIPT, SUPABASE_MESSAGING_DDL, SUPABASE_CRM_RECALL_DDL } from '../utils/supabaseSql';
 
 interface DatabaseSchemaModalProps {
   isOpen: boolean;
@@ -13,12 +13,17 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
   onClose,
   onResetData,
 }) => {
-  const [activeTab, setActiveTab] = useState<'messaging' | 'general'>('messaging');
+  const [activeTab, setActiveTab] = useState<'crm_recall' | 'messaging' | 'general'>('crm_recall');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const currentScript = activeTab === 'messaging' ? SUPABASE_MESSAGING_DDL : SUPABASE_DDL_SCRIPT;
+  const currentScript =
+    activeTab === 'crm_recall'
+      ? SUPABASE_CRM_RECALL_DDL
+      : activeTab === 'messaging'
+      ? SUPABASE_MESSAGING_DDL
+      : SUPABASE_DDL_SCRIPT;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentScript);
@@ -58,33 +63,45 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
         </div>
 
         {/* Tab Selector */}
-        <div className="px-5 pt-3 bg-gray-50/70 border-b border-gray-200 flex items-center justify-between gap-2 shrink-0">
+        <div className="px-5 pt-3 bg-gray-50/70 border-b border-gray-200 flex items-center justify-between gap-2 shrink-0 overflow-x-auto">
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setActiveTab('crm_recall')}
+              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+                activeTab === 'crm_recall'
+                  ? 'bg-white text-[#147A80] border-[#147A80] shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800 border-transparent'
+              }`}
+            >
+              <Users className="w-4 h-4 text-[#147A80]" />
+              <span>1. CRM Recall 180d (crm_leads_recall)</span>
+              <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-black rounded-full">
+                Novo
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('messaging')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 ${
+              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 activeTab === 'messaging'
                   ? 'bg-white text-[#147A80] border-[#147A80] shadow-2xs'
                   : 'text-gray-500 hover:text-gray-800 border-transparent'
               }`}
             >
               <MessageSquare className="w-4 h-4 text-[#147A80]" />
-              <span>1. Mensageria Interna (Tabelas do Chat)</span>
-              <span className="px-1.5 py-0.2 bg-teal-100 text-teal-800 text-[9px] font-black rounded-full">
-                Novo
-              </span>
+              <span>2. Mensageria Interna</span>
             </button>
 
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 ${
+              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 activeTab === 'general'
                   ? 'bg-white text-gray-900 border-gray-900 shadow-2xs'
                   : 'text-gray-500 hover:text-gray-800 border-transparent'
               }`}
             >
               <Layers className="w-4 h-4 text-gray-600" />
-              <span>2. Estrutura Completa (Agendamentos, RBAC & Totem)</span>
+              <span>3. Estrutura Completa (RBAC & Totem)</span>
             </button>
           </div>
 
@@ -92,7 +109,7 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
             href="https://supabase.com/dashboard/project/sswbkfrpxboxmjvunhzt/sql/new"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] font-bold text-[#147A80] hover:underline flex items-center gap-1 hidden sm:flex"
+            className="text-[11px] font-bold text-[#147A80] hover:underline flex items-center gap-1 hidden sm:flex shrink-0"
           >
             <span>Abrir Supabase SQL Editor</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -101,16 +118,26 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 text-sm text-[#1A1A1A]">
-          {activeTab === 'messaging' ? (
+          {activeTab === 'crm_recall' ? (
+            <div className="bg-teal-50/70 p-3.5 rounded-2xl border border-teal-200 text-xs text-teal-950 space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-[#147A80]">
+                <Users className="w-4 h-4 text-[#147A80]" />
+                Tabela Oficial do CRM Recall (crm_leads_recall):
+              </span>
+              <p className="text-gray-700">
+                Execute o script abaixo no <strong>SQL Editor do Supabase</strong>. No seu fluxo do n8n das 06:00h, aponte o nó do Supabase para a tabela <code className="bg-teal-100 px-1 py-0.5 rounded font-mono">crm_leads_recall</code> usando operação <strong>Upsert</strong> na coluna <code className="bg-teal-100 px-1 py-0.5 rounded font-mono">patient_id</code>.
+              </p>
+            </div>
+          ) : activeTab === 'messaging' ? (
             <div className="bg-teal-50/70 p-3.5 rounded-2xl border border-teal-200 text-xs text-teal-950 space-y-1">
               <span className="font-bold flex items-center gap-1.5 text-[#147A80]">
                 <MessageSquare className="w-4 h-4 text-[#147A80]" />
                 Como rodar no Supabase (em 3 passos):
               </span>
               <ol className="list-decimal list-inside space-y-0.5 text-gray-700 pl-1">
-                <li>Clique no botão verde <strong>"Copiar SQL da Mensageria"</strong> abaixo.</li>
+                <li>Clique no botão verde <strong>&quot;Copiar SQL&quot;</strong> abaixo.</li>
                 <li>Abra o <strong>SQL Editor do Supabase</strong> no seu navegador.</li>
-                <li>Cole o código e clique em <strong>RUN (Executar)</strong>. As tabelas, índices e políticas de segurança serão criados instantaneamente.</li>
+                <li>Cole o código e clique em <strong>RUN (Executar)</strong>.</li>
               </ol>
             </div>
           ) : (
@@ -128,7 +155,11 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                {activeTab === 'messaging' ? 'Script DDL de Mensageria (PostgreSQL):' : 'Script DDL Geral (Supabase):'}
+                {activeTab === 'crm_recall'
+                  ? 'Script SQL da Tabela crm_leads_recall:'
+                  : activeTab === 'messaging'
+                  ? 'Script DDL de Mensageria (PostgreSQL):'
+                  : 'Script DDL Geral (Supabase):'}
               </span>
               <button
                 onClick={handleCopy}
@@ -158,12 +189,10 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
         <div className="p-4 bg-[#F8F9FA] border-t border-gray-100 flex items-center justify-between gap-3">
           <button
             onClick={() => {
-              if (window.confirm('Deseja recarregar os dados de demonstração da clínica?')) {
-                onResetData();
-                onClose();
-              }
+              onResetData();
+              onClose();
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-amber-700 px-3 py-2 rounded-xl hover:bg-gray-200/60 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-amber-700 px-3 py-2 rounded-xl hover:bg-gray-200/60 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Restaurar Dados Padrão da Clínica
@@ -171,7 +200,7 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
 
           <button
             onClick={onClose}
-            className="min-h-[48px] px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-[#1A1A1A] font-bold text-sm transition-all"
+            className="min-h-[48px] px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-[#1A1A1A] font-bold text-sm transition-all cursor-pointer"
           >
             Concluir
           </button>

@@ -2,18 +2,12 @@ import React from 'react';
 import { CRMLeadOpportunity, CRMStage } from '../../types/crm';
 import {
   Phone,
-  Calendar,
   MessageSquare,
   Sparkles,
   User,
   Clock,
   Building2,
-  DollarSign,
-  AlertCircle,
-  MoreHorizontal,
   Trash2,
-  CheckCircle2,
-  ArrowRight,
 } from 'lucide-react';
 import { Clinic } from '../../types/database';
 
@@ -59,7 +53,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
       case 'indication':
         return '⭐ Indicação';
       default:
-        return '📌 Outro Oportunidade';
+        return '📌 Oportunidade';
     }
   };
 
@@ -83,6 +77,11 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-[#147A80] border border-teal-200">
                 {getTypeLabel()}
               </span>
+              {opportunity.tipoMensagem && (
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  Mensagem Tipo {opportunity.tipoMensagem}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-slate-500">
@@ -108,13 +107,14 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
                 <span className="flex items-center gap-1 text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                   Última visita: {opportunity.lastVisitDate}
+                  {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo} dias)` : ''}
                 </span>
               )}
             </div>
 
             {opportunity.treatmentDescription && (
               <p className="text-xs text-slate-600 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                {opportunity.treatmentDescription}
+                <span className="font-bold text-slate-700">Último procedimento:</span> {opportunity.treatmentDescription}
               </p>
             )}
           </div>
@@ -165,7 +165,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           <button
             onClick={() => onDelete(opportunity.id)}
             title="Excluir Oportunidade"
-            className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -179,13 +179,20 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
     <div className="bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-3 group">
       <div>
         {/* Top Badges */}
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center justify-between gap-1.5 mb-2 flex-wrap">
           <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${priorityBadge.bg}`}>
             {priorityBadge.label}
           </span>
-          <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-            {getTypeLabel()}
-          </span>
+          <div className="flex items-center gap-1">
+            {opportunity.tipoMensagem && (
+              <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-200">
+                Tipo {opportunity.tipoMensagem}
+              </span>
+            )}
+            <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+              {getTypeLabel()}
+            </span>
+          </div>
         </div>
 
         {/* Patient Name */}
@@ -210,7 +217,10 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
         {opportunity.lastVisitDate && (
           <div className="text-[11px] font-medium text-amber-800 bg-amber-50/80 px-2 py-1 rounded-lg border border-amber-200 flex items-center gap-1 mb-2">
             <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-            <span>Última consulta: {opportunity.lastVisitDate}</span>
+            <span>
+              Última: {opportunity.lastVisitDate}
+              {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
+            </span>
           </div>
         )}
 
@@ -257,7 +267,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
         <button
           onClick={() => onDelete(opportunity.id)}
           title="Excluir Oportunidade"
-          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

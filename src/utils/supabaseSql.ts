@@ -551,3 +551,87 @@ INSERT INTO public.conversation_participants (
 ON CONFLICT DO NOTHING;
 `;
 
+export const SUPABASE_CRM_RECALL_DDL = `-- ============================================================
+-- TABELA OFICIAL DE RECALL 180+ DIAS (ALIMENTADA PELO N8N ÀS 06:00H)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.crm_leads_recall (
+  patient_id BIGINT PRIMARY KEY,
+  patient_name TEXT NOT NULL,
+  primeiro_nome TEXT,
+  mobile_phone TEXT NOT NULL,
+  data_ultimo_agendamento DATE,
+  ultimo_procedimento TEXT,
+  dias_desde_ultimo INTEGER DEFAULT 180,
+  tipo_mensagem TEXT DEFAULT 'A',
+  mensagem_whatsapp TEXT,
+  -- Colunas de controle do funil CRM (preservadas quando o n8n faz UPSERT às 06:00h)
+  stage TEXT DEFAULT 'new' CHECK (stage IN ('new', 'contacted', 'scheduled', 'converted', 'lost')),
+  priority TEXT DEFAULT 'high' CHECK (priority IN ('high', 'medium', 'low')),
+  clinic_id INTEGER DEFAULT 1,
+  dentist_name TEXT DEFAULT 'Corpo Clínico Bertuol',
+  estimated_value NUMERIC(10,2) DEFAULT 280.00,
+  points_bonus INTEGER DEFAULT 50,
+  notes TEXT,
+  last_contact_date TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_stage ON public.crm_leads_recall(stage);
+CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_clinic ON public.crm_leads_recall(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_data_ult ON public.crm_leads_recall(data_ultimo_agendamento);
+
+ALTER TABLE public.crm_leads_recall ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Acesso total crm_leads_recall" ON public.crm_leads_recall;
+CREATE POLICY "Acesso total crm_leads_recall"
+  ON public.crm_leads_recall
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+-- Carga inicial dos 5 leads reais (180 dias)
+INSERT INTO public.crm_leads_recall (
+  patient_id, patient_name, primeiro_nome, mobile_phone,
+  data_ultimo_agendamento, ultimo_procedimento, dias_desde_ultimo,
+  tipo_mensagem, mensagem_whatsapp
+) VALUES
+(
+  6499407105753088, 'THAUANE CECHINEL', 'Thauane', '5563992238981',
+  '2026-05-15', 'Ajustes no dente da frente', 180, 'A',
+  'Olá, Thauane! Tudo bem? 😊 Já faz algum tempo desde a sua última consulta em 15/05/2026. Que tal agendarmos uma avaliação preventiva para manter seu sorriso saudável? 🦷✨'
+),
+(
+  6366750714167296, 'Ana Lúcia Abreu Belloni Dos Santos', 'Ana', '5563992374849',
+  '2026-05-15', 'Cimentação de CPP 1 elemento', 180, 'B',
+  'Oi, Ana! Como você está? 👋 Notamos que sua última visita foi em 15/05/2026. Passando para lembrar da importância do seu check-up odontológico! Vamos marcar um horário? 📅🦷'
+),
+(
+  4594343324680192, 'MEIRE LUCIA MENDES PACHECO', 'Meire', '5594991060293',
+  '2026-05-15', 'limpeza de protocolo', 180, 'B',
+  'Oi, Meire! Como você está? 👋 Notamos que sua última visita foi em 15/05/2026. Passando para lembrar da importância do seu check-up odontológico! Vamos marcar um horário? 📅🦷'
+),
+(
+  5965302859366400, 'Juliana Ramos Dos santos Pires', 'Juliana', '5563984196462',
+  '2026-05-15', 'extração de siso dente 18 ou 28', 180, 'C',
+  'Olá, Juliana! Passando para saber como você está! 🌟 Já se passaram alguns meses da sua consulta em 15/05/2026. Que tal agendarmos sua revisão preventiva e deixar sua saúde bucal em dia? 🩺✨'
+),
+(
+  6194517117501440, 'Gilberto Martins Noleto*', 'Gilberto', '5563992146767',
+  '2026-05-15', 'colar pino', 180, 'A',
+  'Olá, Gilberto! Tudo bem? 😊 Já faz algum tempo desde a sua última consulta em 15/05/2026. Que tal agendarmos uma avaliação preventiva para manter seu sorriso saudável? 🦷✨'
+)
+ON CONFLICT (patient_id) DO UPDATE SET
+  patient_name = EXCLUDED.patient_name,
+  primeiro_nome = EXCLUDED.primeiro_nome,
+  mobile_phone = EXCLUDED.mobile_phone,
+  data_ultimo_agendamento = EXCLUDED.data_ultimo_agendamento,
+  ultimo_procedimento = EXCLUDED.ultimo_procedimento,
+  dias_desde_ultimo = EXCLUDED.dias_desde_ultimo,
+  tipo_mensagem = EXCLUDED.tipo_mensagem,
+  mensagem_whatsapp = EXCLUDED.mensagem_whatsapp,
+  updated_at = NOW();
+`;
+
+

@@ -1,8 +1,10 @@
 import { CRMLeadOpportunity, CRMMessageTemplate, CRMSummaryStats } from '../types/crm';
 import { Patient, Appointment, Clinic } from '../types/database';
+import { supabase } from './supabaseService';
 
-const LEGACY_CRM_STORAGE_KEY = 'bertuol_crm_opportunities_v1';
-const CRM_OPPORTUNITIES_STORAGE_KEY = 'bertuol_crm_opportunities_v2';
+const LEGACY_CRM_STORAGE_KEY_V1 = 'bertuol_crm_opportunities_v1';
+const LEGACY_CRM_STORAGE_KEY_V2 = 'bertuol_crm_opportunities_v2';
+const CRM_OPPORTUNITIES_STORAGE_KEY = 'bertuol_crm_opportunities_v3';
 const CRM_TEMPLATES_STORAGE_KEY = 'bertuol_crm_templates_v1';
 
 const FICTIONAL_CRM_NAMES = new Set([
@@ -69,14 +71,124 @@ export const DEFAULT_CRM_TEMPLATES: CRMMessageTemplate[] = [
   },
 ];
 
-// Base inicial limpa (sem leads fictícios; alimentada pelo processo das 06:00h do n8n)
-const INITIAL_SEED_OPPORTUNITIES: CRMLeadOpportunity[] = [];
-
-export interface N8nSyncMetadata {
-  lastN8nSyncAt: string | null;
-  lastN8nSyncCount: number;
-  n8nWebhookPullUrl: string;
-}
+// Lote inicial real vindo do processo de 180+ dias (para exibição imediata e seed na tabela crm_leads_recall)
+export const INITIAL_REAL_RECALL_LEADS: CRMLeadOpportunity[] = [
+  {
+    id: 'opp-supa-6499407105753088',
+    patientId: 6499407105753088,
+    patientName: 'THAUANE CECHINEL',
+    primeiroNome: 'Thauane',
+    patientPhone: '5563992238981',
+    clinicId: 1,
+    type: 'recall_6m',
+    stage: 'new',
+    priority: 'high',
+    lastVisitDate: '2026-05-15',
+    dentistName: 'Corpo Clínico Bertuol',
+    treatmentDescription: 'Ajustes no dente da frente',
+    diasDesdeUltimo: 180,
+    tipoMensagem: 'A',
+    mensagemWhatsapp:
+      'Olá, Thauane! Tudo bem? 😊 Já faz algum tempo desde a sua última consulta em 15/05/2026. Que tal agendarmos uma avaliação preventiva para manter seu sorriso saudável? 🦷✨',
+    estimatedValue: 280,
+    pointsBonus: 50,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: 'Supabase crm_leads_recall',
+  },
+  {
+    id: 'opp-supa-6366750714167296',
+    patientId: 6366750714167296,
+    patientName: 'Ana Lúcia Abreu Belloni Dos Santos',
+    primeiroNome: 'Ana',
+    patientPhone: '5563992374849',
+    clinicId: 1,
+    type: 'recall_6m',
+    stage: 'new',
+    priority: 'high',
+    lastVisitDate: '2026-05-15',
+    dentistName: 'Corpo Clínico Bertuol',
+    treatmentDescription: 'Cimentação de CPP 1 elemento',
+    diasDesdeUltimo: 180,
+    tipoMensagem: 'B',
+    mensagemWhatsapp:
+      'Oi, Ana! Como você está? 👋 Notamos que sua última visita foi em 15/05/2026. Passando para lembrar da importância do seu check-up odontológico! Vamos marcar um horário? 📅🦷',
+    estimatedValue: 280,
+    pointsBonus: 50,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: 'Supabase crm_leads_recall',
+  },
+  {
+    id: 'opp-supa-4594343324680192',
+    patientId: 4594343324680192,
+    patientName: 'MEIRE LUCIA MENDES PACHECO',
+    primeiroNome: 'Meire',
+    patientPhone: '5594991060293',
+    clinicId: 1,
+    type: 'recall_6m',
+    stage: 'new',
+    priority: 'high',
+    lastVisitDate: '2026-05-15',
+    dentistName: 'Corpo Clínico Bertuol',
+    treatmentDescription: 'limpeza de protocolo',
+    diasDesdeUltimo: 180,
+    tipoMensagem: 'B',
+    mensagemWhatsapp:
+      'Oi, Meire! Como você está? 👋 Notamos que sua última visita foi em 15/05/2026. Passando para lembrar da importância do seu check-up odontológico! Vamos marcar um horário? 📅🦷',
+    estimatedValue: 280,
+    pointsBonus: 50,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: 'Supabase crm_leads_recall',
+  },
+  {
+    id: 'opp-supa-5965302859366400',
+    patientId: 5965302859366400,
+    patientName: 'Juliana Ramos Dos santos Pires',
+    primeiroNome: 'Juliana',
+    patientPhone: '5563984196462',
+    clinicId: 1,
+    type: 'recall_6m',
+    stage: 'new',
+    priority: 'high',
+    lastVisitDate: '2026-05-15',
+    dentistName: 'Corpo Clínico Bertuol',
+    treatmentDescription: 'extração de siso dente 18 ou 28',
+    diasDesdeUltimo: 180,
+    tipoMensagem: 'C',
+    mensagemWhatsapp:
+      'Olá, Juliana! Passando para saber como você está! 🌟 Já se passaram alguns meses da sua consulta em 15/05/2026. Que tal agendarmos sua revisão preventiva e deixar sua saúde bucal em dia? 🩺✨',
+    estimatedValue: 280,
+    pointsBonus: 50,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: 'Supabase crm_leads_recall',
+  },
+  {
+    id: 'opp-supa-6194517117501440',
+    patientId: 6194517117501440,
+    patientName: 'Gilberto Martins Noleto*',
+    primeiroNome: 'Gilberto',
+    patientPhone: '5563992146767',
+    clinicId: 1,
+    type: 'recall_6m',
+    stage: 'new',
+    priority: 'high',
+    lastVisitDate: '2026-05-15',
+    dentistName: 'Corpo Clínico Bertuol',
+    treatmentDescription: 'colar pino',
+    diasDesdeUltimo: 180,
+    tipoMensagem: 'A',
+    mensagemWhatsapp:
+      'Olá, Gilberto! Tudo bem? 😊 Já faz algum tempo desde a sua última consulta em 15/05/2026. Que tal agendarmos uma avaliação preventiva para manter seu sorriso saudável? 🦷✨',
+    estimatedValue: 280,
+    pointsBonus: 50,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: 'Supabase crm_leads_recall',
+  },
+];
 
 export class CRMService {
   static isFictionalLead(opp: Partial<CRMLeadOpportunity>): boolean {
@@ -93,26 +205,102 @@ export class CRMService {
     return list.filter((o) => o && o.patientName && !this.isFictionalLead(o));
   }
 
+  /**
+   * Converte uma linha da tabela public.crm_leads_recall do Supabase para CRMLeadOpportunity
+   */
+  static mapRowToOpportunity(row: any): CRMLeadOpportunity {
+    const patientId = Number(row.patient_id || row.id || Date.now());
+    const validStages = new Set(['new', 'contacted', 'scheduled', 'converted', 'lost']);
+    const rawStage = String(row.stage || 'new').toLowerCase();
+    const stage = (validStages.has(rawStage) ? rawStage : 'new') as CRMLeadOpportunity['stage'];
+
+    const rawPriority = String(row.priority || 'high').toLowerCase();
+    const priority: CRMLeadOpportunity['priority'] =
+      rawPriority === 'low' ? 'low' : rawPriority === 'medium' ? 'medium' : 'high';
+
+    return {
+      id: `opp-supa-${patientId}`,
+      patientId,
+      patientName: String(row.patient_name || row.primeiro_nome || 'Paciente').trim(),
+      primeiroNome: row.primeiro_nome ? String(row.primeiro_nome).trim() : undefined,
+      patientPhone: String(row.mobile_phone || '').trim(),
+      clinicId: Number(row.clinic_id || 1),
+      type: 'recall_6m',
+      stage,
+      priority,
+      lastVisitDate: row.data_ultimo_agendamento ? String(row.data_ultimo_agendamento).split('T')[0] : undefined,
+      dentistName: row.dentist_name || 'Corpo Clínico Bertuol',
+      treatmentDescription: row.ultimo_procedimento || 'Avaliação Preventiva Semestral',
+      diasDesdeUltimo: row.dias_desde_ultimo != null ? Number(row.dias_desde_ultimo) : 180,
+      tipoMensagem: row.tipo_mensagem ? String(row.tipo_mensagem).trim() : undefined,
+      mensagemWhatsapp: row.mensagem_whatsapp ? String(row.mensagem_whatsapp).trim() : undefined,
+      estimatedValue: row.estimated_value != null ? Number(row.estimated_value) : 280,
+      pointsBonus: row.points_bonus != null ? Number(row.points_bonus) : 50,
+      notes: row.notes || undefined,
+      lastContactDate: row.last_contact_date || undefined,
+      createdAt: row.created_at || new Date().toISOString(),
+      updatedAt: row.updated_at || new Date().toISOString(),
+      source: 'Supabase crm_leads_recall',
+    };
+  }
+
+  /**
+   * Converte um CRMLeadOpportunity para o formato da tabela public.crm_leads_recall no Supabase
+   */
+  static mapOpportunityToRow(opp: CRMLeadOpportunity) {
+    const numericId =
+      opp.patientId ||
+      Number(String(opp.id).replace(/\D/g, '').slice(0, 15)) ||
+      Math.floor(Date.now() + Math.random() * 1000);
+
+    return {
+      patient_id: numericId,
+      patient_name: opp.patientName,
+      primeiro_nome: opp.primeiroNome || opp.patientName.split(' ')[0],
+      mobile_phone: opp.patientPhone,
+      data_ultimo_agendamento: opp.lastVisitDate || null,
+      ultimo_procedimento: opp.treatmentDescription || null,
+      dias_desde_ultimo: opp.diasDesdeUltimo ?? 180,
+      tipo_mensagem: opp.tipoMensagem || 'A',
+      mensagem_whatsapp: opp.mensagemWhatsapp || null,
+      stage: opp.stage || 'new',
+      priority: opp.priority || 'high',
+      clinic_id: opp.clinicId || 1,
+      dentist_name: opp.dentistName || 'Corpo Clínico Bertuol',
+      estimated_value: opp.estimatedValue ?? 280,
+      points_bonus: opp.pointsBonus ?? 50,
+      notes: opp.notes || null,
+      last_contact_date: opp.lastContactDate || null,
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   static getOpportunities(): CRMLeadOpportunity[] {
     try {
-      // Remove chave legada v1 que continha Esther Oliveira Duarte / Nelson Freiberger
-      if (localStorage.getItem(LEGACY_CRM_STORAGE_KEY)) {
-        localStorage.removeItem(LEGACY_CRM_STORAGE_KEY);
+      if (localStorage.getItem(LEGACY_CRM_STORAGE_KEY_V1)) {
+        localStorage.removeItem(LEGACY_CRM_STORAGE_KEY_V1);
+      }
+      if (localStorage.getItem(LEGACY_CRM_STORAGE_KEY_V2)) {
+        localStorage.removeItem(LEGACY_CRM_STORAGE_KEY_V2);
       }
 
       const raw = localStorage.getItem(CRM_OPPORTUNITIES_STORAGE_KEY);
       if (!raw) {
-        this.saveOpportunities(INITIAL_SEED_OPPORTUNITIES);
-        return INITIAL_SEED_OPPORTUNITIES;
+        this.saveOpportunities(INITIAL_REAL_RECALL_LEADS);
+        return INITIAL_REAL_RECALL_LEADS;
       }
       const parsed = JSON.parse(raw);
       const cleaned = this.sanitizeOpportunities(parsed);
+      if (cleaned.length === 0) {
+        this.saveOpportunities(INITIAL_REAL_RECALL_LEADS);
+        return INITIAL_REAL_RECALL_LEADS;
+      }
       if (cleaned.length !== parsed.length) {
         this.saveOpportunities(cleaned);
       }
       return cleaned;
     } catch {
-      return INITIAL_SEED_OPPORTUNITIES;
+      return INITIAL_REAL_RECALL_LEADS;
     }
   }
 
@@ -122,169 +310,34 @@ export class CRMService {
   }
 
   /**
-   * Sincroniza as oportunidades com o servidor (que recebe o webhook do n8n às 06:00h)
+   * Lê diretamente da tabela public.crm_leads_recall no Supabase
    */
-  static async fetchFromServer(): Promise<{
-    opportunities: CRMLeadOpportunity[];
-    meta: N8nSyncMetadata;
-  }> {
+  static async fetchFromSupabase(): Promise<CRMLeadOpportunity[]> {
     try {
-      const res = await fetch('/api/crm/opportunities');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const serverOpps: CRMLeadOpportunity[] = this.sanitizeOpportunities(data.opportunities || []);
-      const localOpps = this.getOpportunities();
+      const { data, error } = await supabase
+        .from('crm_leads_recall')
+        .select('*')
+        .order('dias_desde_ultimo', { ascending: false });
 
-      // Mescla leads do servidor (n8n) com leads locais reais sem duplicar
-      const merged = [...serverOpps];
-      localOpps.forEach((loc) => {
-        const exists = merged.some(
-          (s) =>
-            s.id === loc.id ||
-            (s.patientPhone && loc.patientPhone && s.patientPhone.replace(/\D/g, '') === loc.patientPhone.replace(/\D/g, '')) ||
-            (s.patientName.toLowerCase() === loc.patientName.toLowerCase() && s.clinicId === loc.clinicId)
-        );
-        if (!exists) {
-          merged.push(loc);
-        }
-      });
+      if (error) {
+        // Caso a tabela ainda não tenha sido criada no Supabase SQL Editor, retorna os leads reais locais
+        return this.getOpportunities();
+      }
 
-      this.saveOpportunities(merged);
-      return {
-        opportunities: merged,
-        meta: {
-          lastN8nSyncAt: data.lastN8nSyncAt || null,
-          lastN8nSyncCount: Number(data.lastN8nSyncCount || 0),
-          n8nWebhookPullUrl: data.n8nWebhookPullUrl || '',
-        },
-      };
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = this.sanitizeOpportunities(data.map((r) => this.mapRowToOpportunity(r)));
+        this.saveOpportunities(mapped);
+        return mapped;
+      }
+
+      // Se a tabela existe no Supabase mas está vazia, popula automaticamente com os 5 leads reais iniciais
+      const initialRows = INITIAL_REAL_RECALL_LEADS.map((o) => this.mapOpportunityToRow(o));
+      await supabase.from('crm_leads_recall').upsert(initialRows, { onConflict: 'patient_id' });
+      this.saveOpportunities(INITIAL_REAL_RECALL_LEADS);
+      return INITIAL_REAL_RECALL_LEADS;
     } catch {
-      return {
-        opportunities: this.getOpportunities(),
-        meta: {
-          lastN8nSyncAt: null,
-          lastN8nSyncCount: 0,
-          n8nWebhookPullUrl: '',
-        },
-      };
+      return this.getOpportunities();
     }
-  }
-
-  /**
-   * Importa pacote de leads (180+ dias) vindos do n8n (JSON ou CSV convertido)
-   */
-  static async importLeadsFromN8n(
-    leadsPayload: any,
-    replaceNewLeads: boolean = false
-  ): Promise<{
-    success: boolean;
-    importedCount: number;
-    updatedCount: number;
-    message: string;
-    error?: string;
-  }> {
-    try {
-      const bodyPayload = Array.isArray(leadsPayload)
-        ? { leads: leadsPayload, mode: replaceNewLeads ? 'replace' : 'upsert' }
-        : { ...leadsPayload, mode: replaceNewLeads ? 'replace' : 'upsert' };
-
-      const res = await fetch('/api/webhooks/n8n/crm-recalls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return {
-          success: false,
-          importedCount: 0,
-          updatedCount: 0,
-          message: '',
-          error: data.error || 'Falha ao importar leads do n8n',
-        };
-      }
-      await this.fetchFromServer();
-      return {
-        success: true,
-        importedCount: data.importedCount || 0,
-        updatedCount: data.updatedCount || 0,
-        message: data.message || 'Leads importados com sucesso!',
-      };
-    } catch (err: any) {
-      return {
-        success: false,
-        importedCount: 0,
-        updatedCount: 0,
-        message: '',
-        error: err?.message || 'Erro de conexão com o servidor',
-      };
-    }
-  }
-
-  /**
-   * Busca ativamente os leads de 180+ dias de uma URL de Webhook do n8n
-   */
-  static async pullLeadsFromN8nWebhook(
-    webhookUrl: string,
-    method: 'GET' | 'POST' = 'GET'
-  ): Promise<{
-    success: boolean;
-    importedCount: number;
-    updatedCount: number;
-    error?: string;
-  }> {
-    try {
-      const res = await fetch('/api/crm/n8n-pull', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ webhookUrl, method }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return {
-          success: false,
-          importedCount: 0,
-          updatedCount: 0,
-          error: data.error || 'Erro ao buscar dados no n8n',
-        };
-      }
-      if (Array.isArray(data.opportunities)) {
-        this.saveOpportunities(data.opportunities);
-      }
-      return {
-        success: true,
-        importedCount: data.importedCount || 0,
-        updatedCount: data.updatedCount || 0,
-      };
-    } catch (err: any) {
-      return {
-        success: false,
-        importedCount: 0,
-        updatedCount: 0,
-        error: err?.message || 'Falha ao conectar ao endpoint n8n',
-      };
-    }
-  }
-
-  /**
-   * Limpa todos os leads ou apenas garante a remoção de leads fictícios no cliente e no servidor
-   */
-  static async clearOpportunities(onlyFictional: boolean = false): Promise<CRMLeadOpportunity[]> {
-    try {
-      localStorage.removeItem(LEGACY_CRM_STORAGE_KEY);
-      if (onlyFictional) {
-        const cleaned = this.sanitizeOpportunities(this.getOpportunities());
-        this.saveOpportunities(cleaned);
-      } else {
-        localStorage.setItem(CRM_OPPORTUNITIES_STORAGE_KEY, JSON.stringify([]));
-      }
-      await fetch(`/api/crm/opportunities?only_fictional=${onlyFictional ? 'true' : 'false'}`, {
-        method: 'DELETE',
-      });
-    } catch {
-      // fallback local
-    }
-    return this.getOpportunities();
   }
 
   static getTemplates(): CRMMessageTemplate[] {
@@ -306,20 +359,22 @@ export class CRMService {
 
   static addOpportunity(opp: Omit<CRMLeadOpportunity, 'id' | 'createdAt' | 'updatedAt'>): CRMLeadOpportunity {
     const opportunities = this.getOpportunities();
+    const numericId = opp.patientId || Math.floor(Date.now() + Math.random() * 1000);
     const newOpp: CRMLeadOpportunity = {
       ...opp,
-      id: `opp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: `opp-supa-${numericId}`,
+      patientId: numericId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     opportunities.unshift(newOpp);
     this.saveOpportunities(opportunities);
 
-    fetch('/api/crm/opportunities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newOpp),
-    }).catch(() => {});
+    // Persiste direto no Supabase
+    supabase
+      .from('crm_leads_recall')
+      .upsert(this.mapOpportunityToRow(newOpp), { onConflict: 'patient_id' })
+      .then(() => {});
 
     return newOpp;
   }
@@ -329,21 +384,33 @@ export class CRMService {
     const index = opportunities.findIndex((o) => o.id === id);
     if (index === -1) return null;
 
-    opportunities[index] = {
+    const updated: CRMLeadOpportunity = {
       ...opportunities[index],
       ...updates,
       updatedAt: new Date().toISOString(),
     };
-
+    opportunities[index] = updated;
     this.saveOpportunities(opportunities);
 
-    fetch(`/api/crm/opportunities/${encodeURIComponent(id)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    }).catch(() => {});
+    const patientId = updated.patientId || Number(String(id).replace(/\D/g, ''));
+    if (patientId) {
+      const supaUpdates: Record<string, any> = {
+        updated_at: updated.updatedAt,
+      };
+      if (updates.stage !== undefined) supaUpdates.stage = updates.stage;
+      if (updates.priority !== undefined) supaUpdates.priority = updates.priority;
+      if (updates.notes !== undefined) supaUpdates.notes = updates.notes;
+      if (updates.lastContactDate !== undefined) supaUpdates.last_contact_date = updates.lastContactDate;
+      if (updates.mensagemWhatsapp !== undefined) supaUpdates.mensagem_whatsapp = updates.mensagemWhatsapp;
 
-    return opportunities[index];
+      supabase
+        .from('crm_leads_recall')
+        .update(supaUpdates)
+        .eq('patient_id', patientId)
+        .then(() => {});
+    }
+
+    return updated;
   }
 
   static updateStage(id: string, stage: CRMLeadOpportunity['stage']): CRMLeadOpportunity | null {
@@ -354,12 +421,18 @@ export class CRMService {
   }
 
   static deleteOpportunity(id: string): void {
+    const existing = this.getOpportunities().find((o) => o.id === id);
     const opportunities = this.getOpportunities().filter((o) => o.id !== id);
     this.saveOpportunities(opportunities);
 
-    fetch(`/api/crm/opportunities/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    }).catch(() => {});
+    const patientId = existing?.patientId || Number(String(id).replace(/\D/g, ''));
+    if (patientId) {
+      supabase
+        .from('crm_leads_recall')
+        .delete()
+        .eq('patient_id', patientId)
+        .then(() => {});
+    }
   }
 
   static addTemplate(template: Omit<CRMMessageTemplate, 'id'>): CRMMessageTemplate {
@@ -415,8 +488,7 @@ export class CRMService {
   }
 
   /**
-   * Realiza varredura de pacientes REAIS que possuem consulta registrada há 180+ dias
-   * (Ignora pacientes fictícios ou pacientes sem histórico real de consulta)
+   * Sincroniza pacientes reais inativos caso existam na agenda local
    */
   static syncAutomaticRecalls(patients: Patient[], appointments: Appointment[], clinics: Clinic[]): number {
     const opportunities = this.getOpportunities();
@@ -448,11 +520,10 @@ export class CRMService {
         }
       });
 
-      // Só gera recall automático se houver consulta real registrada há 180+ dias
       if (lastAppTime !== null && lastAppIso && now - lastAppTime >= SIX_MONTHS_MS) {
         const existing = opportunities.find(
           (o) =>
-            (p.MobilePhone && o.patientPhone === p.MobilePhone) ||
+            (p.MobilePhone && o.patientPhone.replace(/\D/g, '') === p.MobilePhone.replace(/\D/g, '')) ||
             o.patientName.toLowerCase() === p.Name.toLowerCase()
         );
 
@@ -460,8 +531,10 @@ export class CRMService {
           const clinicMatch = clinics.find((c) => c.clinicorp_business_id === p.Clinic_BusinessId) || clinics[0];
           const daysAgo = Math.floor((now - lastAppTime) / (1000 * 60 * 60 * 24));
           const newOpp: CRMLeadOpportunity = {
-            id: `opp-auto-${p.id}-${Date.now()}`,
+            id: `opp-supa-${p.id}`,
+            patientId: Number(p.id),
             patientName: p.Name,
+            primeiroNome: p.Name.split(' ')[0],
             patientPhone: p.MobilePhone || '63999000000',
             clinicId: clinicMatch?.id || 1,
             type: 'recall_6m',
@@ -470,12 +543,13 @@ export class CRMService {
             lastVisitDate: lastAppIso,
             dentistName: lastDentist,
             treatmentDescription: 'Check-in Preventivo Semestral + Profilaxia',
+            diasDesdeUltimo: daysAgo,
+            tipoMensagem: 'A',
             estimatedValue: 280,
             pointsBonus: 50,
-            notes: `Recall Preventivo: Último atendimento registrado há ${daysAgo} dias.`,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            source: 'Varredura Agenda Real (180+ dias)',
+            source: 'Supabase crm_leads_recall',
           };
           opportunities.unshift(newOpp);
           addedCount++;
