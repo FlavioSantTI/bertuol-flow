@@ -101,6 +101,10 @@ export class CRMService {
     const rawStage = String(row.stage || 'new').toLowerCase();
     const stage = (validStages.has(rawStage) ? rawStage : 'new') as CRMLeadOpportunity['stage'];
 
+    const validTypes = new Set(['recall_6m', 'treatment_pending', 'whatsapp_lead', 'indication', 'other']);
+    const rawType = String(row.opportunity_type || row.type || 'recall_6m').toLowerCase();
+    const type = (validTypes.has(rawType) ? rawType : 'recall_6m') as CRMLeadOpportunity['type'];
+
     const rawPriority = String(row.priority || 'high').toLowerCase();
     const priority: CRMLeadOpportunity['priority'] =
       rawPriority === 'low' ? 'low' : rawPriority === 'medium' ? 'medium' : 'high';
@@ -112,7 +116,7 @@ export class CRMService {
       primeiroNome: row.primeiro_nome ? String(row.primeiro_nome).trim() : undefined,
       patientPhone: String(row.mobile_phone || '').trim(),
       clinicId: Number(row.clinic_id || 1),
-      type: 'recall_6m',
+      type,
       stage,
       priority,
       lastVisitDate,
@@ -127,7 +131,7 @@ export class CRMService {
       lastContactDate: row.last_contact_date || undefined,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
-      source: 'Supabase crm_leads_recall',
+      source: row.source || 'Supabase crm_leads_recall',
     };
   }
 
@@ -147,7 +151,7 @@ export class CRMService {
       mobile_phone: opp.patientPhone,
       data_ultimo_agendamento: opp.lastVisitDate || new Date().toISOString().split('T')[0],
       ultimo_procedimento: opp.treatmentDescription || null,
-      dias_desde_ultimo: opp.diasDesdeUltimo ?? 180,
+      dias_desde_ultimo: opp.diasDesdeUltimo ?? (opp.type === 'recall_6m' ? 180 : 0),
       tipo_mensagem: opp.tipoMensagem || 'A',
       mensagem_whatsapp: opp.mensagemWhatsapp || null,
       stage: opp.stage || 'new',

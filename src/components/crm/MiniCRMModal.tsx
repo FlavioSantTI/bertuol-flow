@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CRMLeadOpportunity, CRMMessageTemplate, CRMStage, CRMSummaryStats } from '../../types/crm';
+import { CRMLeadOpportunity, CRMMessageTemplate, CRMStage, CRMSummaryStats, CRMType } from '../../types/crm';
 import { CRMService } from '../../services/crmService';
 import { Clinic, Dentist, Patient, Appointment, AppUserContext } from '../../types/database';
 import { CRMLeadCard } from './CRMLeadCard';
@@ -52,6 +52,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [opportunities, setOpportunities] = useState<CRMLeadOpportunity[]>([]);
   const [templates, setTemplates] = useState<CRMMessageTemplate[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState<number | 'all'>(selectedClinicIdFilter);
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<CRMType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
@@ -151,6 +152,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   // Filtered Opportunities
   const filteredOpps = opportunities.filter((o) => {
     const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
+    const matchesType = selectedTypeFilter === 'all' || o.type === selectedTypeFilter;
     const matchesQuery =
       searchQuery.trim() === '' ||
       o.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -158,7 +160,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       (o.treatmentDescription && o.treatmentDescription.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (o.dentistName && o.dentistName.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesClinic && matchesQuery;
+    return matchesClinic && matchesType && matchesQuery;
   });
 
   const stats: CRMSummaryStats = CRMService.getStats(opportunities, selectedClinicId);
@@ -386,6 +388,24 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 className="w-full bg-slate-100 border border-slate-200 text-slate-900 font-semibold text-xs rounded-xl pl-8 pr-3 py-2 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            </div>
+
+            <div className="relative shrink-0">
+              <select
+                value={selectedTypeFilter}
+                onChange={(e) =>
+                  setSelectedTypeFilter(e.target.value as CRMType | 'all')
+                }
+                className="bg-slate-100 border border-slate-200 text-slate-900 font-bold text-xs rounded-xl pl-2.5 pr-6 py-2 focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+                title="Filtrar por Tipo de Oportunidade / Origem"
+              >
+                <option value="all">📋 Todos os Tipos</option>
+                <option value="recall_6m">🔄 Recall 6+ Meses</option>
+                <option value="whatsapp_lead">💬 Lead WhatsApp</option>
+                <option value="treatment_pending">📑 Orçamento Aberto</option>
+                <option value="indication">⭐ Indicação</option>
+                <option value="other">📌 Outra Oportunidade</option>
+              </select>
             </div>
 
             <div className="relative shrink-0">
