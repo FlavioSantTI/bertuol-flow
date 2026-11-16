@@ -210,6 +210,9 @@ export class CRMService {
    */
   static mapRowToOpportunity(row: any): CRMLeadOpportunity {
     const patientId = Number(row.patient_id || row.id || Date.now());
+    const lastVisitDate = row.data_ultimo_agendamento ? String(row.data_ultimo_agendamento).split('T')[0] : undefined;
+    const cycleKey = row.id ? `opp-row-${row.id}` : `opp-supa-${patientId}-${lastVisitDate || 'ciclo'}`;
+
     const validStages = new Set(['new', 'contacted', 'scheduled', 'converted', 'lost']);
     const rawStage = String(row.stage || 'new').toLowerCase();
     const stage = (validStages.has(rawStage) ? rawStage : 'new') as CRMLeadOpportunity['stage'];
@@ -219,7 +222,7 @@ export class CRMService {
       rawPriority === 'low' ? 'low' : rawPriority === 'medium' ? 'medium' : 'high';
 
     return {
-      id: `opp-supa-${patientId}`,
+      id: cycleKey,
       patientId,
       patientName: String(row.patient_name || row.primeiro_nome || 'Paciente').trim(),
       primeiroNome: row.primeiro_nome ? String(row.primeiro_nome).trim() : undefined,
@@ -228,7 +231,7 @@ export class CRMService {
       type: 'recall_6m',
       stage,
       priority,
-      lastVisitDate: row.data_ultimo_agendamento ? String(row.data_ultimo_agendamento).split('T')[0] : undefined,
+      lastVisitDate,
       dentistName: row.dentist_name || 'Corpo Clínico Bertuol',
       treatmentDescription: row.ultimo_procedimento || 'Avaliação Preventiva Semestral',
       diasDesdeUltimo: row.dias_desde_ultimo != null ? Number(row.dias_desde_ultimo) : 180,
@@ -258,7 +261,7 @@ export class CRMService {
       patient_name: opp.patientName,
       primeiro_nome: opp.primeiroNome || opp.patientName.split(' ')[0],
       mobile_phone: opp.patientPhone,
-      data_ultimo_agendamento: opp.lastVisitDate || null,
+      data_ultimo_agendamento: opp.lastVisitDate || new Date().toISOString().split('T')[0],
       ultimo_procedimento: opp.treatmentDescription || null,
       dias_desde_ultimo: opp.diasDesdeUltimo ?? 180,
       tipo_mensagem: opp.tipoMensagem || 'A',
@@ -320,7 +323,6 @@ export class CRMService {
         .order('dias_desde_ultimo', { ascending: false });
 
       if (error) {
-        // Caso a tabela ainda não tenha sido criada no Supabase SQL Editor, retorna os leads reais locais
         return this.getOpportunities();
       }
 
@@ -330,9 +332,9 @@ export class CRMService {
         return mapped;
       }
 
-      // Se a tabela existe no Supabase mas está vazia, popula automaticamente com os 5 leads reais iniciais
+      // Se a tabela existe no Supabase mas está vazia, popula com os 5 leads reais iniciais
       const initialRows = INITIAL_REAL_RECALL_LEADS.map((o) => this.mapOpportunityToRow(o));
-      await supabase.from('crm_leads_recall').upsert(initialRows, { onConflict: 'patient_id' });
+      await supabase.from('crm_leads_recall').insert(initialRows);
       this.saveOpportunities(INITIAL_REAL_RECALL_LEADS);
       return INITIAL_REAL_RECALL_LEADS;
     } catch {
@@ -360,20 +362,22 @@ export class CRMService {
   static addOpportunity(opp: Omit<CRMLeadOpportunity, 'id' | 'createdAt' | 'updatedAt'>): CRMLeadOpportunity {
     const opportunities = this.getOpportunities();
     const numericId = opp.patientId || Math.floor(Date.now() + Math.random() * 1000);
+    const cycleDate = opp.lastVisitDate || new Date().toISOString().split('T')[0];
     const newOpp: CRMLeadOpportunity = {
       ...opp,
-      id: `opp-supa-${numericId}`,
+      id: `opp-supa-${numericId}-${cycleDate}`,
       patientId: numericId,
+      lastVisitDate: cycleDate,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     opportunities.unshift(newOpp);
     this.saveOpportunities(opportunities);
 
-    // Persiste direto no Supabase
+    // Persiste direto no Supabase (a trigger fn_crm_leads_recall_smart_cycle gerencia ciclos automaticamente)
     supabase
       .from('crm_leads_recall')
-      .upsert(this.mapOpportunityToRow(newOpp), { onConflict: 'patient_id' })
+      .insert(this.mapOpportunityToRow(newOpp))
       .then(() => {});
 
     return newOpp;
@@ -392,22 +396,28 @@ export class CRMService {
     opportunities[index] = updated;
     this.saveOpportunities(opportunities);
 
-    const patientId = updated.patientId || Number(String(id).replace(/\D/g, ''));
-    if (patientId) {
-      const supaUpdates: Record<string, any> = {
-        updated_at: updated.updatedAt,
-      };
-      if (updates.stage !== undefined) supaUpdates.stage = updates.stage;
-      if (updates.priority !== undefined) supaUpdates.priority = updates.priority;
-      if (updates.notes !== undefined) supaUpdates.notes = updates.notes;
-      if (updates.lastContactDate !== undefined) supaUpdates.last_contact_date = updates.lastContactDate;
-      if (updates.mensagemWhatsapp !== undefined) supaUpdates.mensagem_whatsapp = updates.mensagemWhatsapp;
+    const supaUpdates: Record<string, any> = {
+      updated_at: updated.updatedAt,
+    };
+    if (updates.stage !== undefined) supaUpdates.stage = updates.stage;
+    if (updates.priority !== undefined) supaUpdates.priority = updates.priority;
+    if (updates.notes !== undefined) supaUpdates.notes = updates.notes;
+    if (updates.lastContactDate !== undefined) supaUpdates.last_contact_date = updates.lastContactDate;
+    if (updates.mensagemWhatsapp !== undefined) supaUpdates.mensagem_whatsapp = updates.mensagemWhatsapp;
 
+    if (id.startsWith('opp-row-')) {
+      const rowId = Number(id.replace('opp-row-', ''));
       supabase
         .from('crm_leads_recall')
         .update(supaUpdates)
-        .eq('patient_id', patientId)
+        .eq('id', rowId)
         .then(() => {});
+    } else if (updated.patientId) {
+      let query = supabase.from('crm_leads_recall').update(supaUpdates).eq('patient_id', updated.patientId);
+      if (updated.lastVisitDate) {
+        query = query.eq('data_ultimo_agendamento', updated.lastVisitDate);
+      }
+      query.then(() => {});
     }
 
     return updated;
@@ -425,13 +435,19 @@ export class CRMService {
     const opportunities = this.getOpportunities().filter((o) => o.id !== id);
     this.saveOpportunities(opportunities);
 
-    const patientId = existing?.patientId || Number(String(id).replace(/\D/g, ''));
-    if (patientId) {
+    if (id.startsWith('opp-row-')) {
+      const rowId = Number(id.replace('opp-row-', ''));
       supabase
         .from('crm_leads_recall')
         .delete()
-        .eq('patient_id', patientId)
+        .eq('id', rowId)
         .then(() => {});
+    } else if (existing?.patientId) {
+      let query = supabase.from('crm_leads_recall').delete().eq('patient_id', existing.patientId);
+      if (existing.lastVisitDate) {
+        query = query.eq('data_ultimo_agendamento', existing.lastVisitDate);
+      }
+      query.then(() => {});
     }
   }
 

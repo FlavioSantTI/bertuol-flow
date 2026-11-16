@@ -553,19 +553,41 @@ ON CONFLICT DO NOTHING;
 
 export const SUPABASE_CRM_RECALL_DDL = `-- ============================================================
 -- TABELA OFICIAL DE RECALL 180+ DIAS (ALIMENTADA PELO N8N ÀS 06:00H)
+-- Suporta múltiplos ciclos de 6 meses para o mesmo paciente sem duplicidade!
 -- ============================================================
 
+-- Caso tenha criado a versão anterior com patient_id como PK, este bloco migra automaticamente:
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'crm_leads_recall'
+      AND constraint_name = 'crm_leads_recall_pkey'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'crm_leads_recall'
+      AND column_name = 'id'
+  ) THEN
+    ALTER TABLE public.crm_leads_recall DROP CONSTRAINT crm_leads_recall_pkey;
+    ALTER TABLE public.crm_leads_recall ADD COLUMN id BIGSERIAL PRIMARY KEY;
+    ALTER TABLE public.crm_leads_recall ADD CONSTRAINT uq_crm_recall_patient_ciclo UNIQUE (patient_id, data_ultimo_agendamento);
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.crm_leads_recall (
-  patient_id BIGINT PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
+  patient_id BIGINT NOT NULL,
   patient_name TEXT NOT NULL,
   primeiro_nome TEXT,
   mobile_phone TEXT NOT NULL,
-  data_ultimo_agendamento DATE,
+  data_ultimo_agendamento DATE NOT NULL DEFAULT CURRENT_DATE,
   ultimo_procedimento TEXT,
   dias_desde_ultimo INTEGER DEFAULT 180,
   tipo_mensagem TEXT DEFAULT 'A',
   mensagem_whatsapp TEXT,
-  -- Colunas de controle do funil CRM (preservadas quando o n8n faz UPSERT às 06:00h)
+  -- Colunas de controle do funil CRM (preservadas dentro do mesmo ciclo)
   stage TEXT DEFAULT 'new' CHECK (stage IN ('new', 'contacted', 'scheduled', 'converted', 'lost')),
   priority TEXT DEFAULT 'high' CHECK (priority IN ('high', 'medium', 'low')),
   clinic_id INTEGER DEFAULT 1,
@@ -575,12 +597,53 @@ CREATE TABLE IF NOT EXISTS public.crm_leads_recall (
   notes TEXT,
   last_contact_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  -- Chave composta do ciclo: permite acionar o mesmo paciente daqui a 6 meses
+  -- (quando data_ultimo_agendamento mudar), mantendo o histórico anterior intacto!
+  CONSTRAINT uq_crm_recall_patient_ciclo UNIQUE (patient_id, data_ultimo_agendamento)
 );
 
+CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_patient ON public.crm_leads_recall(patient_id);
 CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_stage ON public.crm_leads_recall(stage);
 CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_clinic ON public.crm_leads_recall(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_data_ult ON public.crm_leads_recall(data_ultimo_agendamento);
+
+-- TRIGGER INTELIGENTE PARA laços do n8n:
+-- Permite que o n8n faça apenas um INSERT simples todo dia às 06:00h!
+-- 1) Se for o MESMO ciclo (mesmo patient_id e mesma data_ultimo_agendamento), apenas atualiza os dias_desde_ultimo sem duplicar e sem perder o stage.
+-- 2) Se for um NOVO ciclo (6 meses depois, com uma nova data_ultimo_agendamento), cria um novo card 'new' e preserva o histórico antigo!
+CREATE OR REPLACE FUNCTION public.fn_crm_leads_recall_smart_cycle()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.crm_leads_recall
+    WHERE patient_id = NEW.patient_id
+      AND data_ultimo_agendamento = NEW.data_ultimo_agendamento
+  ) THEN
+    UPDATE public.crm_leads_recall
+    SET
+      patient_name = COALESCE(NEW.patient_name, patient_name),
+      primeiro_nome = COALESCE(NEW.primeiro_nome, primeiro_nome),
+      mobile_phone = COALESCE(NEW.mobile_phone, mobile_phone),
+      ultimo_procedimento = COALESCE(NEW.ultimo_procedimento, ultimo_procedimento),
+      dias_desde_ultimo = COALESCE(NEW.dias_desde_ultimo, dias_desde_ultimo),
+      tipo_mensagem = COALESCE(NEW.tipo_mensagem, tipo_mensagem),
+      mensagem_whatsapp = COALESCE(NEW.mensagem_whatsapp, mensagem_whatsapp),
+      updated_at = NOW()
+    WHERE patient_id = NEW.patient_id
+      AND data_ultimo_agendamento = NEW.data_ultimo_agendamento;
+    RETURN NULL; -- Evita erro de duplicidade no INSERT do n8n
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_crm_leads_recall_smart_cycle ON public.crm_leads_recall;
+CREATE TRIGGER trg_crm_leads_recall_smart_cycle
+  BEFORE INSERT ON public.crm_leads_recall
+  FOR EACH ROW
+  EXECUTE FUNCTION public.fn_crm_leads_recall_smart_cycle();
 
 ALTER TABLE public.crm_leads_recall ENABLE ROW LEVEL SECURITY;
 
@@ -621,17 +684,7 @@ INSERT INTO public.crm_leads_recall (
   6194517117501440, 'Gilberto Martins Noleto*', 'Gilberto', '5563992146767',
   '2026-05-15', 'colar pino', 180, 'A',
   'Olá, Gilberto! Tudo bem? 😊 Já faz algum tempo desde a sua última consulta em 15/05/2026. Que tal agendarmos uma avaliação preventiva para manter seu sorriso saudável? 🦷✨'
-)
-ON CONFLICT (patient_id) DO UPDATE SET
-  patient_name = EXCLUDED.patient_name,
-  primeiro_nome = EXCLUDED.primeiro_nome,
-  mobile_phone = EXCLUDED.mobile_phone,
-  data_ultimo_agendamento = EXCLUDED.data_ultimo_agendamento,
-  ultimo_procedimento = EXCLUDED.ultimo_procedimento,
-  dias_desde_ultimo = EXCLUDED.dias_desde_ultimo,
-  tipo_mensagem = EXCLUDED.tipo_mensagem,
-  mensagem_whatsapp = EXCLUDED.mensagem_whatsapp,
-  updated_at = NOW();
+);
 `;
 
 
