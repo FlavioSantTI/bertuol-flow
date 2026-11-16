@@ -141,15 +141,20 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
       doc.close();
 
       setTimeout(() => {
+        const t0 = performance.now();
         try {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
         } catch (e) {
           window.print();
         }
-      }, 400);
+        const elapsed = performance.now() - t0;
+        if (window.self !== window.top && elapsed < 90) {
+          window.open(`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`, '_blank', 'noopener,noreferrer');
+        }
+      }, 250);
     } catch (err) {
-      window.print();
+      window.open(`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -338,7 +343,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
 
             {/* Link direto que abre fora do iframe e chama a impressora nativa do Windows */}
             <a
-              href={`/totem-imprimir?clinic_id=${selectedClinic.id}`}
+              href={`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-black flex items-center gap-2 transition-all shadow-md shadow-[#147A80]/20 cursor-pointer text-xs active:scale-95"

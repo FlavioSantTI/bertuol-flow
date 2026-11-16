@@ -3835,10 +3835,11 @@ app.post('/api/gamification/patients/credit', (req: Request, res: Response) => {
 app.get('/totem-imprimir', async (req: Request, res: Response) => {
   try {
     const clinicId = req.query.clinic_id === '2' ? 2 : 1;
+    const autoPrint = req.query.autoprint === '1';
     const clinicName = clinicId === 2 ? 'Unidade Paraíso do Tocantins' : 'Unidade Matriz Palmas';
     const clinicAddress = clinicId === 2 ? 'Av. Bernardo Sayão, Centro, Paraíso - TO' : '104 Sul, Av. JK, Palmas - TO';
 
-    const host = req.get('host') || 'ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app';
+    const host = req.get('host') || 'bertuolflow.app-bertuol.tech';
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const qrTarget = `${protocol}://${host}/paciente?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
 
@@ -3846,7 +3847,7 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
     try {
       const QRCode = (await import('qrcode')).default;
       qrDataUrl = await QRCode.toDataURL(qrTarget, {
-        width: 480,
+        width: 520,
         margin: 2,
         color: { dark: '#147A80', light: '#FFFFFF' },
         errorCorrectionLevel: 'H',
@@ -3859,42 +3860,122 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Totem de Check-in Bertuol - ${clinicName}</title>
   <style>
-    @page { size: A4 portrait; margin: 15mm; }
-    * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
-      padding: 30px 20px;
+      padding: 24px 16px 40px;
       color: #0f172a;
-      background: #f8fafc;
+      background: #f1f5f9;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       min-height: 100vh;
     }
-    .print-controls {
+    .toolbar-wrapper {
+      width: 100%;
+      max-width: 760px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 16px 20px;
       margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .unit-switcher {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      gap: 4px;
+    }
+    .unit-link {
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #475569;
+      transition: all 0.15s ease;
+    }
+    .unit-link.active {
+      background: #147A80;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(20, 122, 128, 0.25);
+    }
+    .print-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
     .btn {
-      padding: 12px 24px;
+      padding: 12px 20px;
       border-radius: 12px;
-      font-weight: bold;
-      font-size: 14px;
+      font-weight: 800;
+      font-size: 13px;
       cursor: pointer;
       border: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
+      transition: all 0.15s ease;
     }
-    .btn-primary { background: #147A80; color: #fff; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: #147A80;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.35);
+    }
     .btn-primary:hover { background: #0f5c61; }
-    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-amber {
+      background: #f59e0b;
+      color: #0f172a;
+    }
+    .btn-amber:hover { background: #d97706; color: #ffffff; }
+    .btn-secondary {
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .iframe-notice {
+      display: none;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .iframe-notice.visible {
+      display: flex;
+    }
     .card {
       background: #ffffff;
       border: 4px solid #147A80;
@@ -3903,7 +3984,7 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
       max-width: 480px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.1);
     }
     .logo-container {
       display: flex;
@@ -4004,19 +4085,72 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
       font-weight: 500;
     }
     @media print {
-      body { background: #ffffff !important; padding: 0 !important; }
-      .print-controls { display: none !important; }
-      .card { box-shadow: none !important; border-width: 3px !important; }
+      body { background: #ffffff !important; padding: 0 !important; justify-content: center !important; }
+      .toolbar-wrapper { display: none !important; }
+      .card { box-shadow: none !important; border-width: 3px !important; margin: 0 auto !important; }
     }
   </style>
 </head>
 <body>
-  <div class="print-controls">
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Chamar Impressora do Windows (Ctrl+P)</button>
-    <button class="btn btn-secondary" onclick="window.close()">Fechar Guia</button>
+  <div class="toolbar-wrapper">
+    <div class="toolbar-row">
+      <div class="unit-switcher">
+        <a href="/totem-imprimir?clinic_id=1" class="unit-link ${clinicId === 1 ? 'active' : ''}">
+          📍 Unidade Matriz Palmas
+        </a>
+        <a href="/totem-imprimir?clinic_id=2" class="unit-link ${clinicId === 2 ? 'active' : ''}">
+          📍 Unidade Paraíso do Tocantins
+        </a>
+      </div>
+
+      <div class="print-controls">
+        <button type="button" class="btn btn-primary" onclick="chamarImpressoraWindows()">
+          🖨️ Chamar Impressora do Windows (Ctrl+P)
+        </button>
+        <a
+          id="open-top-print-link"
+          href="/totem-imprimir?clinic_id=${clinicId}&autoprint=1"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-amber"
+          title="Abre em uma guia limpa do navegador e aciona a impressora automaticamente"
+        >
+          ↗️ Abrir em Nova Guia e Imprimir
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="baixarFolhaA4AltaResolucao()">
+          💾 Baixar Folha A4 (.PNG)
+        </button>
+      </div>
+    </div>
+
+    <div id="iframe-sandbox-alert" class="iframe-notice">
+      <span>
+        ⚠️ <strong>Atenção:</strong> Seu navegador bloqueou a janela de impressão porque esta página está dentro de um painel de visualização (iframe).
+        Clique no botão ao lado para abrir a folha em uma guia direta ou baixe a folha A4 pronta:
+      </span>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a
+          href="/totem-imprimir?clinic_id=${clinicId}&autoprint=1"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-amber"
+          style="padding:8px 14px; font-size:12px;"
+        >
+          🖨️ Abrir Guia de Impressão Direta ↗
+        </a>
+        <button
+          type="button"
+          class="btn btn-primary"
+          style="padding:8px 14px; font-size:12px;"
+          onclick="baixarFolhaA4AltaResolucao()"
+        >
+          💾 Baixar Folha A4 Pronta (.PNG)
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="totem-card-a4">
     <div class="logo-container">
       <div class="logo-badge">b</div>
       <div>
@@ -4030,7 +4164,7 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
     <div class="clinic-text">${clinicName} • ${clinicAddress}</div>
 
     <div class="qr-frame">
-      <img src="${qrDataUrl}" alt="QR Code Check-in" />
+      <img id="totem-qr-img" src="${qrDataUrl}" alt="QR Code Check-in" crossorigin="anonymous" />
     </div>
 
     <div class="cta-instruction">
@@ -4047,11 +4181,182 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
   </div>
 
   <script>
-    // Dispara a caixa de diálogo da impressora do Windows automaticamente
-    window.addEventListener('load', () => {
-      setTimeout(() => {
+    const CLINIC_ID = ${clinicId};
+    const CLINIC_NAME = ${JSON.stringify(clinicName)};
+    const CLINIC_ADDRESS = ${JSON.stringify(clinicAddress)};
+    const AUTO_PRINT = ${autoPrint ? 'true' : 'false'};
+
+    function chamarImpressoraWindows() {
+      const alertBox = document.getElementById('iframe-sandbox-alert');
+      const isInIframe = window.self !== window.top;
+
+      // Mede o tempo de bloqueio de window.print().
+      // No Windows/Chrome/Edge, quando a caixa de diálogo abre de verdade, ela pausa a thread JS (>120ms).
+      // Quando bloqueada por iframe sandbox, window.print() retorna em <25ms sem fazer nada.
+      const start = performance.now();
+      try {
+        window.focus();
         window.print();
-      }, 400);
+      } catch (err) {
+        console.warn('Erro ao chamar window.print():', err);
+      }
+      const elapsed = performance.now() - start;
+
+      if (isInIframe && elapsed < 90) {
+        if (alertBox) alertBox.classList.add('visible');
+        // Abre automaticamente em uma nova guia de topo onde o navegador nunca bloqueia a impressora
+        const newWin = window.open('/totem-imprimir?clinic_id=' + CLINIC_ID + '&autoprint=1', '_blank', 'noopener,noreferrer');
+        if (!newWin) {
+          // Se o bloqueador de popups impedir window.open, aciona o download da folha A4 de alta resolução
+          baixarFolhaA4AltaResolucao();
+        }
+      }
+    }
+
+    // Atalho de teclado Ctrl+P / Cmd+P dentro da página
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        chamarImpressoraWindows();
+      }
+    });
+
+    // Gera uma folha A4 completa (1240 x 1754 px) em Canvas HTML5 para impressão/download infalível
+    function baixarFolhaA4AltaResolucao() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1240;
+      canvas.height = 1754;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Fundo branco A4
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Moldura do Card Centralizado
+      const cardW = 960;
+      const cardH = 1420;
+      const cardX = (canvas.width - cardW) / 2;
+      const cardY = (canvas.height - cardH) / 2;
+
+      ctx.strokeStyle = '#147A80';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, 64);
+      ctx.stroke();
+
+      // Logo Badge "b"
+      ctx.fillStyle = '#147A80';
+      ctx.beginPath();
+      ctx.roundRect(canvas.width / 2 - 140, cardY + 80, 72, 72, 22);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 46px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('b', canvas.width / 2 - 104, cardY + 132);
+
+      // Brand Name
+      ctx.fillStyle = '#147A80';
+      ctx.font = '900 52px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('bertuol', canvas.width / 2 - 50, cardY + 122);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '700 18px system-ui, -apple-system, sans-serif';
+      ctx.fillText('ODONTOLOGIA AVANÇADA', canvas.width / 2 - 48, cardY + 148);
+
+      // Pill Totem de Autoatendimento
+      ctx.fillStyle = '#F0FDFA';
+      ctx.strokeStyle = '#99F6E4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(canvas.width / 2 - 200, cardY + 195, 400, 48, 24);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#0F766E';
+      ctx.font = '800 22px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('TOTEM DE AUTOATENDIMENTO', canvas.width / 2, cardY + 227);
+
+      // Título principal
+      ctx.fillStyle = '#0F172A';
+      ctx.font = '900 58px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Check-in de Chegada', canvas.width / 2, cardY + 315);
+
+      // Unidade e endereço
+      ctx.fillStyle = '#64748B';
+      ctx.font = '600 26px system-ui, -apple-system, sans-serif';
+      ctx.fillText(CLINIC_NAME + ' • ' + CLINIC_ADDRESS, canvas.width / 2, cardY + 365);
+
+      // Moldura tracejada do QR Code
+      const qrBoxSize = 580;
+      const qrBoxX = (canvas.width - qrBoxSize) / 2;
+      const qrBoxY = cardY + 415;
+
+      ctx.save();
+      ctx.strokeStyle = '#147A80';
+      ctx.lineWidth = 6;
+      ctx.setLineDash([18, 12]);
+      ctx.beginPath();
+      ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 48);
+      ctx.stroke();
+      ctx.restore();
+
+      const qrImg = document.getElementById('totem-qr-img');
+      const finishRender = () => {
+        // Instrução
+        ctx.fillStyle = '#1E293B';
+        ctx.font = '800 32px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Aponte a câmera do seu celular para este código ao chegar', canvas.width / 2, cardY + 1075);
+
+        // Tag Clube Sorriso
+        ctx.fillStyle = '#FEF3C7';
+        ctx.strokeStyle = '#FDE68A';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(canvas.width / 2 - 310, cardY + 1120, 620, 68, 24);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#92400E';
+        ctx.font = '800 28px system-ui, -apple-system, sans-serif';
+        ctx.fillText('⭐ Ganhe +20 pontos no Clube Sorriso Bertuol!', canvas.width / 2, cardY + 1164);
+
+        // Rodapé
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '500 22px system-ui, -apple-system, sans-serif';
+        ctx.fillText('Seu dentista é avisado instantaneamente na sala de atendimento.', canvas.width / 2, cardY + 1320);
+
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'Totem-A4-Bertuol-' + (CLINIC_ID === 2 ? 'Paraiso' : 'Palmas') + '.png';
+        a.click();
+      };
+
+      if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) {
+        ctx.drawImage(qrImg, qrBoxX + 30, qrBoxY + 30, qrBoxSize - 60, qrBoxSize - 60);
+        finishRender();
+      } else if (qrImg) {
+        qrImg.onload = () => {
+          ctx.drawImage(qrImg, qrBoxX + 30, qrBoxY + 30, qrBoxSize - 60, qrBoxSize - 60);
+          finishRender();
+        };
+      } else {
+        finishRender();
+      }
+    }
+
+    // Se aberto em guia de topo com ?autoprint=1, chama a impressora automaticamente
+    window.addEventListener('load', () => {
+      if (AUTO_PRINT && window.self === window.top) {
+        setTimeout(() => {
+          window.focus();
+          window.print();
+        }, 350);
+      }
     });
   </script>
 </body>

@@ -46,6 +46,16 @@ interface TutorialResource {
 
 const ROOT_TUTORIAL_RESOURCES: TutorialResource[] = [
   {
+    id: 'preview-transicao-mobile',
+    badge: 'PROPOSTA UX MOBILE • ISOLADA',
+    title: 'Preview: Transição Animada Agenda → Detalhe',
+    description:
+      'Protótipo interativo isolado comparando 3 transições mobile de alta performance (Card Morph FLIP, Bottom Sheet Elástica iOS 18 e Push Horizontal) sem alterar o app principal.',
+    url: '/preview-transicao-agenda.html',
+    category: 'apresentacao',
+    accentColor: 'from-violet-500 to-fuchsia-600',
+  },
+  {
     id: 'studio-3d-full',
     badge: 'PALCO 3D + TRILHA 60M',
     title: 'Estúdio de Apresentação 60m (Modo Completo)',
@@ -247,6 +257,7 @@ export const RootLayout: React.FC<RootLayoutProps> = ({
             <iframe
               src={embeddedResource.url}
               title={embeddedResource.title}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals allow-forms allow-downloads"
               className="w-full flex-1 border-0 bg-slate-950"
             />
           </div>
