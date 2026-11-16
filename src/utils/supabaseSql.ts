@@ -608,13 +608,53 @@ CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_stage ON public.crm_leads_recall
 CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_clinic ON public.crm_leads_recall(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_crm_leads_recall_data_ult ON public.crm_leads_recall(data_ultimo_agendamento);
 
--- TRIGGER INTELIGENTE PARA laços do n8n:
--- Permite que o n8n faça apenas um INSERT simples todo dia às 06:00h!
--- 1) Se for o MESMO ciclo (mesmo patient_id e mesma data_ultimo_agendamento), apenas atualiza os dias_desde_ultimo sem duplicar e sem perder o stage.
--- 2) Se for um NOVO ciclo (6 meses depois, com uma nova data_ultimo_agendamento), cria um novo card 'new' e preserva o histórico antigo!
+-- TRIGGER INTELIGENTE DE AUTO-PREENCHIMENTO E CICLO (PARA O N8N):
+-- O n8n só precisa enviar os 9 campos dele! O banco preenche o restante sozinho:
+-- 1) Preenche stage='new', priority (baseado em dias_desde_ultimo), estimated_value=280, points_bonus=50.
+-- 2) Descobre automaticamente clinic_id (1=Palmas, 2=Paraíso) cruzando com a tabela public.patients (se existir).
+-- 3) Evita duplicidade no mesmo ciclo (patient_id + data_ultimo_agendamento) e permite novo ciclo daqui a 6 meses!
 CREATE OR REPLACE FUNCTION public.fn_crm_leads_recall_smart_cycle()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_city TEXT;
 BEGIN
+  -- 1. Preenchimento automático dos campos que não vêm do n8n (Defaults inteligentes)
+  NEW.stage := COALESCE(NEW.stage, 'new');
+  NEW.estimated_value := COALESCE(NEW.estimated_value, 280.00);
+  NEW.points_bonus := COALESCE(NEW.points_bonus, 50);
+  NEW.dentist_name := COALESCE(NULLIF(TRIM(NEW.dentist_name), ''), 'Corpo Clínico Bertuol');
+
+  -- Prioridade automática conforme tempo sem consulta
+  IF NEW.priority IS NULL THEN
+    IF COALESCE(NEW.dias_desde_ultimo, 180) >= 180 THEN
+      NEW.priority := 'high';
+    ELSIF COALESCE(NEW.dias_desde_ultimo, 180) >= 120 THEN
+      NEW.priority := 'medium';
+    ELSE
+      NEW.priority := 'low';
+    END IF;
+  END IF;
+
+  -- 2. Tenta identificar automaticamente a Unidade (1=Palmas, 2=Paraíso) cruzando com public.patients
+  IF NEW.clinic_id IS NULL THEN
+    BEGIN
+      SELECT LOWER(COALESCE(city, '')) INTO v_city
+      FROM public.patients
+      WHERE external_id = NEW.patient_id::TEXT
+         OR LOWER(name) = LOWER(NEW.patient_name)
+      LIMIT 1;
+
+      IF v_city LIKE '%paraiso%' OR v_city LIKE '%paraíso%' THEN
+        NEW.clinic_id := 2;
+      ELSE
+        NEW.clinic_id := 1;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      NEW.clinic_id := 1;
+    END;
+  END IF;
+
+  -- 3. Verifica se já existe registro para este mesmo ciclo (patient_id + data_ultimo_agendamento)
   IF EXISTS (
     SELECT 1 FROM public.crm_leads_recall
     WHERE patient_id = NEW.patient_id
