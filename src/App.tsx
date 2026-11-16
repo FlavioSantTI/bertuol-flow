@@ -1378,6 +1378,16 @@ export default function App() {
           appointments={appointments}
           userContext={effectiveUserContext}
           selectedClinicIdFilter={selectedClinicId}
+          onAppointmentCreatedFromCRM={(newAppt) => {
+            if (selectedDentist) {
+              const dateKey = formatDateKey(currentDate);
+              if (newAppt.date === dateKey) {
+                setAppointments(
+                  dataService.getAppointments(selectedDentist.id, dateKey, selectedClinicId, userContext)
+                );
+              }
+            }
+          }}
         />
       )}
         </div>

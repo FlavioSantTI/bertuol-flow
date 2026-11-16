@@ -1,171 +1,259 @@
-import React from 'react';
-import { CRMLeadOpportunity, CRMStage } from '../../types/crm';
+import React, { useState } from 'react';
+import { CRMLabel, CRMLeadOpportunity, CRMPipelineStage } from '../../types/crm';
+import { CRMService } from '../../services/crmService';
+import { Clinic } from '../../types/database';
 import {
   Phone,
   MessageSquare,
-  Sparkles,
-  User,
-  Clock,
-  Building2,
+  CalendarPlus,
+  FileText,
   Trash2,
+  Copy,
+  Check,
+  AlertTriangle,
+  Calendar,
 } from 'lucide-react';
-import { Clinic } from '../../types/database';
 
 interface CRMLeadCardProps {
   opportunity: CRMLeadOpportunity;
   clinics: Clinic[];
+  pipelineStages: CRMPipelineStage[];
+  allLabels: CRMLabel[];
+  isFollowUpDue?: boolean;
+  isFollowUpOverdue?: boolean;
+  slaDaysStale?: number;
   onOpenQuickContact: (opp: CRMLeadOpportunity) => void;
-  onUpdateStage: (id: string, stage: CRMStage) => void;
+  onOpenQuickSchedule: (opp: CRMLeadOpportunity) => void;
+  onOpenNotesLabels: (opp: CRMLeadOpportunity) => void;
+  onUpdateStage: (opp: CRMLeadOpportunity, targetStageId: string) => void;
   onDelete: (id: string) => void;
   viewMode?: 'kanban' | 'list';
 }
 
+const LABEL_TONE: Record<CRMLabel['color'], string> = {
+  teal: 'bg-teal-50 text-teal-800 border-teal-200/80',
+  amber: 'bg-amber-50 text-amber-900 border-amber-200/80',
+  rose: 'bg-rose-50 text-rose-800 border-rose-200/80',
+  indigo: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+  emerald: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+  slate: 'bg-slate-100 text-slate-700 border-slate-200/80',
+};
+
 export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   opportunity,
   clinics,
+  pipelineStages,
+  allLabels,
+  isFollowUpDue = false,
+  isFollowUpOverdue = false,
+  slaDaysStale = 0,
   onOpenQuickContact,
+  onOpenQuickSchedule,
+  onOpenNotesLabels,
   onUpdateStage,
   onDelete,
   viewMode = 'kanban',
 }) => {
+  const [copiedPhone, setCopiedPhone] = useState(false);
+
   const clinic = clinics.find((c) => c.id === opportunity.clinicId);
+  const formattedPhone = CRMService.formatPhoneDisplay(opportunity.patientPhone);
+  const resolvedLabels = (opportunity.labels || [])
+    .map((id) => allLabels.find((l) => l.id === id))
+    .filter((l): l is CRMLabel => Boolean(l));
 
-  const getPriorityBadge = () => {
-    switch (opportunity.priority) {
-      case 'high':
-        return { label: 'Alta Prioridade', bg: 'bg-red-50 text-red-700 border-red-200' };
-      case 'medium':
-        return { label: 'Média', bg: 'bg-amber-50 text-amber-800 border-amber-200' };
-      case 'low':
-      default:
-        return { label: 'Normal', bg: 'bg-slate-100 text-slate-700 border-slate-200' };
-    }
+  const priorityLabel =
+    opportunity.priority === 'high' ? 'Alta' : opportunity.priority === 'medium' ? 'Média' : 'Normal';
+
+  const hasSLAWarning = slaDaysStale >= 2;
+
+  const handleCopyPhone = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(opportunity.patientPhone);
+    setCopiedPhone(true);
+    setTimeout(() => setCopiedPhone(false), 1600);
   };
-
-  const getTypeLabel = () => {
-    switch (opportunity.type) {
-      case 'recall_6m':
-        return '🔄 Recall 6+ Meses';
-      case 'treatment_pending':
-        return '📑 Orçamento Aberto';
-      case 'whatsapp_lead':
-        return '💬 Lead WhatsApp';
-      case 'indication':
-        return '⭐ Indicação';
-      default:
-        return '📌 Oportunidade';
-    }
-  };
-
-  const priorityBadge = getPriorityBadge();
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white border border-slate-200 hover:border-teal-300 rounded-2xl p-4 transition-all shadow-2xs hover:shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0 flex-1">
-          <div className="w-10 h-10 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
-            <User className="w-5 h-5 text-[#147A80]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h4 className="font-extrabold text-slate-900 text-base truncate">
-                {opportunity.patientName}
-              </h4>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${priorityBadge.bg}`}>
-                {priorityBadge.label}
+      <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-3.5 transition-all shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          {/* Row 1: Patient Name + Clean Inline Status/Priority */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h4 className="font-bold text-slate-900 text-sm truncate">{opportunity.patientName}</h4>
+
+            <span className="text-xs text-slate-400">·</span>
+
+            <button
+              type="button"
+              onClick={handleCopyPhone}
+              title="Copiar telefone"
+              className="inline-flex items-center gap-1 font-mono tabular-nums text-xs font-semibold text-slate-700 hover:text-[#147A80] cursor-pointer"
+            >
+              <Phone className="w-3 h-3 text-slate-400" />
+              <span>{formattedPhone}</span>
+              {copiedPhone ? (
+                <Check className="w-3 h-3 text-emerald-600" />
+              ) : (
+                <Copy className="w-3 h-3 text-slate-300" />
+              )}
+            </button>
+
+            {opportunity.priority === 'high' && (
+              <span className="text-[11px] font-semibold text-rose-700">· Prioridade {priorityLabel}</span>
+            )}
+
+            {hasSLAWarning && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md tabular-nums">
+                <AlertTriangle className="w-3 h-3" />
+                Sem retorno há {slaDaysStale}d
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-[#147A80] border border-teal-200">
-                {getTypeLabel()}
+            )}
+
+            {isFollowUpDue && (
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border tabular-nums ${
+                  isFollowUpOverdue
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                }`}
+              >
+                <Calendar className="w-3 h-3" />
+                {isFollowUpOverdue ? 'Follow-up atrasado' : 'Follow-up hoje'} ({opportunity.nextContactDate})
               </span>
-              {opportunity.tipoMensagem && (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  Mensagem Tipo {opportunity.tipoMensagem}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-slate-500">
-              <span className="flex items-center gap-1 font-mono font-semibold text-slate-700">
-                <Phone className="w-3.5 h-3.5 text-teal-600" />
-                {opportunity.patientPhone}
-              </span>
-
-              {clinic && (
-                <span className="flex items-center gap-1 font-medium">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  {clinic.shortName}
-                </span>
-              )}
-
-              {opportunity.dentistName && (
-                <span className="flex items-center gap-1 font-medium text-slate-600">
-                  🩺 {opportunity.dentistName}
-                </span>
-              )}
-
-              {opportunity.lastVisitDate && (
-                <span className="flex items-center gap-1 text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  Última visita: {opportunity.lastVisitDate}
-                  {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo} dias)` : ''}
-                </span>
-              )}
-            </div>
-
-            {opportunity.treatmentDescription && (
-              <p className="text-xs text-slate-600 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                <span className="font-bold text-slate-700">Último procedimento:</span> {opportunity.treatmentDescription}
-              </p>
             )}
           </div>
+
+          {/* Row 2: Clean Metadata with · separators */}
+          <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
+            {clinic && <span className="font-medium text-slate-700">{clinic.shortName}</span>}
+            {opportunity.dentistName && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{opportunity.dentistName}</span>
+              </>
+            )}
+            {opportunity.lastVisitDate && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums">
+                  Última: {opportunity.lastVisitDate}
+                  {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
+                </span>
+              </>
+            )}
+            {opportunity.contactAttempts > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums font-medium text-slate-700">
+                  {opportunity.contactAttempts}ª tentativa
+                </span>
+              </>
+            )}
+            {opportunity.scheduledDate && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="font-semibold text-indigo-700 tabular-nums">
+                  Agendado: {opportunity.scheduledDate} {opportunity.scheduledTime || ''}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Row 3: Procedure + Labels + Latest Note */}
+          {(opportunity.treatmentDescription || resolvedLabels.length > 0 || opportunity.notes || opportunity.lostReason) && (
+            <div className="flex items-center gap-2 flex-wrap pt-0.5 text-xs">
+              {opportunity.treatmentDescription && (
+                <span className="text-slate-600">{opportunity.treatmentDescription}</span>
+              )}
+              {resolvedLabels.map((lbl) => (
+                <span
+                  key={lbl.id}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${LABEL_TONE[lbl.color]}`}
+                >
+                  {lbl.name}
+                </span>
+              ))}
+              {opportunity.notes && (
+                <button
+                  type="button"
+                  onClick={() => onOpenNotesLabels(opportunity)}
+                  className="text-[11px] text-slate-600 hover:text-[#147A80] underline decoration-slate-300 cursor-pointer truncate max-w-md"
+                >
+                  Nota: &ldquo;{opportunity.notes}&rdquo;
+                </button>
+              )}
+              {opportunity.lostReason && (
+                <span className="text-[11px] font-medium text-rose-700">
+                  Motivo: {opportunity.lostReason}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right side values & action buttons */}
-        <div className="flex items-center gap-3 shrink-0 self-end md:self-center border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 w-full md:w-auto justify-between md:justify-end">
-          {opportunity.estimatedValue && opportunity.estimatedValue > 0 ? (
-            <div className="text-left md:text-right">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                Valor Est.
-              </span>
-              <span className="text-sm font-extrabold text-emerald-700 font-mono">
+        {/* Right Side: Numeric Values & Actions */}
+        <div className="flex items-center gap-2.5 shrink-0 justify-between lg:justify-end border-t lg:border-t-0 pt-2.5 lg:pt-0 border-slate-100">
+          <div className="text-left lg:text-right mr-1">
+            {opportunity.estimatedValue && opportunity.estimatedValue > 0 ? (
+              <span className="text-sm font-bold text-slate-900 font-mono tabular-nums block">
                 R$ {opportunity.estimatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
-            </div>
-          ) : null}
+            ) : (
+              <span className="text-xs text-slate-400 block">Sem valor</span>
+            )}
+            {opportunity.pointsBonus ? (
+              <span className="text-[11px] font-semibold text-amber-700 tabular-nums">
+                +{opportunity.pointsBonus} pts Clube
+              </span>
+            ) : null}
+          </div>
 
-          {opportunity.pointsBonus ? (
-            <div className="flex items-center gap-1 bg-amber-50 border border-amber-300 text-amber-900 px-2.5 py-1 rounded-xl text-xs font-black">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>+{opportunity.pointsBonus} Pts</span>
-            </div>
-          ) : null}
-
-          {/* Selector Stage */}
-          <select
-            value={opportunity.stage}
-            onChange={(e) => onUpdateStage(opportunity.id, e.target.value as CRMStage)}
-            className="text-xs font-bold bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-2 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80]"
-          >
-            <option value="new">🆕 Novo</option>
-            <option value="contacted">💬 Contatado</option>
-            <option value="scheduled">📅 Agendado</option>
-            <option value="converted">✅ Convertido</option>
-            <option value="lost">❌ Perdido</option>
-          </select>
-
-          {/* Quick WhatsApp Action Button */}
           <button
-            onClick={() => onOpenQuickContact(opportunity)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer hover:scale-102"
+            type="button"
+            onClick={() => onOpenNotesLabels(opportunity)}
+            title="Notas, Rótulos e Follow-up"
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-[#147A80] hover:border-[#147A80] transition-colors cursor-pointer"
           >
-            <MessageSquare className="w-4 h-4" />
-            <span>WhatsApp</span>
+            <FileText className="w-4 h-4" />
           </button>
 
           <button
+            type="button"
+            onClick={() => onOpenQuickSchedule(opportunity)}
+            title="Agendar Consulta em 1-Clique"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <CalendarPlus className="w-3.5 h-3.5 text-[#147A80]" />
+            <span>Agendar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenQuickContact(opportunity)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>WhatsApp</span>
+          </button>
+
+          <select
+            value={opportunity.stage}
+            onChange={(e) => onUpdateStage(opportunity, e.target.value)}
+            className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80]"
+          >
+            {pipelineStages.map((stg) => (
+              <option key={stg.id} value={stg.id}>
+                {stg.title}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
             onClick={() => onDelete(opportunity.id)}
             title="Excluir Oportunidade"
-            className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -174,103 +262,216 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
     );
   }
 
-  // Kanban Card View
+  // Clean Executive Kanban Card View (Zero Pill Sandwich)
   return (
-    <div className="bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-3 group">
-      <div>
-        {/* Top Badges */}
-        <div className="flex items-center justify-between gap-1.5 mb-2 flex-wrap">
-          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${priorityBadge.bg}`}>
-            {priorityBadge.label}
-          </span>
-          <div className="flex items-center gap-1">
-            {opportunity.tipoMensagem && (
-              <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-200">
-                Tipo {opportunity.tipoMensagem}
-              </span>
+    <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-3.5 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between gap-2.5 group">
+      <div className="space-y-1.5">
+        {/* Top Line: Patient Name first + Discrete Note/Tag trigger */}
+        <div className="flex items-start justify-between gap-2">
+          <h4
+            className="font-bold text-slate-900 text-[13px] leading-snug line-clamp-1 group-hover:text-[#147A80] transition-colors"
+            title={opportunity.patientName}
+          >
+            {opportunity.patientName}
+          </h4>
+
+          <button
+            type="button"
+            onClick={() => onOpenNotesLabels(opportunity)}
+            title="Abrir Notas, Rótulos e Follow-up"
+            className="p-1 -mt-0.5 -mr-1 rounded-md text-slate-400 hover:text-[#147A80] hover:bg-teal-50 transition-colors cursor-pointer shrink-0"
+          >
+            <FileText className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Phone & Quick Copy + Priority */}
+        <div className="flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={handleCopyPhone}
+            title="Copiar telefone"
+            className="inline-flex items-center gap-1 font-mono tabular-nums font-semibold text-slate-700 hover:text-[#147A80] cursor-pointer"
+          >
+            <span>{formattedPhone}</span>
+            {copiedPhone ? (
+              <Check className="w-3 h-3 text-emerald-600" />
+            ) : (
+              <Copy className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
-            <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-              {getTypeLabel()}
-            </span>
-          </div>
+          </button>
+
+          <span
+            className={`text-[11px] font-semibold ${
+              opportunity.priority === 'high' ? 'text-rose-700' : 'text-slate-400'
+            }`}
+          >
+            {priorityLabel}
+          </span>
         </div>
 
-        {/* Patient Name */}
-        <h4 className="font-extrabold text-slate-900 text-sm mb-1 line-clamp-1 group-hover:text-[#147A80] transition-colors">
-          {opportunity.patientName}
-        </h4>
+        {/* Unified Clinical Context Line (no nested boxes) */}
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          <span>{clinic?.shortName || 'Palmas'}</span>
+          {opportunity.dentistName && <span> · {opportunity.dentistName}</span>}
+          {opportunity.diasDesdeUltimo ? (
+            <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d inativo</span>
+          ) : null}
+        </p>
 
-        {/* Phone & Clinic */}
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-          <span className="font-mono font-semibold text-slate-700">{opportunity.patientPhone}</span>
-          {clinic && <span className="font-medium text-slate-500 text-[11px]">📍 {clinic.shortName}</span>}
-        </div>
-
-        {/* Description */}
+        {/* Treatment Description */}
         {opportunity.treatmentDescription && (
-          <p className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100 line-clamp-2 mb-2">
+          <p className="text-[11px] text-slate-700 line-clamp-2 leading-snug">
             {opportunity.treatmentDescription}
           </p>
         )}
 
-        {/* Dates / Last Visit */}
-        {opportunity.lastVisitDate && (
-          <div className="text-[11px] font-medium text-amber-800 bg-amber-50/80 px-2 py-1 rounded-lg border border-amber-200 flex items-center gap-1 mb-2">
-            <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-            <span>
-              Última: {opportunity.lastVisitDate}
-              {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
-            </span>
+        {/* SLA / Follow-up / Scheduled Semantic Indicators */}
+        {(hasSLAWarning || isFollowUpDue || opportunity.nextContactDate || opportunity.scheduledDate || opportunity.lostReason) && (
+          <div className="space-y-1 pt-0.5">
+            {hasSLAWarning && (
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-rose-700 tabular-nums">
+                <AlertTriangle className="w-3 h-3 shrink-0" />
+                <span>Sem retorno há {slaDaysStale} dias (SLA)</span>
+              </div>
+            )}
+
+            {opportunity.nextContactDate && (
+              <div
+                className={`flex items-center gap-1 text-[11px] font-semibold tabular-nums ${
+                  isFollowUpOverdue
+                    ? 'text-rose-700'
+                    : isFollowUpDue
+                    ? 'text-amber-700'
+                    : 'text-slate-500'
+                }`}
+              >
+                <Calendar className="w-3 h-3 shrink-0" />
+                <span>
+                  {isFollowUpOverdue
+                    ? `Retorno atrasado (${opportunity.nextContactDate})`
+                    : isFollowUpDue
+                    ? 'Retornar hoje'
+                    : `Retornar em ${opportunity.nextContactDate}`}
+                </span>
+              </div>
+            )}
+
+            {opportunity.scheduledDate && (
+              <div className="text-[11px] font-semibold text-indigo-700 tabular-nums">
+                Agenda: {opportunity.scheduledDate} {opportunity.scheduledTime || ''}
+              </div>
+            )}
+
+            {opportunity.lostReason && (
+              <div className="text-[11px] font-medium text-rose-700 line-clamp-1">
+                Motivo: {opportunity.lostReason}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Value and Points */}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-          {opportunity.estimatedValue ? (
-            <span className="font-black text-emerald-700 font-mono text-xs">
-              R$ {opportunity.estimatedValue.toLocaleString('pt-BR')}
-            </span>
-          ) : (
-            <span className="text-[10px] text-slate-400">Sem valor est.</span>
-          )}
+        {/* Compact Labels + Latest Note Preview */}
+        {(resolvedLabels.length > 0 || opportunity.notes) && (
+          <div className="space-y-1 pt-0.5">
+            {resolvedLabels.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {resolvedLabels.slice(0, 3).map((lbl) => (
+                  <span
+                    key={lbl.id}
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${LABEL_TONE[lbl.color]}`}
+                  >
+                    {lbl.name}
+                  </span>
+                ))}
+                {resolvedLabels.length > 3 && (
+                  <span className="text-[10px] text-slate-400 font-semibold">
+                    +{resolvedLabels.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
 
-          {opportunity.pointsBonus ? (
-            <span className="flex items-center gap-1 bg-amber-100 text-amber-950 px-2 py-0.5 rounded-md text-[10px] font-black border border-amber-300">
-              <Sparkles className="w-3 h-3 text-amber-600" />+{opportunity.pointsBonus} pts
-            </span>
-          ) : null}
-        </div>
+            {opportunity.notes && (
+              <button
+                type="button"
+                onClick={() => onOpenNotesLabels(opportunity)}
+                className="block w-full text-left text-[11px] text-slate-600 hover:text-[#147A80] line-clamp-1 cursor-pointer"
+                title={opportunity.notes}
+              >
+                &ldquo;{opportunity.notes}&rdquo;
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Action Footer */}
-      <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between gap-1.5">
-        <button
-          onClick={() => onOpenQuickContact(opportunity)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-2xs transition-all cursor-pointer"
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>WhatsApp</span>
-        </button>
+      {/* Footer: Value, Attempts & Primary Actions */}
+      <div className="border-t border-slate-100 pt-2 space-y-2">
+        <div className="flex items-center justify-between text-xs tabular-nums">
+          <div className="flex items-center gap-1.5">
+            {opportunity.estimatedValue ? (
+              <span className="font-bold text-slate-900 font-mono">
+                R$ {opportunity.estimatedValue.toLocaleString('pt-BR')}
+              </span>
+            ) : (
+              <span className="text-[11px] text-slate-400">Sem valor</span>
+            )}
+            {opportunity.pointsBonus ? (
+              <span className="text-[11px] font-semibold text-amber-700">· +{opportunity.pointsBonus} pts</span>
+            ) : null}
+          </div>
 
-        <select
-          value={opportunity.stage}
-          onChange={(e) => onUpdateStage(opportunity.id, e.target.value as CRMStage)}
-          className="text-[11px] font-bold bg-slate-100 border border-slate-300 rounded-xl px-2 py-1.5 text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#147A80]"
-        >
-          <option value="new">🆕 Novo</option>
-          <option value="contacted">💬 Contatado</option>
-          <option value="scheduled">📅 Agendado</option>
-          <option value="converted">✅ Convertido</option>
-          <option value="lost">❌ Perdido</option>
-        </select>
+          {opportunity.contactAttempts > 0 && (
+            <span className="text-[11px] font-medium text-slate-500">
+              {opportunity.contactAttempts}ª tent.
+            </span>
+          )}
+        </div>
 
-        <button
-          onClick={() => onDelete(opportunity.id)}
-          title="Excluir Oportunidade"
-          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onOpenQuickContact(opportunity)}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>WhatsApp</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenQuickSchedule(opportunity)}
+            title="Agendar na Grade em 1-Clique"
+            className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-[11px] transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <CalendarPlus className="w-3.5 h-3.5 text-[#147A80]" />
+            <span>Agendar</span>
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-1.5">
+          <select
+            value={opportunity.stage}
+            onChange={(e) => onUpdateStage(opportunity, e.target.value)}
+            className="flex-1 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 cursor-pointer focus:ring-2 focus:ring-[#147A80] truncate"
+          >
+            {pipelineStages.map((stg) => (
+              <option key={stg.id} value={stg.id}>
+                {stg.title}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => onDelete(opportunity.id)}
+            title="Excluir Oportunidade"
+            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer shrink-0"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );
