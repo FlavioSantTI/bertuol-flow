@@ -15,7 +15,7 @@ import { CRMLeadCard } from './CRMLeadCard';
 import { CRMQuickContactModal } from './CRMQuickContactModal';
 import { CRMNewOpportunityModal } from './CRMNewOpportunityModal';
 import { CRMPipelineManagerModal } from './CRMPipelineManagerModal';
-import { CRMNotesLabelsModal } from './CRMNotesLabelsModal';
+import { CRMLeadDrawer } from './CRMLeadDrawer';
 import { CRMQuickScheduleModal } from './CRMQuickScheduleModal';
 import { CRMLostReasonModal } from './CRMLostReasonModal';
 import {
@@ -84,16 +84,29 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
-  // Sub-modals
+  // Sub-modals & Drawer
   const [quickContactOpp, setQuickContactOpp] = useState<CRMLeadOpportunity | null>(null);
   const [quickScheduleOpp, setQuickScheduleOpp] = useState<CRMLeadOpportunity | null>(null);
-  const [notesLabelsOppId, setNotesLabelsOppId] = useState<string | null>(null);
+  const [drawerOppId, setDrawerOppId] = useState<string | null>(null);
   const [pendingLostTransition, setPendingLostTransition] = useState<{
     opp: CRMLeadOpportunity;
     targetStageId: string;
   } | null>(null);
   const [isNewOppModalOpen, setIsNewOppModalOpen] = useState(false);
   const [isPipelineManagerOpen, setIsPipelineManagerOpen] = useState(false);
+
+  // Quick 1-line free capture bar
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
+  const [qcName, setQcName] = useState('');
+  const [qcPhone, setQcPhone] = useState('');
+  const [qcNote, setQcNote] = useState('');
+  const [qcClinicId, setQcClinicId] = useState<number>(
+    typeof selectedClinicIdFilter === 'number' ? selectedClinicIdFilter : clinics[0]?.id || 1
+  );
+
+  // Drag & Drop state
+  const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
 
   // Template editing
   const [editingTemplate, setEditingTemplate] = useState<CRMMessageTemplate | null>(null);
@@ -147,9 +160,9 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     [pipelines, activePipelineId]
   );
 
-  const notesLabelsOpp = useMemo(
-    () => opportunities.find((o) => o.id === notesLabelsOppId) || null,
-    [opportunities, notesLabelsOppId]
+  const drawerOpp = useMemo(
+    () => opportunities.find((o) => o.id === drawerOppId) || null,
+    [opportunities, drawerOppId]
   );
 
   if (!isOpen) return null;
@@ -321,9 +334,64 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     if (selectedLabelFilter === labelId) setSelectedLabelFilter('all');
   };
 
-  const handleUpdateFollowUp = (oppId: string, nextContactDate: string | undefined) => {
-    CRMService.updateOpportunity(oppId, { nextContactDate });
+  const handleSaveOpportunityDrawer = (oppId: string, updates: Partial<CRMLeadOpportunity>) => {
+    CRMService.updateOpportunity(oppId, updates);
     setOpportunities(CRMService.getOpportunities());
+    showToast('Ficha atualizada e sincronizada.');
+  };
+
+  const handleQuickCaptureSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qcName.trim() || !activePipeline) return;
+    const firstStageId = activePipeline.stages[0]?.id || 'new';
+    const inferredType =
+      activePipeline.id === 'budgets'
+        ? 'treatment_pending'
+        : activePipeline.id === 'recall_6m'
+        ? 'recall_6m'
+        : 'whatsapp_lead';
+
+    const created = CRMService.addOpportunity({
+      pipelineId: activePipeline.id,
+      patientName: qcName.trim(),
+      primeiroNome: qcName.trim().split(' ')[0],
+      patientPhone: qcPhone.trim() || 'Sem telefone',
+      clinicId: Number(qcClinicId),
+      type: inferredType,
+      stage: firstStageId,
+      priority: 'medium',
+      dentistName: 'Sem preferência',
+      treatmentDescription: qcNote.trim() || 'Atendimento rápido (ficha livre)',
+      estimatedValue: 0,
+      pointsBonus: activePipeline.defaultPointsBonus ?? 50,
+      assignedUser: currentUserName,
+      notes: qcNote.trim(),
+      source: 'Captura Rápida',
+    });
+    setOpportunities(CRMService.getOpportunities());
+    setQcName('');
+    setQcPhone('');
+    setQcNote('');
+    setIsQuickCaptureOpen(false);
+    showToast(`"${created.patientName}" adicionado em ${activePipeline.name}.`);
+  };
+
+  const handleDragStartCard = (e: React.DragEvent, oppId: string) => {
+    setDraggedOppId(oppId);
+    e.dataTransfer.setData('text/plain', oppId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDropOnStage = (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    const oppId = e.dataTransfer.getData('text/plain') || draggedOppId;
+    setDraggedOppId(null);
+    setDragOverStageId(null);
+    if (!oppId) return;
+    const opp = opportunities.find((o) => o.id === oppId);
+    if (opp && opp.stage !== targetStageId) {
+      handleStageChangeRequest(opp, targetStageId);
+    }
   };
 
   const handleMovePipeline = (oppId: string, targetPipelineId: string) => {
@@ -759,29 +827,45 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               </select>
             </div>
 
-            <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => setViewMode('kanban')}
-                title="Modo Kanban"
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-                  viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
+                onClick={() => setIsQuickCaptureOpen((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer whitespace-nowrap ${
+                  isQuickCaptureOpen
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-teal-50 text-[#147A80] border-teal-200 hover:bg-teal-100'
                 }`}
+                title="Adicionar lead rapidamente em 1 linha livre"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Kanban</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Cadastro Rápido</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                title="Modo Lista"
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-                  viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span>Lista</span>
-              </button>
+
+              <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('kanban')}
+                  title="Modo Kanban"
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                    viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Kanban</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  title="Modo Lista"
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                    viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Lista</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -809,6 +893,64 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 </div>
               )}
 
+              {/* 1-Line Quick Free-Form Capture Bar */}
+              {isQuickCaptureOpen && (
+                <form
+                  onSubmit={handleQuickCaptureSubmit}
+                  className="bg-white border border-[#147A80]/40 rounded-xl p-3 shadow-xs flex flex-wrap lg:flex-nowrap items-center gap-2 shrink-0"
+                >
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={qcName}
+                    onChange={(e) => setQcName(e.target.value)}
+                    placeholder="Nome ou @ do contato *"
+                    className="flex-1 min-w-[160px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                  />
+                  <input
+                    type="text"
+                    value={qcPhone}
+                    onChange={(e) => setQcPhone(e.target.value)}
+                    placeholder="WhatsApp / Contato"
+                    className="w-full sm:w-40 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                  />
+                  <input
+                    type="text"
+                    value={qcNote}
+                    onChange={(e) => setQcNote(e.target.value)}
+                    placeholder="Interesse / Anotação livre (ex: Implantes, prefere tarde)..."
+                    className="flex-[2] min-w-[220px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                  />
+                  <select
+                    value={qcClinicId}
+                    onChange={(e) => setQcClinicId(Number(e.target.value))}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                  >
+                    {clinics
+                      .filter((c) => c.active)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.shortName}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                  >
+                    Salvar em {activePipeline.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickCaptureOpen(false)}
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    Fechar
+                  </button>
+                </form>
+              )}
+
               {viewMode === 'kanban' ? (
                 <div
                   className="grid gap-3.5 items-start pb-2 overflow-x-auto flex-1"
@@ -819,11 +961,25 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   {pipelineStages.map((stg) => {
                     const stageOpps = filteredOpps.filter((o) => o.stage === stg.id);
                     const stageSum = stageOpps.reduce((acc, cur) => acc + (cur.estimatedValue || 0), 0);
+                    const isDropTarget = dragOverStageId === stg.id;
 
                     return (
                       <div
                         key={stg.id}
-                        className="bg-slate-100/80 border border-slate-200 rounded-xl p-2.5 flex flex-col max-h-[68vh]"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          if (dragOverStageId !== stg.id) setDragOverStageId(stg.id);
+                        }}
+                        onDragLeave={() => {
+                          if (dragOverStageId === stg.id) setDragOverStageId(null);
+                        }}
+                        onDrop={(e) => handleDropOnStage(e, stg.id)}
+                        className={`rounded-xl p-2.5 flex flex-col max-h-[68vh] transition-all border ${
+                          isDropTarget
+                            ? 'bg-teal-50/70 border-[#147A80] ring-2 ring-[#147A80]/30'
+                            : 'bg-slate-100/80 border-slate-200'
+                        }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-2.5 px-1">
                           <div className="flex items-center gap-2 min-w-0">
@@ -847,10 +1003,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                           )}
                         </div>
 
-                        <div className="overflow-y-auto space-y-2.5 pr-0.5">
+                        <div className="overflow-y-auto space-y-2.5 pr-0.5 min-h-[80px]">
                           {stageOpps.length === 0 ? (
                             <div className="bg-white/60 border border-dashed border-slate-200 rounded-lg p-4 text-center text-xs text-slate-400">
-                              Sem leads nesta etapa
+                              {draggedOppId ? 'Solte o card aqui' : 'Sem leads nesta etapa'}
                             </div>
                           ) : (
                             stageOpps.map((opp) => (
@@ -865,9 +1021,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                                 slaDaysStale={CRMService.getSLADaysStale(opp, activePipeline)}
                                 onOpenQuickContact={(o) => setQuickContactOpp(o)}
                                 onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
-                                onOpenNotesLabels={(o) => setNotesLabelsOppId(o.id)}
+                                onOpenDrawer={(o) => setDrawerOppId(o.id)}
                                 onUpdateStage={handleStageChangeRequest}
                                 onDelete={handleDeleteOpportunity}
+                                onDragStartCard={handleDragStartCard}
                                 viewMode="kanban"
                               />
                             ))
@@ -896,7 +1053,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                         slaDaysStale={CRMService.getSLADaysStale(opp, activePipeline)}
                         onOpenQuickContact={(o) => setQuickContactOpp(o)}
                         onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
-                        onOpenNotesLabels={(o) => setNotesLabelsOppId(o.id)}
+                        onOpenDrawer={(o) => setDrawerOppId(o.id)}
                         onUpdateStage={handleStageChangeRequest}
                         onDelete={handleDeleteOpportunity}
                         viewMode="list"
@@ -1211,19 +1368,24 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         onConfirmSchedule={handleConfirmQuickSchedule}
       />
 
-      <CRMNotesLabelsModal
-        isOpen={Boolean(notesLabelsOpp)}
-        onClose={() => setNotesLabelsOppId(null)}
-        opportunity={notesLabelsOpp}
-        labels={labels}
+      <CRMLeadDrawer
+        isOpen={Boolean(drawerOpp)}
+        onClose={() => setDrawerOppId(null)}
+        opportunity={drawerOpp}
+        clinics={clinics}
+        dentists={dentists}
         pipelines={pipelines}
+        labels={labels}
         currentUserName={currentUserName}
+        onSaveOpportunity={handleSaveOpportunityDrawer}
+        onStageChangeRequest={handleStageChangeRequest}
+        onMovePipeline={handleMovePipeline}
         onAddNote={handleAddNote}
         onToggleLabel={handleToggleLabel}
         onCreateLabel={handleCreateLabel}
         onDeleteLabel={handleDeleteLabel}
-        onUpdateFollowUp={handleUpdateFollowUp}
-        onMovePipeline={handleMovePipeline}
+        onOpenQuickContact={(o) => setQuickContactOpp(o)}
+        onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
       />
 
       <CRMLostReasonModal

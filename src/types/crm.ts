@@ -41,13 +41,19 @@ export interface CRMNoteEntry {
   createdAt: string;
 }
 
+export interface CRMCustomField {
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface CRMLeadOpportunity {
   id: string;
   pipelineId: string; // Ex: 'recall_6m', 'campaigns', 'budgets', ou slug customizado
   patientId?: number | null; // patient_id do Clinicorp / Supabase crm_leads_recall
   patientName: string; // patient_name
   primeiroNome?: string; // primeiro_nome
-  patientPhone: string; // mobile_phone
+  patientPhone: string; // mobile_phone ou @instagram / contato livre
   clinicId: number; // 1 = Palmas, 2 = Paraíso
   type: CRMType;
   stage: CRMStage;
@@ -63,6 +69,7 @@ export interface CRMLeadOpportunity {
   pointsBonus?: number; // Pontos do Clube Sorriso Bertuol oferecidos no agendamento
   notes?: string; // Resumo rápido visível no card
   notesHistory?: CRMNoteEntry[]; // Timeline cronológica de notas da recepção
+  customFields?: CRMCustomField[]; // Campos livres criados dinamicamente pelas atendentes
   assignedUser?: string;
   contactAttempts: number; // Contador de tentativas (0, 1, 2, 3+)
   lastContactDate?: string;

@@ -1,4 +1,5 @@
 import {
+  CRMCustomField,
   CRMLabel,
   CRMLeadOpportunity,
   CRMMessageTemplate,
@@ -176,6 +177,7 @@ export class CRMService {
         pipelineId: o.pipelineId || this.inferPipelineId(o.type),
         labels: Array.isArray(o.labels) ? o.labels : [],
         notesHistory: Array.isArray(o.notesHistory) ? o.notesHistory : [],
+        customFields: Array.isArray(o.customFields) ? o.customFields : [],
         contactAttempts: typeof o.contactAttempts === 'number' ? o.contactAttempts : 0,
       }));
   }
@@ -476,6 +478,12 @@ export class CRMService {
       ? localCached!.notesHistory
       : [];
 
+    const customFields: CRMCustomField[] = Array.isArray(row.custom_fields)
+      ? row.custom_fields
+      : Array.isArray(localCached?.customFields)
+      ? localCached!.customFields
+      : [];
+
     return {
       id: cycleKey,
       pipelineId,
@@ -498,6 +506,7 @@ export class CRMService {
       pointsBonus: row.points_bonus != null ? Number(row.points_bonus) : 50,
       notes: row.notes || localCached?.notes || undefined,
       notesHistory,
+      customFields,
       assignedUser: row.assigned_user || localCached?.assignedUser || undefined,
       contactAttempts:
         row.contact_attempts != null
@@ -557,6 +566,7 @@ export class CRMService {
       type: opp.type || 'recall_6m',
       labels: opp.labels || [],
       notes_history: opp.notesHistory || [],
+      custom_fields: opp.customFields || [],
       assigned_user: opp.assignedUser || null,
       contact_attempts: opp.contactAttempts || 0,
       next_contact_date: opp.nextContactDate || null,
@@ -674,6 +684,7 @@ export class CRMService {
       lastVisitDate: cycleDate,
       labels: opp.labels || [],
       notesHistory: opp.notesHistory || initialHistory,
+      customFields: opp.customFields || [],
       contactAttempts: opp.contactAttempts ?? 0,
       createdAt: nowIso,
       updatedAt: nowIso,
@@ -732,6 +743,15 @@ export class CRMService {
     this.saveOpportunities(opportunities);
 
     const baseUpdates: Record<string, any> = { updated_at: updated.updatedAt };
+    if (updates.patientName !== undefined) {
+      baseUpdates.patient_name = updates.patientName;
+      baseUpdates.primeiro_nome = updates.patientName.split(' ')[0];
+    }
+    if (updates.patientPhone !== undefined) baseUpdates.mobile_phone = updates.patientPhone;
+    if (updates.clinicId !== undefined) baseUpdates.clinic_id = updates.clinicId;
+    if (updates.treatmentDescription !== undefined)
+      baseUpdates.ultimo_procedimento = updates.treatmentDescription || null;
+    if (updates.pointsBonus !== undefined) baseUpdates.points_bonus = updates.pointsBonus;
     if (updates.stage !== undefined) baseUpdates.stage = updates.stage;
     if (updates.priority !== undefined) baseUpdates.priority = updates.priority;
     if (updates.notes !== undefined) baseUpdates.notes = updates.notes;
@@ -745,6 +765,8 @@ export class CRMService {
     if (updates.type !== undefined) fullUpdates.type = updates.type;
     if (updates.labels !== undefined) fullUpdates.labels = updates.labels;
     if (updates.notesHistory !== undefined) fullUpdates.notes_history = updates.notesHistory;
+    if (updates.customFields !== undefined) fullUpdates.custom_fields = updates.customFields;
+    if (updates.source !== undefined) fullUpdates.source = updates.source;
     if (updates.contactAttempts !== undefined) fullUpdates.contact_attempts = updates.contactAttempts;
     if (updates.nextContactDate !== undefined) fullUpdates.next_contact_date = updates.nextContactDate || null;
     if (updates.lostReason !== undefined) fullUpdates.lost_reason = updates.lostReason || null;

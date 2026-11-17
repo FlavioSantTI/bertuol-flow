@@ -12,6 +12,7 @@ import {
   Check,
   AlertTriangle,
   Calendar,
+  GripVertical,
 } from 'lucide-react';
 
 interface CRMLeadCardProps {
@@ -24,9 +25,10 @@ interface CRMLeadCardProps {
   slaDaysStale?: number;
   onOpenQuickContact: (opp: CRMLeadOpportunity) => void;
   onOpenQuickSchedule: (opp: CRMLeadOpportunity) => void;
-  onOpenNotesLabels: (opp: CRMLeadOpportunity) => void;
+  onOpenDrawer: (opp: CRMLeadOpportunity) => void;
   onUpdateStage: (opp: CRMLeadOpportunity, targetStageId: string) => void;
   onDelete: (id: string) => void;
+  onDragStartCard?: (e: React.DragEvent, oppId: string) => void;
   viewMode?: 'kanban' | 'list';
 }
 
@@ -49,9 +51,10 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   slaDaysStale = 0,
   onOpenQuickContact,
   onOpenQuickSchedule,
-  onOpenNotesLabels,
+  onOpenDrawer,
   onUpdateStage,
   onDelete,
+  onDragStartCard,
   viewMode = 'kanban',
 }) => {
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -61,6 +64,8 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   const resolvedLabels = (opportunity.labels || [])
     .map((id) => allLabels.find((l) => l.id === id))
     .filter((l): l is CRMLabel => Boolean(l));
+
+  const customFields = (opportunity.customFields || []).filter((cf) => cf.value && cf.value.trim());
 
   const priorityLabel =
     opportunity.priority === 'high' ? 'Alta' : opportunity.priority === 'medium' ? 'Média' : 'Normal';
@@ -76,18 +81,22 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-3.5 transition-all shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div
+        onClick={() => onOpenDrawer(opportunity)}
+        className="bg-white border border-slate-200 hover:border-[#147A80]/50 rounded-xl px-4 py-3.5 transition-all shadow-2xs hover:shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer"
+      >
         <div className="min-w-0 flex-1 space-y-1.5">
-          {/* Row 1: Patient Name + Clean Inline Status/Priority */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h4 className="font-bold text-slate-900 text-sm truncate">{opportunity.patientName}</h4>
+            <h4 className="font-bold text-slate-900 text-sm truncate hover:text-[#147A80]">
+              {opportunity.patientName}
+            </h4>
 
             <span className="text-xs text-slate-400">·</span>
 
             <button
               type="button"
               onClick={handleCopyPhone}
-              title="Copiar telefone"
+              title="Copiar contato"
               className="inline-flex items-center gap-1 font-mono tabular-nums text-xs font-semibold text-slate-700 hover:text-[#147A80] cursor-pointer"
             >
               <Phone className="w-3 h-3 text-slate-400" />
@@ -124,16 +133,21 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             )}
           </div>
 
-          {/* Row 2: Clean Metadata with · separators */}
           <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
             {clinic && <span className="font-medium text-slate-700">{clinic.shortName}</span>}
-            {opportunity.dentistName && (
+            {opportunity.source && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{opportunity.source}</span>
+              </>
+            )}
+            {opportunity.dentistName && opportunity.dentistName !== 'Sem preferência' && (
               <>
                 <span aria-hidden="true">·</span>
                 <span>{opportunity.dentistName}</span>
               </>
             )}
-            {opportunity.lastVisitDate && (
+            {opportunity.lastVisitDate && opportunity.type === 'recall_6m' && (
               <>
                 <span aria-hidden="true">·</span>
                 <span className="tabular-nums">
@@ -160,12 +174,20 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             )}
           </div>
 
-          {/* Row 3: Procedure + Labels + Latest Note */}
-          {(opportunity.treatmentDescription || resolvedLabels.length > 0 || opportunity.notes || opportunity.lostReason) && (
+          {(opportunity.treatmentDescription ||
+            resolvedLabels.length > 0 ||
+            customFields.length > 0 ||
+            opportunity.notes ||
+            opportunity.lostReason) && (
             <div className="flex items-center gap-2 flex-wrap pt-0.5 text-xs">
               {opportunity.treatmentDescription && (
                 <span className="text-slate-600">{opportunity.treatmentDescription}</span>
               )}
+              {customFields.slice(0, 2).map((cf) => (
+                <span key={cf.id} className="text-[11px] text-slate-500">
+                  · <strong className="text-slate-700">{cf.label}:</strong> {cf.value}
+                </span>
+              ))}
               {resolvedLabels.map((lbl) => (
                 <span
                   key={lbl.id}
@@ -175,13 +197,9 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
                 </span>
               ))}
               {opportunity.notes && (
-                <button
-                  type="button"
-                  onClick={() => onOpenNotesLabels(opportunity)}
-                  className="text-[11px] text-slate-600 hover:text-[#147A80] underline decoration-slate-300 cursor-pointer truncate max-w-md"
-                >
-                  Nota: &ldquo;{opportunity.notes}&rdquo;
-                </button>
+                <span className="text-[11px] text-slate-600 italic truncate max-w-md">
+                  &ldquo;{opportunity.notes}&rdquo;
+                </span>
               )}
               {opportunity.lostReason && (
                 <span className="text-[11px] font-medium text-rose-700">
@@ -192,8 +210,10 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           )}
         </div>
 
-        {/* Right Side: Numeric Values & Actions */}
-        <div className="flex items-center gap-2.5 shrink-0 justify-between lg:justify-end border-t lg:border-t-0 pt-2.5 lg:pt-0 border-slate-100">
+        <div
+          className="flex items-center gap-2 shrink-0 justify-between lg:justify-end border-t lg:border-t-0 pt-2.5 lg:pt-0 border-slate-100"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="text-left lg:text-right mr-1">
             {opportunity.estimatedValue && opportunity.estimatedValue > 0 ? (
               <span className="text-sm font-bold text-slate-900 font-mono tabular-nums block">
@@ -204,15 +224,15 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             )}
             {opportunity.pointsBonus ? (
               <span className="text-[11px] font-semibold text-amber-700 tabular-nums">
-                +{opportunity.pointsBonus} pts Clube
+                +{opportunity.pointsBonus} pts
               </span>
             ) : null}
           </div>
 
           <button
             type="button"
-            onClick={() => onOpenNotesLabels(opportunity)}
-            title="Notas, Rótulos e Follow-up"
+            onClick={() => onOpenDrawer(opportunity)}
+            title="Abrir Ficha Livre & Notas"
             className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-[#147A80] hover:border-[#147A80] transition-colors cursor-pointer"
           >
             <FileText className="w-4 h-4" />
@@ -221,7 +241,6 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           <button
             type="button"
             onClick={() => onOpenQuickSchedule(opportunity)}
-            title="Agendar Consulta em 1-Clique"
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
           >
             <CalendarPlus className="w-3.5 h-3.5 text-[#147A80]" />
@@ -262,23 +281,36 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
     );
   }
 
-  // Clean Executive Kanban Card View (Zero Pill Sandwich)
+  // Draggable Executive Kanban Card (Click opens Free-Form Ficha Drawer)
   return (
-    <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-3.5 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between gap-2.5 group">
+    <div
+      draggable
+      onDragStart={(e) => {
+        if (onDragStartCard) onDragStartCard(e, opportunity.id);
+      }}
+      onClick={() => onOpenDrawer(opportunity)}
+      className="bg-white border border-slate-200 hover:border-[#147A80]/60 rounded-xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-2.5 group cursor-pointer active:opacity-75"
+    >
       <div className="space-y-1.5">
-        {/* Top Line: Patient Name first + Discrete Note/Tag trigger */}
-        <div className="flex items-start justify-between gap-2">
-          <h4
-            className="font-bold text-slate-900 text-[13px] leading-snug line-clamp-1 group-hover:text-[#147A80] transition-colors"
-            title={opportunity.patientName}
-          >
-            {opportunity.patientName}
-          </h4>
+        {/* Top Line: Drag grip + Patient Name + Open Ficha icon */}
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-400 shrink-0 -ml-1 cursor-grab" />
+            <h4
+              className="font-bold text-slate-900 text-[13px] leading-snug line-clamp-1 group-hover:text-[#147A80] transition-colors"
+              title={opportunity.patientName}
+            >
+              {opportunity.patientName}
+            </h4>
+          </div>
 
           <button
             type="button"
-            onClick={() => onOpenNotesLabels(opportunity)}
-            title="Abrir Notas, Rótulos e Follow-up"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDrawer(opportunity);
+            }}
+            title="Editar Ficha Livre, Rótulos & Notas"
             className="p-1 -mt-0.5 -mr-1 rounded-md text-slate-400 hover:text-[#147A80] hover:bg-teal-50 transition-colors cursor-pointer shrink-0"
           >
             <FileText className="w-3.5 h-3.5" />
@@ -290,7 +322,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           <button
             type="button"
             onClick={handleCopyPhone}
-            title="Copiar telefone"
+            title="Copiar contato"
             className="inline-flex items-center gap-1 font-mono tabular-nums font-semibold text-slate-700 hover:text-[#147A80] cursor-pointer"
           >
             <span>{formattedPhone}</span>
@@ -310,24 +342,49 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           </span>
         </div>
 
-        {/* Unified Clinical Context Line (no nested boxes) */}
-        <p className="text-[11px] text-slate-500 leading-relaxed">
+        {/* Unified Clinical Context Line */}
+        <p className="text-[11px] text-slate-500 leading-relaxed truncate">
           <span>{clinic?.shortName || 'Palmas'}</span>
-          {opportunity.dentistName && <span> · {opportunity.dentistName}</span>}
-          {opportunity.diasDesdeUltimo ? (
-            <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d inativo</span>
+          {opportunity.source && opportunity.source !== 'Supabase crm_leads_recall' && (
+            <span> · {opportunity.source}</span>
+          )}
+          {opportunity.dentistName && opportunity.dentistName !== 'Sem preferência' && (
+            <span> · {opportunity.dentistName}</span>
+          )}
+          {opportunity.diasDesdeUltimo && opportunity.type === 'recall_6m' ? (
+            <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d</span>
           ) : null}
         </p>
 
-        {/* Treatment Description */}
+        {/* Treatment / Free Description */}
         {opportunity.treatmentDescription && (
           <p className="text-[11px] text-slate-700 line-clamp-2 leading-snug">
             {opportunity.treatmentDescription}
           </p>
         )}
 
+        {/* Dynamic Free-Form Custom Fields */}
+        {customFields.length > 0 && (
+          <div className="text-[11px] text-slate-600 space-y-0.5 pt-0.5">
+            {customFields.slice(0, 2).map((cf) => (
+              <div key={cf.id} className="truncate">
+                <span className="font-semibold text-slate-700">{cf.label}:</span> {cf.value}
+              </div>
+            ))}
+            {customFields.length > 2 && (
+              <span className="text-[10px] text-slate-400 font-semibold">
+                +{customFields.length - 2} campos na ficha
+              </span>
+            )}
+          </div>
+        )}
+
         {/* SLA / Follow-up / Scheduled Semantic Indicators */}
-        {(hasSLAWarning || isFollowUpDue || opportunity.nextContactDate || opportunity.scheduledDate || opportunity.lostReason) && (
+        {(hasSLAWarning ||
+          isFollowUpDue ||
+          opportunity.nextContactDate ||
+          opportunity.scheduledDate ||
+          opportunity.lostReason) && (
           <div className="space-y-1 pt-0.5">
             {hasSLAWarning && (
               <div className="flex items-center gap-1 text-[11px] font-semibold text-rose-700 tabular-nums">
@@ -393,21 +450,16 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             )}
 
             {opportunity.notes && (
-              <button
-                type="button"
-                onClick={() => onOpenNotesLabels(opportunity)}
-                className="block w-full text-left text-[11px] text-slate-600 hover:text-[#147A80] line-clamp-1 cursor-pointer"
-                title={opportunity.notes}
-              >
+              <p className="text-[11px] text-slate-500 italic line-clamp-1" title={opportunity.notes}>
                 &ldquo;{opportunity.notes}&rdquo;
-              </button>
+              </p>
             )}
           </div>
         )}
       </div>
 
-      {/* Footer: Value, Attempts & Primary Actions */}
-      <div className="border-t border-slate-100 pt-2 space-y-2">
+      {/* Footer: Value, Attempts & Primary Actions (Stop propagation so buttons fire cleanly) */}
+      <div className="border-t border-slate-100 pt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between text-xs tabular-nums">
           <div className="flex items-center gap-1.5">
             {opportunity.estimatedValue ? (
