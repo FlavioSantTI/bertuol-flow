@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.0
+# 🦷 Bertuol Odontologia Avançada — Versão 1.5.1
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM de Reativação & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente, Totem de Recepção com Gamificação e Central Exclusiva Admin Root de Tutoriais & Apresentação 3D.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Ficha Livre & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente, Totem de Recepção com Gamificação e Central Exclusiva Admin Root de Tutoriais & Apresentação 3D.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.0-FF981A.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.1-FF981A.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,29 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.0
+## 🌟 Visão Geral da Jornada & Versão 1.5.1
 
-O **Bertuol Flow** chega à **Versão 1.5.0** pronto para o lançamento oficial em produção: com a **interface principal da clínica 100% limpa** para o dia a dia operacional e todos os materiais de treinamento, apresentação 3D e roteiros HeyGen organizados dentro da **Rota Exclusiva do Admin Root (`/root` / `/tutoriais`)**.
+O **Bertuol Flow** chega à **Versão 1.5.1** evoluindo o módulo comercial para um **CRM Multi-Funil completo com Ficha Livre de Atendimento**, sincronizado em tempo real via Supabase entre todas as recepcionistas, somado à arquitetura oficial da v1.5.0 com interface clínica limpa e Central Exclusiva do Admin Root (`/root` / `/tutoriais`).
 
-### 🏆 Novidades e Funcionalidades Principais da v1.5.0
+### 🆕 Novidades da v1.5.1 — CRM Comercial Multi-Funil & Ficha Livre
+
+- **🔀 CRUD Completo de Funis Personalizáveis (`CRMPipelineManagerModal` / `crm_pipelines`)**:
+  - Crie, renomeie, reordene, escolha cores/ícones e personalize as etapas de quantos funis precisar além dos padrões (**Recall 6+ Meses**, **Campanhas & Tráfego Pago** e **Orçamentos em Aberto**).
+  - Regras por etapa com suporte a colunas de **Ganho (`won`)** e **Perda (`lost`)**.
+- **📝 Ficha Livre de Atendimento & Cadastro Rápido 1-Linha (`CRMLeadDrawer` & `CRMNewOpportunityModal`)**:
+  - **Cadastro Rápido Inline**: Lance leads de balcão, WhatsApp ou `@instagram` diretamente acima do Kanban em 1 linha (`Nome ou @`, `WhatsApp / Contato`, `Interesse / Anotação livre`, `Unidade`).
+  - **Gaveta Deslizante Editável (`CRMLeadDrawer`)**: Clique em qualquer card para editar nome, contato (`WhatsApp` ou `@instagram`), interesse livre, canal de origem, unidade, dentista (`Sem preferência` incluso), prioridade, valor, pontos Clube Sorriso e transferência entre funis.
+  - **Campos Livres da Atendente (`+ Campo Livre` / `custom_fields`)**: Adicione atributos dinâmicos como *Melhor Horário*, *Instagram / Rede*, *Convênio / Plano*, *Indicado por*, *Forma de Pagamento*, *Queixa Principal* ou qualquer par personalizado `rótulo + valor`.
+- **🏷️ Rótulos Customizados (`crm_labels`) & Notas Cronológicas**:
+  - Criação/remoção de etiquetas coloridas e histórico completo de anotações com autor, data e hora sincronizado no Supabase.
+- **📅 Agendamento 1-Clique na Agenda Clínica (`CRMQuickScheduleModal`)**:
+  - Converta um lead do CRM diretamente em consulta agendada vinculando unidade, profissional, data e horário, movendo o card automaticamente para a etapa de ganho.
+- **⏱️ Follow-up, Alertas de SLA & Motivo de Perda (`CRMLostReasonModal`)**:
+  - Controle de próxima data de contato (hoje/amanhã/3 dias/7 dias/custom), badges de SLA atrasado e registro estruturado do motivo de perda ao mover ou arrastar o card para perdido.
+- **🖱️ Drag & Drop no Kanban**:
+  - Arraste e solte cards diretamente entre as colunas do funil com destaque visual e persistência imediata no Supabase (`crm_leads_recall` + trigger n8n 06:00h).
+
+### 🏆 Funcionalidades Consolidadas (v1.5.0)
 
 #### 1. 👑 Nova Central Exclusiva Admin Root de Tutoriais & Lançamento (`/root` | `/tutoriais` | `?app=root`)
 - **Interface Principal da Clínica 100% Limpa**: Os botões de apresentação e roteiros foram removidos da área de trabalho da clínica (`/`), garantindo zero distração para dentistas, recepcionistas e gerentes.
@@ -71,8 +89,8 @@ O **Bertuol Flow** chega à **Versão 1.5.0** pronto para o lançamento oficial 
 - **Isolamento Estrito de Unidade**: Perfis de unidade única (`receptionist`, `dentist`, `admin_clinica` local) exibem automaticamente cadeado fixo (`🔒 Palmas - TO` / `🔒 Paraíso - TO`), enquanto `admin_root` e `gerente_atendimento` possuem alternância multi-clínica.
 - **Acesso Clube Sorriso para Dentistas**: Botão **Clube Sorriso & Vouchers** habilitado no cabeçalho do perfil `dentist` para consulta de pontos e vouchers dos pacientes.
 
-#### 6. 🎯 Módulo CRM (Recall Preventivo & Funil de WhatsApp) & Mensageria Interna
-- **Varredura Inteligente de Recalls (6+ Meses)**: Identificação automática de pacientes sem consulta há mais de 6 meses para reativação preventiva com funil Kanban e disparo no WhatsApp.
+#### 6. 🎯 Módulo CRM Comercial Multi-Funil (Recall n8n, Campanhas, Orçamentos & Ficha Livre) & Mensageria Interna
+- **Varredura Automática n8n (06:00h) + Funis Personalizáveis**: Sincronização direta com `public.crm_leads_recall` no Supabase (180+ dias sem consulta), múltiplos funis com CRUD completo (`crm_pipelines`), etiquetas (`crm_labels`), notas cronológicas, agendamento em 1 clique, drag-and-drop e ficha livre da atendente (`CRMLeadDrawer`).
 - **Mensageria Interna Multi-Unidade**: Chat em tempo real entre recepção, dentistas e pacientes com gravação de áudio no navegador, envio de fotos/mídia e contador de mensagens não lidas.
 
 #### 7. 🏢 Gestão Multi-Clínicas (Multi-Tenant)
@@ -92,8 +110,8 @@ O **Bertuol Flow** chega à **Versão 1.5.0** pronto para o lançamento oficial 
 │   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, MiniCRM, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.0)
+│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, crm/MiniCRMModal, CRMLeadDrawer, etc.)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.1)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
@@ -139,6 +157,11 @@ ALTER TABLE public.patients
   ADD COLUMN IF NOT EXISTS app_access_status VARCHAR(40) DEFAULT 'pending_activation',
   ADD COLUMN IF NOT EXISTS activation_token VARCHAR(100),
   ADD COLUMN IF NOT EXISTS activation_token_expires_at TIMESTAMPTZ;
+
+-- 3. CRM COMERCIAL MULTI-FUNIL, RÓTULOS & FICHA LIVRE (v1.5.1)
+-- Tabelas: public.crm_pipelines, public.crm_labels e extensões em public.crm_leads_recall
+ALTER TABLE public.crm_leads_recall
+  ADD COLUMN IF NOT EXISTS custom_fields JSONB NOT NULL DEFAULT '[]'::jsonb;
 ```
 
 ---
@@ -180,6 +203,6 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.0`
+- **Versão**: `v1.5.1`
 - **Gestão**: Flávio Santiago & Favuca Dias
 
