@@ -37,17 +37,18 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
-        <div className="bg-slate-900 px-5 py-3.5 text-white flex items-center justify-between">
+        <div className="bg-white border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <h3 className="font-bold text-sm">Registrar Motivo de Perda</h3>
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <h3 className="font-bold text-sm text-slate-900">Registrar Motivo de Perda</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+            aria-label="Fechar modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -55,7 +56,7 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <p className="text-xs text-slate-600">
-            Informe o motivo pelo qual <strong className="text-slate-900">{opportunity.patientName}</strong> não avançou neste funil. Esse dado alimenta o painel de inteligência comercial.
+            Informe o motivo pelo qual <strong className="text-slate-900">{opportunity.patientName}</strong> não avançou neste funil. Esse dado alimenta o painel comercial.
           </p>
 
           <div className="space-y-1.5">
@@ -64,7 +65,7 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
                 key={reason}
                 className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors ${
                   selectedReason === reason
-                    ? 'bg-slate-900 text-white border-slate-900'
+                    ? 'bg-teal-50 text-[#0f5c61] border-[#147A80]'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -74,7 +75,7 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
                   value={reason}
                   checked={selectedReason === reason}
                   onChange={() => setSelectedReason(reason)}
-                  className="accent-teal-500"
+                  className="accent-[#147A80]"
                 />
                 <span>{reason}</span>
               </label>
@@ -82,15 +83,15 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-              Observação Adicional (Opcional)
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Observação adicional (opcional)
             </label>
             <input
               type="text"
               value={extraNote}
               onChange={(e) => setExtraNote(e.target.value)}
               placeholder="Ex: Pediu para tentar novamente em janeiro"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900"
+              className="w-full h-9 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
             />
           </div>
 
@@ -98,13 +99,13 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              className="h-9 px-4 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
+              className="h-9 flex items-center gap-1.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Confirmar Perda</span>

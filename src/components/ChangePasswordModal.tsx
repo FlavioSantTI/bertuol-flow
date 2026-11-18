@@ -114,25 +114,19 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden my-auto flex flex-col">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col">
         {/* Header */}
-        <div
-          className={`p-4 sm:p-5 text-white flex items-center justify-between shrink-0 shadow-xs ${
-            isForcedFirstAccess
-              ? 'bg-linear-to-r from-amber-500 via-orange-500 to-amber-600'
-              : 'bg-linear-to-r from-gray-900 to-gray-800'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-inner shrink-0">
-              <KeyRound className="w-5 h-5" />
+        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+              <KeyRound className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-base font-black tracking-tight leading-tight">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 truncate">
                 {isForcedFirstAccess ? 'Cadastrar Senha Definitiva' : 'Alterar Minha Senha'}
               </h3>
-              <p className="text-xs text-white/80 mt-0.5 truncate max-w-[240px]">
+              <p className="text-xs text-slate-500 truncate max-w-[260px]">
                 {currentUserContext.userName} ({currentUserContext.email || 'Usuário'})
               </p>
             </div>
@@ -141,45 +135,44 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           {!isForcedFirstAccess && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
+              aria-label="Fechar janela"
+              className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           )}
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs bg-[#FAF9F6]">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs bg-[#F8FAFC]/40">
           {isForcedFirstAccess && (
-            <div className="p-3 bg-amber-50 border border-amber-300 text-amber-950 rounded-2xl flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block text-xs">Primeiro Acesso Detectado!</span>
-                <span className="text-[11px] text-amber-900 leading-snug block mt-0.5">
-                  Por segurança e privacidade da sua agenda, substitua a senha provisória cadastrando
-                  uma nova senha pessoal.
+                <span className="font-semibold block text-xs">Primeiro Acesso Detectado</span>
+                <span className="text-xs text-amber-800 leading-snug block mt-0.5">
+                  Por segurança e privacidade da sua agenda, substitua a senha provisória cadastrando uma nova senha pessoal.
                 </span>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2 font-semibold">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2 font-medium">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl flex items-center gap-2 font-bold animate-in fade-in">
-              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-2 font-semibold">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>Senha cadastrada com sucesso! Redirecionando...</span>
             </div>
           )}
 
-          {/* Current Password Field */}
           <div>
-            <label className="block text-gray-700 font-bold mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               {isForcedFirstAccess ? 'Senha Provisória Recebida' : 'Senha Atual'}
             </label>
             <div className="relative">
@@ -188,21 +181,20 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Informe a senha atual..."
-                className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-xs text-gray-900 focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                className="w-full h-10 bg-white border border-slate-300 rounded-lg pl-3 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* New Password Field */}
           <div>
-            <label className="block text-gray-700 font-bold mb-1">Nova Senha Pessoal *</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Nova Senha Pessoal *</label>
             <div className="relative">
               <input
                 type={showNew ? 'text' : 'password'}
@@ -210,21 +202,20 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres..."
-                className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-xs text-gray-900 focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                className="w-full h-10 bg-white border border-slate-300 rounded-lg pl-3 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password Field */}
           <div>
-            <label className="block text-gray-700 font-bold mb-1">Confirmar Nova Senha *</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Confirmar Nova Senha *</label>
             <div className="relative">
               <input
                 type={showConfirm ? 'text' : 'password'}
@@ -232,60 +223,46 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Digite a nova senha novamente..."
-                className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-xs text-gray-900 focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                className="w-full h-10 bg-white border border-slate-300 rounded-lg pl-3 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Password Quality Criteria */}
-          <div className="p-3 bg-white rounded-2xl border border-gray-200 space-y-1.5 text-[11px]">
-            <span className="font-bold text-gray-700 block mb-1">Requisitos de Segurança:</span>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
-                isLengthOk ? 'bg-emerald-100 text-emerald-800 font-black' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {isLengthOk ? '✓' : '•'}
-              </span>
-              <span className={isLengthOk ? 'text-emerald-800 font-semibold' : 'text-gray-500'}>
+          <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5 text-xs">
+            <span className="font-semibold text-slate-700 block mb-1">Requisitos de Segurança</span>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isLengthOk ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+              <span className={isLengthOk ? 'text-emerald-700 font-medium' : 'text-slate-500'}>
                 Pelo menos 6 caracteres
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
-                hasLetter ? 'bg-emerald-100 text-emerald-800 font-black' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {hasLetter ? '✓' : '•'}
-              </span>
-              <span className={hasLetter ? 'text-emerald-800 font-semibold' : 'text-gray-500'}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${hasLetter ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+              <span className={hasLetter ? 'text-emerald-700 font-medium' : 'text-slate-500'}>
                 Contém letras
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
-                isMatch ? 'bg-emerald-100 text-emerald-800 font-black' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {isMatch ? '✓' : '•'}
-              </span>
-              <span className={isMatch ? 'text-emerald-800 font-semibold' : 'text-gray-500'}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isMatch ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+              <span className={isMatch ? 'text-emerald-700 font-medium' : 'text-slate-500'}>
                 Senhas coincidem exatamente
               </span>
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             {!isForcedFirstAccess && (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors cursor-pointer"
+                className="h-10 px-4 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs sm:text-sm transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -293,7 +270,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             <button
               type="submit"
               disabled={!isLengthOk || !isMatch || success}
-              className="px-5 py-2.5 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+              className="h-10 px-5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Salvar Nova Senha</span>

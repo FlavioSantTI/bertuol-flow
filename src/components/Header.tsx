@@ -1,18 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
 import { getDefaultPermissionsForRole } from '../services/dataService';
-import { APP_VERSION } from '../config/version';
 import { BertuolLogo } from './BertuolLogo';
-import { BertuolBotAvatar } from './BertuolBotAvatar';
 import {
   ChevronDown,
   Database,
   Smartphone,
   Monitor,
-  UserCheck,
   Stethoscope,
   Bell,
-  Layers,
   Share2,
   Check,
   Building2,
@@ -21,7 +17,6 @@ import {
   KeyRound,
   LogOut,
   Sparkles,
-  Eye,
   HelpCircle,
   TrendingUp,
   Gift,
@@ -30,6 +25,8 @@ import {
   MessageSquare,
   SlidersHorizontal,
   Target,
+  Menu,
+  X,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -69,13 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
   selectedClinicId,
   onSelectClinic,
   userContext,
-  onUpdateUserContext,
   onOpenMultiClinicModal,
   isMobileView,
   onToggleView,
   onOpenSchemaModal,
   onOpenNotificationModal,
-  onOpenClinicorpModal,
   onOpenUserManagementModal,
   onOpenChangePasswordModal,
   onOpenWebAuthnModal,
@@ -91,6 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,7 +114,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const isReceptionist = userContext.role === 'receptionist';
   const isDentist = userContext.role === 'dentist';
   const isGerente = userContext.role === 'gerente_atendimento';
   const isClinicaAdmin = userContext.role === 'admin_clinica';
@@ -141,78 +136,293 @@ export const Header: React.FC<HeaderProps> = ({
   const canManageGamification = !isDentist && Boolean(effectivePermissions.canManageGamification);
   const canManageClinics = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClinics);
   const canManageUsers = isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageUsers);
-  const canManageClientAccounts = !isDentist && (isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts));
-  const canSwitchDentist = !isDentist && (isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda));
+  const canManageClientAccounts =
+    !isDentist && (isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts));
+  const canSwitchDentist =
+    !isDentist &&
+    (isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda));
   const canSwitchAllClinics =
     isAdmin ||
     isGerente ||
     (isClinicaAdmin && Array.isArray(userContext.allowedClinicIds) && userContext.allowedClinicIds.length > 1);
   const canAccessTotemConfig = !isDentist && Boolean(effectivePermissions.canAccessTotemConfig);
-  const canManageWebAuthn = isAdmin || Boolean(effectivePermissions.canManageWebAuthn);
-  const canAccessConfig = isAdmin || Boolean(effectivePermissions.canAccessConfig);
   const canViewClubeSorriso = Boolean(effectivePermissions.canViewClubeSorriso);
+
   const boundClinic =
     clinics.find((c) => c.id === selectedClinicId) ||
     clinics.find((c) => c.id === userContext.clinicId) ||
     clinics[0];
-  const currentClinic = clinics.find((c) => c.id === selectedClinicId) || boundClinic;
 
-  const getRoleBadge = () => {
+  const getRoleLabel = () => {
     switch (userContext.role) {
       case 'admin_root':
       case 'admin':
-        return { label: '👑 Admin Root', bg: 'bg-purple-50 text-purple-800 border-purple-200' };
+        return 'Admin Root';
       case 'admin_clinica':
-        return { label: '🏢 Admin Clínica', bg: 'bg-amber-100 text-amber-900 border-amber-300' };
+        return 'Admin Clínica';
       case 'admin_tecnico':
-        return { label: '🛠️ Admin Técnico', bg: 'bg-slate-100 text-slate-800 border-slate-300' };
+        return 'Admin Técnico';
       case 'gerente_atendimento':
-        return { label: '👔 Gerente Multiclínica', bg: 'bg-indigo-50 text-indigo-800 border-indigo-200' };
+        return 'Gerente Multiclínica';
       case 'receptionist':
-        return { label: '🛎️ Recepção', bg: 'bg-blue-50 text-blue-800 border-blue-200' };
+        return 'Recepção';
       case 'dentist':
       default:
-        if (isAvaliador) {
-          return { label: '📋 Avaliador', bg: 'bg-amber-100 text-amber-900 border-amber-300' };
-        }
-        return { label: '🩺 Dentista', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        return isAvaliador ? 'Avaliador' : 'Dentista';
     }
   };
-  const roleBadge = getRoleBadge();
+
+  const roleLabel = getRoleLabel();
+  const hasUnread = typeof unreadMessagesCount === 'number' && unreadMessagesCount > 0;
+
+  const renderManagementMenuContent = (closeFn: () => void) => (
+    <div className="divide-y divide-slate-100">
+      {/* User Identity Summary */}
+      <div className="px-4 py-2.5 bg-slate-50/70">
+        <p className="text-xs font-semibold text-slate-900 truncate">
+          {userContext.userName || 'Equipe Bertuol'}
+        </p>
+        <p className="text-[11px] text-slate-500">
+          {roleLabel} · {selectedClinicId === 'all' ? 'Todas as Unidades' : boundClinic?.shortName || 'Unidade Local'}
+        </p>
+      </div>
+
+      {/* Group 1: Gestão & Operação */}
+      {(canAccessCRM || canManageUsers || canManageClientAccounts || canManageClinics || isAdmin) && (
+        <div className="p-1.5 space-y-0.5">
+          <span className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 block">
+            Gestão e Equipe
+          </span>
+          {canAccessCRM && onOpenCRMModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenCRMModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Target className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>CRM Bertuol</span>
+            </button>
+          )}
+          {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenUserManagementModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Users className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>{canManageUsers ? 'Usuários e Clientes' : 'Credenciais de Clientes'}</span>
+            </button>
+          )}
+          {canManageClinics && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenMultiClinicModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Building2 className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>Unidades Multi-Clínicas</span>
+            </button>
+          )}
+          {isAdmin && onOpenRolloutReportModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenRolloutReportModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <TrendingUp className="w-4 h-4 text-slate-500 shrink-0" />
+              <span>Relatório de Implantação</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Group 2: Clube Sorriso & Totem */}
+      {(canManageGamification || canViewClubeSorriso || canAccessTotemConfig) && (
+        <div className="p-1.5 space-y-0.5">
+          <span className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 block">
+            Clube Sorriso e Recepção
+          </span>
+          {canManageGamification && onOpenAdminGamificationModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenAdminGamificationModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>Admin Clube e Push</span>
+            </button>
+          )}
+          {(canManageGamification || canViewClubeSorriso) && onOpenVoucherModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenVoucherModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Gift className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>{isDentist ? 'Consultar Vouchers' : 'Baixa de Vouchers'}</span>
+            </button>
+          )}
+          {canAccessTotemConfig && onOpenTotemQRModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenTotemQRModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <QrCode className="w-4 h-4 text-slate-500 shrink-0" />
+              <span>QR Code e Totem</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Group 3: Segurança e Conta */}
+      <div className="p-1.5 space-y-0.5">
+        <span className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 block">
+          Conta e Segurança
+        </span>
+        {onOpenWebAuthnModal && (
+          <button
+            type="button"
+            onClick={() => {
+              closeFn();
+              onOpenWebAuthnModal();
+            }}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+          >
+            <Fingerprint className="w-4 h-4 text-[#147A80] shrink-0" />
+            <span>Biometria e Face ID</span>
+          </button>
+        )}
+        {onOpenChangePasswordModal && (
+          <button
+            type="button"
+            onClick={() => {
+              closeFn();
+              onOpenChangePasswordModal();
+            }}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+          >
+            <KeyRound className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>Alterar Senha</span>
+          </button>
+        )}
+        {isAdmin && (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onToggleView();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              {isMobileView ? (
+                <Monitor className="w-4 h-4 text-slate-500 shrink-0" />
+              ) : (
+                <Smartphone className="w-4 h-4 text-slate-500 shrink-0" />
+              )}
+              <span>{isMobileView ? 'Modo Tela Cheia' : 'Simular Tela Móvel'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                onOpenSchemaModal();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              <Database className="w-4 h-4 text-slate-500 shrink-0" />
+              <span>Script SQL Supabase</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeFn();
+                handleCopyLink();
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <Share2 className="w-4 h-4 text-slate-500 shrink-0" />
+              )}
+              <span>{copied ? 'Link Copiado' : 'Copiar Link da Agenda'}</span>
+            </button>
+          </>
+        )}
+        <a
+          href="/faq.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={closeFn}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+        >
+          <HelpCircle className="w-4 h-4 text-slate-500 shrink-0" />
+          <span>Central de Ajuda (FAQ)</span>
+        </a>
+        {onLogout && (
+          <button
+            type="button"
+            onClick={() => {
+              closeFn();
+              onLogout();
+            }}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors text-left cursor-pointer mt-1"
+          >
+            <LogOut className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>Sair do Sistema</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-xs transition-all w-full max-w-full">
-      {/* DESKTOP HEADER (sm and up) */}
-      <div className="hidden sm:flex max-w-7xl mx-auto px-3 xl:px-4 py-2.5 items-center justify-between gap-3">
-        {/* Brand / Logo + Selectors */}
-        <div className="flex items-center gap-3 shrink-0 min-w-0">
-          <div className="flex items-center gap-2 shrink-0">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 w-full">
+      {/* DESKTOP 3-ZONE HEADER */}
+      <div className="hidden sm:flex max-w-7xl mx-auto px-4 py-2.5 items-center justify-between gap-6">
+        {/* Zone 1: Brand + Context Selectors */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="shrink-0">
             <BertuolLogo size="md" mode="horizontal" />
-            <div className="hidden lg:flex flex-col pl-2 border-l border-[#E2E6E7]">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[12px] font-extrabold text-[#199A9F] tracking-tight">
-                  Agenda Inteligente
-                </span>
-                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-black bg-amber-100 text-amber-900 border border-amber-300">
-                  v{APP_VERSION}
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* Clinic Selector Dropdown (Global only for Root & Gerente Multiclínica; Locked for single-unit profiles) */}
+          <span className="h-5 w-px bg-slate-200 hidden lg:block shrink-0" aria-hidden="true" />
+
+          {/* Clinic Selector / Lock */}
           {!canSwitchAllClinics ? (
             <div
-              title="Acesso restrito à sua unidade vinculada (LGPD)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold shrink-0 min-h-[44px]"
+              title="Unidade vinculada"
+              className="flex items-center gap-1.5 px-3 h-10 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium shrink-0"
             >
-              <Lock className="w-3.5 h-3.5 text-[#147A80]" />
-              <span className="truncate max-w-[140px]">
-                {boundClinic?.shortName || 'Unidade Palmas'}
-              </span>
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate max-w-[140px]">{boundClinic?.shortName || 'Unidade Palmas'}</span>
             </div>
           ) : (
             <div className="relative shrink-0">
+              <Building2 className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <select
                 id="clinic-select-desktop"
                 value={selectedClinicId}
@@ -220,23 +430,24 @@ export const Header: React.FC<HeaderProps> = ({
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   onSelectClinic(val);
                 }}
-                className="appearance-none bg-white hover:bg-gray-50 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-8 pr-7 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all cursor-pointer max-w-[155px] truncate shadow-2xs"
+                className="appearance-none bg-slate-50 hover:bg-white border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-8 pr-7 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 focus:border-[#147A80] transition-colors cursor-pointer max-w-[160px] truncate"
               >
-                <option value="all">🏢 {clinics.filter((c) => c.active).length === 1 ? 'Unidade Palmas' : 'Todas as Clínicas'}</option>
+                <option value="all">
+                  {clinics.filter((c) => c.active).length === 1 ? 'Unidade Palmas' : 'Todas as Clínicas'}
+                </option>
                 {clinics
                   .filter((c) => c.active)
                   .map((c) => (
                     <option key={c.id} value={c.id}>
-                      📍 {c.shortName}
+                      {c.shortName}
                     </option>
                   ))}
               </select>
-              <Building2 className="w-4 h-4 text-[#199A9F] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
 
-          {/* Dentist Selector (only when in Admin or Gerente mode) or Locked Badge for Dentist */}
+          {/* Dentist Selector / Lock */}
           {canSwitchDentist ? (
             <div className="relative shrink-0">
               <select
@@ -247,7 +458,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="appearance-none bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-[#1A1A1A] font-semibold text-xs sm:text-sm rounded-xl pl-3 pr-8 py-2.5 min-h-[44px] focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all cursor-pointer max-w-[170px] truncate shadow-2xs"
+                className="appearance-none bg-slate-50 hover:bg-white border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-3 pr-7 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 focus:border-[#147A80] transition-colors cursor-pointer max-w-[175px] truncate"
               >
                 {dentists.length === 0 ? (
                   <option value="">Carregando profissionais...</option>
@@ -259,400 +470,189 @@ export const Header: React.FC<HeaderProps> = ({
                   ))
                 )}
               </select>
-              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           ) : isDentist ? (
             <div
-              title="Acesso clínico restrito à sua própria agenda (LGPD)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950 text-xs font-bold shrink-0 min-h-[44px] shadow-2xs"
+              title="Agenda restrita ao profissional autenticado"
+              className="flex items-center gap-1.5 px-3 h-10 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium shrink-0"
             >
-              <Stethoscope className="w-4 h-4 text-amber-600 shrink-0" />
-              <span className="truncate max-w-[150px]">
-                {selectedDentist?.Name || userContext.userName || 'Avaliador Bertuol'}
+              <Stethoscope className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
+              <span className="truncate max-w-[160px]">
+                {selectedDentist?.Name || userContext.userName || 'Profissional'}
               </span>
-              <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0 ml-1" />
             </div>
           ) : null}
         </div>
 
-        {/* Right Actions Toolbar: FIXED, NEVER OVERFLOWING */}
+        {/* Zone 2: Exactly 3 Primary Actions (Mensagens · CRM/Vouchers · Alertas) */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* MENSAGENS E ATENDIMENTO (Prioridade Máxima • Sempre Visível) */}
           {onOpenMessagingModal && (
             <button
+              type="button"
               onClick={onOpenMessagingModal}
-              title={isDentist ? 'Mensagens: Conversas com Recepção e Pacientes' : 'Central de Mensagens e Atendimento'}
-              className={`relative flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-102 shrink-0 ${
-                typeof unreadMessagesCount === 'number' && unreadMessagesCount > 0
-                  ? 'bg-amber-400 hover:bg-amber-500 text-slate-950 ring-2 ring-amber-300 animate-pulse'
-                  : 'bg-[#147A80] hover:bg-[#0f5c61] text-white'
+              title="Central de Mensagens e Atendimento"
+              className={`flex items-center gap-2 px-4 h-10 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                hasUnread
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-[#147A80] hover:bg-[#0F5C61] text-white'
               }`}
             >
-              <MessageSquare className="w-4 h-4 shrink-0 text-current" />
+              <MessageSquare className="w-4 h-4 shrink-0" />
               <span>Mensagens</span>
-              {typeof unreadMessagesCount === 'number' && unreadMessagesCount > 0 && (
-                <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+              {hasUnread && (
+                <span className="px-1.5 py-0.2 rounded bg-white/20 text-white text-[11px] font-mono tabular-nums">
                   {unreadMessagesCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* CRM (Recall 6+ Meses & WhatsApp Pipeline) */}
-          {canAccessCRM && onOpenCRMModal && (
+          {canAccessCRM && onOpenCRMModal ? (
             <button
+              type="button"
               onClick={onOpenCRMModal}
-              title="CRM Bertuol: Recall Preventivo e Pipeline WhatsApp"
-              className="relative flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-102 shrink-0"
+              title="CRM Bertuol"
+              className="flex items-center gap-2 px-4 h-10 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Target className="w-4 h-4 text-amber-400 shrink-0" />
+              <Target className="w-4 h-4 text-[#147A80] shrink-0" />
               <span>CRM</span>
               {typeof crmBadgeCount === 'number' && crmBadgeCount > 0 && (
-                <span className="min-w-5 h-5 px-1.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center shadow-xs">
-                  {crmBadgeCount}
+                <span className="text-[11px] font-mono tabular-nums text-slate-500">
+                  ({crmBadgeCount})
                 </span>
               )}
             </button>
-          )}
-
-          {/* Atalho Direto para Dentista: Clube Sorriso & Consulta de Vouchers */}
-          {isDentist && canViewClubeSorriso && onOpenVoucherModal && (
+          ) : isDentist && canViewClubeSorriso && onOpenVoucherModal ? (
             <button
               type="button"
               onClick={onOpenVoucherModal}
-              title="Clube Sorriso: Consultar Pontos e Vouchers dos Pacientes"
-              className="flex items-center gap-1.5 px-3.5 min-h-[44px] rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-950 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
+              title="Consultar Pontos e Vouchers do Clube Sorriso"
+              className="flex items-center gap-2 px-4 h-10 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Gift className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Clube Sorriso & Vouchers</span>
+              <Gift className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span>Vouchers</span>
             </button>
-          )}
+          ) : null}
 
-          {/* Quick Shortcut: Admin Clube de Vantagens (Disponível em telas médias/grandes) */}
-          {canManageGamification && onOpenAdminGamificationModal && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onOpenAdminGamificationModal();
-              }}
-              title="Painel Admin: Clube de Vantagens e Push"
-              className="hidden 2xl:flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black transition-all cursor-pointer shadow-2xs hover:scale-102 active:scale-95 shrink-0"
-            >
-              <Sparkles className="w-4 h-4 text-amber-200 shrink-0 pointer-events-none" />
-              <span className="pointer-events-none">Admin Clube</span>
-            </button>
-          )}
-
-          {/* Quick Shortcut: Gestão de Usuários / Clientes (Telas grandes) */}
-          {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
-            <button
-              onClick={onOpenUserManagementModal}
-              title={canManageUsers ? 'Gestão de Usuários e Clientes' : 'Central de Credenciais de Clientes'}
-              className="hidden 2xl:flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-orange-50 hover:bg-orange-100/90 border border-orange-200 text-orange-950 text-xs font-bold transition-colors cursor-pointer shadow-2xs shrink-0"
-            >
-              <Users className="w-4 h-4 text-orange-600 shrink-0" />
-              <span>{canManageUsers ? 'Usuários & Clientes' : 'Clientes App'}</span>
-            </button>
-          )}
-
-          {/* Notification & Alerts Settings Button */}
           <button
+            type="button"
             onClick={onOpenNotificationModal}
-            title={isDentist ? `Bertuol Bot: Configurar Meus Alertas • ${selectedDentist?.Name || ''}` : "Bertuol Bot: Central de Notificações e Alertas"}
-            className={`relative flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl border transition-all cursor-pointer shadow-2xs hover:scale-102 shrink-0 ${
-              isDentist
-                ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-300 text-amber-950 font-bold'
-                : 'bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold'
-            }`}
+            title="Central de Alertas e Notificações"
+            className="flex items-center gap-2 px-3.5 h-10 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
-            <BertuolBotAvatar mood="compact" size="sm" className="shrink-0" />
-            <span className="text-xs hidden md:inline">
-              {isDentist ? 'Bertuol Bot' : 'Alertas'}
-            </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ring-2 ring-white" />
+            <Bell className="w-4 h-4 text-slate-500 shrink-0" />
+            <span className="hidden md:inline">Alertas</span>
           </button>
+        </div>
 
-          {/* MENU GESTÃO & FERRAMENTAS DROPDOWN (Organizado para todas as resoluções) */}
+        {/* Zone 3: Organized Gestão Dropdown + Sign Out */}
+        <div className="flex items-center gap-2 shrink-0">
           <div className="relative shrink-0" ref={adminMenuRef}>
             <button
               type="button"
               onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
-              title="Menu Geral de Gestão, Ferramentas e Relatórios"
-              className={`flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+              title="Menu de Gestão, Clube e Configurações"
+              className={`flex items-center gap-1.5 px-3.5 h-10 rounded-lg border text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 isAdminMenuOpen
-                  ? 'bg-[#147A80] text-white border-[#147A80]'
-                  : 'bg-[#F8F9FA] hover:bg-gray-100 border-gray-200 text-gray-800'
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
               }`}
             >
-              <SlidersHorizontal className="w-4 h-4 text-current" />
-              <span className="hidden md:inline">Gestão</span>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Gestão</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isAdminMenuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-68 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 divide-y divide-gray-100">
-                {/* Grupo 1: Gestão Principal (Apenas para Perfis de Gestão / Recepção) */}
-                {(canAccessCRM || canManageUsers || canManageClientAccounts || canManageClinics) && (
-                  <div className="px-2 py-1 space-y-0.5">
-                    <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                      Gestão & Equipe
-                    </span>
-                    {canAccessCRM && onOpenCRMModal && (
-                      <button
-                        onClick={() => {
-                          setIsAdminMenuOpen(false);
-                          onOpenCRMModal();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-900 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
-                      >
-                        <Target className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>CRM (Recall & WhatsApp)</span>
-                      </button>
-                    )}
-                    {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
-                      <button
-                        onClick={() => {
-                          setIsAdminMenuOpen(false);
-                          onOpenUserManagementModal();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-orange-950 transition-colors text-left cursor-pointer"
-                      >
-                        <Users className="w-4 h-4 text-orange-600 shrink-0" />
-                        <span>{canManageUsers ? 'Gestão de Usuários & Clientes' : 'Central de Credenciais de Clientes'}</span>
-                      </button>
-                    )}
-                    {isAdmin && onOpenRolloutReportModal && (
-                      <button
-                        onClick={() => {
-                          setIsAdminMenuOpen(false);
-                          onOpenRolloutReportModal();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 transition-colors text-left cursor-pointer"
-                      >
-                        <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Relatório de Implantação</span>
-                      </button>
-                    )}
-                    {canManageClinics && (
-                      <button
-                        onClick={() => {
-                          setIsAdminMenuOpen(false);
-                          onOpenMultiClinicModal();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
-                      >
-                        <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>Gestão Multi-Clínicas</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Grupo 2: Clube Sorriso e Totem */}
-                <div className="px-2 py-1 space-y-0.5">
-                  <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                    Clube Sorriso & Pacientes
-                  </span>
-                  {canManageGamification && onOpenAdminGamificationModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenAdminGamificationModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Admin Clube & Push</span>
-                    </button>
-                  )}
-                  {(canManageGamification || canViewClubeSorriso) && onOpenVoucherModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenVoucherModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
-                    >
-                      <Gift className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>{isDentist ? 'Consultar Clube Sorriso & Vouchers' : 'Baixa & Consulta de Vouchers'}</span>
-                    </button>
-                  )}
-                  {canAccessTotemConfig && onOpenTotemQRModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenTotemQRModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
-                    >
-                      <QrCode className="w-4 h-4 text-[#147A80] shrink-0" />
-                      <span>Totem QR Code de Balcão</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Grupo 3: Segurança e Minha Conta */}
-                <div className="px-2 py-1 space-y-0.5">
-                  <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 block">
-                    Segurança & Minha Conta
-                  </span>
-                  {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenSchemaModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors text-left cursor-pointer"
-                    >
-                      <Database className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span>Script SQL Supabase</span>
-                    </button>
-                  )}
-                  {onOpenWebAuthnModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenWebAuthnModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-teal-50 hover:text-[#147A80] transition-colors text-left cursor-pointer"
-                    >
-                      <Fingerprint className="w-4 h-4 text-[#199A9F] shrink-0" />
-                      <span>Biometria & Face ID</span>
-                    </button>
-                  )}
-                  {onOpenChangePasswordModal && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onOpenChangePasswordModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors text-left cursor-pointer"
-                    >
-                      <KeyRound className="w-4 h-4 text-gray-600 shrink-0" />
-                      <span>Alterar Minha Senha</span>
-                    </button>
-                  )}
-                  {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        handleCopyLink();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors text-left cursor-pointer"
-                    >
-                      {copied ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : <Share2 className="w-4 h-4 text-gray-600 shrink-0" />}
-                      <span>{copied ? 'Link Copiado!' : 'Copiar Link da Agenda'}</span>
-                    </button>
-                  )}
-                  <a
-                    href="/faq.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsAdminMenuOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-950 transition-colors text-left cursor-pointer"
-                  >
-                    <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Central de Ajuda (FAQ)</span>
-                  </a>
-                </div>
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                {renderManagementMenuContent(() => setIsAdminMenuOpen(false))}
               </div>
             )}
           </div>
 
-          {/* View Mode Toggle (Exclusivo Admin Root) */}
-          {isAdmin && (
-            <button
-              onClick={onToggleView}
-              title={isMobileView ? 'Mudar para modo tela cheia' : 'Mudar para modo moldura móvel'}
-              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors cursor-pointer shrink-0"
-            >
-              {isMobileView ? (
-                <Monitor className="w-4 h-4 text-gray-700" />
-              ) : (
-                <Smartphone className="w-4 h-4 text-[#4BBCBE]" />
-              )}
-            </button>
-          )}
-
-          {/* Logout Button */}
           {onLogout && (
             <button
+              type="button"
               onClick={onLogout}
-              title="Sair / Desconectar do Sistema"
-              className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl bg-red-50 hover:bg-red-100/80 border border-red-200 text-red-700 text-xs font-bold transition-colors cursor-pointer shadow-2xs shrink-0"
+              title="Sair do Sistema"
+              className="flex items-center gap-1.5 px-3 h-10 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-slate-600 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <LogOut className="w-4 h-4 text-red-600 shrink-0" />
+              <LogOut className="w-4 h-4 shrink-0" />
               <span className="hidden xl:inline">Sair</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* MOBILE HEADER (sm:hidden - Perfectly fitted in 100% viewport width) */}
+      {/* MOBILE 2-ROW CLEAN HEADER */}
       <div className="sm:hidden w-full px-3 py-2.5 flex flex-col gap-2">
-        {/* Row 1: Brand Logo + Primary Action Buttons (Mensagens e Notificações) */}
+        {/* Row 1: Brand + Primary Actions (Chat, CRM/Alertas, Menu) */}
         <div className="flex items-center justify-between gap-2 w-full min-w-0">
-          <div className="flex items-center gap-1 min-w-0">
+          <div className="min-w-0 shrink-0">
             <BertuolLogo size="sm" mode="horizontal" />
           </div>
 
-          {/* Mobile Right Action Icons (Mensagens em Primeiro Lugar com Badge) */}
           <div className="flex items-center gap-1.5 shrink-0">
             {onOpenMessagingModal && (
               <button
+                type="button"
                 onClick={onOpenMessagingModal}
-                title="Central de Mensagens e Atendimento"
-                className={`relative flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                  typeof unreadMessagesCount === 'number' && unreadMessagesCount > 0
-                    ? 'bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300 animate-pulse'
-                    : 'bg-[#147A80] text-white hover:bg-[#0f5c61]'
+                className={`flex items-center gap-1.5 px-3 h-10 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  hasUnread ? 'bg-amber-600 text-white' : 'bg-[#147A80] text-white'
                 }`}
               >
-                <MessageSquare className="w-4 h-4 text-current" />
-                <span className="font-extrabold text-[11px]">Chat</span>
-                {typeof unreadMessagesCount === 'number' && unreadMessagesCount > 0 && (
-                  <span className="min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[9px] font-black flex items-center justify-center">
+                <MessageSquare className="w-4 h-4" />
+                <span>Chat</span>
+                {hasUnread && (
+                  <span className="px-1 rounded bg-white/20 text-[10px] font-mono tabular-nums">
                     {unreadMessagesCount}
                   </span>
                 )}
               </button>
             )}
 
-            {/* Bell Push Notifications Button */}
-            <button
-              onClick={onOpenNotificationModal}
-              title="Notificações Push"
-              className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#F8F9FA] hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors cursor-pointer"
-            >
-              <Bell className="w-4 h-4 text-[#199A9F]" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#4BBCBE] animate-pulse ring-1.5 ring-white" />
-            </button>
-
-            {/* Logout Mobile Button */}
-            {onLogout && (
+            {canAccessCRM && onOpenCRMModal && (
               <button
-                onClick={onLogout}
-                title="Sair"
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 transition-colors cursor-pointer"
+                type="button"
+                onClick={onOpenCRMModal}
+                className="flex items-center gap-1 px-2.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs font-semibold cursor-pointer"
               >
-                <LogOut className="w-4 h-4 text-red-600" />
+                <Target className="w-4 h-4 text-[#147A80]" />
+                <span>CRM</span>
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={onOpenNotificationModal}
+              aria-label="Alertas"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-700 cursor-pointer"
+            >
+              <Bell className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
+              aria-label="Menu de Gestão"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 cursor-pointer"
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Row 2: Selectors Bar (Side-by-side 50/50 in mobile) */}
-        <div className="flex items-center gap-1.5 w-full min-w-0">
-          {/* Clinic Selector Mobile */}
+        {/* Row 2: 50/50 Clinic & Dentist Selectors */}
+        <div className="flex items-center gap-2 w-full min-w-0">
           {!canSwitchAllClinics ? (
-            <div className="flex-1 min-w-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold h-10">
-              <Lock className="w-3 h-3 text-[#147A80] shrink-0" />
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium h-10">
+              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="truncate">{boundClinic?.shortName || 'Unidade Palmas'}</span>
             </div>
           ) : (
             <div className="relative flex-1 min-w-0">
+              <Building2 className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <select
                 id="clinic-select-mobile"
                 value={selectedClinicId}
@@ -660,23 +660,23 @@ export const Header: React.FC<HeaderProps> = ({
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   onSelectClinic(val);
                 }}
-                className="w-full appearance-none bg-white border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-7 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] truncate shadow-2xs"
+                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-7 pr-6 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
               >
-                <option value="all">🏢 {clinics.filter((c) => c.active).length === 1 ? 'Palmas (Ativa)' : 'Todas as Clínicas'}</option>
+                <option value="all">
+                  {clinics.filter((c) => c.active).length === 1 ? 'Palmas' : 'Todas Clínicas'}
+                </option>
                 {clinics
                   .filter((c) => c.active)
                   .map((c) => (
                     <option key={c.id} value={c.id}>
-                      📍 {c.shortName}
+                      {c.shortName}
                     </option>
                   ))}
               </select>
-              <Building2 className="w-3.5 h-3.5 text-[#199A9F] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="w-3 h-3 text-gray-500 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
 
-          {/* Dentist Selector (Admin / Gerente only) or Locked Badge for Dentist */}
           {canSwitchDentist ? (
             <div className="relative flex-1 min-w-0">
               <select
@@ -687,7 +687,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="w-full appearance-none bg-[#F8F9FA] border border-gray-200 text-[#1A1A1A] font-semibold text-xs rounded-xl pl-2.5 pr-6 py-2 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] truncate shadow-2xs"
+                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-2.5 pr-6 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
               >
                 {dentists.length === 0 ? (
                   <option value="">Carregando...</option>
@@ -699,210 +699,23 @@ export const Header: React.FC<HeaderProps> = ({
                   ))
                 )}
               </select>
-              <ChevronDown className="w-3 h-3 text-gray-500 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           ) : isDentist ? (
-            <div
-              title="Acesso clínico restrito à sua própria agenda (LGPD)"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs font-bold flex-1 min-w-0 h-10 shadow-2xs"
-            >
-              <Stethoscope className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="truncate text-xs">
-                {selectedDentist?.Name || userContext.userName || 'Avaliador Bertuol'}
-              </span>
-              <Lock className="w-3 h-3 text-amber-600 shrink-0 ml-auto" />
+            <div className="flex items-center gap-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium flex-1 min-w-0 h-10">
+              <Stethoscope className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
+              <span className="truncate">{selectedDentist?.Name || userContext.userName || 'Profissional'}</span>
             </div>
           ) : null}
         </div>
 
-        {/* Row 3: Secondary Tools Bar (Horizontal Smooth Scroll) */}
-        <div className="flex items-center gap-1.5 w-full overflow-x-auto no-scrollbar py-0.5">
-          {/* CRM Mobile Button */}
-          {canAccessCRM && onOpenCRMModal && (
-            <button
-              onClick={onOpenCRMModal}
-              title="CRM Bertuol: Recall & WhatsApp"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-slate-900 text-white text-[11px] font-black shrink-0 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Target className="w-3.5 h-3.5 text-amber-400" />
-              <span>CRM</span>
-              {typeof crmBadgeCount === 'number' && crmBadgeCount > 0 && (
-                <span className="min-w-4 h-4 px-1 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black flex items-center justify-center">
-                  {crmBadgeCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Totem QR Code Mobile */}
-          {canAccessTotemConfig && onOpenTotemQRModal && (
-            <button
-              onClick={onOpenTotemQRModal}
-              title="Totem QR Code de Balcão"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-            >
-              <QrCode className="w-3.5 h-3.5 text-[#147A80]" />
-              <span>Totem QR</span>
-            </button>
-          )}
-
-          {/* Vouchers & Prêmios Mobile */}
-          {(canManageGamification || canViewClubeSorriso) && onOpenVoucherModal && (
-            <button
-              onClick={onOpenVoucherModal}
-              title="Clube Sorriso: Baixa de Vouchers e Prêmios"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-            >
-              <Gift className="w-3.5 h-3.5 text-amber-600" />
-              <span>Vouchers</span>
-            </button>
-          )}
-
-          {/* Admin Clube Mobile Button */}
-          {canManageGamification && onOpenAdminGamificationModal && (
-            <button
-              type="button"
-              onClick={onOpenAdminGamificationModal}
-              title="Painel Admin: Clube de Vantagens & Notificações Push"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-amber-950 text-[11px] font-black shrink-0 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-950" />
-              <span>Admin Clube</span>
-            </button>
-          )}
-
-          {/* User & Client Management Button */}
-          {(canManageUsers || canManageClientAccounts) && onOpenUserManagementModal && (
-            <button
-              onClick={onOpenUserManagementModal}
-              title={canManageUsers ? 'Gestão de Usuários & Clientes' : 'Gestão de Clientes (App)'}
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-            >
-              <Users className="w-3.5 h-3.5 text-orange-600" />
-              <span>{canManageUsers ? 'Usuários' : 'Clientes'}</span>
-            </button>
-          )}
-
-          {/* Multi-Clinic Button (Only for Admins/Gerente) */}
-          {canManageClinics && (
-            <button
-              onClick={onOpenMultiClinicModal}
-              title="Gestão Multi-Clínicas"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5 text-amber-600" />
-              <span>Clínicas</span>
-            </button>
-          )}
-
-          {/* WebAuthn Biometrics Mobile Button */}
-          {onOpenWebAuthnModal && (
-            <button
-              onClick={onOpenWebAuthnModal}
-              title="Cadastrar e Gerenciar Face ID / Biometria"
-              className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] text-[11px] font-bold shrink-0 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Fingerprint className="w-3.5 h-3.5 text-[#199A9F] stroke-[2.5]" />
-              <span>Biometria</span>
-            </button>
-          )}
-
-          {/* Change Password Button */}
-          {onOpenChangePasswordModal && (
-            <button
-              onClick={onOpenChangePasswordModal}
-              title="Alterar Senha"
-              className={`flex items-center gap-1 px-2.5 h-8.5 rounded-lg border text-[11px] font-bold shrink-0 transition-colors cursor-pointer ${
-                userContext.mustChangePassword
-                  ? 'bg-amber-100 border-amber-300 text-amber-900 animate-pulse'
-                  : 'bg-[#F8F9FA] hover:bg-gray-100 border-gray-200 text-gray-700'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-              <span>Senha</span>
-            </button>
-          )}
-
-          {/* Share Link Button */}
-          <button
-            onClick={handleCopyLink}
-            title="Copiar link"
-            className="flex items-center gap-1 px-2.5 h-8.5 rounded-lg border border-gray-200 bg-[#F8F9FA] text-gray-700 text-[11px] font-semibold shrink-0 transition-colors cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-gray-600" />}
-            <span>{copied ? 'Copiado!' : 'Compartilhar'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Selected Dentist Banner / Reception Banner / User Identity Bar */}
-      <div className="bg-[#F8F9FA]/95 border-t border-gray-100 px-3 sm:px-4 py-1.5 text-xs text-gray-600 w-full overflow-hidden">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            {isReceptionist ? (
-              <>
-                <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span className="font-bold text-[#1A1A1A] truncate">
-                  {currentClinic?.shortName || 'Recepção'}:
-                </span>
-                <span className="text-gray-600 truncate">
-                  Todos os Pacientes da Recepção
-                </span>
-              </>
-            ) : canSwitchDentist ? (
-              <>
-                <Eye className="w-3.5 h-3.5 text-[#199A9F] shrink-0" />
-                <span className="text-gray-500 hidden xs:inline shrink-0">Agenda em Exibição:</span>
-                <span className="font-bold text-[#1A1A1A] truncate">
-                  {selectedDentist?.Name || 'Todos os Profissionais'}
-                </span>
-                <span className="text-gray-400 hidden sm:inline">•</span>
-                <span className="text-gray-500 truncate hidden sm:inline">
-                  {selectedClinicId === 'all'
-                    ? '🏢 Todas as Unidades'
-                    : `📍 ${currentClinic?.shortName}`}
-                </span>
-              </>
-            ) : (
-              <>
-                <Stethoscope className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span className="text-gray-500 hidden xs:inline shrink-0">Profissional:</span>
-                <span className="font-bold text-[#1A1A1A] truncate">
-                  {selectedDentist?.Name || userContext.userName || 'Dentista'}
-                </span>
-                <span className="text-gray-400 hidden sm:inline">•</span>
-                <span className="text-gray-500 truncate hidden sm:inline">
-                  {currentClinic?.shortName || 'Unidade Local'}
-                </span>
-              </>
-            )}
+        {/* Mobile Expandable Gestão Drawer */}
+        {isMobileMenuOpen && (
+          <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden mt-0.5">
+            {renderManagementMenuContent(() => setIsMobileMenuOpen(false))}
           </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {userContext.userName && (
-              <span className="text-[11px] text-gray-700 font-medium hidden md:inline truncate max-w-[200px]">
-                👤 <strong className="text-gray-900">{userContext.userName}</strong>
-              </span>
-            )}
-            <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${roleBadge.bg}`}
-            >
-              {roleBadge.label}
-            </span>
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                title="Sair / Desconectar do Sistema"
-                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 hover:bg-red-100/90 border border-red-200 text-red-700 text-[11px] font-bold transition-all cursor-pointer shadow-2xs hover:scale-102 active:scale-95 shrink-0"
-              >
-                <LogOut className="w-3 h-3 text-red-600 shrink-0" />
-                <span>Sair</span>
-              </button>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </header>
   );
 };
-

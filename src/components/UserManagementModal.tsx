@@ -33,6 +33,7 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  Clock,
 } from 'lucide-react';
 import {
   AppUserContext,
@@ -96,7 +97,7 @@ export interface PermissionCategory {
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     id: 'agenda',
-    title: '📅 Agenda & Atendimento Clínico',
+    title: 'Agenda & Atendimento Clínico',
     badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     permissions: [
       { key: 'canViewAgenda', label: 'Visualizar Agenda do Dia / Semanal', description: 'Acessar a grade de horários de consultas' },
@@ -108,7 +109,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'crm',
-    title: '📈 CRM, Vendas & Funil de Oportunidades',
+    title: 'CRM, Vendas & Funil de Oportunidades',
     badge: 'bg-amber-100 text-amber-800 border-amber-200',
     permissions: [
       { key: 'canAccessCRM', label: 'Acesso ao CRM de Oportunidades', description: 'Acessar o pipeline visual de vendas e orçamentos' },
@@ -118,7 +119,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'financeiro',
-    title: '💰 Financeiro & Faturamento',
+    title: 'Financeiro & Faturamento',
     badge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
     permissions: [
       { key: 'canViewFinancialDashboard', label: 'Dashboard Financeiro & Métricas', description: 'Visualizar faturamento, ticket médio e gráficos DRE' },
@@ -127,7 +128,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'mensageria',
-    title: '💬 Mensageria & Notificações',
+    title: 'Mensageria & Notificações',
     badge: 'bg-blue-100 text-blue-800 border-blue-200',
     permissions: [
       { key: 'canReceiveWhatsApp', label: 'Receber Alertas via WhatsApp / WAHA', description: 'Receber notificações e alertas no WhatsApp' },
@@ -138,7 +139,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'clube_sorriso',
-    title: '🎁 Clube Sorriso & Gamificação',
+    title: 'Clube Sorriso & Gamificação',
     badge: 'bg-purple-100 text-purple-800 border-purple-200',
     permissions: [
       { key: 'canViewClubeSorriso', label: 'Leitura do Clube Sorriso & Extrato', description: 'Consultar histórico de pontos e extrato dos pacientes' },
@@ -147,7 +148,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'seguranca_lgpd',
-    title: '🔐 Segurança, Totem & LGPD',
+    title: 'Segurança, Totem & LGPD',
     badge: 'bg-rose-100 text-rose-800 border-rose-200',
     permissions: [
       { key: 'canViewPatientPhone', label: 'Visualizar Telefones (LGPD)', description: 'Exibir número de telefone e dados sensíveis de pacientes' },
@@ -158,7 +159,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: 'administracao',
-    title: '🛠️ Administração & TI',
+    title: 'Administração & TI',
     badge: 'bg-slate-100 text-slate-800 border-slate-200',
     permissions: [
       { key: 'canAccessConfig', label: 'Configurações Técnicas & Webhooks', description: 'Configurações de integração Clinicorp/WAHA/Supabase' },
@@ -384,7 +385,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       const data = await response.json();
       if (data.success && data.mode === 'evolution_go') {
-        setEvolutionStatusMessage({ type: 'success', text: '✅ Mensagem enviada com sucesso via Evolution GO!' });
+        setEvolutionStatusMessage({ type: 'success', text: 'Mensagem enviada com sucesso via Evolution GO!' });
         dataService.markInviteSent(selectedUserForInvite.id);
         refreshUsers();
       } else if (data.fallbackUrl) {
@@ -396,10 +397,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         dataService.markInviteSent(selectedUserForInvite.id);
         refreshUsers();
       } else {
-        setEvolutionStatusMessage({ type: 'error', text: `❌ ${data.error || 'Erro ao enviar via Evolution GO'}` });
+        setEvolutionStatusMessage({ type: 'error', text: `${data.error || 'Erro ao enviar via Evolution GO'}` });
       }
     } catch (err: any) {
-      setEvolutionStatusMessage({ type: 'error', text: `❌ Falha na conexão com Evolution GO: ${err?.message}` });
+      setEvolutionStatusMessage({ type: 'error', text: `Falha na conexão com Evolution GO: ${err?.message}` });
     } finally {
       setSendingViaEvolution(false);
     }
@@ -798,33 +799,33 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       case 'admin_root':
       case 'admin':
         return {
-          label: '👑 Admin Root',
-          bg: 'bg-purple-100 text-purple-900 border-purple-300',
+          label: 'Admin Root',
+          bg: 'bg-purple-50 text-purple-800 border-purple-200',
           desc: 'Acesso Global Total',
         };
       case 'admin_clinica':
         return {
-          label: '🏢 Admin Clínica',
-          bg: 'bg-amber-100 text-amber-900 border-amber-300',
+          label: 'Admin Clínica',
+          bg: 'bg-amber-50 text-amber-800 border-amber-200',
           desc: 'Gestão da Clínica & Unidades',
         };
       case 'gerente_atendimento':
         return {
-          label: '👔 Gerente Atendimento',
-          bg: 'bg-indigo-100 text-indigo-900 border-indigo-300',
+          label: 'Gerente Atendimento',
+          bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
           desc: 'Gestor de Agendas e Check-ins',
         };
       case 'receptionist':
         return {
-          label: '🛎️ Recepção',
-          bg: 'bg-blue-100 text-blue-900 border-blue-300',
+          label: 'Recepção',
+          bg: 'bg-blue-50 text-blue-800 border-blue-200',
           desc: 'Atendimento e Check-in Local',
         };
       case 'dentist':
       default:
         return {
-          label: '🩺 Dentista',
-          bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+          label: 'Dentista',
+          bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
           desc: 'Agenda Individual & Alertas',
         };
     }
@@ -833,34 +834,29 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden my-auto flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+      <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="bg-linear-to-r from-[#4BBCBE] via-[#23B3BB] to-[#199A9F] p-4 sm:p-5 text-white flex items-center justify-between shrink-0 shadow-sm">
+        <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-inner shrink-0">
-              <Users className="w-6 h-6 stroke-[2.2]" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+              <Users className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black tracking-tight truncate">
-                  Gestão de Usuários & Perfis
-                </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/25 text-white border border-white/30 shrink-0">
-                  {isAdminRoot ? '👑 Visão Corporativa Root' : '🏢 Visão Admin Clínica'}
-                </span>
-              </div>
-              <p className="text-xs text-white/90 truncate mt-0.5">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">
+                Gestão de Usuários & Perfis
+              </h2>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
                 {isAdminRoot
-                  ? 'Controle irrestrito: visualização e gestão de usuários de todas as clínicas e unidades derivadas'
-                  : `Gestão restrita aos usuários vinculados à sua clínica (${actorAllowedClinics.map((c) => c.shortName).join(', ')})`}
+                  ? 'Visão Corporativa Root — visualização e gestão de usuários de todas as clínicas e unidades'
+                  : `Visão Admin Clínica — gestão restrita às unidades vinculadas (${actorAllowedClinics.map((c) => c.shortName).join(', ')})`}
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0 ml-2"
+            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0 ml-2"
             title="Fechar janela"
           >
             <X className="w-5 h-5" />
@@ -868,35 +864,35 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3.5 bg-[#FAF9F6]">
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 bg-slate-50">
           {/* Main Navigation Tabs: Users vs Roles CRUD vs Clients (Top Position) */}
-          <div className="flex items-center justify-between gap-2 border-b border-gray-200 pb-2.5 flex-wrap">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               {canManageInternalUsers && (
                 <>
                   <button
                     type="button"
                     onClick={() => setActiveMainTab('users')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 ${
                       activeMainTab === 'users'
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        ? 'bg-[#147A80] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
                     <Users className="w-4 h-4" />
-                    <span>Gerenciamento de Usuários Internos</span>
+                    <span>Usuários Internos</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveMainTab('roles')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 ${
                       activeMainTab === 'roles'
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        ? 'bg-[#147A80] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Perfis & Cargos de Acesso (CRUD RBAC)</span>
+                    <span>Perfis & Cargos (RBAC)</span>
                   </button>
                 </>
               )}
@@ -904,10 +900,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMainTab('clients')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 tabular-nums ${
                     activeMainTab === 'clients'
                       ? 'bg-[#147A80] text-white shadow-xs'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   <Smartphone className="w-4 h-4" />
@@ -920,33 +916,23 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           {activeMainTab !== 'clients' && (
             <>
               {/* Top Scope Notification (Only for Internal Users / RBAC tabs) */}
-              <div
-                className={`p-3 rounded-2xl border flex items-start gap-3 ${
-                  isAdminRoot
-                    ? 'bg-purple-50/80 border-purple-200 text-purple-950'
-                    : 'bg-amber-50/90 border-amber-300 text-amber-950'
-                }`}
-              >
-                <ShieldCheck
-                  className={`w-5 h-5 shrink-0 mt-0.5 ${
-                    isAdminRoot ? 'text-purple-600' : 'text-amber-600'
-                  }`}
-                />
-                <div className="text-xs">
-                  <span className="font-bold block mb-0.5">
+              <div className="p-3 rounded-xl border border-slate-200 bg-white flex items-start gap-3">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-[#147A80]" />
+                <div className="text-xs text-slate-600">
+                  <span className="font-semibold text-slate-900 block mb-0.5">
                     {isAdminRoot
                       ? 'Regra Corporativa Root Ativa (Hierarquia Máxima):'
                       : 'Regra de Franquia / Unidade Ativa (Segregação LGPD):'}
                   </span>
                   {isAdminRoot ? (
                     <span>
-                      Como <strong>Admin Root</strong>, você enxerga e gerencia usuários de{' '}
-                      <strong>todas as clínicas</strong> (Palmas, Paraíso, Araguaína e novas unidades),
+                      Como <strong className="text-slate-900">Admin Root</strong>, você enxerga e gerencia usuários de{' '}
+                      <strong className="text-slate-900">todas as clínicas</strong> (Palmas, Paraíso, Araguaína e novas unidades),
                       com permissão para conceder qualquer perfil e escopo.
                     </span>
                   ) : (
                     <span>
-                      Como <strong>Admin de Clínica</strong>, você possui autorização estrita para
+                      Como <strong className="text-slate-900">Admin de Clínica</strong>, você possui autorização estrita para
                       gerenciar profissionais e recepção da sua clínica e unidades derivadas. Os dados e
                       usuários de outras franquias são preservados em sigilo total.
                     </span>
@@ -956,37 +942,37 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Quick Metrics Bar (Only for Internal Users / RBAC tabs) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div className="p-3 bg-white rounded-2xl border border-gray-200 shadow-2xs">
-                  <span className="text-[11px] text-gray-500 font-semibold block">Total Visível</span>
-                  <span className="text-lg sm:text-xl font-black text-gray-900">{stats.total}</span>
-                  <span className="text-[10px] text-gray-400 block">usuários no escopo</span>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-500 font-semibold block">Total Visível</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">{stats.total}</span>
+                  <span className="text-[10px] text-slate-400 block">usuários no escopo</span>
                 </div>
-                <div className="p-3 bg-white rounded-2xl border border-emerald-200 shadow-2xs">
-                  <span className="text-[11px] text-emerald-700 font-semibold block flex items-center gap-1">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
                     <Stethoscope className="w-3.5 h-3.5" /> Dentistas
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-emerald-900">
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
                     {stats.dentistsCount}
                   </span>
-                  <span className="text-[10px] text-emerald-600 block">corpo clínico</span>
+                  <span className="text-[10px] text-slate-400 block">corpo clínico</span>
                 </div>
-                <div className="p-3 bg-white rounded-2xl border border-blue-200 shadow-2xs">
-                  <span className="text-[11px] text-blue-700 font-semibold block flex items-center gap-1">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" /> Recepção
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-blue-900">
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
                     {stats.receptionCount}
                   </span>
-                  <span className="text-[10px] text-blue-600 block">atendimento local</span>
+                  <span className="text-[10px] text-slate-400 block">atendimento local</span>
                 </div>
-                <div className="p-3 bg-white rounded-2xl border border-purple-200 shadow-2xs">
-                  <span className="text-[11px] text-purple-700 font-semibold block flex items-center gap-1">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-[#147A80] font-semibold flex items-center gap-1">
                     <Crown className="w-3.5 h-3.5" /> Gestão / Admins
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-purple-900">
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
                     {stats.adminsCount}
                   </span>
-                  <span className="text-[10px] text-purple-600 block">gestores ativos</span>
+                  <span className="text-[10px] text-slate-400 block">gestores ativos</span>
                 </div>
               </div>
             </>
@@ -1000,10 +986,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
             />
           ) : activeMainTab === 'roles' ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900">Perfis de Acesso Personalizados (RBAC)</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-bold text-slate-900">Perfis de Acesso Personalizados (RBAC)</h3>
+                  <p className="text-xs text-slate-500">
                     Crie novos papéis, defina descrições e ajuste quais funcionalidades cada perfil pode acessar.
                   </p>
                 </div>
@@ -1021,7 +1007,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     setRoleFormError(null);
                     setIsRoleFormOpen(true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Novo Perfil Customizado</span>
@@ -1035,31 +1021,31 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   {
                     id: 'dentist',
                     name: 'Dentista',
-                    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
                     desc: 'Acesso exclusivo à própria agenda e resumos com IA.',
                   },
                   {
                     id: 'receptionist',
                     name: 'Recepção',
-                    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+                    badge: 'bg-blue-50 text-blue-800 border-blue-200',
                     desc: 'Acesso à recepção, check-in e leitura do Clube Sorriso.',
                   },
                   {
                     id: 'admin_clinica',
                     name: 'Admin Clínica',
-                    badge: 'bg-amber-100 text-amber-800 border-amber-200',
+                    badge: 'bg-amber-50 text-amber-800 border-amber-200',
                     desc: 'Gestão de profissionais, usuários e relatórios da clínica.',
                   },
                   {
                     id: 'admin_root',
                     name: 'Admin Root',
-                    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+                    badge: 'bg-purple-50 text-purple-800 border-purple-200',
                     desc: 'Acesso global irrestrito a todas as unidades e configurações.',
                   },
                   {
                     id: 'gerente_atendimento',
                     name: 'Gerente Atendimento',
-                    badge: 'bg-orange-100 text-orange-800 border-orange-200',
+                    badge: 'bg-orange-50 text-orange-800 border-orange-200',
                     desc: 'Gestão de múltiplas agendas sem configurações técnicas.',
                   },
                 ].map((sysRole) => {
@@ -1067,46 +1053,44 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   return (
                     <div
                       key={sysRole.id}
-                      className="p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-3"
+                      className="p-4 bg-white rounded-xl border border-slate-200 space-y-3"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border ${sysRole.badge}`}
+                          className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${sysRole.badge}`}
                         >
-                          🩺 {sysRole.name} (Sistema)
+                          {sysRole.name} (Sistema)
                         </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRoleFormData({
-                                id: sysRole.id,
-                                name: sysRole.name,
-                                description: sysRole.desc,
-                                badgeBg: sysRole.badge,
-                                defaultPermissions: currentPerms,
-                              });
-                              setEditingRoleId(sysRole.id);
-                              setRoleFormError(null);
-                              setIsRoleFormOpen(true);
-                            }}
-                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 cursor-pointer text-xs flex items-center gap-1.5 font-bold transition-all"
-                            title="Editar Permissões deste Perfil do Sistema"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Editar</span>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFormData({
+                              id: sysRole.id,
+                              name: sysRole.name,
+                              description: sysRole.desc,
+                              badgeBg: sysRole.badge,
+                              defaultPermissions: currentPerms,
+                            });
+                            setEditingRoleId(sysRole.id);
+                            setRoleFormError(null);
+                            setIsRoleFormOpen(true);
+                          }}
+                          className="h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 text-slate-700 hover:text-[#147A80] cursor-pointer text-xs flex items-center gap-1.5 font-semibold transition-colors"
+                          title="Editar Permissões deste Perfil do Sistema"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
+                        </button>
                       </div>
-                      <p className="text-xs text-gray-600">{sysRole.desc}</p>
-                      <div className="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-200">
-                        <span className="font-bold block mb-1">Permissões Ativas:</span>
+                      <p className="text-xs text-slate-600">{sysRole.desc}</p>
+                      <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <span className="font-semibold text-slate-700 block mb-1.5">Permissões Ativas:</span>
                         <div className="flex flex-wrap gap-1">
                           {Object.entries(currentPerms).map(([k, v]) =>
                             v ? (
                               <span
                                 key={k}
-                                className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]"
+                                className="px-1.5 py-0.5 bg-teal-50 text-[#147A80] border border-teal-200/70 rounded font-medium text-[10px]"
                               >
                                 {PERMISSION_LABELS[k] || k}
                               </span>
@@ -1120,10 +1104,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                 {/* Custom roles created by admin */}
                 {customRoles.map((cr) => (
-                  <div key={cr.id} className="p-4 bg-white rounded-2xl border border-purple-300 shadow-2xs space-y-3 relative group">
-                    <div className="flex items-center justify-between">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${cr.badgeBg}`}>
-                        ✨ {cr.name}
+                  <div key={cr.id} className="p-4 bg-white rounded-xl border border-slate-200 space-y-3 relative group">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${cr.badgeBg}`}>
+                        {cr.name}
                       </span>
                       <div className="flex items-center gap-1">
                         <button
@@ -1134,7 +1118,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             setRoleFormError(null);
                             setIsRoleFormOpen(true);
                           }}
-                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer text-xs"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer text-xs transition-colors"
                           title="Editar Perfil"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -1143,7 +1127,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDeleteRole(cr.id)}
-                            className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer text-xs"
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer text-xs transition-colors"
                             title="Excluir Perfil"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1151,12 +1135,14 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         )}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600">{cr.description || 'Sem descrição.'}</p>
-                    <div className="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-200">
-                      <span className="font-bold block mb-1">Permissões Ativas ({Object.values(cr.defaultPermissions).filter(Boolean).length}):</span>
+                    <p className="text-xs text-slate-600">{cr.description || 'Sem descrição.'}</p>
+                    <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <span className="font-semibold text-slate-700 block mb-1.5 tabular-nums">
+                        Permissões Ativas ({Object.values(cr.defaultPermissions).filter(Boolean).length}):
+                      </span>
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(cr.defaultPermissions).map(([k, v]) => v ? (
-                          <span key={k} className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold text-[10px]">
+                          <span key={k} className="px-1.5 py-0.5 bg-teal-50 text-[#147A80] border border-teal-200/70 rounded font-medium text-[10px]">
                             {PERMISSION_LABELS[k] || k}
                           </span>
                         ) : null)}
@@ -1167,44 +1153,44 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               </div>
 
               {/* Matriz Comparativa de Permissões por Perfil (Tabela RBAC) */}
-              <div className="bg-white rounded-3xl border border-gray-200 p-4 sm:p-5 shadow-2xs space-y-4 mt-6">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-4 mt-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3 gap-2 flex-wrap">
                   <div>
-                    <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-purple-600" />
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#147A80]" />
                       Matriz Comparativa de Permissões por Perfil (RBAC)
                     </h4>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       Visão geral da matriz de privilégios. Verifique o escopo de cada perfil para evitar acessos indevidos.
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 bg-purple-50 text-purple-700 font-bold rounded-full text-xs border border-purple-200">
-                    21 Funcionalidades Mapeadas
+                  <span className="text-xs font-medium text-slate-500 tabular-nums">
+                    21 funcionalidades mapeadas
                   </span>
                 </div>
 
-                <div className="overflow-x-auto border border-gray-200 rounded-2xl">
+                <div className="overflow-x-auto border border-slate-200 rounded-xl">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-gray-100/80 text-gray-700 font-bold border-b border-gray-200">
+                      <tr className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                         <th className="p-3 min-w-[220px]">Funcionalidade do Sistema</th>
-                        <th className="p-3 text-center min-w-[90px] bg-purple-50 text-purple-900">Root</th>
+                        <th className="p-3 text-center min-w-[90px] bg-teal-50/60 text-[#147A80]">Root</th>
                         <th className="p-3 text-center min-w-[100px]">Admin Clínica</th>
                         <th className="p-3 text-center min-w-[110px]">Gerente Atend.</th>
                         <th className="p-3 text-center min-w-[90px]">Recepção</th>
                         <th className="p-3 text-center min-w-[90px]">Dentista</th>
                         {customRoles.map((cr) => (
-                          <th key={cr.id} className="p-3 text-center min-w-[100px] bg-purple-50/50 text-purple-900">
-                            ✨ {cr.name}
+                          <th key={cr.id} className="p-3 text-center min-w-[100px] bg-teal-50/40 text-[#147A80]">
+                            {cr.name}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                       {PERMISSION_CATEGORIES.map((cat) => (
                         <React.Fragment key={cat.id}>
-                          <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-200">
-                            <td colSpan={5 + customRoles.length} className="p-2.5 pl-3 text-xs bg-slate-100/80 text-slate-800">
+                          <tr className="bg-slate-50 font-semibold text-slate-900 border-t border-slate-200">
+                            <td colSpan={6 + customRoles.length} className="p-2.5 pl-3 text-xs bg-slate-100/80 text-slate-800">
                               {cat.title}
                             </td>
                           </tr>
@@ -1216,31 +1202,31 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             const dentPerm = getDefaultPermissionsForRole('dentist')[perm.key];
 
                             return (
-                              <tr key={perm.key} className="hover:bg-gray-50/80 transition-colors">
-                                <td className="p-3 font-medium text-gray-900">
-                                  <span className="font-bold block">{perm.label}</span>
-                                  <span className="text-[10px] text-gray-400 block">{perm.description}</span>
+                              <tr key={perm.key} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="p-3 font-medium text-slate-900">
+                                  <span className="font-semibold block">{perm.label}</span>
+                                  <span className="text-[11px] text-slate-500 block">{perm.description}</span>
                                 </td>
-                                <td className="p-3 text-center bg-purple-50/30 font-bold text-emerald-600">
-                                  {rootPerm ? '✓' : '✗'}
+                                <td className="p-3 text-center bg-teal-50/20 font-bold text-emerald-600">
+                                  {rootPerm ? '✓' : '—'}
                                 </td>
-                                <td className={`p-3 text-center font-bold ${clinicaPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                  {clinicaPerm ? '✓' : '✗'}
+                                <td className={`p-3 text-center font-bold ${clinicaPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {clinicaPerm ? '✓' : '—'}
                                 </td>
-                                <td className={`p-3 text-center font-bold ${gerentePerm ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                  {gerentePerm ? '✓' : '✗'}
+                                <td className={`p-3 text-center font-bold ${gerentePerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {gerentePerm ? '✓' : '—'}
                                 </td>
-                                <td className={`p-3 text-center font-bold ${recepPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                  {recepPerm ? '✓' : '✗'}
+                                <td className={`p-3 text-center font-bold ${recepPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {recepPerm ? '✓' : '—'}
                                 </td>
-                                <td className={`p-3 text-center font-bold ${dentPerm ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                  {dentPerm ? '✓' : '✗'}
+                                <td className={`p-3 text-center font-bold ${dentPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {dentPerm ? '✓' : '—'}
                                 </td>
                                 {customRoles.map((cr) => {
                                   const cPerm = Boolean((cr.defaultPermissions as any)[perm.key]);
                                   return (
-                                    <td key={cr.id} className={`p-3 text-center font-bold bg-purple-50/20 ${cPerm ? 'text-purple-600' : 'text-gray-300'}`}>
-                                      {cPerm ? '✓' : '✗'}
+                                    <td key={cr.id} className={`p-3 text-center font-bold bg-teal-50/15 ${cPerm ? 'text-[#147A80]' : 'text-slate-300'}`}>
+                                      {cPerm ? '✓' : '—'}
                                     </td>
                                   );
                                 })}
@@ -1256,30 +1242,35 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Role Form Modal */}
               {isRoleFormOpen && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-                  <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                      <h3 className="text-base font-black text-gray-900">
-                        {editingRoleId ? 'Editar Perfil Customizado' : 'Novo Perfil de Acesso (RBAC)'}
-                      </h3>
+                <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-900">
+                          {editingRoleId ? 'Editar Perfil Customizado' : 'Novo Perfil de Acesso (RBAC)'}
+                        </h3>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setIsRoleFormOpen(false)}
-                        className="text-gray-400 hover:text-gray-600 text-sm font-bold cursor-pointer"
+                        className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
-                        ✕
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    {roleFormError && (
-                      <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs font-bold">
-                        {roleFormError}
-                      </div>
-                    )}
+                    <form onSubmit={handleSaveRole} className="p-5 overflow-y-auto space-y-4 text-xs">
+                      {roleFormError && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold">
+                          {roleFormError}
+                        </div>
+                      )}
 
-                    <form onSubmit={handleSaveRole} className="space-y-4 text-xs">
                       <div>
-                        <label className="font-bold text-gray-700 block mb-1">Nome do Perfil / Cargo *</label>
+                        <label className="font-semibold text-slate-700 block mb-1">Nome do Perfil / Cargo *</label>
                         <input
                           type="text"
                           required
@@ -1293,25 +1284,25 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             }));
                           }}
                           placeholder="Ex: Financeiro Sênior, Coordenador..."
-                          className="w-full p-2.5 rounded-xl border border-gray-200 font-medium text-gray-900 focus:ring-2 focus:ring-purple-500"
+                          className="w-full h-10 px-3 rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                         />
                       </div>
 
                       <div>
-                        <label className="font-bold text-gray-700 block mb-1">Descrição Breve</label>
+                        <label className="font-semibold text-slate-700 block mb-1">Descrição Breve</label>
                         <textarea
                           rows={2}
                           value={roleFormData.description || ''}
                           onChange={(e) => setRoleFormData((prev) => ({ ...prev, description: e.target.value }))}
                           placeholder="Explique o escopo de atuação deste perfil..."
-                          className="w-full p-2.5 rounded-xl border border-gray-200 font-medium text-gray-900 focus:ring-2 focus:ring-purple-500"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                         />
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="font-bold text-gray-700 block text-xs">
-                            Permissões Padrão do Perfil ({Object.values(roleFormData.defaultPermissions).filter(Boolean).length} / {PERMISSION_CATEGORIES.reduce((acc, cat) => acc + cat.permissions.length, 0)} ativas)
+                          <label className="font-semibold text-slate-700 block text-xs tabular-nums">
+                            Permissões Padrão ({Object.values(roleFormData.defaultPermissions).filter(Boolean).length} / {PERMISSION_CATEGORIES.reduce((acc, cat) => acc + cat.permissions.length, 0)} ativas)
                           </label>
                           <div className="flex items-center gap-2">
                             <button
@@ -1321,11 +1312,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allTrue[p.key] = true)));
                                 setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allTrue } }));
                               }}
-                              className="text-[11px] font-bold text-purple-700 hover:underline cursor-pointer"
+                              className="text-[11px] font-semibold text-[#147A80] hover:underline cursor-pointer"
                             >
                               Marcar Todas
                             </button>
-                            <span className="text-gray-300">|</span>
+                            <span className="text-slate-300">|</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -1333,18 +1324,18 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allFalse[p.key] = false)));
                                 setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allFalse } }));
                               }}
-                              className="text-[11px] font-bold text-gray-500 hover:underline cursor-pointer"
+                              className="text-[11px] font-semibold text-slate-500 hover:underline cursor-pointer"
                             >
                               Limpar Todas
                             </button>
                           </div>
                         </div>
 
-                        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                        <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
                           {PERMISSION_CATEGORIES.map((cat) => (
-                            <div key={cat.id} className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                              <div className="flex items-center justify-between border-b border-gray-200 pb-1.5">
-                                <span className="font-bold text-gray-900 text-xs">{cat.title}</span>
+                            <div key={cat.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                <span className="font-bold text-slate-900 text-xs">{cat.title}</span>
                                 <div className="flex items-center gap-1.5">
                                   <button
                                     type="button"
@@ -1353,7 +1344,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                       cat.permissions.forEach((p) => ((updated as any)[p.key] = true));
                                       setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
                                     }}
-                                    className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                                    className="text-[10px] font-semibold text-[#147A80] bg-teal-50 px-2 py-0.5 rounded border border-teal-200 hover:bg-teal-100 cursor-pointer"
                                   >
                                     Marcar Categoria
                                   </button>
@@ -1364,7 +1355,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                       cat.permissions.forEach((p) => ((updated as any)[p.key] = false));
                                       setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
                                     }}
-                                    className="text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-200 cursor-pointer"
+                                    className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-200 cursor-pointer"
                                   >
                                     Limpar
                                   </button>
@@ -1375,15 +1366,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 {cat.permissions.map((perm) => (
                                   <label
                                     key={perm.key}
-                                    className={`p-2 rounded-xl border flex items-start justify-between cursor-pointer transition-all ${
+                                    className={`p-2 rounded-xl border flex items-start justify-between cursor-pointer transition-colors ${
                                       (roleFormData.defaultPermissions as any)[perm.key]
-                                        ? 'bg-purple-50/80 border-purple-200 shadow-2xs'
-                                        : 'bg-white border-gray-200 hover:bg-gray-100'
+                                        ? 'bg-teal-50/70 border-teal-200'
+                                        : 'bg-white border-slate-200 hover:bg-slate-100'
                                     }`}
                                   >
                                     <div className="pr-2 space-y-0.5">
-                                      <span className="font-bold text-gray-900 text-xs block">{perm.label}</span>
-                                      <span className="text-[10px] text-gray-500 block leading-tight">{perm.description}</span>
+                                      <span className="font-semibold text-slate-900 text-xs block">{perm.label}</span>
+                                      <span className="text-[10px] text-slate-500 block leading-tight">{perm.description}</span>
                                     </div>
                                     <input
                                       type="checkbox"
@@ -1397,7 +1388,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                           },
                                         }))
                                       }
-                                      className="rounded text-purple-600 focus:ring-purple-500 mt-0.5 shrink-0"
+                                      className="rounded text-[#147A80] focus:ring-[#147A80] mt-0.5 shrink-0"
                                     />
                                   </label>
                                 ))}
@@ -1407,17 +1398,17 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
                         <button
                           type="button"
                           onClick={() => setIsRoleFormOpen(false)}
-                          className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold cursor-pointer"
+                          className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer transition-colors"
                         >
                           Cancelar
                         </button>
                         <button
                           type="submit"
-                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer shadow-xs"
+                          className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold cursor-pointer shadow-xs transition-colors"
                         >
                           Salvar Perfil
                         </button>
@@ -1430,23 +1421,23 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           ) : (
             <div className="space-y-4">
               {/* Action Row: Filters + Create Button */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
             {/* Search Box */}
             <div className="relative flex-1 min-w-[220px]">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar por nome, e-mail ou telefone..."
-                className="w-full bg-white border border-gray-200 rounded-2xl pl-9 pr-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                className="w-full h-9 bg-white border border-slate-200 rounded-xl pl-9 pr-8 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded cursor-pointer"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -1460,18 +1451,18 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   onChange={(e) =>
                     setSelectedClinicFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
                   }
-                  className="appearance-none bg-white border border-gray-200 rounded-xl pl-2.5 pr-7 py-2 text-xs font-semibold text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs cursor-pointer"
+                  className="appearance-none h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-7 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
                 >
                   <option value="all">
-                    🏢 {isAdminRoot ? 'Todas as Clínicas' : 'Minhas Unidades'}
+                    {isAdminRoot ? 'Todas as Clínicas' : 'Minhas Unidades'}
                   </option>
                   {actorAllowedClinics.map((c) => (
                     <option key={c.id} value={c.id}>
-                      📍 {c.shortName}
+                      {c.shortName}
                     </option>
                   ))}
                 </select>
-                <Filter className="w-3 h-3 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Filter className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Role Filter */}
@@ -1479,32 +1470,32 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 <select
                   value={selectedRoleFilter}
                   onChange={(e) => setSelectedRoleFilter(e.target.value as UserRole | 'all')}
-                  className="appearance-none bg-white border border-gray-200 rounded-xl pl-2.5 pr-7 py-2 text-xs font-semibold text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs cursor-pointer"
+                  className="appearance-none h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-7 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
                 >
                   <option value="all">Todos os Perfis</option>
-                  <option value="dentist">🩺 Dentistas</option>
-                  <option value="receptionist">🛎️ Recepção</option>
-                  <option value="admin_clinica">🏢 Admin Clínica</option>
-                  {isAdminRoot && <option value="admin_root">👑 Admin Root</option>}
-                  <option value="gerente_atendimento">👔 Gerente Atendimento</option>
+                  <option value="dentist">Dentistas</option>
+                  <option value="receptionist">Recepção</option>
+                  <option value="admin_clinica">Admin Clínica</option>
+                  {isAdminRoot && <option value="admin_root">Admin Root</option>}
+                  <option value="gerente_atendimento">Gerente Atendimento</option>
                 </select>
-                <Filter className="w-3 h-3 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Filter className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Batch Import / Pre-Cadastro Button */}
               <button
                 onClick={() => setIsPreCadastroModalOpen(true)}
                 title="Puxar dentistas da base da Clinicorp / Supabase e pré-cadastrar no sistema"
-                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300 text-emerald-950 text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                className="h-9 px-3.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 tabular-nums"
               >
-                <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+                <Sparkles className="w-4 h-4 text-[#147A80]" />
                 <span>Puxar da Base ({pendingDentists.length} pendentes)</span>
               </button>
 
               {/* Create User Button */}
               <button
                 onClick={handleOpenCreateForm}
-                className="px-3.5 py-2 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Novo Usuário</span>
@@ -1514,16 +1505,16 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
           {/* Batch Success Notification */}
           {batchSuccessMessage && (
-            <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl flex items-center justify-between text-xs font-bold animate-in fade-in">
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center justify-between text-xs font-semibold">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 {batchSuccessMessage}
               </span>
               <button
                 onClick={() => setBatchSuccessMessage(null)}
-                className="text-emerald-700 hover:text-emerald-900 font-extrabold text-sm ml-2 cursor-pointer"
+                className="text-emerald-700 hover:text-emerald-900 p-1 rounded cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -1531,10 +1522,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           {/* Users List Table / Cards */}
           <div className="space-y-3">
             {filteredUsers.length === 0 ? (
-              <div className="p-8 text-center bg-white rounded-3xl border border-gray-200">
-                <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <h4 className="text-sm font-bold text-gray-700">Nenhum usuário encontrado</h4>
-                <p className="text-xs text-gray-500 mt-1">
+              <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <h4 className="text-sm font-bold text-slate-700">Nenhum usuário encontrado</h4>
+                <p className="text-xs text-slate-500 mt-1">
                   Tente alterar os termos da busca ou os filtros aplicados.
                 </p>
               </div>
@@ -1547,32 +1538,29 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   .filter(Boolean);
 
                 const isRootUser = user.id === 'usr_favuca_root';
-                const isCurrentLoggedIn =
-                  currentUserContext.email === user.email ||
-                  (currentUserContext.role === 'admin_root' && user.role === 'admin_root');
 
                 return (
                   <div
                     key={user.id}
-                    className={`p-4 bg-white rounded-2xl border transition-all ${
+                    className={`p-4 bg-white rounded-xl border transition-colors ${
                       !user.active
-                        ? 'border-gray-200 bg-gray-50/70 opacity-75'
-                        : 'border-gray-200/90 hover:border-amber-300 shadow-2xs hover:shadow-xs'
+                        ? 'border-slate-200 bg-slate-50/70 opacity-75'
+                        : 'border-slate-200 hover:border-[#147A80]/40'
                     }`}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                       {/* Left: User Identity & Info */}
                       <div className="flex items-start sm:items-center gap-3 min-w-0">
                         <div
-                          className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-sm shrink-0 shadow-2xs"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
                           style={{
                             backgroundColor:
                               user.role === 'admin_root'
-                                ? '#9333EA'
+                                ? '#7E22CE'
                                 : user.role === 'admin_clinica'
                                 ? '#D97706'
                                 : user.role === 'dentist'
-                                ? '#059669'
+                                ? '#147A80'
                                 : '#2563EB',
                           }}
                         >
@@ -1581,29 +1569,29 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-bold text-gray-900 truncate">{user.name}</h4>
+                            <h4 className="text-sm font-bold text-slate-900 truncate">{user.name}</h4>
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${roleBadge.bg}`}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${roleBadge.bg}`}
                             >
                               {roleBadge.label}
                             </span>
                             {user.active ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ativo
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-300">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                                 Inativo
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-gray-500 mt-1 flex-wrap">
+                          <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap tabular-nums">
                             <span className="truncate">{user.email}</span>
                             {user.phone && <span>• {formatPhoneDisplay(user.phone)}</span>}
                             <span>
                               • Matriz:{' '}
-                              <strong className="text-gray-700">
+                              <strong className="text-slate-700 font-semibold">
                                 {mainClinic?.shortName || 'Palmas'}
                               </strong>
                             </span>
@@ -1611,15 +1599,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                           {/* Allowed Units Pills & Password Status */}
                           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            <span className="text-[10px] text-gray-400 font-semibold mr-0.5">
+                            <span className="text-[10px] text-slate-400 font-semibold mr-0.5">
                               Unidades:
                             </span>
                             {allowedClinicNames.map((name, i) => (
                               <span
                                 key={i}
-                                className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 text-gray-700 border border-gray-200"
+                                className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
                               >
-                                📍 {name}
+                                {name}
                               </span>
                             ))}
 
@@ -1627,16 +1615,16 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             {user.mustChangePassword ? (
                               <span
                                 title="Usuário ainda utiliza senha provisória e deverá cadastrar uma nova no primeiro acesso"
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200"
                               >
                                 <KeyRound className="w-3 h-3 text-amber-600" /> Troca de Senha Pendente
                               </span>
                             ) : (
                               <span
                                 title="Usuário já cadastrou sua senha definitiva"
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
                               >
-                                <Lock className="w-3 h-3 text-gray-400" /> Senha Cadastrada
+                                <Lock className="w-3 h-3 text-slate-400" /> Senha Cadastrada
                               </span>
                             )}
 
@@ -1650,10 +1638,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       </div>
 
                       {/* Right: Permissions Badges & Action Buttons */}
-                      <div className="flex items-center gap-2 flex-wrap lg:justify-end shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+                      <div className="flex items-center gap-2 flex-wrap lg:justify-end shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                         {/* Granular Permissions Quick Badges */}
                         <div
-                          className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-200/80 mr-1"
+                          className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 mr-1"
                           title="Permissões ativas deste usuário"
                         >
                           <span
@@ -1662,10 +1650,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 ? 'Visualizar Agenda: Permitido'
                                 : 'Visualizar Agenda: Negado'
                             }
-                            className={`p-1 rounded-md text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                               user.permissions?.canViewAgenda
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-gray-200 text-gray-400'
+                                : 'bg-slate-200 text-slate-400'
                             }`}
                           >
                             Agenda
@@ -1676,10 +1664,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 ? 'Check-in: Permitido'
                                 : 'Check-in: Negado'
                             }
-                            className={`p-1 rounded-md text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                               user.permissions?.canCheckIn
                                 ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-200 text-gray-400'
+                                : 'bg-slate-200 text-slate-400'
                             }`}
                           >
                             Check-in
@@ -1690,10 +1678,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 ? 'Alertas WhatsApp: Ativo'
                                 : 'Alertas WhatsApp: Inativo'
                             }
-                            className={`p-1 rounded-md text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                               user.permissions?.canReceiveWhatsApp
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-200 text-gray-400'
+                                : 'bg-slate-200 text-slate-400'
                             }`}
                           >
                             Zap
@@ -1704,10 +1692,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                 ? 'Push Celular: Ativo'
                                 : 'Push Celular: Inativo'
                             }
-                            className={`p-1 rounded-md text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                               user.permissions?.canReceivePush
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-gray-200 text-gray-400'
+                                ? 'bg-teal-100 text-[#147A80]'
+                                : 'bg-slate-200 text-slate-400'
                             }`}
                           >
                             Push
@@ -1715,7 +1703,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           {user.permissions?.canViewClubeSorriso && (
                             <span
                               title="Leitura de Pacientes do Clube Sorriso e Vouchers: Permitido"
-                              className="p-1 rounded-md text-[10px] font-bold bg-teal-100 text-teal-800"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-100 text-[#147A80]"
                             >
                               Clube
                             </span>
@@ -1723,7 +1711,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           {user.permissions?.canAccessConfig && (
                             <span
                               title="Configurações Técnicas e Webhooks: Permitido"
-                              className="p-1 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800"
                             >
                               Config
                             </span>
@@ -1734,9 +1722,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         <button
                           onClick={() => handleOpenInviteModal(user)}
                           title="Enviar link de acesso e credenciais via WhatsApp ou E-mail"
-                          className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300 text-emerald-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                          className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                         >
-                          <Send className="w-3.5 h-3.5 text-emerald-600" />
+                          <Send className="w-3.5 h-3.5" />
                           <span>Enviar Acesso</span>
                         </button>
 
@@ -1744,9 +1732,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         <button
                           onClick={() => handleOpenResetModal(user)}
                           title="Redefinir senha e gerar nova senha provisória"
-                          className="p-2 rounded-xl bg-white hover:bg-amber-50 border border-gray-200 text-gray-700 hover:text-amber-800 transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-white hover:bg-teal-50 border border-slate-200 text-slate-600 hover:text-[#147A80] transition-colors cursor-pointer flex items-center justify-center"
                         >
-                          <KeyRound className="w-4 h-4 text-amber-700" />
+                          <KeyRound className="w-4 h-4" />
                         </button>
 
                         {/* Simulate User Button */}
@@ -1756,9 +1744,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             onClose();
                           }}
                           title="Simular visualização exata deste usuário no aplicativo"
-                          className="px-2.5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                          className="h-8 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                         >
-                          <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                          <UserCheck className="w-3.5 h-3.5 text-[#147A80]" />
                           <span>Simular</span>
                         </button>
 
@@ -1766,7 +1754,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         <button
                           onClick={() => handleOpenEditForm(user)}
                           title="Editar dados e permissões do usuário"
-                          className="p-2 rounded-xl bg-white hover:bg-amber-50 border border-gray-200 text-gray-700 hover:text-amber-800 transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-white hover:bg-teal-50 border border-slate-200 text-slate-600 hover:text-[#147A80] transition-colors cursor-pointer flex items-center justify-center"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -1775,19 +1763,19 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         {!isRootUser && (
                           <div className="relative">
                             {deleteConfirmId === user.id ? (
-                              <div className="flex items-center gap-1 bg-red-50 p-1 rounded-xl border border-red-200">
-                                <span className="text-[10px] text-red-700 font-bold px-1">
+                              <div className="flex items-center gap-1 bg-rose-50 p-1 rounded-lg border border-rose-200">
+                                <span className="text-[10px] text-rose-700 font-semibold px-1">
                                   Excluir?
                                 </span>
                                 <button
                                   onClick={() => handleDeleteUser(user.id)}
-                                  className="px-2 py-0.5 rounded-lg bg-red-600 text-white text-[10px] font-bold"
+                                  className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-semibold cursor-pointer"
                                 >
                                   Sim
                                 </button>
                                 <button
                                   onClick={() => setDeleteConfirmId(null)}
-                                  className="px-1.5 py-0.5 rounded-lg bg-gray-200 text-gray-700 text-[10px] font-bold"
+                                  className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold cursor-pointer"
                                 >
                                   Não
                                 </button>
@@ -1796,7 +1784,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                               <button
                                 onClick={() => setDeleteConfirmId(user.id)}
                                 title="Excluir usuário do sistema"
-                                className="p-2 rounded-xl bg-white hover:bg-red-50 border border-gray-200 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                                className="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer flex items-center justify-center"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1815,14 +1803,14 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-white border-t border-gray-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-[#147A80]" />
             <span>Permissões validadas em tempo real com controle RBAC por unidade</span>
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold transition-colors cursor-pointer"
+            className="h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer"
           >
             Fechar Painel
           </button>
@@ -1831,19 +1819,21 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       {/* CREATE / EDIT USER MODAL FORM */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-300 overflow-hidden my-auto flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[90vh]">
             {/* Form Header */}
-            <div className="bg-linear-to-r from-amber-500 to-orange-500 p-4 text-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <UserPlus className="w-5 h-5" />
-                <h3 className="text-sm sm:text-base font-bold">
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">
                   {editingUserId ? 'Editar Usuário e Permissões' : 'Cadastrar Novo Usuário'}
                 </h3>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1860,13 +1850,13 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Auto-fill from Base Dentists (Only on create) */}
               {!editingUserId && (
-                <div className="p-3.5 bg-linear-to-r from-amber-50 to-orange-50/70 border border-amber-200/90 rounded-2xl space-y-2">
+                <div className="p-3.5 bg-teal-50/70 border border-teal-200 rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
+                    <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#147A80]" />
                       Puxar Dados de um Dentista da Base (Auto-preenchimento)
                     </span>
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-[#147A80] bg-white border border-teal-200 px-2 py-0.5 rounded-md">
                       1 Clique
                     </span>
                   </div>
@@ -1878,20 +1868,20 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       handleSelectDentistForPreCadastro(dId);
                     }}
                     defaultValue=""
-                    className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-semibold text-gray-800 shadow-2xs focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                    className="w-full h-9 bg-white border border-teal-200 rounded-xl px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
                   >
-                    <option value="">⚡ Selecione um dentista para importar dados da base...</option>
+                    <option value="">Selecione um dentista para importar dados da base...</option>
                     {dentists.map((d) => {
                       const isAlready = users.some((u) => u.dentist_id === d.id);
                       return (
                         <option key={d.id} value={d.id}>
-                          {isAlready ? '✓ (Já cadastrado) ' : '✨ '} {d.Name} — {d.specialty || d.CRO}
+                          {isAlready ? '(Já cadastrado) ' : ''}{d.Name} — {d.specialty || d.CRO}
                         </option>
                       );
                     })}
                   </select>
 
-                  <p className="text-[11px] text-amber-900/80 leading-snug">
+                  <p className="text-[11px] text-slate-600 leading-snug">
                     Importa automaticamente o nome oficial, e-mail institucional, celular/WhatsApp, unidades de atendimento e vínculo com o Clinicorp.
                   </p>
                 </div>
@@ -1899,37 +1889,37 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Section 1: Basic Info */}
               <div className="space-y-3">
-                <h4 className="font-extrabold text-gray-900 uppercase tracking-wider text-[11px] border-b pb-1">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
                   1. Dados Básicos
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">Nome Completo *</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Nome Completo *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Ex: Dra. Mariana Alencar"
-                      className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-900 focus:ring-2 focus:ring-amber-500"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">E-mail de Acesso *</label>
+                    <label className="block text-slate-700 font-semibold mb-1">E-mail de Acesso *</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="exemplo@bertuolodontologia.com.br"
-                      className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-900 focus:ring-2 focus:ring-amber-500"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">
+                    <label className="block text-slate-700 font-semibold mb-1">
                       Telefone / WhatsApp (para Notificações)
                     </label>
                     <input
@@ -1940,22 +1930,22 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       }
                       placeholder="(63) 98148-7023"
                       maxLength={15}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-900 focus:ring-2 focus:ring-amber-500 font-mono text-xs"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80] font-mono text-xs tabular-nums"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">Status da Conta</label>
-                    <div className="flex items-center gap-3 pt-1">
+                    <label className="block text-slate-700 font-semibold mb-1">Status da Conta</label>
+                    <div className="flex items-center gap-3 pt-1.5">
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
                           type="radio"
                           name="user_status"
                           checked={formData.active}
                           onChange={() => setFormData({ ...formData, active: true })}
-                          className="text-amber-500 focus:ring-amber-500"
+                          className="text-[#147A80] focus:ring-[#147A80]"
                         />
-                        <span className="font-bold text-emerald-700">Ativo</span>
+                        <span className="font-semibold text-emerald-700">Ativo</span>
                       </label>
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -1963,9 +1953,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           name="user_status"
                           checked={!formData.active}
                           onChange={() => setFormData({ ...formData, active: false })}
-                          className="text-amber-500 focus:ring-amber-500"
+                          className="text-[#147A80] focus:ring-[#147A80]"
                         />
-                        <span className="font-bold text-gray-500">Inativo</span>
+                        <span className="font-semibold text-slate-500">Inativo</span>
                       </label>
                     </div>
                   </div>
@@ -1973,7 +1963,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   {/* Initial / Temporary Password */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-gray-700 font-bold">
+                      <label className="text-slate-700 font-semibold">
                         {editingUserId ? 'Senha do Usuário' : 'Senha Inicial Provisória *'}
                       </label>
                       <button
@@ -1984,7 +1974,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             initialPassword: generateSecureTemporaryPassword(),
                           }))
                         }
-                        className="text-[10px] text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold flex items-center gap-1 cursor-pointer"
                       >
                         <RefreshCw className="w-3 h-3" /> Gerar Aleatória
                       </button>
@@ -1997,12 +1987,12 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           setFormData({ ...formData, initialPassword: e.target.value })
                         }
                         placeholder="Ex: Bertuol@2026"
-                        className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-xs font-mono text-gray-900 focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                        className="w-full h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-10 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                       />
                       <button
                         type="button"
                         onClick={() => setShowFormPassword(!showFormPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                       >
                         {showFormPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -2018,9 +2008,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         onChange={(e) =>
                           setFormData({ ...formData, mustChangePassword: e.target.checked })
                         }
-                        className="rounded text-amber-600 focus:ring-amber-500"
+                        className="rounded text-[#147A80] focus:ring-[#147A80]"
                       />
-                      <span className="text-xs text-gray-800 font-semibold">
+                      <span className="text-xs text-slate-800 font-medium">
                         Exigir troca no 1º acesso (Recomendado)
                       </span>
                     </label>
@@ -2030,17 +2020,17 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Section 2: Role Selection */}
               <div className="space-y-3 pt-2">
-                <h4 className="font-extrabold text-gray-900 uppercase tracking-wider text-[11px] border-b pb-1">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
                   2. Papel / Perfil de Acesso (RBAC)
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {/* Option 1: Dentist */}
                   <label
-                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
                       formData.role === 'dentist'
-                        ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-500/20'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <input
@@ -2048,11 +2038,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       name="role_select"
                       checked={formData.role === 'dentist'}
                       onChange={() => handleRoleChange('dentist')}
-                      className="mt-0.5 text-emerald-600"
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
                     />
                     <div>
-                      <span className="font-bold text-gray-900 block">🩺 Dentista</span>
-                      <span className="text-[11px] text-gray-500 leading-snug block">
+                      <span className="font-semibold text-slate-900 block">Dentista</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
                         Acesso exclusivo à sua própria agenda e alertas no celular.
                       </span>
                     </div>
@@ -2060,10 +2050,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                   {/* Option 2: Receptionist */}
                   <label
-                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
                       formData.role === 'receptionist'
-                        ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-500/20'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <input
@@ -2071,11 +2061,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       name="role_select"
                       checked={formData.role === 'receptionist'}
                       onChange={() => handleRoleChange('receptionist')}
-                      className="mt-0.5 text-blue-600"
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
                     />
                     <div>
-                      <span className="font-bold text-gray-900 block">🛎️ Recepção</span>
-                      <span className="text-[11px] text-gray-500 leading-snug block">
+                      <span className="font-semibold text-slate-900 block">Recepção</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
                         Acesso à recepção da unidade física com check-in de pacientes.
                       </span>
                     </div>
@@ -2083,10 +2073,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                   {/* Option 3: Admin Clínica */}
                   <label
-                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
                       formData.role === 'admin_clinica'
-                        ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-500/20'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <input
@@ -2094,11 +2084,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       name="role_select"
                       checked={formData.role === 'admin_clinica'}
                       onChange={() => handleRoleChange('admin_clinica')}
-                      className="mt-0.5 text-amber-600"
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
                     />
                     <div>
-                      <span className="font-bold text-gray-900 block">🏢 Admin Clínica</span>
-                      <span className="text-[11px] text-gray-500 leading-snug block">
+                      <span className="font-semibold text-slate-900 block">Admin Clínica</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
                         Gestão da sua clínica e unidades derivadas, agendas e usuários.
                       </span>
                     </div>
@@ -2107,10 +2097,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   {/* Option 4: Admin Root (Only visible/creatable by Admin Root) */}
                   {isAdminRoot && (
                     <label
-                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
                         formData.role === 'admin_root'
-                          ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-500/20'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                          ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                          : 'bg-white border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       <input
@@ -2118,11 +2108,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         name="role_select"
                         checked={formData.role === 'admin_root'}
                         onChange={() => handleRoleChange('admin_root')}
-                        className="mt-0.5 text-purple-600"
+                        className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
                       />
                       <div>
-                        <span className="font-bold text-gray-900 block">👑 Admin Root</span>
-                        <span className="text-[11px] text-gray-500 leading-snug block">
+                        <span className="font-semibold text-slate-900 block">Admin Root</span>
+                        <span className="text-[11px] text-slate-500 leading-snug block">
                           Acesso global irrestrito a todas as clínicas e dados técnicos.
                         </span>
                       </div>
@@ -2133,10 +2123,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   {customRoles.map((cr) => (
                     <label
                       key={cr.id}
-                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
                         formData.role === cr.id
-                          ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-500/20'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                          ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                          : 'bg-white border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       <input
@@ -2144,11 +2134,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         name="role_select"
                         checked={formData.role === cr.id}
                         onChange={() => handleRoleChange(cr.id)}
-                        className="mt-0.5 text-purple-600"
+                        className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
                       />
                       <div>
-                        <span className="font-bold text-gray-900 block">✨ {cr.name}</span>
-                        <span className="text-[11px] text-gray-500 leading-snug block">
+                        <span className="font-semibold text-slate-900 block">{cr.name}</span>
+                        <span className="text-[11px] text-slate-500 leading-snug block">
                           {cr.description || 'Perfil customizado com permissões RBAC.'}
                         </span>
                       </div>
@@ -2158,8 +2148,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                 {/* Dentist Person Linking (if role === dentist) */}
                 {formData.role === 'dentist' && (
-                  <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5">
-                    <label className="block text-emerald-950 font-bold">
+                  <div className="p-3 bg-teal-50/60 border border-teal-200 rounded-xl space-y-1.5">
+                    <label className="block text-slate-900 font-semibold">
                       Vincular ao Profissional da Clinicorp:
                     </label>
                     <select
@@ -2167,7 +2157,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, dentist_id: Number(e.target.value) })
                       }
-                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-gray-900 font-semibold text-xs"
+                      className="w-full h-9 bg-white border border-teal-200 rounded-xl px-3 text-slate-900 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     >
                       {dentists.map((d) => (
                         <option key={d.id} value={d.id}>
@@ -2175,7 +2165,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         </option>
                       ))}
                     </select>
-                    <span className="text-[11px] text-emerald-800 block">
+                    <span className="text-[11px] text-slate-600 block">
                       Permite sincronização automática de horários e pacientes deste dentista.
                     </span>
                   </div>
@@ -2184,13 +2174,13 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Section 3: Clinic and Units Scope */}
               <div className="space-y-3 pt-2">
-                <h4 className="font-extrabold text-gray-900 uppercase tracking-wider text-[11px] border-b pb-1">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
                   3. Vinculação de Clínica e Unidades Derivadas
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">Clínica Matriz *</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Clínica Matriz *</label>
                     <select
                       value={formData.clinicId}
                       disabled={isAdminClinica} // Locked if admin_clinica
@@ -2204,26 +2194,26 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             : [...prev.allowedClinicIds, newCid],
                         }));
                       }}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-900 font-semibold focus:ring-2 focus:ring-amber-500 disabled:bg-gray-100 disabled:text-gray-500"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#147A80] disabled:bg-slate-100 disabled:text-slate-500"
                     >
                       {actorAllowedClinics.map((c) => (
                         <option key={c.id} value={c.id}>
-                          📍 {c.name}
+                          {c.name}
                         </option>
                       ))}
                     </select>
                     {isAdminClinica && (
-                      <span className="text-[10px] text-amber-700 mt-1 block">
-                        🔒 Travado na sua clínica de gestão.
+                      <span className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Travado na sua clínica de gestão.
                       </span>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-bold mb-1">
+                    <label className="block text-slate-700 font-semibold mb-1">
                       Unidades Autorizadas para Acesso
                     </label>
-                    <div className="space-y-1.5 p-2.5 bg-gray-50 rounded-xl border border-gray-200 max-h-32 overflow-y-auto">
+                    <div className="space-y-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 max-h-32 overflow-y-auto">
                       {actorAllowedClinics.map((c) => (
                         <label
                           key={c.id}
@@ -2233,9 +2223,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             type="checkbox"
                             checked={formData.allowedClinicIds.includes(c.id)}
                             onChange={() => handleToggleAllowedClinic(c.id)}
-                            className="rounded text-amber-600 focus:ring-amber-500"
+                            className="rounded text-[#147A80] focus:ring-[#147A80]"
                           />
-                          <span className="text-gray-800 font-medium">
+                          <span className="text-slate-800 font-medium">
                             {c.shortName} {c.id === formData.clinicId ? '(Matriz)' : ''}
                           </span>
                         </label>
@@ -2247,8 +2237,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Section 4: Granular Permissions Matrix */}
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between border-b pb-1">
-                  <h4 className="font-extrabold text-gray-900 uppercase tracking-wider text-[11px]">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h4 className="font-bold text-slate-900 text-xs">
                     4. Ações & Funções Permitidas (Permissões Granulares)
                   </h4>
                   <button
@@ -2259,7 +2249,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         permissions: getDefaultPermissionsForRole(prev.role),
                       }))
                     }
-                    className="text-[11px] text-amber-700 hover:text-amber-800 font-bold underline cursor-pointer"
+                    className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold underline cursor-pointer"
                   >
                     Restaurar Padrão do Perfil
                   </button>
@@ -2267,9 +2257,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
                 <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
                   {PERMISSION_CATEGORIES.map((cat) => (
-                    <div key={cat.id} className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                      <div className="flex items-center justify-between border-b border-gray-200 pb-1">
-                        <span className="font-bold text-gray-900 text-xs">{cat.title}</span>
+                    <div key={cat.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                        <span className="font-bold text-slate-900 text-xs">{cat.title}</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         {cat.permissions.map((perm) => {
@@ -2277,24 +2267,24 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                           return (
                             <label
                               key={perm.key}
-                              className={`p-2 rounded-xl border flex items-start justify-between transition-all ${
+                              className={`p-2 rounded-xl border flex items-start justify-between transition-colors ${
                                 isConfigAndNotRoot
-                                  ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+                                  ? 'bg-slate-100 border-slate-200 opacity-60 cursor-not-allowed'
                                   : formData.permissions[perm.key]
-                                  ? 'bg-amber-50/80 border-amber-200 shadow-2xs cursor-pointer'
-                                  : 'bg-white border-gray-200 hover:bg-gray-100 cursor-pointer'
+                                  ? 'bg-teal-50/70 border-teal-200 cursor-pointer'
+                                  : 'bg-white border-slate-200 hover:bg-slate-100 cursor-pointer'
                               }`}
                             >
                               <div className="pr-2 space-y-0.5">
-                                <span className="font-bold text-gray-900 text-xs block">{perm.label}</span>
-                                <span className="text-[10px] text-gray-500 block leading-tight">{perm.description}</span>
+                                <span className="font-semibold text-slate-900 text-xs block">{perm.label}</span>
+                                <span className="text-[10px] text-slate-500 block leading-tight">{perm.description}</span>
                               </div>
                               <input
                                 type="checkbox"
                                 disabled={isConfigAndNotRoot}
                                 checked={Boolean(formData.permissions[perm.key])}
                                 onChange={() => handleTogglePermission(perm.key)}
-                                className="rounded text-amber-600 focus:ring-amber-500 mt-0.5 shrink-0"
+                                className="rounded text-[#147A80] focus:ring-[#147A80] mt-0.5 shrink-0"
                               />
                             </label>
                           );
@@ -2306,17 +2296,17 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               </div>
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors cursor-pointer"
+                  className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xs transition-all cursor-pointer"
+                  className="h-10 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
                 >
                   {editingUserId ? 'Salvar Alterações' : 'Criar Usuário'}
                 </button>
@@ -2328,81 +2318,81 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       {/* DEDICATED PRE-CADASTRO EM LOTE MODAL */}
       {isPreCadastroModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-emerald-300 overflow-hidden my-auto flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-700 p-4 sm:p-5 text-white flex items-center justify-between shrink-0 shadow-xs">
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-inner shrink-0">
-                  <Sparkles className="w-5 h-5 animate-pulse" />
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight leading-tight">
+                  <h3 className="text-base font-bold tracking-tight text-slate-900 leading-tight">
                     Puxar Dentistas da Base (Pré-Cadastro em Lote)
                   </h3>
-                  <p className="text-xs text-emerald-100 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Profissionais cadastrados no Clinicorp / Supabase prontos para virar usuários
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsPreCadastroModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 bg-[#FAF9F6] flex-1 text-xs">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50 flex-1 text-xs">
               {/* Summary Cards */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-white rounded-2xl border border-gray-200 shadow-2xs">
-                  <span className="text-[11px] text-gray-500 font-semibold block">Total na Base</span>
-                  <span className="text-lg font-black text-gray-900">{dentists.length}</span>
-                  <span className="text-[10px] text-gray-400 block">profissionais Clinicorp</span>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-500 font-semibold block">Total na Base</span>
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">{dentists.length}</span>
+                  <span className="text-[10px] text-slate-400 block">profissionais Clinicorp</span>
                 </div>
-                <div className="p-3 bg-white rounded-2xl border border-emerald-200 shadow-2xs">
-                  <span className="text-[11px] text-emerald-700 font-semibold block flex items-center gap-1">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Já Cadastrados
                   </span>
-                  <span className="text-lg font-black text-emerald-900">
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">
                     {baseDentistsStatus.filter((b) => b.isRegistered).length}
                   </span>
-                  <span className="text-[10px] text-emerald-600 block">com acesso ativo</span>
+                  <span className="text-[10px] text-slate-400 block">com acesso ativo</span>
                 </div>
-                <div className="p-3 bg-white rounded-2xl border border-amber-300 shadow-2xs">
-                  <span className="text-[11px] text-amber-800 font-semibold block flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5" /> Pendentes
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-[#147A80] font-semibold flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> Pendentes
                   </span>
-                  <span className="text-lg font-black text-amber-950">
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">
                     {pendingDentists.length}
                   </span>
-                  <span className="text-[10px] text-amber-700 block">aguardando ativação</span>
+                  <span className="text-[10px] text-slate-400 block">aguardando ativação</span>
                 </div>
               </div>
 
               {/* Batch Action Banner */}
               {pendingDentists.length > 0 ? (
-                <div className="p-4 bg-linear-to-r from-emerald-500 to-teal-600 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 bg-teal-50 rounded-xl text-slate-900 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h4 className="font-extrabold text-sm leading-tight">
+                    <h4 className="font-bold text-sm leading-tight tabular-nums">
                       Existem {pendingDentists.length} dentistas na base sem usuário criado
                     </h4>
-                    <p className="text-xs text-emerald-100 mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Deseja puxar e pré-cadastrar todos com e-mail, telefone, CRO e clínicas em 1 clique?
                     </p>
                   </div>
                   <button
                     onClick={handleBatchPreCadastrarAll}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-950 font-black text-xs shadow-md transition-all cursor-pointer shrink-0 flex items-center justify-center gap-2"
+                    className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer shrink-0 flex items-center justify-center gap-2 tabular-nums"
                   >
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <Sparkles className="w-4 h-4" />
                     <span>Pré-cadastrar Todos ({pendingDentists.length})</span>
                   </button>
                 </div>
               ) : (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl flex items-center gap-2 font-bold text-xs">
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2 font-semibold text-xs">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span>Todos os dentistas cadastrados no Clinicorp já possuem usuário ativo no sistema!</span>
                 </div>
@@ -2410,7 +2400,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
               {/* Dentists List */}
               <div className="space-y-2.5">
-                <h4 className="font-black text-gray-900 uppercase tracking-wider text-[11px]">
+                <h4 className="font-bold text-slate-900 text-xs">
                   Profissionais da Base Clinicorp & Status de Acesso
                 </h4>
 
@@ -2423,10 +2413,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     return (
                       <div
                         key={dentist.id}
-                        className={`p-3.5 bg-white rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        className={`p-3.5 bg-white rounded-xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isRegistered
-                            ? 'border-gray-200 bg-gray-50/50'
-                            : 'border-emerald-200/90 shadow-2xs hover:border-emerald-400'
+                            ? 'border-slate-200 bg-slate-50/50'
+                            : 'border-slate-200 hover:border-[#147A80]/50'
                         }`}
                       >
                         {/* Info */}
@@ -2435,45 +2425,45 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             <img
                               src={dentist.avatarUrl}
                               alt={dentist.Name}
-                              className="w-10 h-10 rounded-2xl object-cover border border-gray-200 shrink-0 shadow-2xs"
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] font-bold flex items-center justify-center shrink-0">
                               <Stethoscope className="w-5 h-5" />
                             </div>
                           )}
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-extrabold text-gray-900 text-xs truncate">
+                              <span className="font-bold text-slate-900 text-xs truncate">
                                 {dentist.Name}
                               </span>
-                              <span className="text-[10px] text-gray-500 font-semibold">
+                              <span className="text-[10px] text-slate-500 font-semibold tabular-nums">
                                 {dentist.CRO}
                               </span>
                               {isRegistered ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <Check className="w-3 h-3" /> Já no Sistema
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                                  ⏳ Pendente
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                  <Clock className="w-3 h-3" /> Pendente
                                 </span>
                               )}
                             </div>
 
-                            <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                            <p className="text-[11px] text-slate-500 mt-0.5 truncate tabular-nums">
                               {dentist.specialty || 'Cirurgião-Dentista'} • {dentist.MobilePhone || 'Sem telefone'} • {dentist.Email}
                             </p>
 
                             <div className="flex items-center gap-1 mt-1 flex-wrap">
-                              <span className="text-[10px] text-gray-400 font-medium">Unidades:</span>
+                              <span className="text-[10px] text-slate-400 font-medium">Unidades:</span>
                               {affiliatedNames.map((name, i) => (
                                 <span
                                   key={i}
-                                  className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-gray-100 text-gray-700 border border-gray-200"
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
                                 >
-                                  📍 {name}
+                                  {name}
                                 </span>
                               ))}
                             </div>
@@ -2491,15 +2481,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                   onClose();
                                 }
                               }}
-                              className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                              className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                             >
-                              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              <UserCheck className="w-3.5 h-3.5 text-[#147A80]" />
                               <span>Simular Visão</span>
                             </button>
                           ) : (
                             <button
                               onClick={() => handlePreCadastrarDentist(dentist)}
-                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                              className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
                             >
                               <Sparkles className="w-3.5 h-3.5" />
                               <span>Pré-cadastrar Agora</span>
@@ -2514,13 +2504,13 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-white border-t border-gray-200 flex items-center justify-between shrink-0">
-              <span className="text-xs text-gray-500">
+            <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 gap-2">
+              <span className="text-xs text-slate-500">
                 Os dentistas pré-cadastrados recebem acesso instantâneo via link e push notification.
               </span>
               <button
                 onClick={() => setIsPreCadastroModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                className="h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
               >
                 Concluir
               </button>
@@ -2531,44 +2521,44 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       {/* WHATSAPP & EMAIL INVITE MODAL */}
       {isInviteModalOpen && selectedUserForInvite && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-emerald-300 overflow-hidden my-auto flex flex-col">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col">
             {/* Header */}
-            <div className="bg-linear-to-r from-emerald-600 to-teal-700 p-4 text-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
-                  <Send className="w-5 h-5" />
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <Send className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold">Enviar Convite & Acesso</h4>
-                  <p className="text-[11px] text-emerald-100">{selectedUserForInvite.name}</p>
+                  <h4 className="text-sm font-bold text-slate-900">Enviar Convite & Acesso</h4>
+                  <p className="text-xs text-slate-500">{selectedUserForInvite.name}</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="p-4 sm:p-5 space-y-3.5 bg-[#FAF9F6] text-xs">
-              <div className="p-3 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-1">
-                <span className="text-gray-500 font-semibold block text-[11px]">Destinatário:</span>
-                <span className="font-extrabold text-gray-900 text-xs block">{selectedUserForInvite.name}</span>
-                <span className="text-gray-600 block">{selectedUserForInvite.email}</span>
+            <div className="p-4 sm:p-5 space-y-3.5 bg-slate-50 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-slate-500 font-semibold block text-[11px]">Destinatário:</span>
+                <span className="font-bold text-slate-900 text-xs block">{selectedUserForInvite.name}</span>
+                <span className="text-slate-600 block">{selectedUserForInvite.email}</span>
                 {selectedUserForInvite.phone && (
-                  <span className="text-emerald-700 font-bold block">{formatPhoneDisplay(selectedUserForInvite.phone)}</span>
+                  <span className="text-[#147A80] font-semibold block tabular-nums">{formatPhoneDisplay(selectedUserForInvite.phone)}</span>
                 )}
               </div>
 
               {/* Message Bubble Preview */}
               <div className="space-y-1.5">
-                <span className="font-bold text-gray-700 block text-[11px]">
+                <span className="font-semibold text-slate-700 block text-[11px]">
                   Prévia da Mensagem WhatsApp (Pronta para Enviar):
                 </span>
-                <div className="p-3.5 bg-emerald-50/90 border border-emerald-200 text-emerald-950 rounded-2xl font-mono text-[11px] leading-relaxed shadow-inner whitespace-pre-line max-h-56 overflow-y-auto">
+                <div className="p-3.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-mono text-[11px] leading-relaxed whitespace-pre-line max-h-56 overflow-y-auto">
                   {formatInviteTextMessage(selectedUserForInvite)}
                 </div>
               </div>
@@ -2576,12 +2566,12 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               {/* Evolution GO Feedback Message */}
               {evolutionStatusMessage && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs font-bold ${
+                  className={`p-2.5 rounded-xl text-xs font-semibold ${
                     evolutionStatusMessage.type === 'success'
-                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
                       : evolutionStatusMessage.type === 'error'
-                      ? 'bg-rose-100 text-rose-900 border border-rose-300'
-                      : 'bg-blue-100 text-blue-900 border border-blue-300'
+                      ? 'bg-rose-50 text-rose-900 border border-rose-200'
+                      : 'bg-blue-50 text-blue-900 border border-blue-200'
                   }`}
                 >
                   {evolutionStatusMessage.text}
@@ -2595,11 +2585,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   type="button"
                   disabled={sendingViaEvolution}
                   onClick={handleSendViaEvolutionGo}
-                  className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <Send className="w-4 h-4" />
                   <span>
-                    {sendingViaEvolution ? 'Disparando via Evolution GO...' : '⚡ Disparar via Evolution GO (Automático)'}
+                    {sendingViaEvolution ? 'Disparando via Evolution GO...' : 'Disparar via Evolution GO (Automático)'}
                   </span>
                 </button>
 
@@ -2612,11 +2602,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     dataService.markInviteSent(selectedUserForInvite.id);
                     refreshUsers();
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+                  className="w-full h-9 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
-                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                  <MessageSquare className="w-4 h-4 text-[#147A80]" />
                   <span>Abrir no WhatsApp Web / App Manual</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                 </a>
 
                 {/* 3. Copy Full Text button */}
@@ -2626,16 +2616,16 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     setInviteCopied(true);
                     setTimeout(() => setInviteCopied(false), 2500);
                   }}
-                  className="w-full py-2 px-3 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full h-9 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   {inviteCopied ? (
                     <>
                       <Check className="w-4 h-4 text-emerald-600" />
-                      <span className="text-emerald-700 font-black">Mensagem Copiada para a Área de Transferência!</span>
+                      <span className="text-emerald-700 font-bold">Mensagem Copiada para a Área de Transferência!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 text-gray-600" />
+                      <Copy className="w-4 h-4 text-slate-500" />
                       <span>Copiar Mensagem Completa (com link e senha)</span>
                     </>
                   )}
@@ -2649,7 +2639,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                     setInviteCopied(true);
                     setTimeout(() => setInviteCopied(false), 2500);
                   }}
-                  className="w-full py-1.5 text-center text-gray-500 hover:text-gray-800 font-semibold text-[11px] underline cursor-pointer"
+                  className="w-full py-1.5 text-center text-slate-500 hover:text-slate-800 font-medium text-[11px] underline cursor-pointer"
                 >
                   Copiar apenas o link de acesso direto (com auto-configuração)
                 </button>
@@ -2657,10 +2647,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3 bg-white border-t border-gray-200 flex justify-end">
+            <div className="px-5 py-3 bg-white border-t border-slate-200 flex justify-end">
               <button
                 onClick={() => setIsInviteModalOpen(false)}
-                className="px-4 py-1.5 rounded-xl bg-gray-900 text-white text-xs font-bold"
+                className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
               >
                 Fechar
               </button>
@@ -2671,31 +2661,33 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       {/* RESET PASSWORD MODAL */}
       {isResetModalOpen && selectedUserForReset && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-amber-300 overflow-hidden my-auto flex flex-col">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col">
             {/* Header */}
-            <div className="bg-linear-to-r from-amber-500 to-orange-500 p-4 text-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <KeyRound className="w-5 h-5" />
-                <h4 className="text-sm font-bold">Redefinir Senha do Usuário</h4>
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-900">Redefinir Senha do Usuário</h4>
               </div>
               <button
                 onClick={() => setIsResetModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="p-4 sm:p-5 space-y-3.5 bg-[#FAF9F6] text-xs">
-              <div className="p-3 bg-white rounded-xl border border-gray-200 space-y-0.5">
-                <span className="font-bold text-gray-900 text-xs block">{selectedUserForReset.name}</span>
-                <span className="text-gray-600 block">{selectedUserForReset.email}</span>
+            <div className="p-4 sm:p-5 space-y-3.5 bg-slate-50 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-0.5">
+                <span className="font-bold text-slate-900 text-xs block">{selectedUserForReset.name}</span>
+                <span className="text-slate-600 block">{selectedUserForReset.email}</span>
               </div>
 
               {resetSuccessMessage && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl flex items-center gap-2 font-bold animate-in fade-in">
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2 font-semibold">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>{resetSuccessMessage}</span>
                 </div>
@@ -2704,11 +2696,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               {/* Temporary password input */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="font-bold text-gray-700">Nova Senha Provisória:</label>
+                  <label className="font-semibold text-slate-700">Nova Senha Provisória:</label>
                   <button
                     type="button"
                     onClick={() => setResetNewPassword(generateSecureTemporaryPassword())}
-                    className="text-[10px] text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     <RefreshCw className="w-3 h-3" /> Gerar Outra
                   </button>
@@ -2717,7 +2709,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   type="text"
                   value={resetNewPassword}
                   onChange={(e) => setResetNewPassword(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-gray-900 shadow-2xs focus:ring-2 focus:ring-amber-500"
+                  className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
@@ -2727,9 +2719,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   type="checkbox"
                   checked={resetMustChange}
                   onChange={(e) => setResetMustChange(e.target.checked)}
-                  className="rounded text-amber-600 focus:ring-amber-500"
+                  className="rounded text-[#147A80] focus:ring-[#147A80]"
                 />
-                <span className="text-xs text-gray-800 font-semibold">
+                <span className="text-xs text-slate-800 font-medium">
                   Exigir que o usuário cadastre nova senha no próximo acesso
                 </span>
               </label>
@@ -2739,7 +2731,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleExecuteResetPassword(true)}
-                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  className="w-full h-10 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <MessageSquare className="w-4 h-4" />
                   <span>Salvar e Enviar Nova Senha via WhatsApp</span>
@@ -2748,7 +2740,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleExecuteResetPassword(false)}
-                  className="w-full py-2 px-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                  className="w-full h-9 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Salvar Apenas no Sistema
                 </button>

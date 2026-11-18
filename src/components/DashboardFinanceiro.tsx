@@ -19,7 +19,7 @@ import {
   LineChart as LineChartIcon,
   Calendar,
   Sparkles,
-  CheckCircle2,
+  ArrowRight,
 } from 'lucide-react';
 import { PatientPoint } from '../types/database';
 
@@ -189,21 +189,21 @@ export const DashboardFinanceiro: React.FC<DashboardFinanceiroProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-4 sm:p-5 border border-teal-100 shadow-sm space-y-4">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#147A80] flex items-center justify-center shrink-0 border border-teal-200/60 shadow-2xs">
-            <BarChart3 className="w-5 h-5 text-[#147A80]" />
+          <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#147A80] flex items-center justify-center shrink-0 border border-teal-200/80">
+            <BarChart3 className="w-4 h-4 text-[#147A80]" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-gray-900 leading-tight flex items-center gap-1.5">
+            <h3 className="text-sm font-bold text-slate-900 leading-tight flex items-center gap-2">
               <span>Dashboard Financeiro do Clube</span>
-              <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-300/60">
-                IA Analytics
+              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-teal-50 text-[#147A80] border border-teal-200/70">
+                Analytics
               </span>
             </h3>
-            <p className="text-[11px] text-gray-500 font-medium">
+            <p className="text-[11px] text-slate-500 font-medium">
               Histórico comparativo de pontos acumulados versus resgates em prêmios
             </p>
           </div>
@@ -211,23 +211,25 @@ export const DashboardFinanceiro: React.FC<DashboardFinanceiroProps> = ({
 
         {/* View Toggle Controls */}
         <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
-          <div className="flex items-center p-1 bg-gray-100 rounded-xl text-xs font-bold border border-gray-200">
+          <div className="flex items-center p-1 bg-slate-100 rounded-xl text-xs font-semibold border border-slate-200">
             <button
+              type="button"
               onClick={() => setSelectedPeriod('6m')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                 selectedPeriod === '6m'
-                  ? 'bg-white text-[#147A80] shadow-2xs font-black'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-white text-[#147A80] shadow-2xs font-bold'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               6 Meses
             </button>
             <button
+              type="button"
               onClick={() => setSelectedPeriod('12m')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                 selectedPeriod === '12m'
-                  ? 'bg-white text-[#147A80] shadow-2xs font-black'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-white text-[#147A80] shadow-2xs font-bold'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               12 Meses
@@ -263,54 +265,54 @@ export const DashboardFinanceiro: React.FC<DashboardFinanceiroProps> = ({
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/80">
-          <div className="flex items-center justify-between text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+        <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200/80">
+          <div className="flex items-center justify-between text-emerald-800 text-[11px] font-semibold">
             <span>Total Acumulado</span>
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
           </div>
-          <span className="text-lg font-black text-emerald-900 block mt-1">
-            +{stats.totalEarned} <span className="text-xs font-bold text-emerald-700">pts</span>
+          <span className="text-lg font-bold text-emerald-900 tabular-nums block mt-1">
+            +{stats.totalEarned} <span className="text-xs font-semibold text-emerald-700">pts</span>
           </span>
-          <span className="text-[10px] text-emerald-700/80 font-medium block truncate">
+          <span className="text-[11px] text-emerald-700/80 font-medium block truncate">
             Consultas & Check-ins
           </span>
         </div>
 
-        <div className="bg-rose-50/60 p-3 rounded-2xl border border-rose-200/80">
-          <div className="flex items-center justify-between text-rose-800 text-[10px] font-black uppercase tracking-wider">
+        <div className="bg-rose-50/60 p-3 rounded-xl border border-rose-200/80">
+          <div className="flex items-center justify-between text-rose-800 text-[11px] font-semibold">
             <span>Prêmios Resgatados</span>
             <Gift className="w-3.5 h-3.5 text-rose-600" />
           </div>
-          <span className="text-lg font-black text-rose-900 block mt-1">
-            -{stats.totalRedeemed} <span className="text-xs font-bold text-rose-700">pts</span>
+          <span className="text-lg font-bold text-rose-900 tabular-nums block mt-1">
+            -{stats.totalRedeemed} <span className="text-xs font-semibold text-rose-700">pts</span>
           </span>
-          <span className="text-[10px] text-rose-700/80 font-medium block truncate">
+          <span className="text-[11px] text-rose-700/80 font-medium tabular-nums block truncate">
             {stats.redemptionRate}% dos pontos convertidos
           </span>
         </div>
 
-        <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80">
-          <div className="flex items-center justify-between text-amber-900 text-[10px] font-black uppercase tracking-wider">
+        <div className="bg-amber-50/60 p-3 rounded-xl border border-amber-200/80">
+          <div className="flex items-center justify-between text-amber-900 text-[11px] font-semibold">
             <span>Economia Estimada</span>
             <DollarSign className="w-3.5 h-3.5 text-amber-600" />
           </div>
-          <span className="text-lg font-black text-amber-950 block mt-1">
+          <span className="text-lg font-bold text-amber-950 tabular-nums block mt-1">
             R$ {stats.estimatedSavingsR$}
           </span>
-          <span className="text-[10px] text-amber-800/80 font-medium block truncate">
+          <span className="text-[11px] text-amber-800/80 font-medium block truncate">
             Descontos & Vouchers
           </span>
         </div>
 
-        <div className="bg-teal-50/60 p-3 rounded-2xl border border-teal-200/80">
-          <div className="flex items-center justify-between text-[#147A80] text-[10px] font-black uppercase tracking-wider">
+        <div className="bg-teal-50/60 p-3 rounded-xl border border-teal-200/80">
+          <div className="flex items-center justify-between text-[#147A80] text-[11px] font-semibold">
             <span>Saldo Atual</span>
             <Award className="w-3.5 h-3.5 text-[#147A80]" />
           </div>
-          <span className="text-lg font-black text-[#147A80] block mt-1">
-            {totalPoints} <span className="text-xs font-bold text-teal-700">pts</span>
+          <span className="text-lg font-bold text-[#147A80] tabular-nums block mt-1">
+            {totalPoints} <span className="text-xs font-semibold text-teal-700">pts</span>
           </span>
-          <span className="text-[10px] text-teal-800/80 font-medium block truncate">
+          <span className="text-[11px] text-teal-800/80 font-medium block truncate">
             Pronto para resgate
           </span>
         </div>
@@ -319,17 +321,17 @@ export const DashboardFinanceiro: React.FC<DashboardFinanceiroProps> = ({
       {/* ========================================================
           SEÇÃO: METAS DO MÊS & EVOLUÇÃO DE TIER NO CLUBE SORRISO
       ======================================================== */}
-      <div className="p-4 rounded-3xl bg-linear-to-r from-slate-900 via-slate-800 to-[#147A80] text-white shadow-md space-y-3 relative overflow-hidden">
+      <div className="p-4 rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-[#147A80] text-white shadow-sm space-y-3 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xl">{stats.tierIcon}</span>
             <div>
-              <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
+              <span className="text-[11px] text-amber-300 font-semibold block">
                 Metas do Mês • Clube Sorriso Bertuol
               </span>
-              <h4 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
-                <span>Nível Atual: Nível {stats.currentTier}</span>
-                <span className="text-gray-400">➔</span>
+              <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                <span>Nível Atual: {stats.currentTier}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                 <span className="text-amber-300 flex items-center gap-1">
                   <span>Alvo: {stats.targetTier}</span>
                   <span>{stats.targetIcon}</span>
@@ -338,51 +340,49 @@ export const DashboardFinanceiro: React.FC<DashboardFinanceiroProps> = ({
             </div>
           </div>
 
-          <div className="self-start sm:self-auto px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[11px] font-black shrink-0">
+          <div className="self-start sm:self-auto px-2.5 py-1 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[11px] font-semibold tabular-nums shrink-0">
             {stats.pointsNeeded > 0
-              ? `Faltam ${stats.pointsNeeded} pts para evoluir!`
-              : '🎯 Meta do Nível Alcançada!'}
+              ? `Faltam ${stats.pointsNeeded} pts para evoluir`
+              : 'Meta do Nível Alcançada'}
           </div>
         </div>
 
         {/* Visual Progress Bar */}
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs font-bold">
-            <span className="text-gray-200 text-[11px]">
+          <div className="flex justify-between items-center text-xs font-semibold">
+            <span className="text-slate-200 text-[11px] tabular-nums">
               Progresso Geral ({totalPoints} / {stats.targetPoints} pts)
             </span>
-            <span className="text-amber-300 text-xs font-black">
+            <span className="text-amber-300 text-xs font-bold tabular-nums">
               {stats.tierPercent}%
             </span>
           </div>
 
-          <div className="w-full h-3.5 rounded-full bg-slate-950/60 p-0.5 border border-white/15 overflow-hidden relative shadow-inner">
+          <div className="w-full h-3 rounded-full bg-slate-950/60 p-0.5 border border-white/15 overflow-hidden relative shadow-inner">
             <div
               className="h-full bg-linear-to-r from-teal-400 via-emerald-400 to-amber-400 rounded-full transition-all duration-700 shadow-sm relative"
               style={{ width: `${stats.tierPercent}%` }}
-            >
-              <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
-            </div>
+            />
           </div>
         </div>
 
         {/* Dynamic Action Checklist to Earn Points Fast */}
         <div className="pt-1.5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
           <div className="p-2 rounded-xl bg-white/10 border border-white/15 flex items-center justify-between">
-            <span className="font-semibold text-gray-200">Confirmar Presença</span>
-            <span className="font-black text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-md">
+            <span className="font-semibold text-slate-200">Confirmar Presença</span>
+            <span className="font-bold tabular-nums text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-md">
               +10 pts
             </span>
           </div>
           <div className="p-2 rounded-xl bg-white/10 border border-white/15 flex items-center justify-between">
-            <span className="font-semibold text-gray-200">Pré-Check-in Digital</span>
-            <span className="font-black text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-md">
+            <span className="font-semibold text-slate-200">Pré-Check-in Digital</span>
+            <span className="font-bold tabular-nums text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-md">
               +20 pts
             </span>
           </div>
           <div className="p-2 rounded-xl bg-white/10 border border-white/15 flex items-center justify-between">
-            <span className="font-semibold text-gray-200">Completa Aniversário</span>
-            <span className="font-black text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded-md">
+            <span className="font-semibold text-slate-200">Completa Aniversário</span>
+            <span className="font-bold tabular-nums text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded-md">
               +30 pts
             </span>
           </div>

@@ -552,7 +552,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
             <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
               Central de Credenciais & Acessos de Clientes (Clube Sorriso PWA)
             </h4>
-            <span className="hidden xl:inline-block text-[11px] font-mono tabular-nums font-bold text-[#147A80] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md shrink-0">
+            <span className="hidden xl:inline-block text-[11px] font-mono tabular-nums font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md shrink-0">
               {filteredPatients.length.toLocaleString('pt-BR')} / {stats.total.toLocaleString('pt-BR')}
             </span>
             {isSearchingRemote && (
@@ -565,7 +565,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Abas de Status Integrando os KPIs em Uma Única Linha */}
-            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg overflow-x-auto">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto">
               {(
                 [
                   { id: 'all', label: `Todos (${stats.total.toLocaleString('pt-BR')})` },
@@ -581,7 +581,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                     setStatusFilter(tab.id);
                     setCurrentPage(1);
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold tabular-nums transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     statusFilter === tab.id
                       ? 'bg-white text-slate-900 shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -597,7 +597,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Sincronizar com Supabase"
-              className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+              className="h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#147A80]' : 'text-slate-600'}`} />
               <span className="hidden sm:inline">Sincronizar</span>
@@ -606,7 +606,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
             <button
               type="button"
               onClick={() => handleOpenEditModal()}
-              className="px-3 py-1.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+              className="h-9 px-3.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Novo Cliente</span>
@@ -628,8 +628,8 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                 setNameSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Buscar cliente pelo NOME ou SOBRENOME (ex: Maria Silva, João, Flávio)..."
-              className="w-full pl-9 pr-20 py-2 rounded-lg border-2 border-[#147A80]/40 focus:border-[#147A80] bg-teal-50/20 focus:bg-white text-xs sm:text-sm font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-hidden"
+              placeholder="Buscar cliente pelo nome ou sobrenome (ex: Maria Silva, João)..."
+              className="w-full h-9 pl-9 pr-20 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#147A80] focus:border-[#147A80] bg-white text-xs sm:text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none"
             />
             {nameSearchTerm && (
               <button
@@ -638,7 +638,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                   setNameSearchTerm('');
                   setCurrentPage(1);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
               >
                 <X className="w-3 h-3" />
                 <span>Limpar</span>
@@ -657,7 +657,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                 setCurrentPage(1);
               }}
               placeholder="CPF, WhatsApp ou Prontuário..."
-              className="w-full pl-8 pr-7 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]"
+              className="w-full h-9 pl-8 pr-7 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
             />
             {secondarySearchTerm && (
               <button
@@ -682,7 +682,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                   setTenantFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-2.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700"
+                className="h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               >
                 <option value="all">Todas as Unidades</option>
                 <option value={TENANT_ID_PALMAS}>Palmas - TO</option>
@@ -704,7 +704,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                 setSelectedInitialLetter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-2.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 font-mono"
+              className="h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 font-mono focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               title="Filtrar pela letra inicial do nome"
             >
               <option value="ALL">Inicial: A–Z</option>
@@ -727,7 +727,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                   setCurrentPage(1);
                 }}
                 title="Limpar todos os filtros"
-                className="px-2.5 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                className="h-9 px-2.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <X className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Limpar</span>
@@ -830,7 +830,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                             type="button"
                             onClick={() => handleOpenActivationModal(patient)}
                             title="Gerar e Enviar Link de Primeiro Acesso por WhatsApp ou SMS"
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                            className="h-8 px-2.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                           >
                             <Send className="w-3.5 h-3.5" />
                             <span>Enviar Link</span>
@@ -841,9 +841,9 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                             type="button"
                             onClick={() => handleOpenResetPassword(patient)}
                             title="Renovar ou Redefinir Senha de Acesso do Cliente"
-                            className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                            className="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <KeyRound className="w-3.5 h-3.5 text-amber-700" />
+                            <KeyRound className="w-3.5 h-3.5 text-[#147A80]" />
                             <span>Renovar Senha</span>
                           </button>
 
@@ -852,7 +852,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                             type="button"
                             onClick={() => handleOpenEditModal(patient)}
                             title="Editar cadastro completo e permissões do cliente"
-                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -966,121 +966,127 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 
       {/* MODAL 1: DISPARO DE LINK DE PRIMEIRO ACESSO (WHATSAPP / SMS / LINK DIRETO) */}
       {selectedForActivation && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Send className="w-4 h-4 text-emerald-600" />
-                  <span>Ativação de Acesso ao App do Cliente</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Cliente: <strong className="text-slate-800">{selectedForActivation.name}</strong> ·{' '}
-                  <span className="font-mono">{selectedForActivation.mobile_phone || 'Sem telefone'}</span>
-                </p>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden">
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                    Ativação de Acesso ao App do Cliente
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                    Cliente: <strong className="text-slate-800">{selectedForActivation.name}</strong> ·{' '}
+                    <span className="font-mono tabular-nums">{selectedForActivation.mobile_phone || 'Sem telefone'}</span>
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedForActivation(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Token de Ativação (48h):</span>
-                <span className="font-mono font-bold text-slate-900 tabular-nums">{activationToken}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Senha Temporária Inicial:</span>
-                <span className="font-mono font-bold text-emerald-700 tabular-nums">{activationTempPassword}</span>
-              </div>
-              <div className="pt-1 border-t border-slate-200">
-                <span className="text-[11px] text-slate-500 block mb-1">Link Direto do Portal do Paciente:</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={formatPatientPortalUrl(selectedForActivation, activationToken)}
-                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-slate-700"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(formatPatientPortalUrl(selectedForActivation, activationToken));
-                      setCopiedLink(true);
-                      setTimeout(() => setCopiedLink(false), 2000);
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLink ? 'Copiado' : 'Copiar'}</span>
-                  </button>
+            <div className="p-5 space-y-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Token de Ativação (48h):</span>
+                  <span className="font-mono font-bold text-slate-900 tabular-nums">{activationToken}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Senha Temporária Inicial:</span>
+                  <span className="font-mono font-bold text-[#147A80] tabular-nums">{activationTempPassword}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200">
+                  <span className="text-[11px] text-slate-500 block mb-1">Link Direto do Portal do Paciente:</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={formatPatientPortalUrl(selectedForActivation, activationToken)}
+                      className="flex-1 h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-[11px] font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(formatPatientPortalUrl(selectedForActivation, activationToken));
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? 'Copiado' : 'Copiar'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  disabled={sendingEvolution}
+                  onClick={() =>
+                    handleSendViaEvolutionApi(selectedForActivation, activationToken, activationTempPassword, false)
+                  }
+                  className="w-full h-10 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{sendingEvolution ? 'Enviando...' : 'Disparo Direto (API)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSendWhatsAppInvite(selectedForActivation, activationToken, activationTempPassword, false)
+                  }
+                  className="w-full h-10 px-3 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Enviar por WhatsApp Web</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendSmsInvite(selectedForActivation, activationToken, activationTempPassword)}
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Smartphone className="w-4 h-4 text-slate-600" />
+                  <span>Enviar Link via SMS</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const msg = formatPatientInviteMessage(selectedForActivation, {
+                      token: activationToken,
+                      tempPassword: activationTempPassword,
+                    });
+                    navigator.clipboard.writeText(msg);
+                    setCopiedMessage(true);
+                    setTimeout(() => setCopiedMessage(false), 2000);
+                  }}
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  {copiedMessage ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedMessage ? 'Mensagem Copiada!' : 'Copiar Texto Completo'}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() =>
-                  handleSendWhatsAppInvite(selectedForActivation, activationToken, activationTempPassword, false)
-                }
-                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Enviar por WhatsApp Web</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={sendingEvolution}
-                onClick={() =>
-                  handleSendViaEvolutionApi(selectedForActivation, activationToken, activationTempPassword, false)
-                }
-                className="w-full py-2.5 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                <span>{sendingEvolution ? 'Enviando...' : 'Disparo Direto (API)'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSendSmsInvite(selectedForActivation, activationToken, activationTempPassword)}
-                className="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                <Smartphone className="w-4 h-4 text-slate-600" />
-                <span>Enviar Link via SMS</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const msg = formatPatientInviteMessage(selectedForActivation, {
-                    token: activationToken,
-                    tempPassword: activationTempPassword,
-                  });
-                  navigator.clipboard.writeText(msg);
-                  setCopiedMessage(true);
-                  setTimeout(() => setCopiedMessage(false), 2000);
-                }}
-                className="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                {copiedMessage ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedMessage ? 'Mensagem Copiada!' : 'Copiar Texto Completo'}</span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
                   handleToggleAccessStatus(selectedForActivation, 'active');
                   setSelectedForActivation(null);
                 }}
-                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-[#147A80] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <UserCheck className="w-3.5 h-3.5" />
                 <span>Marcar Conta como Ativa Agora</span>
@@ -1089,7 +1095,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedForActivation(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                className="h-9 px-4 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
               >
                 Fechar
               </button>
@@ -1100,30 +1106,34 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 
       {/* MODAL 2: RENOVAÇÃO / REDEFINIÇÃO DE SENHA DO CLIENTE */}
       {selectedForReset && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-amber-600" />
-                  <span>Renovar Senha do Cliente</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Cliente: <strong className="text-slate-800">{selectedForReset.name}</strong>
-                </p>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                    Renovar Senha do Cliente
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                    Cliente: <strong className="text-slate-800">{selectedForReset.name}</strong>
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedForReset(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Nova Senha Temporária / Código de Balcão
                 </label>
                 <div className="flex items-center gap-2">
@@ -1131,13 +1141,13 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                     type="text"
                     value={resetPasswordValue}
                     onChange={(e) => setResetPasswordValue(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-bold text-slate-900"
+                    className="flex-1 h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                   />
                   <button
                     type="button"
                     onClick={() => setResetPasswordValue(generateSecureTemporaryPassword())}
                     title="Gerar outra senha"
-                    className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4" />
                   </button>
@@ -1148,25 +1158,25 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                       setCopiedResetCode(true);
                       setTimeout(() => setCopiedResetCode(false), 2000);
                     }}
-                    className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    className="h-10 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     {copiedResetCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedResetCode ? 'Copiada' : 'Copiar'}</span>
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1.5">
                   Você pode informar esta senha presencialmente no balcão ou enviá-la com o link de renovação abaixo.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 pt-2">
+              <div className="grid grid-cols-1 gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     handleSendWhatsAppInvite(selectedForReset, resetTokenValue, resetPasswordValue, true);
                     setSelectedForReset(null);
                   }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-10 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   <span>Enviar Nova Senha & Link via WhatsApp</span>
@@ -1178,7 +1188,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                     handleSendSmsInvite(selectedForReset, resetTokenValue, resetPasswordValue);
                     setSelectedForReset(null);
                   }}
-                  className="w-full py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>Enviar Nova Senha via SMS</span>
@@ -1186,11 +1196,11 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
               <button
                 type="button"
                 onClick={() => setSelectedForReset(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                className="h-9 px-4 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
               >
                 Concluir
               </button>
@@ -1201,37 +1211,42 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
 
       {/* MODAL 3: CADASTRO COMPLETO E PERMISSÕES DO CLIENTE */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
           <form
             onSubmit={handleSavePatientForm}
-            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {editingPatient ? 'Editar Dados e Acesso do Cliente' : 'Novo Cliente / Paciente'}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Atualize os dados cadastrais e o status de permissão no aplicativo Clube Sorriso.
-                </p>
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                    {editingPatient ? 'Editar Dados e Acesso do Cliente' : 'Novo Cliente / Paciente'}
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                    Atualize os dados cadastrais e a permissão no aplicativo Clube Sorriso.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="sm:col-span-2">
-                <label className="block font-bold text-slate-700 mb-1">Unidade / Clínica (tenant_id) *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Unidade / Clínica (tenant_id) *</label>
                 <select
                   value={canAccessAllUnits ? editForm.tenant_id : lockedTenantUuid}
                   disabled={!canAccessAllUnits}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, tenant_id: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold disabled:bg-slate-100 disabled:text-slate-600"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 font-semibold disabled:bg-slate-100 disabled:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 >
                   <option value={TENANT_ID_PALMAS}>
                     Palmas - TO ({TENANT_ID_PALMAS})
@@ -1243,74 +1258,74 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Nome Completo *</label>
                 <input
                   type="text"
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Ex: Maria Clara Oliveira"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">WhatsApp / Celular</label>
+                <label className="block font-semibold text-slate-700 mb-1">WhatsApp / Celular</label>
                 <input
                   type="text"
                   value={editForm.mobile_phone}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, mobile_phone: e.target.value }))}
                   placeholder="(63) 99999-9999"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-mono"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">CPF / Documento</label>
+                <label className="block font-semibold text-slate-700 mb-1">CPF / Documento</label>
                 <input
                   type="text"
                   value={editForm.document_id}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, document_id: e.target.value }))}
                   placeholder="000.000.000-00"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-mono"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">E-mail</label>
+                <label className="block font-semibold text-slate-700 mb-1">E-mail</label>
                 <input
                   type="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="cliente@email.com"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Plano / Convênio</label>
+                <label className="block font-semibold text-slate-700 mb-1">Plano / Convênio</label>
                 <input
                   type="text"
                   value={editForm.insurance_plan_name}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, insurance_plan_name: e.target.value }))}
                   placeholder="Particular, Bradesco Dental..."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Nº do Prontuário</label>
+                <label className="block font-semibold text-slate-700 mb-1">Nº do Prontuário</label>
                 <input
                   type="text"
                   value={editForm.clinical_record_number}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, clinical_record_number: e.target.value }))}
                   placeholder="Ex: PR-1042"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-mono"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Permissão de Acesso ao App</label>
+                <label className="block font-semibold text-slate-700 mb-1">Permissão de Acesso ao App</label>
                 <select
                   value={editForm.app_access_status}
                   onChange={(e) =>
@@ -1319,7 +1334,7 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
                       app_access_status: e.target.value as 'active' | 'pending_activation' | 'blocked',
                     }))
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 >
                   <option value="active">Ativo (Acesso Liberado)</option>
                   <option value="pending_activation">Pendente de Ativação (Aguardando Link)</option>
@@ -1328,29 +1343,29 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block font-bold text-slate-700 mb-1">Observações Clínicas / Atendimento</label>
+                <label className="block font-semibold text-slate-700 mb-1">Observações Clínicas / Atendimento</label>
                 <textarea
                   rows={2}
                   value={editForm.notes}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, notes: e.target.value }))}
                   placeholder="Anotações relevantes para recepção e atendimento..."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                className="h-10 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSavingForm}
-                className="px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-bold cursor-pointer"
+                className="h-10 px-4 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer"
               >
                 {isSavingForm ? 'Salvando...' : editingPatient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
               </button>

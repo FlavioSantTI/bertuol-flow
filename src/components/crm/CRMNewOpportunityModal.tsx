@@ -149,18 +149,18 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#147A80] border border-teal-200 flex items-center justify-center">
               <Plus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Ficha Livre — Novo Atendimento / Lead</h3>
-              <p className="text-xs text-slate-300">
-                Preencha apenas o que tiver em mãos; o restante pode completar depois
+              <h3 className="font-bold text-sm text-slate-900">Novo Atendimento / Lead</h3>
+              <p className="text-xs text-slate-500">
+                Preencha o essencial agora e complete os demais detalhes depois
               </p>
             </div>
           </div>
@@ -168,7 +168,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,7 +180,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
           {/* Essential Free-form Trio */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Nome / Identificação *
               </label>
               <div className="relative">
@@ -190,15 +191,15 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                   placeholder="Ex: Maria (Instagram) ou João Silva"
                   value={patientName}
                   onChange={(e) => setPatientName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-[#147A80] focus:bg-white"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl pl-9 pr-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:bg-white"
                 />
                 <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                WhatsApp / Contato Livre
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                WhatsApp / Contato livre
               </label>
               <div className="relative">
                 <input
@@ -206,7 +207,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                   placeholder="Ex: 63999887766 ou @instagram"
                   value={patientPhone}
                   onChange={(e) => setPatientPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-[#147A80] focus:bg-white font-mono"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl pl-9 pr-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:bg-white font-mono"
                 />
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
@@ -215,7 +216,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
 
           {/* Free Text Summary */}
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               O que o paciente precisa / Anotação livre
             </label>
             <textarea
@@ -223,15 +224,15 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
               placeholder="Escreva livremente: Ex. Perguntou sobre implante, quer passar em Palmas na sexta à tarde..."
               value={treatmentDescription}
               onChange={(e) => setTreatmentDescription(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl p-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
             />
           </div>
 
           {/* Pipeline & Unit & Channel */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1 flex items-center gap-1">
-                <Layers className="w-3 h-3" /> Funil
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 text-slate-400" /> Funil
               </label>
               <select
                 value={pipelineId}
@@ -243,7 +244,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                     setPointsBonus(String(found.defaultPointsBonus));
                   }
                 }}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-3 py-2.5"
+                className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               >
                 {pipelines.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -254,11 +255,11 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">Unidade</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Unidade</label>
               <select
                 value={clinicId}
                 onChange={(e) => setClinicId(Number(e.target.value))}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-3 py-2.5"
+                className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
               >
                 {clinics
                   .filter((c) => c.active)
@@ -273,18 +274,18 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
 
           {/* Quick Channel Chips */}
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-              Por onde chegou? (Canal)
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Canal de origem
             </label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
+            <div className="flex flex-wrap gap-1.5">
               {CHANNEL_CHIPS.map((ch) => (
                 <button
                   key={ch}
                   type="button"
                   onClick={() => setSource(ch)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border cursor-pointer transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
                     source === ch
-                      ? 'bg-slate-900 text-white border-slate-900'
+                      ? 'bg-[#147A80] text-white border-[#147A80]'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -296,11 +297,11 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
 
           {/* Dynamic Free Custom Fields */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase text-slate-600">
-                Campos Livres Extras (Opcional)
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-700">
+                Campos extras (opcional)
               </span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {QUICK_CUSTOM_PRESETS.filter(
                   (p) => !customFields.some((c) => c.label === p)
                 ).map((preset) => (
@@ -308,7 +309,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                     key={preset}
                     type="button"
                     onClick={() => addCustomField(preset)}
-                    className="text-[10px] font-semibold text-[#147A80] hover:underline cursor-pointer"
+                    className="text-[11px] font-semibold text-[#147A80] hover:underline cursor-pointer"
                   >
                     + {preset}
                   </button>
@@ -326,7 +327,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                       prev.map((item) => (item.id === cf.id ? { ...item, label: e.target.value } : item))
                     )
                   }
-                  className="w-1/3 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                  className="w-1/3 h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-xs font-semibold"
                 />
                 <input
                   type="text"
@@ -337,7 +338,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                     )
                   }
                   placeholder="Preencha..."
-                  className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                  className="flex-1 h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-xs"
                 />
                 <button
                   type="button"
@@ -355,21 +356,21 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                 value={newFieldLabel}
                 onChange={(e) => setNewFieldLabel(e.target.value)}
                 placeholder="Campo personalizado"
-                className="w-1/3 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                className="w-1/3 h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-xs"
               />
               <input
                 type="text"
                 value={newFieldValue}
                 onChange={(e) => setNewFieldValue(e.target.value)}
                 placeholder="Informação..."
-                className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                className="flex-1 h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-xs"
               />
               <button
                 type="button"
                 onClick={() => addCustomField()}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer"
               >
-                + Add
+                Adicionar
               </button>
             </div>
           </div>
@@ -389,13 +390,13 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
             <div className="space-y-3 pt-2 border-t border-slate-100">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Tipo / Categoria
                   </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as CRMType)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5 py-2"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5"
                   >
                     <option value="whatsapp_lead">Lead WhatsApp</option>
                     <option value="treatment_pending">Orçamento Pendente</option>
@@ -406,13 +407,13 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Profissional
                   </label>
                   <select
                     value={dentistName}
                     onChange={(e) => setDentistName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5 py-2"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5"
                   >
                     <option value="Sem preferência">Sem preferência</option>
                     {dentists.map((d) => (
@@ -424,11 +425,11 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">Prioridade</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Prioridade</label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as CRMPriority)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5 py-2"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl px-2.5"
                   >
                     <option value="high">Alta</option>
                     <option value="medium">Média</option>
@@ -439,20 +440,20 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                    Valor Est. (R$)
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Valor est. (R$)
                   </label>
                   <input
                     type="number"
                     placeholder="0.00"
                     value={estimatedValue}
                     onChange={(e) => setEstimatedValue(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 py-2 font-mono tabular-nums"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 font-mono tabular-nums"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-amber-800 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Bônus Clube (Pts)
                   </label>
                   <input
@@ -460,27 +461,27 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                     placeholder="50"
                     value={pointsBonus}
                     onChange={(e) => setPointsBonus(e.target.value)}
-                    className="w-full bg-amber-50/60 border border-amber-200 text-amber-950 text-xs font-bold rounded-xl px-3 py-2 font-mono tabular-nums"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 font-mono tabular-nums"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Follow-up
+                  <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-slate-400" /> Follow-up
                   </label>
                   <input
                     type="date"
                     value={nextContactDate}
                     onChange={(e) => setNextContactDate(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono rounded-xl px-3 py-2"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono rounded-xl px-3"
                   />
                 </div>
               </div>
 
               {labels.length > 0 && (
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1.5 flex items-center gap-1">
-                    <Tag className="w-3 h-3" /> Rótulos
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex items-center gap-1">
+                    <Tag className="w-3 h-3 text-slate-400" /> Rótulos
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {labels.map((lbl) => {
@@ -490,9 +491,9 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                           key={lbl.id}
                           type="button"
                           onClick={() => toggleLabel(lbl.id)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                             selected
-                              ? 'bg-slate-900 text-white border-slate-900'
+                              ? 'bg-[#147A80] text-white border-[#147A80]'
                               : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
@@ -505,8 +506,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
               )}
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                  Nota Inicial da Recepção
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Nota inicial da recepção
                 </label>
                 <textarea
                   rows={2}
@@ -520,17 +521,17 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
           )}
 
           {/* Footer buttons */}
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
+              className="h-9 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-100 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Salvar no Funil</span>

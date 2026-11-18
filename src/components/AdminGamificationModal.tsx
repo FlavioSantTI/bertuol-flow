@@ -832,31 +832,26 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-70 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-gray-100 flex flex-col h-[94vh] max-h-[850px] overflow-hidden animate-in zoom-in-95">
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-[2px]">
+      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-xl border border-slate-200 flex flex-col h-[94vh] max-h-[850px] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-linear-to-r from-amber-600 via-amber-500 to-[#147A80] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-xs border border-white/20">
-              <Sparkles className="w-5 h-5 text-amber-200" />
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black tracking-tight">
-                  Painel de Controle do Admin • Clube de Vantagens
-                </h2>
-                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">
-                  RF05 / RF06 / RF07
-                </span>
-              </div>
-              <p className="text-xs text-amber-100/90 font-medium">
-                Gestão completa de Prêmios, Regras de Pontos, Saldos de Pacientes e Auditoria de Vouchers
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">
+                Painel Administrativo • Clube de Vantagens
+              </h2>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                Gestão de prêmios, regras de pontos, saldos de pacientes e auditoria de vouchers
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -865,7 +860,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
         {/* Global Feedback Banner com Sair / ESC */}
         {feedback && (
           <div
-            className={`px-4 py-3 text-xs font-bold flex flex-wrap items-center justify-between gap-2 shadow-sm ${
+            className={`px-4 py-3 text-xs font-semibold flex flex-wrap items-center justify-between gap-2 ${
               feedback.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
             }`}
           >
@@ -880,7 +875,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               <button
                 type="button"
                 onClick={() => setFeedback(null)}
-                className="px-2.5 py-1 rounded-lg bg-black/20 hover:bg-black/30 text-white font-black text-[11px] transition-all flex items-center gap-1 cursor-pointer border border-white/20 active:scale-95"
+                className="px-2.5 py-1 rounded-lg bg-black/20 hover:bg-black/30 text-white font-semibold text-[11px] transition-colors flex items-center gap-1 cursor-pointer border border-white/20"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Sair (Esc)</span>
@@ -890,14 +885,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
         )}
 
         {/* Navigation Tabs */}
-        <div className="px-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-2 overflow-x-auto text-xs font-bold">
-          <div className="flex items-center gap-1 py-2">
+        <div className="px-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto text-xs font-semibold shrink-0">
+          <div className="flex items-center gap-1.5 py-2 tabular-nums">
             <button
               onClick={() => setActiveTab('rewards')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'rewards'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Gift className="w-4 h-4" />
@@ -906,10 +901,10 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
             <button
               onClick={() => setActiveTab('rules')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'rules'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Settings className="w-4 h-4" />
@@ -918,10 +913,10 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
             <button
               onClick={() => setActiveTab('tiers')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'tiers'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Crown className="w-4 h-4" />
@@ -930,10 +925,10 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
             <button
               onClick={() => setActiveTab('patients')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'patients'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Users className="w-4 h-4" />
@@ -942,10 +937,10 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
             <button
               onClick={() => setActiveTab('vouchers')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'vouchers'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Ticket className="w-4 h-4" />
@@ -954,28 +949,28 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
             <button
               onClick={() => setActiveTab('notifications')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`h-9 px-3 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'notifications'
-                  ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  ? 'bg-[#147A80] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <Bell className="w-4 h-4 text-amber-900" />
-              <span>🔔 Notificações & Push ({clinicorpBirthdays.length})</span>
+              <Bell className="w-4 h-4" />
+              <span>Notificações & Push ({clinicorpBirthdays.length})</span>
             </button>
           </div>
 
           <button
             onClick={loadAllData}
             title="Atualizar dados do servidor"
-            className="p-2 rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer shrink-0"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-600' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#147A80]' : ''}`} />
           </button>
         </div>
 
         {/* Body Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA]">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
           {/* ========================================================
               TAB 1: CRUD CATÁLOGO DE PRÊMIOS (RF06)
           ======================================================== */}
@@ -983,14 +978,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900">Catálogo de Recompensas e Brindes Físicos</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-bold text-slate-900">Catálogo de Recompensas e Brindes Físicos</h3>
+                  <p className="text-xs text-slate-500">
                     Defina os itens resgatáveis pelos pacientes, controle de estoque e pontuação exigida.
                   </p>
                 </div>
                 <button
                   onClick={() => handleOpenRewardForm()}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Cadastrar Novo Prêmio</span>
@@ -1002,8 +997,8 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                 {rewards.map((reward) => (
                   <div
                     key={reward.id}
-                    className={`bg-white rounded-2xl p-4 border transition-all shadow-xs flex flex-col justify-between ${
-                      reward.is_active ? 'border-gray-200' : 'border-dashed border-gray-300 opacity-60 bg-gray-50'
+                    className={`bg-white rounded-xl p-4 border flex flex-col justify-between transition-colors ${
+                      reward.is_active ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60 bg-slate-50'
                     }`}
                   >
                     <div>
@@ -1012,53 +1007,53 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                           <img
                             src={reward.image_url}
                             alt={reward.title}
-                            className="w-16 h-16 rounded-xl object-cover border border-gray-100 shrink-0 bg-gray-100"
+                            className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0 text-amber-600">
-                            <Gift className="w-8 h-8" />
+                          <div className="w-16 h-16 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center shrink-0 text-[#147A80]">
+                            <Gift className="w-7 h-7" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-[#147A80] bg-teal-50 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-semibold text-[#147A80] bg-teal-50 border border-teal-200/70 px-2 py-0.5 rounded-md">
                               {reward.clinic_id ? (reward.clinic_id === 2 ? 'Paraíso' : 'Palmas') : 'Todas as Unidades'}
                             </span>
                             <span
-                              className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                                reward.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                                reward.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
                               }`}
                             >
                               {reward.is_active ? 'Ativo' : 'Inativo'}
                             </span>
                           </div>
-                          <h4 className="text-xs font-bold text-gray-900 mt-1 truncate">{reward.title}</h4>
-                          <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{reward.description}</p>
+                          <h4 className="text-xs font-bold text-slate-900 mt-1.5 truncate">{reward.title}</h4>
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{reward.description}</p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100 text-center text-[11px]">
+                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center text-[11px] tabular-nums">
                         <div>
-                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Pontos</span>
-                          <span className="font-black text-amber-600">{reward.points_required} pts</span>
+                          <span className="text-[10px] text-slate-400 font-medium block">Pontos</span>
+                          <span className="font-bold text-[#147A80]">{reward.points_required} pts</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Estoque</span>
-                          <span className={`font-black ${reward.stock_available < 3 ? 'text-rose-600' : 'text-gray-800'}`}>
+                          <span className="text-[10px] text-slate-400 font-medium block">Estoque</span>
+                          <span className={`font-bold ${reward.stock_available < 3 ? 'text-rose-600' : 'text-slate-800'}`}>
                             {reward.stock_available} un.
                           </span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Validade</span>
-                          <span className="font-bold text-gray-700">{reward.voucher_validity_days || 30} dias</span>
+                          <span className="text-[10px] text-slate-400 font-medium block">Validade</span>
+                          <span className="font-semibold text-slate-700">{reward.voucher_validity_days || 30} dias</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
                       <button
                         onClick={() => handleToggleRewardActive(reward)}
-                        className="text-[11px] font-bold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         {reward.is_active ? 'Desativar' : 'Ativar'}
                       </button>
@@ -1066,7 +1061,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                         <button
                           onClick={() => handleOpenRewardForm(reward)}
                           title="Editar prêmio"
-                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -1092,14 +1087,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900">Regras de Bonificação e Gamificação</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-bold text-slate-900">Regras de Bonificação e Gamificação</h3>
+                  <p className="text-xs text-slate-500">
                     Defina quantos pontos o paciente ganha por pontualidade no totem, confirmação ou engajamento.
                   </p>
                 </div>
                 <button
                   onClick={() => handleOpenRuleForm()}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Nova Regra de Pontuação</span>
@@ -1107,43 +1102,43 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               </div>
 
               {/* Lista de Regras */}
-              <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
-                <div className="divide-y divide-gray-100">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="divide-y divide-slate-100">
                   {rules.map((rule) => (
                     <div key={rule.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 font-black text-amber-800 text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center shrink-0 font-bold text-[#147A80] text-sm tabular-nums">
                           +{rule.points_reward}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-xs font-black text-gray-900">{rule.title}</h4>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-mono">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-xs font-bold text-slate-900">{rule.title}</h4>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
                               {rule.trigger_event}
                             </span>
                             <span
-                              className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                                rule.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                                rule.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
                               }`}
                             >
                               {rule.is_active ? 'Ativa' : 'Pausada'}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5">{rule.description}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{rule.description}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                         <button
                           onClick={() => handleOpenRuleForm(rule)}
-                          className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                          className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           <span>Editar</span>
                         </button>
                         <button
                           onClick={() => handleDeleteRule(rule.id, rule.title)}
-                          className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer flex items-center justify-center"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1159,19 +1154,19 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               TAB: CRUD CATEGORIAS / NÍVEIS DE FIDELIDADE (TIERS)
           ======================================================== */}
           {activeTab === 'tiers' && (
-            <div className="space-y-4 animate-in fade-in">
+            <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900">
+                  <h3 className="text-sm font-bold text-slate-900">
                     Categorias & Níveis de Fidelidade do Paciente (Tiers)
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Defina a régua de pontuação para o paciente evoluir (Bronze, Prata, Ouro, Diamante...), multiplicadores de bônus e benefícios.
                   </p>
                 </div>
                 <button
                   onClick={() => handleOpenTierForm()}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Nova Categoria / Nível</span>
@@ -1183,46 +1178,46 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                 {tiers.map((tierItem) => (
                   <div
                     key={tierItem.id}
-                    className={`bg-white rounded-3xl p-5 border flex flex-col justify-between shadow-xs transition-all ${
-                      tierItem.is_active ? 'border-gray-200' : 'border-dashed border-gray-300 opacity-60 bg-gray-50'
+                    className={`bg-white rounded-xl p-4 border flex flex-col justify-between transition-colors ${
+                      tierItem.is_active ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60 bg-slate-50'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl p-2 rounded-2xl bg-amber-50 border border-amber-100 shrink-0">
+                        <span className="text-2xl p-2 rounded-xl bg-slate-50 border border-slate-200 shrink-0">
                           {tierItem.badge}
                         </span>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="flex flex-col items-end gap-1 tabular-nums">
                           <span
-                            className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                              tierItem.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                              tierItem.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
                             }`}
                           >
                             {tierItem.is_active ? 'Ativa' : 'Pausada'}
                           </span>
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                          <span className="text-[10px] font-semibold text-[#147A80] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
                             {tierItem.multiplier}x Bônus
                           </span>
                         </div>
                       </div>
 
                       <div className="mt-3">
-                        <h4 className="text-sm font-black text-gray-900">{tierItem.name}</h4>
-                        <div className="flex items-baseline gap-1 mt-0.5">
-                          <span className="text-xs font-bold text-gray-500">A partir de</span>
-                          <span className="text-base font-black text-[#147A80]">{tierItem.min_points}</span>
-                          <span className="text-xs font-bold text-gray-500">pontos</span>
+                        <h4 className="text-sm font-bold text-slate-900">{tierItem.name}</h4>
+                        <div className="flex items-baseline gap-1 mt-0.5 tabular-nums">
+                          <span className="text-xs font-medium text-slate-500">A partir de</span>
+                          <span className="text-base font-bold text-[#147A80]">{tierItem.min_points}</span>
+                          <span className="text-xs font-medium text-slate-500">pontos</span>
                         </div>
-                        <p className="text-xs text-gray-600 mt-2 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100 min-h-[4rem]">
+                        <p className="text-xs text-slate-600 mt-2 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200 min-h-[4rem]">
                           {tierItem.benefits_description || 'Sem descrição de benefícios cadastrada.'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
                       <button
                         onClick={() => handleToggleTierActive(tierItem)}
-                        className="text-[11px] font-bold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         {tierItem.is_active ? 'Desativar' : 'Ativar'}
                       </button>
@@ -1230,14 +1225,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                         <button
                           onClick={() => handleOpenTierForm(tierItem)}
                           title="Editar categoria"
-                          className="p-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteTier(tierItem.id, tierItem.name)}
                           title="Excluir categoria"
-                          className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1256,37 +1251,37 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900">Carteira de Fidelidade dos Pacientes</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-bold text-slate-900">Carteira de Fidelidade dos Pacientes</h3>
+                  <p className="text-xs text-slate-500">
                     Consulte saldos, visualize extratos completos e realize créditos ou estornos manuais de pontos.
                   </p>
                 </div>
                 <button
                   onClick={() => handleOpenCreditModal()}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Lançar / Ajustar Pontos Manualmente</span>
+                  <span>Lançar / Ajustar Pontos</span>
                 </button>
               </div>
 
               {/* Campo de Busca */}
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Buscar paciente por nome ou telefone..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-gray-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                  className="w-full h-10 pl-10 pr-4 rounded-xl bg-white border border-slate-200 text-xs focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                 />
               </div>
 
               {/* Tabela de Pacientes */}
-              <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-[10px] font-black">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
                       <tr>
                         <th className="p-3.5">Paciente</th>
                         <th className="p-3.5">Telefone</th>
@@ -1296,7 +1291,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                         <th className="p-3.5 text-right">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100 tabular-nums">
                       {patients
                         .filter(
                           (p) =>
@@ -1304,27 +1299,27 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                             p.phone.includes(searchTerm)
                         )
                         .map((pat) => (
-                          <tr key={pat.phone} className="hover:bg-gray-50/80 transition-colors">
-                            <td className="p-3.5 font-bold text-gray-900">{pat.patientName}</td>
-                            <td className="p-3.5 text-gray-600 font-mono text-[11px]">{pat.phone}</td>
+                          <tr key={pat.phone} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3.5 font-semibold text-slate-900">{pat.patientName}</td>
+                            <td className="p-3.5 text-slate-600 font-mono text-[11px]">{pat.phone}</td>
                             <td className="p-3.5">
-                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase bg-slate-100 text-slate-800 border border-slate-200">
                                 {pat.tier}
                               </span>
                             </td>
-                            <td className="p-3.5 font-black text-[#147A80] text-sm">{pat.totalPoints} pts</td>
-                            <td className="p-3.5 text-gray-500 text-[11px]">{pat.historyCount} lançamentos</td>
+                            <td className="p-3.5 font-bold text-[#147A80] text-sm">{pat.totalPoints} pts</td>
+                            <td className="p-3.5 text-slate-500 text-[11px]">{pat.historyCount} lançamentos</td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   onClick={() => setSelectedPatientForStatement(pat)}
-                                  className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#147A80] font-bold text-[11px] transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#147A80] font-semibold text-[11px] transition-colors cursor-pointer"
                                 >
                                   Extrato
                                 </button>
                                 <button
                                   onClick={() => handleOpenCreditModal(pat)}
-                                  className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-[11px] transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-[11px] transition-colors cursor-pointer"
                                 >
                                   Ajustar
                                 </button>
@@ -1339,34 +1334,34 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
               {/* Modal / Gaveta de Extrato do Paciente Selecionado */}
               {selectedPatientForStatement && (
-                <div className="p-4 rounded-3xl bg-white border-2 border-teal-500 shadow-md space-y-3">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                <div className="p-4 rounded-xl bg-white border border-teal-200 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-[#147A80]" />
-                      <h4 className="text-xs font-black text-gray-900">
+                      <h4 className="text-xs font-bold text-slate-900 tabular-nums">
                         Extrato do Paciente: {selectedPatientForStatement.patientName} ({selectedPatientForStatement.phone})
                       </h4>
                     </div>
                     <button
                       onClick={() => setSelectedPatientForStatement(null)}
-                      className="text-xs text-gray-400 hover:text-gray-700 font-bold cursor-pointer"
+                      className="text-xs text-slate-500 hover:text-slate-900 font-semibold cursor-pointer"
                     >
                       Fechar
                     </button>
                   </div>
 
-                  <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 text-xs">
+                  <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs tabular-nums">
                     {selectedPatientForStatement.history.map((h) => (
                       <div key={h.id} className="py-2 flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-gray-800">{h.description}</p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="font-semibold text-slate-800">{h.description}</p>
+                          <p className="text-[10px] text-slate-400">
                             {new Date(h.created_at).toLocaleDateString('pt-BR')} às{' '}
                             {new Date(h.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                         <span
-                          className={`font-black text-xs ${
+                          className={`font-bold text-xs ${
                             h.points > 0 ? 'text-emerald-600' : 'text-rose-600'
                           }`}
                         >
@@ -1387,17 +1382,17 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900">Auditoria & Validação de Vouchers de Brindes</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-bold text-slate-900">Auditoria & Validação de Vouchers de Brindes</h3>
+                  <p className="text-xs text-slate-500">
                     Acompanhe todos os códigos emitidos pelos pacientes e confirme a entrega presencial.
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-[10px] font-black">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
                       <tr>
                         <th className="p-3.5">Código Voucher</th>
                         <th className="p-3.5">Prêmio</th>
@@ -1408,46 +1403,46 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                         <th className="p-3.5 text-right">Ação</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100 tabular-nums">
                       {vouchers.map((vch) => {
                         const isPending = vch.status === 'pending';
                         return (
-                          <tr key={vch.id} className="hover:bg-gray-50/80 transition-colors">
+                          <tr key={vch.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="p-3.5">
-                              <span className="font-mono font-black text-xs bg-amber-50 border border-amber-200 text-amber-900 px-2 py-1 rounded-lg">
+                              <span className="font-mono font-bold text-xs bg-slate-100 border border-slate-200 text-slate-900 px-2 py-1 rounded-lg">
                                 {vch.secretCode}
                               </span>
                             </td>
-                            <td className="p-3.5 font-bold text-gray-900">{vch.rewardTitle}</td>
+                            <td className="p-3.5 font-semibold text-slate-900">{vch.rewardTitle}</td>
                             <td className="p-3.5">
-                              <div className="font-bold text-gray-800">{vch.patientName}</div>
-                              <div className="text-[10px] text-gray-400 font-mono">{vch.patientPhone}</div>
+                              <div className="font-semibold text-slate-800">{vch.patientName}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{vch.patientPhone}</div>
                             </td>
-                            <td className="p-3.5 font-black text-rose-600">-{vch.pointsSpent} pts</td>
+                            <td className="p-3.5 font-bold text-rose-600">-{vch.pointsSpent} pts</td>
                             <td className="p-3.5">
                               <span
-                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
                                   isPending
-                                    ? 'bg-amber-100 text-amber-800 animate-pulse'
-                                    : 'bg-emerald-100 text-emerald-800'
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 }`}
                               >
                                 {isPending ? 'Pendente' : 'Entregue'}
                               </span>
                             </td>
-                            <td className="p-3.5 text-gray-500 text-[11px]">
+                            <td className="p-3.5 text-slate-500 text-[11px]">
                               {new Date(vch.createdAt).toLocaleDateString('pt-BR')}
                             </td>
                             <td className="p-3.5 text-right">
                               {isPending ? (
                                 <button
                                   onClick={() => handleRedeemVoucher(vch.secretCode)}
-                                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] shadow-xs transition-all cursor-pointer"
+                                  className="h-8 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-[11px] transition-colors cursor-pointer"
                                 >
                                   Dar Baixa
                                 </button>
                               ) : (
-                                <span className="text-[11px] text-gray-400 font-bold">✓ Entregue</span>
+                                <span className="text-[11px] text-slate-400 font-semibold">Entregue</span>
                               )}
                             </td>
                           </tr>
@@ -1464,59 +1459,59 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               TAB 5: NOTIFICAÇÕES & WEB PUSH (ANIVERSARIANTES & AVISOS DE CONSULTA)
           ======================================================== */}
           {activeTab === 'notifications' && (
-            <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="space-y-4">
               {/* Header and Sub-tabs */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                    <Bell className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-[#147A80]" />
                     Central de Notificações, Aniversariantes & Lembretes Push
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Dispare cortesias de aniversário (sem dependência de WhatsApp) e envie lembretes automáticos de consulta (1 dia e 2h antes).
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl text-xs font-bold shrink-0">
+                <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl text-xs font-semibold shrink-0 tabular-nums">
                   <button
                     onClick={() => setNotificationsSubTab('birthdays')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                       notificationsSubTab === 'birthdays'
-                        ? 'bg-white text-gray-900 shadow-xs font-black'
-                        : 'text-gray-500 hover:text-gray-800'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    🎂 Aniversariantes ({clinicorpBirthdays.length})
+                    Aniversariantes ({clinicorpBirthdays.length})
                   </button>
                   <button
                     onClick={() => setNotificationsSubTab('reminders')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                       notificationsSubTab === 'reminders'
-                        ? 'bg-white text-gray-900 shadow-xs font-black'
-                        : 'text-gray-500 hover:text-gray-800'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    📅 Lembretes ({clinicorpAppointments.length})
+                    Lembretes ({clinicorpAppointments.length})
                   </button>
                   <button
                     onClick={() => setNotificationsSubTab('requests')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                       notificationsSubTab === 'requests'
-                        ? 'bg-white text-gray-900 shadow-xs font-black'
-                        : 'text-gray-500 hover:text-gray-800'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    🎁 Agendamentos ({birthdayRequests.length})
+                    Agendamentos ({birthdayRequests.length})
                   </button>
                   <button
                     onClick={() => setNotificationsSubTab('subscribers')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                       notificationsSubTab === 'subscribers'
-                        ? 'bg-white text-gray-900 shadow-xs font-black'
-                        : 'text-gray-500 hover:text-gray-800'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    📱 Celulares ({pushSubscribers.length})
+                    Celulares ({pushSubscribers.length})
                   </button>
                 </div>
               </div>
@@ -1525,13 +1520,15 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               {notificationsSubTab === 'birthdays' && (
                 <div className="space-y-4">
                   {/* Template Message Card */}
-                  <div className="p-4 rounded-3xl bg-linear-to-r from-amber-500 via-amber-600 to-teal-800 text-white shadow-md border border-amber-300/40 space-y-3">
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <PartyPopper className="w-5 h-5 text-amber-200" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                          <PartyPopper className="w-4 h-4" />
+                        </div>
                         <div>
-                          <h4 className="text-sm font-black">Modelo Oficial de Mensagem de Aniversário</h4>
-                          <p className="text-[11px] text-amber-100">
+                          <h4 className="text-sm font-bold text-slate-900">Modelo Oficial de Mensagem de Aniversário</h4>
+                          <p className="text-[11px] text-slate-500">
                             Entregue como Notificação Push nativa no celular e Card Exclusivo no App (0 Pontos)
                           </p>
                         </div>
@@ -1539,32 +1536,32 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                       <button
                         onClick={handleDispatchAllBirthdays}
                         disabled={isDispatchingAllBirthdays || clinicorpBirthdays.length === 0}
-                        className="px-4 py-2.5 rounded-xl bg-white hover:bg-amber-50 text-[#147A80] font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
+                        className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50 shrink-0 tabular-nums"
                       >
-                        <Send className="w-4 h-4 text-[#147A80]" />
-                        <span>{isDispatchingAllBirthdays ? 'Disparando...' : `🚀 Disparar para Todos (${clinicorpBirthdays.length})`}</span>
+                        <Send className="w-4 h-4" />
+                        <span>{isDispatchingAllBirthdays ? 'Disparando...' : `Disparar para Todos (${clinicorpBirthdays.length})`}</span>
                       </button>
                     </div>
 
-                    <div className="p-3 rounded-2xl bg-black/25 border border-white/20 text-xs font-mono leading-relaxed text-amber-50">
-                      Olá, <strong>*Nome*</strong>. Feliz aniversário! 🚀<br />
-                      Queremos que seu sorriso acompanhe suas conquistas. Por isso, você recebeu uma <strong>*Cortesia de Aniversário*</strong>: Profilaxia e Diagnóstico por Imagem (Sky Câmera) por nossa conta.<br />
-                      Válido até <strong>*30 dias*</strong>. Agende seu presente direto no App do Paciente!
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono leading-relaxed text-slate-700">
+                      Olá, <strong className="text-slate-900">*Nome*</strong>. Feliz aniversário!<br />
+                      Queremos que seu sorriso acompanhe suas conquistas. Por isso, você recebeu uma <strong className="text-slate-900">*Cortesia de Aniversário*</strong>: Profilaxia e Diagnóstico por Imagem (Sky Câmera) por nossa conta.<br />
+                      Válido até <strong className="text-slate-900">*30 dias*</strong>. Agende seu presente direto no App do Paciente!
                     </div>
                   </div>
 
                   {/* Birthdays Table from Clinicorp */}
-                  <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
-                    <div className="p-3.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                      <span className="text-xs font-black text-gray-700 flex items-center gap-2">
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-2 tabular-nums">
                         <span>Aniversariantes de Hoje do Clinicorp</span>
-                        <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#147A80] text-[10px] font-black">
+                        <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#147A80] border border-teal-200 text-[10px] font-semibold">
                           API Ao Vivo: {clinicorpBirthdays.length} pacientes
                         </span>
                       </span>
                       <button
                         onClick={fetchNotificationData}
-                        className="text-[11px] font-bold text-[#147A80] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-semibold text-[#147A80] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Atualizar
@@ -1573,7 +1570,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-gray-50/60 border-b border-gray-200 text-gray-500 uppercase text-[10px] font-black">
+                        <thead className="bg-slate-50/60 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
                           <tr>
                             <th className="p-3.5">Paciente</th>
                             <th className="p-3.5">Telefone</th>
@@ -1582,26 +1579,25 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                             <th className="p-3.5 text-right">Disparo Push / In-App</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-slate-100 tabular-nums">
                           {clinicorpBirthdays.map((b: any, idx: number) => {
                             const cleanPhone = String(b.MobilePhone || '').replace(/\D/g, '');
                             const isSending = sendingPushForPhone === cleanPhone;
                             return (
-                              <tr key={b.PatientId || idx} className="hover:bg-gray-50/80 transition-colors">
-                                <td className="p-3.5 font-bold text-gray-900 flex items-center gap-2">
-                                  <span>🎂</span>
-                                  <span>{b.Name}</span>
+                              <tr key={b.PatientId || idx} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="p-3.5 font-semibold text-slate-900">
+                                  {b.Name}
                                 </td>
-                                <td className="p-3.5 font-mono text-gray-600">{b.MobilePhone || 'Sem telefone'}</td>
-                                <td className="p-3.5 font-bold text-amber-700">{b.Age ? `${b.Age} anos` : '-'}</td>
-                                <td className="p-3.5 text-gray-500">
+                                <td className="p-3.5 font-mono text-slate-600">{b.MobilePhone || 'Sem telefone'}</td>
+                                <td className="p-3.5 font-semibold text-[#147A80]">{b.Age ? `${b.Age} anos` : '-'}</td>
+                                <td className="p-3.5 text-slate-500">
                                   {b.BirthDate ? new Date(b.BirthDate).toLocaleDateString('pt-BR') : '-'}
                                 </td>
                                 <td className="p-3.5 text-right">
                                   <button
                                     onClick={() => handleSendIndividualBirthdayPush(b)}
                                     disabled={isSending}
-                                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-[11px] shadow-2xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                    className="h-8 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
                                   >
                                     {isSending ? 'Enviando...' : 'Enviar Cortesia'}
                                   </button>
@@ -1619,40 +1615,42 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               {/* SUB-TAB 2: LEMBRETES DE CONSULTAS (1 DIA ANTES & 2 HORAS ANTES) */}
               {notificationsSubTab === 'reminders' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => setReminderTypeFilter('1_day')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        className={`h-9 px-3 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
                           reminderTypeFilter === '1_day'
-                            ? 'bg-[#147A80] text-white shadow-xs font-black'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#147A80] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                         }`}
                       >
-                        📅 Consultas de Amanhã (Lembrete 1 Dia Antes)
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Consultas de Amanhã (1 Dia Antes)</span>
                       </button>
                       <button
                         onClick={() => setReminderTypeFilter('2_hours')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        className={`h-9 px-3 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
                           reminderTypeFilter === '2_hours'
-                            ? 'bg-[#147A80] text-white shadow-xs font-black'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#147A80] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                         }`}
                       >
-                        ⏰ Consultas de Hoje (Lembrete 2 Horas Antes)
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Consultas de Hoje (2 Horas Antes)</span>
                       </button>
                     </div>
 
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-xs text-slate-500 font-medium tabular-nums">
                       Total: {clinicorpAppointments.filter((a) => reminderTypeFilter === '1_day' ? a.targetType === '1_day_before' : a.targetType === '2_hours_before').length} agendamentos
                     </span>
                   </div>
 
                   {/* Appointments Table */}
-                  <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-[10px] font-black">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
                           <tr>
                             <th className="p-3.5">Horário</th>
                             <th className="p-3.5">Paciente</th>
@@ -1661,7 +1659,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                             <th className="p-3.5 text-right">Lembrete Push</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-slate-100 tabular-nums">
                           {clinicorpAppointments
                             .filter((a) =>
                               reminderTypeFilter === '1_day'
@@ -1672,24 +1670,24 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                               const cleanPhone = String(appt.MobilePhone || '').replace(/\D/g, '');
                               const isSending = sendingPushForPhone === cleanPhone;
                               return (
-                                <tr key={appt.id || idx} className="hover:bg-gray-50/80 transition-colors">
-                                  <td className="p-3.5 font-black text-gray-900">
-                                    <span className="px-2 py-0.5 rounded-lg bg-teal-50 text-[#147A80] font-mono">
+                                <tr key={appt.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="p-3.5 font-bold text-slate-900">
+                                    <span className="px-2 py-0.5 rounded bg-teal-50 text-[#147A80] font-mono">
                                       {appt.fromTime || '14:00'}
                                     </span>
                                   </td>
-                                  <td className="p-3.5 font-bold text-gray-900">
+                                  <td className="p-3.5 font-semibold text-slate-900">
                                     {appt.Name || appt.patientName || 'Paciente Agendado'}
                                   </td>
-                                  <td className="p-3.5 font-mono text-gray-600">{appt.MobilePhone || 'Sem celular'}</td>
-                                  <td className="p-3.5 text-gray-600 truncate max-w-xs">
+                                  <td className="p-3.5 font-mono text-slate-600">{appt.MobilePhone || 'Sem celular'}</td>
+                                  <td className="p-3.5 text-slate-600 truncate max-w-xs">
                                     {appt.Notes || 'Atendimento Clínico Geral'}
                                   </td>
                                   <td className="p-3.5 text-right">
                                     <button
                                       onClick={() => handleSendReminderPush(appt)}
                                       disabled={isSending}
-                                      className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-[11px] shadow-2xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                      className="h-8 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
                                     >
                                       {isSending ? 'Enviando...' : `Disparar Lembrete (${reminderTypeFilter === '1_day' ? '1d' : '2h'})`}
                                     </button>
@@ -1707,25 +1705,25 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               {/* SUB-TAB 3: SOLICITAÇÕES DE AGENDAMENTO FEITAS PELO APP */}
               {notificationsSubTab === 'requests' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200/80 text-[#147A80] text-xs">
+                  <div className="p-4 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] text-xs">
                     <p className="font-bold">Agendamentos Solicitados no App do Paciente (Sem WhatsApp):</p>
                     <p className="text-[11px] text-teal-800 mt-0.5">
                       Quando o paciente recebe o voucher de aniversário, ele solicita data e período diretamente pelo aplicativo. A recepção valida e agenda no Clinicorp.
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                     {birthdayRequests.length === 0 ? (
-                      <div className="py-12 text-center text-gray-400 space-y-2">
-                        <Gift className="w-8 h-8 mx-auto text-gray-300" />
-                        <p className="text-xs font-bold text-gray-600">Nenhuma solicitação de cortesia pendente</p>
-                        <p className="text-[11px] text-gray-400">
+                      <div className="py-12 text-center text-slate-400 space-y-2">
+                        <Gift className="w-8 h-8 mx-auto text-slate-300" />
+                        <p className="text-xs font-bold text-slate-600">Nenhuma solicitação de cortesia pendente</p>
+                        <p className="text-[11px] text-slate-400">
                           Quando um aniversariante solicitar o agendamento pelo app, aparecerá listado aqui.
                         </p>
                       </div>
                     ) : (
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-[10px] font-black">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
                           <tr>
                             <th className="p-3.5">Paciente</th>
                             <th className="p-3.5">Data Preferencial</th>
@@ -1735,20 +1733,20 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                             <th className="p-3.5 text-right">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-slate-100 tabular-nums">
                           {birthdayRequests.map((req: any) => (
-                            <tr key={req.id} className="hover:bg-gray-50/80">
-                              <td className="p-3.5 font-bold text-gray-900">
+                            <tr key={req.id} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-semibold text-slate-900">
                                 <div>{req.patientName}</div>
-                                <div className="text-[10px] text-gray-400 font-mono">{req.phone}</div>
+                                <div className="text-[10px] text-slate-400 font-mono">{req.phone}</div>
                               </td>
-                              <td className="p-3.5 font-black text-[#147A80]">{req.preferredDate}</td>
-                              <td className="p-3.5 text-gray-700">{req.preferredPeriod}</td>
-                              <td className="p-3.5 text-gray-600">{req.unit}</td>
-                              <td className="p-3.5 text-gray-500 italic truncate max-w-xs">{req.notes || '-'}</td>
+                              <td className="p-3.5 font-bold text-[#147A80]">{req.preferredDate}</td>
+                              <td className="p-3.5 text-slate-700">{req.preferredPeriod}</td>
+                              <td className="p-3.5 text-slate-600">{req.unit}</td>
+                              <td className="p-3.5 text-slate-500 italic truncate max-w-xs">{req.notes || '-'}</td>
                               <td className="p-3.5 text-right">
-                                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
-                                  ✓ Solicitado
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
+                                  Solicitado
                                 </span>
                               </td>
                             </tr>
@@ -1764,19 +1762,19 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
               {notificationsSubTab === 'subscribers' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-3xl bg-slate-900 text-white space-y-2">
-                      <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                    <div className="p-5 rounded-xl bg-white border border-slate-200 space-y-2">
+                      <div className="flex items-center gap-2 text-[#147A80] font-semibold text-xs">
                         <Smartphone className="w-4 h-4" />
                         <span>Aparelhos Ativos com Web Push</span>
                       </div>
-                      <div className="text-3xl font-black">{pushSubscribers.length}</div>
-                      <p className="text-[11px] text-gray-300">
+                      <div className="text-3xl font-bold text-slate-900 tabular-nums">{pushSubscribers.length}</div>
+                      <p className="text-xs text-slate-500">
                         Dispositivos móveis que autorizaram notificações push e recebem avisos na tela de bloqueio.
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-3xl bg-white border border-gray-200 shadow-xs space-y-2.5">
-                      <span className="font-bold text-gray-900 text-xs flex items-center gap-1.5">
+                    <div className="p-5 rounded-xl bg-white border border-slate-200 space-y-3">
+                      <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                         <Send className="w-3.5 h-3.5 text-[#147A80]" />
                         Teste Direto de Push em Aparelho
                       </span>
@@ -1786,19 +1784,19 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                           placeholder="Telefone"
                           value={testPushPhone}
                           onChange={(e) => setTestPushPhone(e.target.value)}
-                          className="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs font-mono"
+                          className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                         />
                         <input
                           type="text"
                           placeholder="Nome do Paciente"
                           value={testPushName}
                           onChange={(e) => setTestPushName(e.target.value)}
-                          className="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs"
+                          className="h-9 px-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                         />
                       </div>
                       <button
                         onClick={handleSendCustomTestPush}
-                        className="w-full py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
+                        className="w-full h-9 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
                       >
                         Disparar Push de Teste Agora
                       </button>
@@ -1812,83 +1810,91 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
         {/* Modal Form: Criar / Editar Prêmio */}
         {rewardFormOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h4 className="text-sm font-black text-gray-900">
-                  {editingReward ? 'Editar Prêmio' : 'Cadastrar Novo Prêmio'}
-                </h4>
-                <button onClick={() => setRewardFormOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-900/50 backdrop-blur-[2px]">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                    <Gift className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {editingReward ? 'Editar Prêmio' : 'Cadastrar Novo Prêmio'}
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setRewardFormOpen(false)}
+                  className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveReward} className="space-y-3 text-xs">
+              <form onSubmit={handleSaveReward} className="p-5 overflow-y-auto space-y-3 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Título do Prêmio *</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Título do Prêmio *</label>
                   <input
                     type="text"
                     required
                     value={rewardFormData.title}
                     onChange={(e) => setRewardFormData({ ...rewardFormData, title: e.target.value })}
                     placeholder="Ex: Kit Higiene Dental Premium"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Descrição Detalhada</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Descrição Detalhada</label>
                   <textarea
                     rows={2}
                     value={rewardFormData.description}
                     onChange={(e) => setRewardFormData({ ...rewardFormData, description: e.target.value })}
                     placeholder="Ex: Contém escova de cerdas macias, fio dental e necessaire Bertuol."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Pontos Exigidos *</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Pontos Exigidos *</label>
                     <input
                       type="number"
                       required
                       min={1}
                       value={rewardFormData.points_required}
                       onChange={(e) => setRewardFormData({ ...rewardFormData, points_required: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Estoque Físico *</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Estoque Físico *</label>
                     <input
                       type="number"
                       required
                       min={0}
                       value={rewardFormData.stock_available}
                       onChange={(e) => setRewardFormData({ ...rewardFormData, stock_available: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Validade do Voucher (dias)</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Validade do Voucher (dias)</label>
                     <input
                       type="number"
                       min={1}
                       value={rewardFormData.voucher_validity_days}
                       onChange={(e) => setRewardFormData({ ...rewardFormData, voucher_validity_days: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Unidade Vinculada</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Unidade Vinculada</label>
                     <select
                       value={rewardFormData.clinic_id}
                       onChange={(e) => setRewardFormData({ ...rewardFormData, clinic_id: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none cursor-pointer bg-white"
                     >
                       <option value="">Todas as Unidades</option>
                       <option value="1">Unidade Matriz Palmas</option>
@@ -1900,14 +1906,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                 {/* Upload Local de Imagem (Armazenamento 100% Interno no Servidor) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-bold text-gray-700">
+                    <label className="block text-[11px] font-semibold text-slate-700">
                       Foto do Prêmio (Armazenamento Local)
                     </label>
                     {localGallery.length > 0 && (
                       <button
                         type="button"
                         onClick={() => setShowGallery(!showGallery)}
-                        className="text-[10px] font-bold text-[#147A80] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-semibold text-[#147A80] hover:underline flex items-center gap-1 cursor-pointer tabular-nums"
                       >
                         <ImageIcon className="w-3 h-3" />
                         <span>{showGallery ? 'Ocultar Galeria' : `Galeria Salva (${localGallery.length})`}</span>
@@ -1930,26 +1936,26 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
                   {/* Preview ou Dropzone */}
                   {rewardFormData.image_url ? (
-                    <div className="p-3 rounded-2xl bg-amber-50/60 border-2 border-amber-200 flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-teal-50/50 border border-teal-200 flex items-center gap-3">
                       <img
                         src={rewardFormData.image_url}
                         alt="Preview do Prêmio"
-                        className="w-16 h-16 rounded-xl object-cover border border-amber-300 shadow-2xs shrink-0 bg-white"
+                        className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0 bg-white"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
                             'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=80';
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase">
-                          <FileCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                          <span className={rewardFormData.image_url.includes('supabase.co') ? 'text-indigo-700' : 'text-emerald-700'}>
+                        <div className="flex items-center gap-1.5 text-[10px] font-semibold">
+                          <FileCheck className="w-3.5 h-3.5 shrink-0 text-[#147A80]" />
+                          <span className="text-[#147A80]">
                             {rewardFormData.image_url.includes('supabase.co')
-                              ? '☁️ Supabase Storage (Bucket rewards)'
-                              : '💾 Armazenamento Local Bertuol'}
+                              ? 'Supabase Storage (Bucket rewards)'
+                              : 'Armazenamento Local Bertuol'}
                           </span>
                         </div>
-                        <p className="text-[11px] font-mono text-gray-600 truncate mt-0.5">
+                        <p className="text-[11px] font-mono text-slate-600 truncate mt-0.5">
                           {rewardFormData.image_url}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
@@ -1957,14 +1963,14 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                             type="button"
                             onClick={() => imageFileInputRef.current?.click()}
                             disabled={isUploadingImage}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-[10px] transition-all cursor-pointer shadow-2xs"
+                            className="px-2.5 py-1 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-[10px] transition-colors cursor-pointer"
                           >
                             Trocar Foto
                           </button>
                           <button
                             type="button"
                             onClick={() => setRewardFormData((prev) => ({ ...prev, image_url: '' }))}
-                            className="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[10px] transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[10px] transition-colors cursor-pointer"
                           >
                             Remover
                           </button>
@@ -1980,28 +1986,28 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                         const file = e.dataTransfer.files?.[0];
                         if (file) handleProcessFile(file);
                       }}
-                      className={`p-4 rounded-2xl border-2 border-dashed border-gray-300 hover:border-amber-400 bg-gray-50/70 hover:bg-amber-50/30 transition-all flex flex-col items-center justify-center text-center cursor-pointer group ${
+                      className={`p-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#147A80] bg-slate-50 hover:bg-teal-50/30 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group ${
                         isUploadingImage ? 'opacity-60 pointer-events-none' : ''
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-700 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center mb-2">
                         {isUploadingImage ? (
                           <RefreshCw className="w-5 h-5 animate-spin" />
                         ) : (
                           <UploadCloud className="w-5 h-5" />
                         )}
                       </div>
-                      <p className="text-xs font-black text-gray-800">
-                        {isUploadingImage ? 'Enviando imagem ao servidor...' : '📁 Clique para escolher foto do computador ou celular'}
+                      <p className="text-xs font-bold text-slate-800">
+                        {isUploadingImage ? 'Enviando imagem ao servidor...' : 'Clique para escolher foto do computador ou celular'}
                       </p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">
-                        PNG, JPG, WEBP até 20 MB • Salvo diretamente na pasta local do servidor
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        PNG, JPG, WEBP até 20 MB • Salvo diretamente no servidor
                       </p>
                     </div>
                   )}
 
                   {uploadError && (
-                    <p className="text-[10px] font-bold text-rose-600 flex items-center gap-1">
+                    <p className="text-[10px] font-semibold text-rose-600 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
                       <span>{uploadError}</span>
                     </p>
@@ -2009,8 +2015,8 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
                   {/* Galeria de Fotos Salvas Localmente */}
                   {showGallery && localGallery.length > 0 && (
-                    <div className="p-2.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-2 animate-in fade-in">
-                      <p className="text-[10px] font-bold text-gray-600">
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                      <p className="text-[10px] font-semibold text-slate-600">
                         Clique em uma imagem da pasta local para selecioná-la:
                       </p>
                       <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1">
@@ -2022,18 +2028,18 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                               setRewardFormData((prev) => ({ ...prev, image_url: img.url }));
                               setShowGallery(false);
                             }}
-                            className={`p-1 rounded-xl border transition-all text-left group hover:scale-102 ${
+                            className={`p-1 rounded-lg border transition-colors text-left cursor-pointer ${
                               rewardFormData.image_url === img.url
                                 ? 'border-[#147A80] ring-2 ring-[#147A80]/30 bg-teal-50'
-                                : 'border-gray-200 bg-white hover:border-amber-400'
+                                : 'border-slate-200 bg-white hover:border-[#147A80]'
                             }`}
                           >
                             <img
                               src={img.url}
                               alt={img.filename}
-                              className="w-full h-12 rounded-lg object-cover bg-gray-100"
+                              className="w-full h-12 rounded object-cover bg-slate-100"
                             />
-                            <p className="text-[9px] font-mono text-gray-500 truncate mt-1">
+                            <p className="text-[9px] font-mono text-slate-500 truncate mt-1">
                               {img.filename.replace(/^premio-\d+-/, '')}
                             </p>
                           </button>
@@ -2049,7 +2055,7 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                       value={rewardFormData.image_url}
                       onChange={(e) => setRewardFormData({ ...rewardFormData, image_url: e.target.value })}
                       placeholder="Caminho local salvo: /uploads/rewards/premio-exemplo.png"
-                      className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-[10px] font-mono text-gray-600 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-8 px-3 rounded-xl border border-slate-200 text-[10px] font-mono text-slate-600 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2060,24 +2066,24 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                     id="rewardActiveCheck"
                     checked={rewardFormData.is_active}
                     onChange={(e) => setRewardFormData({ ...rewardFormData, is_active: e.target.checked })}
-                    className="w-4 h-4 text-amber-500 rounded cursor-pointer"
+                    className="w-4 h-4 text-[#147A80] focus:ring-[#147A80] rounded cursor-pointer"
                   />
-                  <label htmlFor="rewardActiveCheck" className="text-xs font-bold text-gray-700 cursor-pointer">
+                  <label htmlFor="rewardActiveCheck" className="text-xs font-semibold text-slate-700 cursor-pointer">
                     Item Ativo e Visível para os Pacientes
                   </label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setRewardFormOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50"
+                    className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black shadow-xs cursor-pointer"
+                    className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
                   >
                     Salvar Prêmio
                   </button>
@@ -2089,59 +2095,67 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
         {/* Modal Form: Criar / Editar Regra de Pontuação */}
         {ruleFormOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h4 className="text-sm font-black text-gray-900">
-                  {editingRule ? 'Editar Regra de Pontuação' : 'Nova Regra de Pontuação'}
-                </h4>
-                <button onClick={() => setRuleFormOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-900/50 backdrop-blur-[2px]">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                    <Settings className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {editingRule ? 'Editar Regra de Pontuação' : 'Nova Regra de Pontuação'}
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setRuleFormOpen(false)}
+                  className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveRule} className="space-y-3 text-xs">
+              <form onSubmit={handleSaveRule} className="p-5 space-y-3 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Título da Regra *</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Título da Regra *</label>
                   <input
                     type="text"
                     required
                     value={ruleFormData.title}
                     onChange={(e) => setRuleFormData({ ...ruleFormData, title: e.target.value })}
                     placeholder="Ex: Check-in Presencial no Totem"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Descrição Explicativa</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Descrição Explicativa</label>
                   <textarea
                     rows={2}
                     value={ruleFormData.description}
                     onChange={(e) => setRuleFormData({ ...ruleFormData, description: e.target.value })}
                     placeholder="Ex: Pontos concedidos automaticamente ao ler o QR Code na chegada."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Pontos Concedidos (+pts) *</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Pontos Concedidos (+pts) *</label>
                     <input
                       type="number"
                       required
                       min={1}
                       value={ruleFormData.points_reward}
                       onChange={(e) => setRuleFormData({ ...ruleFormData, points_reward: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Gatilho do Evento</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Gatilho do Evento</label>
                     <select
                       value={ruleFormData.trigger_event}
                       onChange={(e) => setRuleFormData({ ...ruleFormData, trigger_event: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none cursor-pointer bg-white"
                     >
                       <option value="qr_code_totem">Leitura Totem QR (Presencial)</option>
                       <option value="whatsapp_confirm">Confirmação WhatsApp</option>
@@ -2159,24 +2173,24 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                     id="ruleActiveCheck"
                     checked={ruleFormData.is_active}
                     onChange={(e) => setRuleFormData({ ...ruleFormData, is_active: e.target.checked })}
-                    className="w-4 h-4 text-amber-500 rounded cursor-pointer"
+                    className="w-4 h-4 text-[#147A80] focus:ring-[#147A80] rounded cursor-pointer"
                   />
-                  <label htmlFor="ruleActiveCheck" className="text-xs font-bold text-gray-700 cursor-pointer">
+                  <label htmlFor="ruleActiveCheck" className="text-xs font-semibold text-slate-700 cursor-pointer">
                     Regra Ativa no Sistema
                   </label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setRuleFormOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50"
+                    className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black shadow-xs cursor-pointer"
+                    className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
                   >
                     Salvar Regra
                   </button>
@@ -2188,44 +2202,49 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
         {/* Modal Form: Crédito / Ajuste Manual de Pontos */}
         {creditModalOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-emerald-600" />
-                  <h4 className="text-sm font-black text-gray-900">Lançar / Ajustar Pontos do Paciente</h4>
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-900/50 backdrop-blur-[2px]">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900">Lançar / Ajustar Pontos do Paciente</h4>
                 </div>
-                <button onClick={() => setCreditModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <button
+                  onClick={() => setCreditModalOpen(false)}
+                  className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveCredit} className="space-y-3 text-xs">
+              <form onSubmit={handleSaveCredit} className="p-5 space-y-3 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Telefone do Paciente (apenas dígitos) *</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Telefone do Paciente (apenas dígitos) *</label>
                   <input
                     type="text"
                     required
                     value={creditFormData.phone}
                     onChange={(e) => setCreditFormData({ ...creditFormData, phone: e.target.value })}
                     placeholder="Ex: 63984123456"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-mono"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none font-mono tabular-nums"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Nome do Paciente</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Nome do Paciente</label>
                   <input
                     type="text"
                     value={creditFormData.patientName}
                     onChange={(e) => setCreditFormData({ ...creditFormData, patientName: e.target.value })}
                     placeholder="Ex: Carlos Henrique Silva"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Pontos a Lançar (Use valor positivo para crédito ou negativo para débito) *
                   </label>
                   <input
@@ -2234,33 +2253,33 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                     value={creditFormData.points}
                     onChange={(e) => setCreditFormData({ ...creditFormData, points: Number(e.target.value) })}
                     placeholder="Ex: 50 ou -20"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-black text-emerald-700"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none font-bold text-[#147A80] tabular-nums"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Motivo / Justificativa do Lançamento *</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Motivo / Justificativa do Lançamento *</label>
                   <textarea
                     rows={2}
                     required
                     value={creditFormData.description}
                     onChange={(e) => setCreditFormData({ ...creditFormData, description: e.target.value })}
                     placeholder="Ex: Bônus concedido por indicação de amigo ou cortesia da recepção."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setCreditModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50"
+                    className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-xs cursor-pointer"
+                    className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
                   >
                     Confirmar Lançamento
                   </button>
@@ -2272,48 +2291,53 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
 
         {/* Modal Form: Criar / Editar Categoria (Tier) */}
         {tierFormOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-amber-500" />
-                  <h4 className="text-sm font-black text-gray-900">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-900/50 backdrop-blur-[2px]">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                    <Crown className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900">
                     {editingTier ? 'Editar Categoria de Fidelidade' : 'Cadastrar Nova Categoria (Tier)'}
                   </h4>
                 </div>
-                <button onClick={() => setTierFormOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <button
+                  onClick={() => setTierFormOpen(false)}
+                  className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveTier} className="space-y-3 text-xs">
+              <form onSubmit={handleSaveTier} className="p-5 space-y-3 text-xs">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Nome da Categoria *</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Nome da Categoria *</label>
                     <input
                       type="text"
                       required
                       value={tierFormData.name}
                       onChange={(e) => setTierFormData({ ...tierFormData, name: e.target.value })}
                       placeholder="Ex: Ouro, Platinum, VIP"
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Emoji / Ícone</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Símbolo / Sigla</label>
                     <input
                       type="text"
                       value={tierFormData.badge}
                       onChange={(e) => setTierFormData({ ...tierFormData, badge: e.target.value })}
-                      placeholder="Ex: 🥇 ou 💎"
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center text-lg focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      placeholder="Ex: VIP"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 text-center text-base focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Pontos Mínimos *</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Pontos Mínimos *</label>
                     <input
                       type="number"
                       required
@@ -2321,11 +2345,11 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                       value={tierFormData.min_points}
                       onChange={(e) => setTierFormData({ ...tierFormData, min_points: Number(e.target.value) })}
                       placeholder="Ex: 180"
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-[#147A80] focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 font-bold text-[#147A80] tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Multiplicador Bônus</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Multiplicador Bônus</label>
                     <input
                       type="number"
                       step="0.05"
@@ -2333,20 +2357,20 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                       value={tierFormData.multiplier}
                       onChange={(e) => setTierFormData({ ...tierFormData, multiplier: Number(e.target.value) })}
                       placeholder="Ex: 1.25"
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 font-bold text-amber-600 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                      className="w-full h-9 px-3 rounded-xl border border-slate-200 font-bold text-[#147A80] tabular-nums focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 mb-1">Descrição dos Benefícios *</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Descrição dos Benefícios *</label>
                   <textarea
                     rows={3}
                     required
                     value={tierFormData.benefits_description}
                     onChange={(e) => setTierFormData({ ...tierFormData, benefits_description: e.target.value })}
                     placeholder="Ex: 25% de bônus em todos os check-ins, voucher especial de aniversário e prioridade na agenda."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#147A80] focus:outline-none"
                   />
                 </div>
 
@@ -2356,24 +2380,24 @@ export const AdminGamificationModal: React.FC<AdminGamificationModalProps> = ({
                     id="tierActiveCheck"
                     checked={tierFormData.is_active}
                     onChange={(e) => setTierFormData({ ...tierFormData, is_active: e.target.checked })}
-                    className="w-4 h-4 text-amber-500 rounded cursor-pointer"
+                    className="w-4 h-4 text-[#147A80] focus:ring-[#147A80] rounded cursor-pointer"
                   />
-                  <label htmlFor="tierActiveCheck" className="text-xs font-bold text-gray-700 cursor-pointer">
+                  <label htmlFor="tierActiveCheck" className="text-xs font-semibold text-slate-700 cursor-pointer">
                     Categoria Ativa no Clube
                   </label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setTierFormOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50"
+                    className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-black shadow-xs cursor-pointer"
+                    className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
                   >
                     Salvar Categoria
                   </button>

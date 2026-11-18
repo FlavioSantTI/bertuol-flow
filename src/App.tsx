@@ -777,59 +777,51 @@ export default function App() {
   return (
     <TenantProvider>
       <ClinicLayout userContext={effectiveUserContext}>
-        <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] flex flex-col font-sans selection:bg-[#4BBCBE]/30 selection:text-[#1A1A1A] w-full max-w-full overflow-x-hidden">
-      {/* Barra Compacta Exclusiva do SuperAdmin Root (Unificando Simulação de Perfil + Escopo de Unidade) */}
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-[#147A80]/20 selection:text-slate-900 w-full max-w-full overflow-x-hidden">
+      {/* Barra Compacta Exclusiva do SuperAdmin Root */}
       {componentAccess.adminSimulationToolbar && (
-        <div className="bg-slate-900 text-white px-3 sm:px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-2 shadow-sm shrink-0 z-40 border-b border-slate-800">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            <span className="font-bold text-slate-100 truncate">
-              👑 MODO SUPERADMIN ROOT
-            </span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 text-[10px] font-mono font-bold border border-slate-700 shrink-0">
-              v{APP_VERSION}
-            </span>
+        <div className="bg-slate-900 text-slate-100 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 shrink-0 z-40 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="font-semibold text-slate-100 truncate">Modo SuperAdmin Root</span>
+            <span className="text-slate-500" aria-hidden="true">·</span>
+            <span className="text-[11px] font-mono tabular-nums text-slate-400">v{APP_VERSION}</span>
             {simulatedRole !== 'none' && (
-              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[11px] font-bold shrink-0">
-                Simulando Perfil Restrito
-              </span>
+              <>
+                <span className="text-slate-500" aria-hidden="true">·</span>
+                <span className="text-[11px] font-semibold text-amber-300">Simulando perfil</span>
+              </>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {/* Seletor de Escopo de Unidade Global do Root */}
-            <div className="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
-              <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="text-[11px] text-slate-300 font-semibold hidden md:inline">Unidade:</span>
+            <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
+              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
                 value={String(selectedClinicId)}
                 onChange={(e) => {
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   handleSelectClinic(val);
                 }}
-                className="bg-transparent text-amber-300 text-xs font-bold focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-slate-100 text-xs font-medium focus:outline-hidden cursor-pointer"
               >
-                <option value="all" className="text-slate-900">Todas as Unidades (Global)</option>
+                <option value="all" className="text-slate-900">Todas as Unidades</option>
                 {clinics
                   .filter((c) => c.active)
                   .map((c) => (
                     <option key={c.id} value={c.id} className="text-slate-900">
-                      📍 {c.shortName}
+                      {c.shortName}
                     </option>
                   ))}
               </select>
             </div>
 
-            {/* Seletor de Simulação de Perfil RBAC */}
-            <div className="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700">
-              <Users className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-              <span className="text-[11px] text-slate-300 font-semibold hidden md:inline">Visão:</span>
+            <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
+              <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
                 value={simulatedRole}
                 onChange={(e) => {
                   const nextRole = e.target.value as UserRole | 'none';
                   setSimulatedRole(nextRole);
-                  // Ao simular perfil de unidade fixa, seleciona Palmas (1) se estiver em 'all'
                   if (
                     (nextRole === 'receptionist' || nextRole === 'dentist' || nextRole === 'admin_clinica') &&
                     selectedClinicId === 'all'
@@ -837,13 +829,13 @@ export default function App() {
                     handleSelectClinic(1);
                   }
                 }}
-                className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-slate-100 text-xs font-medium focus:outline-hidden cursor-pointer"
               >
-                <option value="none" className="text-slate-900">👑 Visão Total Admin Root</option>
-                <option value="admin_clinica" className="text-slate-900">🏢 Admin Clínica (Unidade)</option>
-                <option value="gerente_atendimento" className="text-slate-900">👔 Gerente Multiclínica</option>
-                <option value="receptionist" className="text-slate-900">🛎️ Recepção (Unidade Local)</option>
-                <option value="dentist" className="text-slate-900">🩺 Dentista (Agenda + Vouchers)</option>
+                <option value="none" className="text-slate-900">Visão Admin Root</option>
+                <option value="admin_clinica" className="text-slate-900">Admin Clínica</option>
+                <option value="gerente_atendimento" className="text-slate-900">Gerente Multiclínica</option>
+                <option value="receptionist" className="text-slate-900">Recepção Local</option>
+                <option value="dentist" className="text-slate-900">Dentista</option>
               </select>
             </div>
 
@@ -854,21 +846,19 @@ export default function App() {
                   setSimulatedRole('none');
                   handleSelectClinic('all');
                 }}
-                className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[11px] cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs cursor-pointer transition-colors"
               >
                 Restaurar Root
               </button>
             )}
 
-            {/* Acesso Exclusivo Admin Root à Rota Dedicada de Tutoriais & Apresentações (/root) */}
             <button
               type="button"
               onClick={handleSwitchToRoot}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-extrabold text-[11px] cursor-pointer transition-colors shadow-xs"
-              title="Abrir Rota Exclusiva Admin Root com Tutoriais, Apresentação 3D e Roteiros HeyGen (/root)"
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-medium text-xs cursor-pointer transition-colors"
+              title="Abrir Central Admin Root e Tutoriais (/root)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>📚 Central Root & Tutoriais</span>
+              Central Root
             </button>
           </div>
         </div>
@@ -905,29 +895,25 @@ export default function App() {
 
       {/* Live Reception Totem Arrival Alert Banner (RF04) */}
       {arrivalAlert && (
-        <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white px-4 py-3 shadow-md shrink-0 flex items-center justify-between text-xs font-medium animate-in slide-in-from-top-4 border-b border-emerald-500 z-30">
-          <div className="flex items-center gap-3 max-w-6xl mx-auto w-full justify-between">
+        <div className="bg-[#147A80] text-white px-4 py-3 shrink-0 border-b border-[#0F5C61] z-30">
+          <div className="flex items-center gap-3 max-w-4xl mx-auto w-full justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <BertuolBotAvatar mood="alert" size="md" className="shrink-0" />
               <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-200 block">
-                    Bertuol Bot • Check-in na Recepção ({arrivalAlert.time})
-                  </span>
+                <div className="text-[11px] font-medium text-teal-100 flex items-center gap-2">
+                  <span>Check-in na recepção · {arrivalAlert.time}</span>
                   {arrivalAlert.dentistName?.includes('Avaliador') && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-400/40 text-[9px] font-black">
-                      🛡️ AMBIENTE DE TESTES (SEM MENSAGEM A DENTISTAS REAIS)
-                    </span>
+                    <span className="font-semibold text-white">· Ambiente de testes</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm font-black truncate block mt-0.5">
-                  O paciente <u>{arrivalAlert.patientName}</u> realizou check-in para <strong>{arrivalAlert.dentistName || 'o consultório'}</strong> e aguarda atendimento!
-                </span>
+                <p className="text-xs sm:text-sm font-semibold truncate mt-0.5">
+                  Paciente {arrivalAlert.patientName} realizou check-in para {arrivalAlert.dentistName || 'o consultório'}.
+                </p>
               </div>
             </div>
             <button
               onClick={() => setArrivalAlert(null)}
-              className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-102 active:scale-95"
+              className="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition-colors shrink-0 cursor-pointer"
             >
               Dispensar
             </button>
@@ -937,19 +923,16 @@ export default function App() {
 
       {/* First Access / Temporary Password Alert Banner */}
       {userContext.mustChangePassword && (
-        <div className="bg-linear-to-r from-amber-500 via-orange-500 to-amber-600 text-white px-3 sm:px-4 py-2.5 shadow-sm shrink-0 flex items-center justify-between text-xs font-bold animate-in fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 max-w-6xl mx-auto w-full justify-between">
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping shrink-0" />
-              <span>
-                👋 <strong>Primeiro Acesso Detectado:</strong> Você está utilizando uma senha provisória. Por segurança, cadastre sua nova senha definitiva.
-              </span>
+        <div className="bg-amber-600 text-white px-4 py-2.5 shrink-0 border-b border-amber-700">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 max-w-4xl mx-auto w-full justify-between text-xs">
+            <span className="font-medium">
+              <strong className="font-semibold">Primeiro acesso:</strong> Você está utilizando uma senha provisória. Cadastre sua senha definitiva para proteger sua conta.
             </span>
             <button
               onClick={() => setIsChangePasswordModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-white text-gray-900 hover:bg-gray-100 font-black text-xs shadow-xs cursor-pointer shrink-0 transition-transform active:scale-95 text-center"
+              className="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 hover:bg-slate-100 font-semibold text-xs cursor-pointer shrink-0 transition-colors"
             >
-              Cadastrar Minha Senha Agora
+              Cadastrar Senha
             </button>
           </div>
         </div>
@@ -959,12 +942,12 @@ export default function App() {
       <PWAInstallBanner onOpenNotifications={() => setIsNotificationModalOpen(true)} />
 
       {/* Main Container: Supports Mobile Frame Simulation or Full Responsive */}
-      <main className="flex-1 flex justify-center py-2 sm:py-6 px-1.5 sm:px-4 w-full max-w-full overflow-x-hidden min-w-0">
+      <main className="flex-1 flex justify-center py-3 sm:py-6 px-2 sm:px-4 w-full max-w-full overflow-x-hidden min-w-0">
         <div
           className={`w-full max-w-full min-w-0 transition-all duration-300 ${
             isMobileFrameView
               ? 'max-w-[420px] bg-white rounded-[40px] shadow-2xl border-8 border-gray-900 overflow-hidden flex flex-col min-h-[780px] my-auto'
-              : 'max-w-3xl bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-200/80 overflow-hidden flex flex-col'
+              : 'max-w-4xl bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col'
           }`}
         >
           {/* Mobile frame simulated top status indicator */}
@@ -987,69 +970,70 @@ export default function App() {
           />
 
           {/* Quick Metrics Bar & Search / Filter */}
-          <div className="p-3 sm:p-4 bg-white border-b border-gray-100 space-y-3">
-            {/* Quick Metrics pill */}
-            <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="px-4 py-3.5 sm:px-5 bg-white border-b border-slate-200 space-y-3">
+            {/* Clean Unboxed Metrics Line */}
+            <div className="flex items-center justify-between text-xs text-slate-600 flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-700">Progresso do Dia:</span>
-                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold border border-emerald-100">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  {summarizedCount} de {totalDayAppointments} com Resumo IA
+                <span className="font-semibold text-slate-800">Progresso do dia</span>
+                <span aria-hidden="true" className="text-slate-300">·</span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 tabular-nums">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>
+                    {summarizedCount} de {totalDayAppointments} com resumo IA
+                  </span>
                 </span>
               </div>
 
               {summarizedCount < totalDayAppointments && (
-                <span className="hidden sm:inline-flex text-[11px] text-amber-700 font-medium">
+                <span className="text-[11px] text-slate-500 tabular-nums">
                   {totalDayAppointments - summarizedCount} aguardando síntese
                 </span>
               )}
             </div>
 
-            {/* Daily Executive Briefing (Push Preview & Resumo IA da Agenda) */}
+            {/* Sober Daily Executive Briefing Strip */}
             {appointments.length > 0 && (
               <div
                 onClick={() => setIsDailyBriefingOpen(true)}
-                className="bg-linear-to-r from-amber-500/10 via-orange-500/5 to-white hover:from-amber-500/15 hover:via-orange-500/10 rounded-2xl p-3 sm:p-3.5 border border-amber-300/80 shadow-xs cursor-pointer transition-all hover:shadow-md group"
+                className="bg-slate-50 hover:bg-slate-100/80 rounded-xl p-3 sm:px-4 border border-slate-200 cursor-pointer transition-colors group"
               >
-                <div className="flex items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-[#EBF8F8] text-[#147A80] flex items-center justify-center shrink-0">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 block truncate">
-                          Resumo Executivo da Agenda • {selectedDentist?.Name || 'Geral'}
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <span className="font-semibold text-slate-900 truncate">
+                          Resumo do dia · {selectedDentist?.Name || 'Geral'}
                         </span>
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-200/80 text-amber-950 shrink-0">
-                          {appointments.length} consultas
-                        </span>
+                        <span aria-hidden="true" className="text-slate-300">·</span>
+                        <span className="tabular-nums shrink-0">{appointments.length} consultas</span>
                       </div>
-                      <p className="text-xs text-gray-800 font-medium truncate mt-0.5">
-                        Início às <strong>{appointments[0]?.fromTime}</strong> • 1º paciente: <strong>{appointments[0]?.PatientName || 'Paciente'}</strong> ({appointments[0]?.Procedures})
+                      <p className="text-xs text-slate-600 truncate mt-0.5 tabular-nums">
+                        Início às <strong className="text-slate-800">{appointments[0]?.fromTime}</strong> com{' '}
+                        <strong className="text-slate-800">{appointments[0]?.PatientName || 'Paciente'}</strong>
                       </p>
-                      <span className="text-[11px] text-amber-700 font-bold group-hover:underline flex items-center gap-1 mt-0.5">
-                        Toque para abrir a síntese clínica do dia
-                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsNotificationModalOpen(true);
                       }}
-                      className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                       title="Configurar push matinal"
                     >
-                      <Bell className="w-3.5 h-3.5 text-amber-600" />
+                      <Bell className="w-3.5 h-3.5 text-slate-500" />
                       <span className="hidden sm:inline">Push Matinal</span>
                     </button>
 
-                    <div className="px-2.5 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs group-hover:bg-amber-600 transition-colors">
+                    <div className="px-3 py-1.5 rounded-lg bg-[#147A80] group-hover:bg-[#0F5C61] text-white text-xs font-semibold flex items-center gap-1 transition-colors whitespace-nowrap">
                       <span className="hidden md:inline">Ver Resumo</span>
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
                 </div>
@@ -1058,33 +1042,35 @@ export default function App() {
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Buscar por paciente, procedimento ou histórico..."
+                placeholder="Buscar por paciente, procedimento ou observação..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-[#F8F9FA] hover:bg-gray-100/80 focus:bg-white text-xs sm:text-sm text-[#1A1A1A] placeholder-gray-400 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all min-h-[44px]"
+                className="w-full pl-9 pr-16 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/25 focus:border-[#147A80] transition-colors min-h-[40px]"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
                 >
                   Limpar
                 </button>
               )}
             </div>
 
-            {/* Category Pills Filter */}
+            {/* Category Filter Buttons */}
             {dayCategories.length > 1 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs">
                 <button
+                  type="button"
                   onClick={() => setSelectedCategoryFilter('all')}
-                  className={`px-2.5 py-1 rounded-lg font-semibold shrink-0 transition-all ${
+                  className={`px-3 py-1.5 rounded-lg font-medium shrink-0 transition-colors cursor-pointer whitespace-nowrap ${
                     selectedCategoryFilter === 'all'
-                      ? 'bg-[#1A1A1A] text-white'
-                      : 'bg-[#F8F9FA] text-gray-600 hover:bg-gray-200/80'
+                      ? 'bg-[#147A80] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
                   }`}
                 >
                   Todas ({appointments.length})
@@ -1092,16 +1078,17 @@ export default function App() {
 
                 {dayCategories.map((cat) => (
                   <button
+                    type="button"
                     key={cat.id}
                     onClick={() =>
                       setSelectedCategoryFilter(
                         selectedCategoryFilter === cat.id ? 'all' : cat.id
                       )
                     }
-                    className={`px-2.5 py-1 rounded-lg font-semibold shrink-0 transition-all flex items-center gap-1.5 border ${
+                    className={`px-3 py-1.5 rounded-lg font-medium shrink-0 transition-colors flex items-center gap-1.5 border cursor-pointer whitespace-nowrap ${
                       selectedCategoryFilter === cat.id
-                        ? 'border-transparent text-white shadow-2xs'
-                        : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        ? 'border-transparent text-white'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                     style={{
                       backgroundColor:
@@ -1115,7 +1102,7 @@ export default function App() {
                           selectedCategoryFilter === cat.id ? '#ffffff' : cat.color,
                       }}
                     />
-                    {cat.name}
+                    <span>{cat.name}</span>
                   </button>
                 ))}
               </div>
@@ -1123,15 +1110,15 @@ export default function App() {
           </div>
 
           {/* Chronological List of Appointments (RF02) */}
-          <div className="flex-1 p-3 sm:p-5 overflow-y-auto space-y-3 bg-[#F8F9FA]/40">
+          <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-2.5 bg-slate-50/70">
             {isLoading ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
               </div>
             ) : filteredAppointments.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {filteredAppointments.map((appt) => (
                   <AppointmentCard
                     key={appt.id}
@@ -1141,16 +1128,16 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              /* Empty State (PRD UI/UX Section 2) */
+              /* Empty State */
               <div className="py-14 sm:py-20 px-4 text-center flex flex-col items-center justify-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center text-[#4BBCBE] border border-teal-200/60 shadow-xs">
-                  <CalendarX className="w-8 h-8 stroke-[1.8]" />
+                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center text-[#147A80] border border-slate-200">
+                  <CalendarX className="w-7 h-7 stroke-[1.75]" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-[#1A1A1A]">
+                  <h3 className="text-base font-semibold text-slate-900">
                     Nenhum paciente agendado para esta data
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto">
+                  <p className="text-xs sm:text-sm text-slate-500 max-w-xs mx-auto">
                     {searchQuery
                       ? 'Nenhum agendamento encontrado com os filtros informados.'
                       : 'Utilize os botões de navegação acima para verificar outros dias da semana.'}
@@ -1158,42 +1145,31 @@ export default function App() {
                 </div>
                 {searchQuery && (
                   <button
+                    type="button"
                     onClick={() => {
                       setSearchQuery('');
                       setSelectedCategoryFilter('all');
                     }}
-                    className="mt-2 text-xs font-bold text-[#199A9F] hover:underline"
+                    className="mt-2 text-xs font-semibold text-[#147A80] hover:underline cursor-pointer"
                   >
-                    Redefinir Filtros
+                    Redefinir filtros
                   </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* Quick AI Tip / Footer */}
-          <div className="bg-white p-3 px-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-[#4BBCBE]" />
-              Toque no paciente para abrir a ficha e o Resumo IA
-            </span>
-            <span className="text-[11px] font-semibold text-gray-400">
-              Bertuol • Clinicorp Ready
-            </span>
-          </div>
-
-          {/* App Footer */}
-          <footer className="mt-8 pt-4 pb-4 border-t border-[#E2E6E7] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-gray-500">
+          {/* Single Clean App Footer */}
+          <footer className="bg-white px-4 sm:px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#147A80]">Bertuol Flow</span>
-              <span className="text-gray-300">•</span>
-              <span className="text-[11px] text-gray-500">Bertuol Odontologia Avançada</span>
+              <span className="font-semibold text-slate-800">Bertuol Flow</span>
+              <span className="text-slate-300" aria-hidden="true">·</span>
+              <span>Bertuol Odontologia Avançada</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30 shadow-2xs">
-                Versão {APP_VERSION}
-              </span>
-              <span className="text-[10px] text-gray-400">© 2026</span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 tabular-nums">
+              <span>Toque em qualquer atendimento para abrir detalhes e síntese</span>
+              <span aria-hidden="true">·</span>
+              <span>v{APP_VERSION}</span>
             </div>
           </footer>
 

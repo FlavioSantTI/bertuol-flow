@@ -176,19 +176,19 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
   if (!hasCRMAccess) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
-          <div className="w-12 h-12 bg-amber-100 text-amber-800 rounded-xl flex items-center justify-center mx-auto">
-            <Lock className="w-6 h-6 text-amber-600" />
+      <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border border-slate-200">
+          <div className="w-11 h-11 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl flex items-center justify-center mx-auto">
+            <Lock className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">Acesso Restrito ao CRM</h3>
-          <p className="text-xs text-gray-600">
+          <h3 className="text-base font-bold text-slate-900">Acesso Restrito ao CRM</h3>
+          <p className="text-xs text-slate-600">
             Seu perfil ({userContext.role}) não possui autorização para acessar o módulo CRM.
           </p>
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs cursor-pointer"
+            className="w-full py-2.5 bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold rounded-xl text-xs cursor-pointer transition-colors"
           >
             Fechar
           </button>
@@ -499,12 +499,12 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const pipelineStages = activePipeline?.stages || [];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
       <div className="bg-slate-50 rounded-2xl w-full max-w-[1440px] h-[95vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        {/* 1. Compact Single-Row Executive Header */}
-        <header className="bg-linear-to-r from-[#0d4f52] to-[#147A80] px-5 py-3 text-white flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-6 min-w-0">
-            <h2 className="font-bold text-base tracking-tight text-white whitespace-nowrap shrink-0">
+        {/* 1. Clean Clinical Single-Row Header */}
+        <header className="bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-5 min-w-0">
+            <h2 className="font-bold text-base tracking-tight text-slate-900 whitespace-nowrap shrink-0">
               CRM Bertuol
             </h2>
 
@@ -526,16 +526,16 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       setActivePipelineId(pl.id);
                       setActiveView('pipeline');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
                       isActive
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-teal-50 hover:bg-white/10'
+                        ? 'bg-[#147A80] text-white'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <span>{pl.name}</span>
                     <span
-                      className={`text-[10px] font-mono tabular-nums px-1.5 py-0.2 rounded ${
-                        isActive ? 'bg-slate-100 text-slate-800' : 'bg-white/15 text-white'
+                      className={`text-[11px] font-mono tabular-nums px-1.5 py-0.5 rounded ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {count}
@@ -544,15 +544,15 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 );
               })}
 
-              <span className="h-4 w-px bg-white/20 mx-1 shrink-0" aria-hidden="true" />
+              <span className="h-4 w-px bg-slate-200 mx-1 shrink-0" aria-hidden="true" />
 
               <button
                 type="button"
                 onClick={() => setActiveView('templates')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
                   activeView === 'templates'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-teal-50 hover:bg-white/10'
+                    ? 'bg-[#147A80] text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
@@ -562,10 +562,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveView('dashboard')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ${
                   activeView === 'dashboard'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-teal-50 hover:bg-white/10'
+                    ? 'bg-[#147A80] text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <BarChart3 className="w-3.5 h-3.5" />
@@ -579,9 +579,9 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               type="button"
               onClick={() => setIsPipelineManagerOpen(true)}
               title="Criar, editar ou reorganizar funis comerciais"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
             >
-              <Layers className="w-3.5 h-3.5" />
+              <Layers className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden sm:inline">Gerenciar Funis</span>
             </button>
 
@@ -590,16 +590,16 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               onClick={handleRefreshFromSupabase}
               disabled={isSyncing}
               title="Sincronizar com Supabase"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap disabled:opacity-60"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSyncing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Sincronizar</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsNewOppModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
+              className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Lead</span>
@@ -608,7 +608,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Fechar CRM"
             >
               <X className="w-5 h-5" />
             </button>
@@ -616,7 +617,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         </header>
 
         {/* Mobile/Tablet Navigation Strip */}
-        <div className="lg:hidden bg-[#0d4f52] px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-white/10 shrink-0">
+        <div className="lg:hidden bg-slate-50 px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 shrink-0">
           {pipelines.map((pl) => {
             const isActive = activeView === 'pipeline' && activePipeline?.id === pl.id;
             return (
@@ -627,8 +628,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   setActivePipelineId(pl.id);
                   setActiveView('pipeline');
                 }}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
-                  isActive ? 'bg-white text-slate-900' : 'text-teal-50 bg-white/10'
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer border ${
+                  isActive
+                    ? 'bg-[#147A80] text-white border-[#147A80]'
+                    : 'bg-white text-slate-700 border-slate-200'
                 }`}
               >
                 {pl.name}
@@ -638,8 +641,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveView('templates')}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
-              activeView === 'templates' ? 'bg-white text-slate-900' : 'text-teal-50 bg-white/10'
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer border ${
+              activeView === 'templates'
+                ? 'bg-[#147A80] text-white border-[#147A80]'
+                : 'bg-white text-slate-700 border-slate-200'
             }`}
           >
             Modelos
@@ -647,8 +652,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveView('dashboard')}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
-              activeView === 'dashboard' ? 'bg-white text-slate-900' : 'text-teal-50 bg-white/10'
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer border ${
+              activeView === 'dashboard'
+                ? 'bg-[#147A80] text-white border-[#147A80]'
+                : 'bg-white text-slate-700 border-slate-200'
             }`}
           >
             Relatórios
@@ -657,27 +664,27 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
         {/* Toast Notification */}
         {syncToast && (
-          <div className="bg-emerald-50 border-b border-emerald-200 px-5 py-2 text-xs font-semibold text-emerald-900 flex items-center justify-between shrink-0">
+          <div className="bg-teal-50 border-b border-teal-200 px-5 py-2 text-xs font-semibold text-[#0f5c61] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-[#147A80]" />
               <span>{syncToast}</span>
             </div>
             <button
               type="button"
               onClick={() => setSyncToast(null)}
-              className="text-emerald-700 hover:underline cursor-pointer"
+              className="text-[#147A80] hover:underline cursor-pointer"
             >
               Fechar
             </button>
           </div>
         )}
 
-        {/* 2. High-Density Compact KPI Strip (60-30-10 Neutral Design) */}
+        {/* 2. Clean Clinical KPI Strip */}
         <div className="bg-white border-b border-slate-200 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shrink-0">
           <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                {activeView === 'pipeline' ? 'Fila do Funil' : 'Fila Global Ativa'}
+              <span className="text-[11px] font-medium text-slate-500 block">
+                {activeView === 'pipeline' ? 'Fila do funil' : 'Fila global ativa'}
               </span>
               <span className="text-base font-bold text-slate-900 tabular-nums">
                 {activeView === 'pipeline' ? stats.totalActive : globalStats.totalActive} leads
@@ -694,8 +701,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
           <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Follow-ups & SLA
+              <span className="text-[11px] font-medium text-slate-500 block">
+                Follow-ups e SLA
               </span>
               <span className="text-base font-bold text-amber-700 tabular-nums">
                 {activeView === 'pipeline' ? stats.totalFollowUpsDue : globalStats.totalFollowUpsDue}{' '}
@@ -715,10 +722,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
           <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Agendados na Grade
+              <span className="text-[11px] font-medium text-slate-500 block">
+                Agendados na grade
               </span>
-              <span className="text-base font-bold text-indigo-700 tabular-nums">
+              <span className="text-base font-bold text-[#147A80] tabular-nums">
                 {activeView === 'pipeline' ? stats.totalScheduled : globalStats.totalScheduled}{' '}
                 consultas
               </span>
@@ -728,8 +735,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
           <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Receita Convertida
+              <span className="text-[11px] font-medium text-slate-500 block">
+                Receita convertida
               </span>
               <span className="text-base font-bold text-emerald-700 font-mono tabular-nums">
                 R${' '}
@@ -748,7 +755,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
         {/* 3. Filter Toolbar (When viewing Pipeline) */}
         {activeView === 'pipeline' && (
-          <div className="bg-white border-b border-slate-200 px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+          <div className="bg-white border-b border-slate-200 px-5 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
               <div className="relative flex-1 min-w-[200px] max-w-xs">
                 <input
@@ -756,7 +763,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   placeholder="Buscar paciente, telefone ou nota..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-lg pl-8 pr-3 py-1.5 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                  className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-lg pl-8 pr-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -764,7 +771,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <button
                 type="button"
                 onClick={() => setOnlyFollowUpsFilter((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                className={`h-9 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                   onlyFollowUpsFilter
                     ? 'bg-amber-600 text-white border-amber-600'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -773,7 +780,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <AlertTriangle className="w-3.5 h-3.5" />
                 <span>Follow-ups / SLA</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded text-[10px] font-mono tabular-nums ${
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums ${
                     onlyFollowUpsFilter ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
                   }`}
                 >
@@ -782,9 +789,26 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               </button>
 
               <select
+                value={selectedClinicId}
+                onChange={(e) =>
+                  setSelectedClinicId(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                }
+                className="h-9 bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+              >
+                <option value="all">Todas Clínicas</option>
+                {clinics
+                  .filter((c) => c.active)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.shortName}
+                    </option>
+                  ))}
+              </select>
+
+              <select
                 value={selectedLabelFilter}
                 onChange={(e) => setSelectedLabelFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2.5 py-1.5 cursor-pointer"
+                className="h-9 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 title="Filtrar por Rótulo"
               >
                 <option value="all">Todos os Rótulos</option>
@@ -798,7 +822,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <select
                 value={selectedTypeFilter}
                 onChange={(e) => setSelectedTypeFilter(e.target.value as CRMType | 'all')}
-                className="bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2.5 py-1.5 cursor-pointer"
+                className="h-9 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 title="Filtrar por Tipo de Origem"
               >
                 <option value="all">Todos os Tipos</option>
@@ -808,32 +832,15 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <option value="indication">Indicação</option>
                 <option value="other">Outra Oportunidade</option>
               </select>
-
-              <select
-                value={selectedClinicId}
-                onChange={(e) =>
-                  setSelectedClinicId(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                }
-                className="bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2.5 py-1.5 cursor-pointer"
-              >
-                <option value="all">Todas Clínicas</option>
-                {clinics
-                  .filter((c) => c.active)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.shortName}
-                    </option>
-                  ))}
-              </select>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsQuickCaptureOpen((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer whitespace-nowrap ${
+                className={`h-9 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                   isQuickCaptureOpen
-                    ? 'bg-slate-900 text-white border-slate-900'
+                    ? 'bg-[#147A80] text-white border-[#147A80]'
                     : 'bg-teal-50 text-[#147A80] border-teal-200 hover:bg-teal-100'
                 }`}
                 title="Adicionar lead rapidamente em 1 linha livre"
@@ -842,13 +849,13 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <span>Cadastro Rápido</span>
               </button>
 
-              <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+              <div className="h-9 flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('kanban')}
                   title="Modo Kanban"
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-                    viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
+                  className={`h-full px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                    viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -858,8 +865,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   type="button"
                   onClick={() => setViewMode('list')}
                   title="Modo Lista"
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-                    viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500'
+                  className={`h-full px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                    viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <List className="w-3.5 h-3.5" />
@@ -1214,13 +1221,13 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
+                      <tr className="border-b border-slate-200 text-slate-500 font-semibold">
                         <th className="py-2.5 px-3">Funil</th>
-                        <th className="py-2.5 px-3 text-right">Leads Ativos</th>
+                        <th className="py-2.5 px-3 text-right">Leads ativos</th>
                         <th className="py-2.5 px-3 text-right">Follow-ups / SLA</th>
                         <th className="py-2.5 px-3 text-right">Agendados</th>
                         <th className="py-2.5 px-3 text-right">Convertidos</th>
-                        <th className="py-2.5 px-3 text-right">Em Negociação (R$)</th>
+                        <th className="py-2.5 px-3 text-right">Em negociação (R$)</th>
                         <th className="py-2.5 px-3 text-right">Convertido (R$)</th>
                       </tr>
                     </thead>
@@ -1265,7 +1272,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 uppercase font-bold">
+                        <tr className="border-b border-slate-200 text-slate-500 font-semibold">
                           <th className="py-2.5 px-3">Unidade</th>
                           <th className="py-2.5 px-3 text-right">Ativos</th>
                           <th className="py-2.5 px-3 text-right">Agendados</th>

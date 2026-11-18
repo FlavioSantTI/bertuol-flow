@@ -11,7 +11,6 @@ import {
   KeyRound,
   ShieldCheck,
   ChevronRight,
-  UserCheck,
   Fingerprint,
 } from 'lucide-react';
 import { dataService } from '../services/dataService';
@@ -324,37 +323,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#EBF8F8] via-[#F4F7F8] to-[#FFF9E6] flex flex-col justify-center items-center p-4 sm:p-6 text-gray-900 font-sans selection:bg-[#4BBCBE]/20">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 text-slate-900 font-sans selection:bg-[#147A80]/20">
       <div className="w-full max-w-md mx-auto">
         {/* Brand Header with Authentic Logo */}
         <div className="text-center mb-6">
           <BertuolLogo size="xl" mode="full" className="mx-auto" />
           <div className="flex items-center justify-center gap-2 mt-2">
-            <p className="text-xs text-[#147A80] font-bold">
+            <p className="text-xs text-[#147A80] font-semibold">
               Agenda & Gestão Inteligente
             </p>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#4BBCBE]/15 text-[#147A80] border border-[#4BBCBE]/30">
-              Versão {APP_VERSION}
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums bg-teal-50 text-[#147A80] border border-teal-200/80">
+              v{APP_VERSION}
             </span>
           </div>
         </div>
 
         {/* Card Container */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/60 border border-[#E2E6E7] overflow-hidden backdrop-blur-md">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           {/* STEP 1: Standard Login Form */}
           {!pendingFirstAccessUser && (
             <div className="p-6 sm:p-7 space-y-5">
               {/* Detected Invite Greeting Banner */}
               {inviteUserFound && (
-                <div className="p-3.5 bg-[#EBF8F8] border border-[#4BBCBE]/40 text-[#147A80] rounded-2xl flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-[#199A9F] shrink-0 mt-0.5 animate-pulse" />
+                <div className="p-3.5 bg-teal-50/70 border border-teal-200/80 text-[#147A80] rounded-xl flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-[#147A80] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-xs block">
-                      👋 Olá, {inviteUserFound.name}!
+                      Olá, {inviteUserFound.name}!
                     </span>
                     <span className="text-[11px] text-[#147A80] leading-snug block mt-0.5">
                       Seu acesso ao sistema foi liberado. Digite a senha provisória recebida no WhatsApp (ex:{' '}
-                      <code className="font-mono font-bold bg-[#4BBCBE]/20 text-[#147A80] px-1 rounded">
+                      <code className="font-mono font-bold bg-teal-100/70 text-[#147A80] px-1 rounded">
                         Bertuol@2026
                       </code>
                       ) para acessar.
@@ -363,11 +362,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </div>
               )}
 
-              <div className="border-b border-gray-100 pb-3">
-                <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+              <div className="border-b border-slate-100 pb-3">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
                   Acessar Sistema
                 </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Informe seus dados de acesso cadastrados ou entre com sua biometria
                 </p>
               </div>
@@ -379,18 +378,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     type="button"
                     onClick={handleBiometricLogin}
                     disabled={isBiometricLoading || isLoading}
-                    className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-linear-to-r from-teal-50 via-[#EBF8F8] to-teal-50 hover:from-teal-100 hover:to-teal-100 border-2 border-[#4BBCBE]/60 hover:border-[#4BBCBE] text-[#147A80] hover:text-[#0D575B] font-black text-xs transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer active:scale-98 disabled:opacity-50 group"
+                    className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-teal-50/70 hover:bg-teal-50 border border-teal-200 hover:border-[#147A80] text-[#147A80] font-bold text-xs transition-colors flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 group"
                   >
                     {isBiometricLoading ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-[#199A9F] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-[#147A80] border-t-transparent rounded-full animate-spin" />
                         <span>Aguardando Face ID / Biometria no aparelho...</span>
                       </>
                     ) : (
                       <>
-                        <Fingerprint className="w-5 h-5 text-[#199A9F] group-hover:scale-110 transition-transform stroke-[2.5]" />
+                        <Fingerprint className="w-5 h-5 text-[#147A80]" />
                         <span>Entrar com Face ID / Biometria</span>
-                        <span className="ml-auto text-[10px] uppercase font-black text-[#147A80] bg-[#4BBCBE]/20 px-2 py-0.5 rounded-md">
+                        <span className="ml-auto text-[10px] font-semibold text-[#147A80] bg-white border border-teal-200 px-2 py-0.5 rounded-md">
                           1 Toque
                         </span>
                       </>
@@ -398,11 +397,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   </button>
 
                   <div className="relative flex items-center justify-center pt-1">
-                    <div className="border-t border-gray-200 w-full" />
-                    <span className="bg-white px-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0">
+                    <div className="border-t border-slate-200 w-full" />
+                    <span className="bg-white px-3 text-[11px] font-medium text-slate-400 shrink-0">
                       ou entre com e-mail e senha
                     </span>
-                    <div className="border-t border-gray-200 w-full" />
+                    <div className="border-t border-slate-200 w-full" />
                   </div>
                 </div>
               )}
@@ -417,7 +416,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {/* E-mail Field */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     E-mail ou Usuário *
                   </label>
                   <div className="relative">
@@ -427,19 +426,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seu.email@bertuolodontologia.com.br"
-                      className="w-full bg-[#FAF9F6] border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-900 focus:bg-white focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all outline-hidden shadow-2xs font-medium"
+                      className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:border-transparent transition-colors font-medium"
                     />
-                    <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Password Field */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-gray-700">
+                    <label className="text-xs font-semibold text-slate-700">
                       Senha de Acesso *
                     </label>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[11px] text-slate-400">
                       Provisória ou Definitiva
                     </span>
                   </div>
@@ -450,13 +449,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-[#FAF9F6] border border-gray-200 rounded-xl pl-9 pr-10 py-2.5 text-xs text-gray-900 focus:bg-white focus:ring-2 focus:ring-[#4BBCBE] focus:border-transparent transition-all outline-hidden shadow-2xs font-medium"
+                      className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-10 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:border-transparent transition-colors font-medium"
                     />
-                    <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -470,13 +469,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       type="checkbox"
                       checked={rememberCredentials}
                       onChange={(e) => setRememberCredentials(e.target.checked)}
-                      className="w-4 h-4 rounded-md border-gray-300 text-[#4BBCBE] focus:ring-[#4BBCBE] focus:ring-offset-0 cursor-pointer accent-[#4BBCBE]"
+                      className="w-4 h-4 rounded-md border-slate-300 text-[#147A80] focus:ring-[#147A80] focus:ring-offset-0 cursor-pointer accent-[#147A80]"
                     />
-                    <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
+                    <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
                       Lembrar login e senha
                     </span>
                   </label>
-                  <span className="text-[10px] text-gray-400 font-medium hidden sm:inline">
+                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
                     Neste dispositivo
                   </span>
                 </div>
@@ -485,7 +484,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-linear-to-r from-[#4BBCBE] via-[#23B3BB] to-[#199A9F] hover:from-[#3BA8AA] hover:to-[#147A80] text-white font-black text-xs shadow-md shadow-[#4BBCBE]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
+                  className="w-full h-11 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -493,7 +492,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     <>
                       <Lock className="w-3.5 h-3.5" />
                       <span>Entrar no Sistema</span>
-                      <ChevronRight className="w-4 h-4 stroke-[3]" />
+                      <ChevronRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
@@ -503,27 +502,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
           {/* STEP 2: First Access Mandatory Password Setup Form */}
           {pendingFirstAccessUser && (
-            <div className="p-6 sm:p-7 space-y-5 bg-[#FAF9F6]">
+            <div className="p-6 sm:p-7 space-y-5 bg-slate-50/60">
               {/* Header */}
-              <div className="bg-linear-to-r from-[#4BBCBE] via-[#23B3BB] to-[#199A9F] -mx-6 sm:-mx-7 -mt-6 sm:-mt-7 p-5 text-white flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-                  <KeyRound className="w-5 h-5" />
+              <div className="bg-white border-b border-slate-200 -mx-6 sm:-mx-7 -mt-6 sm:-mt-7 px-6 py-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                  <KeyRound className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black tracking-tight leading-tight">
+                  <h3 className="text-sm font-bold text-slate-900 tracking-tight leading-tight">
                     Cadastrar Nova Senha Pessoal
                   </h3>
-                  <p className="text-[11px] text-white/80 mt-0.5 truncate max-w-[240px]">
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate max-w-[240px]">
                     {pendingFirstAccessUser.name} ({pendingFirstAccessUser.email})
                   </p>
                 </div>
               </div>
 
-              <div className="p-3 bg-amber-50 border border-amber-300 text-amber-950 rounded-2xl flex items-start gap-2.5 text-xs">
+              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-2.5 text-xs">
                 <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block text-xs">Primeiro Acesso Detectado!</span>
-                  <span className="text-[11px] text-amber-900 leading-snug block mt-0.5">
+                  <span className="font-bold block text-xs">Primeiro Acesso Detectado</span>
+                  <span className="text-[11px] text-amber-800 leading-snug block mt-0.5">
                     Por segurança e conformidade LGPD da sua agenda, substitua a senha provisória
                     criando uma nova senha pessoal definitiva.
                   </span>
@@ -538,7 +537,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               )}
 
               {changeSuccess && (
-                <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl flex items-center gap-2 text-xs font-bold animate-in fade-in">
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in">
                   <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
                   <span>Senha pessoal cadastrada com sucesso! Entrando na sua agenda...</span>
                 </div>
@@ -547,7 +546,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <form onSubmit={handleFirstAccessSubmit} className="space-y-4">
                 {/* New Password */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Nova Senha Pessoal *
                   </label>
                   <div className="relative">
@@ -557,12 +556,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres..."
-                      className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-xs text-gray-900 focus:ring-2 focus:ring-[#FFB347] focus:border-transparent outline-hidden shadow-2xs font-medium"
+                      className="w-full h-10 bg-white border border-slate-200 rounded-xl pl-3 pr-10 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:border-transparent font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -571,7 +570,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
                 {/* Confirm New Password */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Confirmar Nova Senha *
                   </label>
                   <div className="relative">
@@ -581,12 +580,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Digite a nova senha novamente..."
-                      className="w-full bg-white border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-xs text-gray-900 focus:ring-2 focus:ring-[#FFB347] focus:border-transparent outline-hidden shadow-2xs font-medium"
+                      className="w-full h-10 bg-white border border-slate-200 rounded-xl pl-3 pr-10 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:border-transparent font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -597,7 +596,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading || changeSuccess}
-                  className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
+                  className="w-full h-11 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -611,28 +610,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </form>
             </div>
           )}
-
-
         </div>
 
         {/* Security & System Info Footer */}
-        <div className="text-center mt-6 space-y-2 text-xs text-gray-400">
+        <div className="text-center mt-6 space-y-2.5 text-xs text-slate-500">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <a
               href="/paciente"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-semibold text-[11px] transition-colors"
             >
-              <span>🌟 Portal do Paciente & Clube Sorriso</span>
+              <span>Portal do Paciente & Clube Sorriso</span>
             </a>
             <a
               href="/manual-instalacao.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-[#147A80] hover:text-[#0f5c61] border border-[#4BBCBE]/30 font-bold text-[11px] shadow-2xs transition-all hover:scale-102"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 font-semibold text-[11px] transition-colors"
             >
-              <span>📱 Manual de Instalação</span>
+              <span>Manual de Instalação</span>
             </a>
           </div>
 
@@ -640,10 +637,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Autenticação Criptografada • Sistema Bertuol Odontologia</span>
           </p>
-          <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
             <span>Dúvidas ou redefinição de acesso? Entre em contato com o suporte.</span>
             <span>•</span>
-            <span className="font-bold text-gray-500">Versão {APP_VERSION}</span>
+            <span className="font-semibold text-slate-500 tabular-nums">Versão {APP_VERSION}</span>
           </div>
         </div>
       </div>

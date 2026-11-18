@@ -32,75 +32,73 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] animate-in fade-in duration-200">
       <div
-        className="bg-white w-full max-w-3xl max-h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
+        className="bg-white w-full max-w-3xl max-h-[92vh] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-200"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-white border-b border-gray-100 flex items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#147A80] flex items-center justify-center">
-              <Database className="w-5 h-5" />
+        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+              <Database className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-[#1A1A1A]">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-slate-900 truncate">
                 Scripts SQL DDL — Supabase PostgreSQL
               </h2>
-              <p className="text-xs text-gray-500 font-medium">
-                Banco de Dados: <span className="font-mono text-teal-700">DB_Bertuol (sswbkfrpxboxmjvunhzt)</span>
+              <p className="text-xs text-slate-500 truncate">
+                Banco de Dados: <span className="font-mono text-[#147A80]">DB_Bertuol (sswbkfrpxboxmjvunhzt)</span>
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-2xl bg-[#F8F9FA] hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+            aria-label="Fechar janela"
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Selector */}
-        <div className="px-5 pt-3 bg-gray-50/70 border-b border-gray-200 flex items-center justify-between gap-2 shrink-0 overflow-x-auto">
-          <div className="flex items-center gap-2">
+        <div className="px-5 pt-2.5 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setActiveTab('crm_recall')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 text-xs font-medium rounded-t-lg transition-colors cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 activeTab === 'crm_recall'
-                  ? 'bg-white text-[#147A80] border-[#147A80] shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800 border-transparent'
+                  ? 'bg-white text-[#147A80] border-[#147A80] font-semibold'
+                  : 'text-slate-500 hover:text-slate-900 border-transparent'
               }`}
             >
-              <Users className="w-4 h-4 text-[#147A80]" />
-              <span>1. CRM Recall 180d (crm_leads_recall)</span>
-              <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-black rounded-full">
-                Novo
-              </span>
+              <Users className="w-3.5 h-3.5" />
+              <span>1. CRM Recall 180d</span>
             </button>
 
             <button
               onClick={() => setActiveTab('messaging')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 text-xs font-medium rounded-t-lg transition-colors cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 activeTab === 'messaging'
-                  ? 'bg-white text-[#147A80] border-[#147A80] shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800 border-transparent'
+                  ? 'bg-white text-[#147A80] border-[#147A80] font-semibold'
+                  : 'text-slate-500 hover:text-slate-900 border-transparent'
               }`}
             >
-              <MessageSquare className="w-4 h-4 text-[#147A80]" />
+              <MessageSquare className="w-3.5 h-3.5" />
               <span>2. Mensageria Interna</span>
             </button>
 
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 text-xs font-medium rounded-t-lg transition-colors cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 activeTab === 'general'
-                  ? 'bg-white text-gray-900 border-gray-900 shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800 border-transparent'
+                  ? 'bg-white text-[#147A80] border-[#147A80] font-semibold'
+                  : 'text-slate-500 hover:text-slate-900 border-transparent'
               }`}
             >
-              <Layers className="w-4 h-4 text-gray-600" />
+              <Layers className="w-3.5 h-3.5" />
               <span>3. Estrutura Completa (RBAC & Totem)</span>
             </button>
           </div>
@@ -109,7 +107,7 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
             href="https://supabase.com/dashboard/project/sswbkfrpxboxmjvunhzt/sql/new"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] font-bold text-[#147A80] hover:underline flex items-center gap-1 hidden sm:flex shrink-0"
+            className="text-xs font-medium text-[#147A80] hover:underline items-center gap-1 hidden sm:flex shrink-0 pb-1.5"
           >
             <span>Abrir Supabase SQL Editor</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -117,58 +115,58 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 text-sm text-[#1A1A1A]">
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 text-sm text-slate-900 bg-[#F8FAFC]/40">
           {activeTab === 'crm_recall' ? (
-            <div className="bg-teal-50/70 p-3.5 rounded-2xl border border-teal-200 text-xs text-teal-950 space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-[#147A80]">
-                <Users className="w-4 h-4 text-[#147A80]" />
-                Tabela Oficial do CRM Recall (crm_leads_recall):
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+              <span className="font-semibold flex items-center gap-1.5 text-[#147A80]">
+                <Users className="w-4 h-4" />
+                Tabela Oficial do CRM Recall (crm_leads_recall)
               </span>
-              <p className="text-gray-700">
-                Execute o script abaixo no <strong>SQL Editor do Supabase</strong>. No seu fluxo do n8n das 06:00h, aponte o nó do Supabase para a tabela <code className="bg-teal-100 px-1 py-0.5 rounded font-mono">crm_leads_recall</code> usando operação <strong>Upsert</strong> na coluna <code className="bg-teal-100 px-1 py-0.5 rounded font-mono">patient_id</code>.
+              <p>
+                Execute o script abaixo no <strong>SQL Editor do Supabase</strong>. No fluxo do n8n das 06:00h, aponte o nó do Supabase para a tabela <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">crm_leads_recall</code> usando operação <strong>Upsert</strong> na coluna <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">patient_id</code>.
               </p>
             </div>
           ) : activeTab === 'messaging' ? (
-            <div className="bg-teal-50/70 p-3.5 rounded-2xl border border-teal-200 text-xs text-teal-950 space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-[#147A80]">
-                <MessageSquare className="w-4 h-4 text-[#147A80]" />
-                Como rodar no Supabase (em 3 passos):
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+              <span className="font-semibold flex items-center gap-1.5 text-[#147A80]">
+                <MessageSquare className="w-4 h-4" />
+                Como rodar no Supabase (em 3 passos)
               </span>
-              <ol className="list-decimal list-inside space-y-0.5 text-gray-700 pl-1">
-                <li>Clique no botão verde <strong>&quot;Copiar SQL&quot;</strong> abaixo.</li>
+              <ol className="list-decimal list-inside space-y-0.5 pl-1">
+                <li>Clique no botão <strong>&quot;Copiar SQL&quot;</strong> abaixo.</li>
                 <li>Abra o <strong>SQL Editor do Supabase</strong> no seu navegador.</li>
                 <li>Cole o código e clique em <strong>RUN (Executar)</strong>.</li>
               </ol>
             </div>
           ) : (
-            <div className="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
-              <span className="font-bold flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-amber-700" />
-                Isolamento Multitenant:
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+              <span className="font-semibold flex items-center gap-1.5 text-[#147A80]">
+                <Layers className="w-4 h-4" />
+                Isolamento Multitenant
               </span>
               <p>
-                Todas as consultas filtram rigorosamente por <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono">Clinic_BusinessId</code> e <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono">Dentist_PersonId</code>, garantindo privacidade clínica absoluta.
+                Todas as consultas filtram rigorosamente por <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">Clinic_BusinessId</code> e <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">Dentist_PersonId</code>, garantindo privacidade clínica absoluta.
               </p>
             </div>
           )}
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+              <span className="text-xs font-semibold text-slate-600">
                 {activeTab === 'crm_recall'
-                  ? 'Script SQL da Tabela crm_leads_recall:'
+                  ? 'Script SQL da Tabela crm_leads_recall'
                   : activeTab === 'messaging'
-                  ? 'Script DDL de Mensageria (PostgreSQL):'
-                  : 'Script DDL Geral (Supabase):'}
+                  ? 'Script DDL de Mensageria (PostgreSQL)'
+                  : 'Script DDL Geral (Supabase)'}
               </span>
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white shadow-xs transition-all cursor-pointer active:scale-95"
+                className="h-9 flex items-center gap-1.5 text-xs font-medium px-3.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white transition-colors cursor-pointer"
               >
                 {copied ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>Copiado com Sucesso!</span>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Copiado com Sucesso</span>
                   </>
                 ) : (
                   <>
@@ -179,20 +177,20 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
               </button>
             </div>
 
-            <pre className="bg-[#1A1A1A] text-teal-100 text-xs font-mono p-4 rounded-2xl overflow-x-auto max-h-[340px] leading-relaxed selection:bg-teal-700 selection:text-white">
+            <pre className="bg-slate-900 text-teal-100 text-xs font-mono p-4 rounded-xl overflow-x-auto max-h-[340px] leading-relaxed selection:bg-teal-700 selection:text-white">
               {currentScript}
             </pre>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#F8F9FA] border-t border-gray-100 flex items-center justify-between gap-3">
+        <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
           <button
             onClick={() => {
               onResetData();
               onClose();
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-amber-700 px-3 py-2 rounded-xl hover:bg-gray-200/60 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-[#147A80] px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Restaurar Dados Padrão da Clínica
@@ -200,7 +198,7 @@ export const DatabaseSchemaModal: React.FC<DatabaseSchemaModalProps> = ({
 
           <button
             onClick={onClose}
-            className="min-h-[48px] px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-[#1A1A1A] font-bold text-sm transition-all cursor-pointer"
+            className="h-10 px-5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-xs sm:text-sm transition-colors cursor-pointer"
           >
             Concluir
           </button>

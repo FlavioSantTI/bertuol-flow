@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.1
+# 🦷 Bertuol Odontologia Avançada — Versão 1.5.2
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Ficha Livre & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente, Totem de Recepção com Gamificação e Central Exclusiva Admin Root de Tutoriais & Apresentação 3D.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Ficha Livre & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.1-FF981A.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.2-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,22 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.1
+## 🌟 Visão Geral da Jornada & Versão 1.5.2
 
-O **Bertuol Flow** chega à **Versão 1.5.1** evoluindo o módulo comercial para um **CRM Multi-Funil completo com Ficha Livre de Atendimento**, sincronizado em tempo real via Supabase entre todas as recepcionistas, somado à arquitetura oficial da v1.5.0 com interface clínica limpa e Central Exclusiva do Admin Root (`/root` / `/tutoriais`).
+O **Bertuol Flow** chega à **Versão 1.5.2** com uma reorganização completa de **UI/UX Clínica (60-30-10)** em todo o sistema e a nova **Central de QR Code para Marketing & Totem**, mantendo todas as capacidades da v1.5.1 (CRM Multi-Funil com Ficha Livre) e da v1.5.0 (Central Admin Root `/root` / `/tutoriais`).
 
-### 🆕 Novidades da v1.5.1 — CRM Comercial Multi-Funil & Ficha Livre
+### 🆕 Novidades da v1.5.2 — UI/UX Clínica & Central de QR Code para Marketing
+
+- **🎨 Reorganização Completa de UI/UX Clínica (`Header`, `Agenda`, `CRM` e `Modais`)**:
+  - Padronização visual 60-30-10 com superfícies limpas (`#F8FAFC` / `#FFFFFF`), bordas sutis (`border-slate-200`), tipografia numérica alinhada (`tabular-nums`) e acento principal único em **`#147A80`**.
+  - Cabeçalho reorganizado com ações principais claras na rotina clínica e menu **Gestão** agrupado por contexto.
+  - Unificação de todos os modais administrativos, operacionais, CRM e notificações com cabeçalhos limpos e redução de poluição visual (remoção de excesso de cápsulas, emojis em controles e animações decorativas contínuas).
+- **📣 Central de QR Code · Folder de Marketing & Totem (`TotemQRCodeModal`)**:
+  - Novo modo **Folder Marketing (Pacientes)** em **Gestão → QR Code e Totem**, apontando por padrão para o link oficial `https://bertuolflow.app-bertuol.tech/paciente` (além de presets para `/` ou URL personalizada com UTM).
+  - Opções gráficas para impressão: escolha de cor (**Teal Bertuol `#147A80`** ou **Preto Gráfico `#0F172A`**) e opção de **Fundo Transparente**.
+  - Exportação direta em **PNG Alta Resolução (1200×1200 px)** e **SVG (Vetor)** para gráficas, Canva e materiais impressos, preservando o modo **Totem de Check-in (Recepção)** com impressão A4.
+
+### 🔄 Recursos da v1.5.1 — CRM Comercial Multi-Funil & Ficha Livre
 
 - **🔀 CRUD Completo de Funis Personalizáveis (`CRMPipelineManagerModal` / `crm_pipelines`)**:
   - Crie, renomeie, reordene, escolha cores/ícones e personalize as etapas de quantos funis precisar além dos padrões (**Recall 6+ Meses**, **Campanhas & Tráfego Pago** e **Orçamentos em Aberto**).
@@ -111,7 +122,7 @@ O **Bertuol Flow** chega à **Versão 1.5.1** evoluindo o módulo comercial para
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
 │   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, crm/MiniCRMModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.1)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.2)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
@@ -203,6 +214,6 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.1`
+- **Versão**: `v1.5.2`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

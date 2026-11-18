@@ -137,8 +137,11 @@ const AudioMessagePlayer: React.FC<{ url: string; durationSeconds?: number; isMe
       </button>
 
       <div className="flex-1 min-w-0 space-y-0.5">
-        <div className="flex items-center justify-between text-[10px] font-mono font-bold opacity-90">
-          <span>🎙️ Áudio de Voz</span>
+        <div className="flex items-center justify-between text-[10px] font-mono font-semibold opacity-90 tabular-nums">
+          <span className="inline-flex items-center gap-1">
+            <Mic className="w-3 h-3" />
+            Áudio de Voz
+          </span>
           <span>
             {formatTime(currentTime)} {finalDuration > 0 ? `/ ${formatTime(finalDuration)}` : ''}
           </span>
@@ -896,22 +899,22 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
   const activeConversation = conversations.find((c) => c.id === selectedConversationId);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-7xl h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-7xl h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans">
         
         {/* HEADER */}
-        <header className="bg-gradient-to-r from-[#147A80] via-[#126d72] to-[#0f5b5f] px-5 py-3.5 flex items-center justify-between text-white border-b border-teal-800/50 shrink-0">
+        <header className="bg-[#147A80] px-5 py-3.5 flex items-center justify-between text-white border-b border-teal-800/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-inner">
-              <MessageSquare className="w-5 h-5 text-teal-200" />
+            <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+              <MessageSquare className="w-5 h-5 text-teal-100" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-black text-sm tracking-tight text-white">
+                <h2 className="font-bold text-sm tracking-tight text-white">
                   Central de Atendimento & Mensageria
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-200 text-[10px] font-semibold border border-emerald-400/30 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                   Ao vivo
                 </span>
               </div>
@@ -925,7 +928,7 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
             <button
               type="button"
               onClick={() => setIsNewConvModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-white text-[#147A80] hover:bg-teal-50 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+              className="h-9 px-3 rounded-lg bg-white text-[#147A80] hover:bg-teal-50 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <PlusCircle className="w-4 h-4 text-[#147A80]" />
               <span className="hidden sm:inline">Nova Conversa</span>
@@ -934,7 +937,7 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               title="Fechar janela"
             >
               <X className="w-4 h-4" />
@@ -1057,11 +1060,11 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {typeof conv.unread_count === 'number' && conv.unread_count > 0 && (
-                              <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs animate-bounce">
+                              <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold tabular-nums flex items-center justify-center">
                                 {conv.unread_count}
                               </span>
                             )}
-                            <span className="text-[10px] text-slate-400 font-mono">{timeStr}</span>
+                            <span className="text-[10px] text-slate-400 font-mono tabular-nums">{timeStr}</span>
                           </div>
                         </div>
 
@@ -1098,8 +1101,8 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                           </div>
 
                           {isUnassigned ? (
-                            <span className="text-amber-400 font-bold flex items-center gap-1">
-                              <span>🔔</span>
+                            <span className="text-amber-400 font-semibold flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
                               <span>Pendente</span>
                             </span>
                           ) : (
@@ -1375,7 +1378,7 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                       <div className="flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
                         <div>
-                          <p className="font-bold text-amber-100">🔒 Permissão de Microfone Não Concedida</p>
+                          <p className="font-bold text-amber-100">Permissão de Microfone Não Concedida</p>
                           <p className="text-[11px] text-amber-300">
                             Para gravar voz no navegador: clique no ícone de <strong>cadeado ou microfone</strong> na barra de endereço, selecione <strong>Permitir (Allow)</strong> e tente novamente.
                           </p>
@@ -1446,10 +1449,13 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                       <div className="flex-1 flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-rose-950/40 border border-rose-800/80 rounded-xl">
                         {isRecording && (
                           <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                            <span className="text-xs font-mono font-bold text-rose-300">
-                              {isPaused ? '⏸️ Gravação Pausada' : '🎙️ Gravando Áudio...'} 00:
-                              {recordingSeconds < 10 ? '0' + recordingSeconds : recordingSeconds}
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <span className="text-xs font-mono font-semibold text-rose-300 tabular-nums flex items-center gap-1.5">
+                              {isPaused ? <Pause className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                              <span>{isPaused ? 'Gravação Pausada' : 'Gravando Áudio...'}</span>
+                              <span>
+                                00:{recordingSeconds < 10 ? '0' + recordingSeconds : recordingSeconds}
+                              </span>
                             </span>
                           </div>
                         )}
@@ -1573,17 +1579,23 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                       <CornerDownLeft className="w-3 h-3 text-slate-500" />
                       <span>Enter envia, Shift+Enter pula linha</span>
                     </span>
-                    <span className="flex items-center gap-2">
-                      <span>📎 Anexos (Imagem, PDF)</span>
+                    <span className="flex items-center gap-2.5">
+                      <span className="inline-flex items-center gap-1">
+                        <Paperclip className="w-3 h-3" />
+                        Anexos (Imagem, PDF)
+                      </span>
                       <span>·</span>
-                      <span>🎙️ Áudio HD com Pausa/Prévia</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Mic className="w-3 h-3" />
+                        Áudio HD com Pausa/Prévia
+                      </span>
                     </span>
                   </div>
                 </form>
               </>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500 space-y-3">
-                <div className="w-14 h-14 rounded-3xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300">
                   <MessageSquare className="w-7 h-7" />
                 </div>
                 <h3 className="text-base font-bold text-slate-200">Selecione uma conversa</h3>
@@ -1616,8 +1628,8 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
 
       {/* MODAL 1: Transferir Atendimento */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl text-slate-100">
+        <div className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl text-slate-100">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h4 className="font-bold text-sm text-slate-100 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300">
@@ -1628,9 +1640,10 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                aria-label="Fechar"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
             <p className="text-xs text-slate-400">
@@ -1672,8 +1685,8 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
 
       {/* MODAL 2: Adicionar Dentista */}
       {isAddParticipantModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl text-slate-100">
+        <div className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl text-slate-100">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h4 className="font-bold text-sm text-slate-100 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300">
@@ -1684,9 +1697,10 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddParticipantModalOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                aria-label="Fechar"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="max-h-64 overflow-y-auto space-y-1.5 divide-y divide-slate-800 pr-1">
@@ -1714,8 +1728,8 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
 
       {/* MODAL 3: Criar Nova Conversa */}
       {isNewConvModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-slate-100 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl text-slate-100 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h4 className="font-bold text-sm text-slate-100 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300">
@@ -1726,9 +1740,10 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsNewConvModalOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer"
+                className="w-9 h-9 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                aria-label="Fechar"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1747,9 +1762,10 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                         setNewConvPatientPhone(tp.phone);
                         if (tp.clinicId) setNewConvClinicId(tp.clinicId);
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-teal-900/60 border border-slate-700 text-slate-300 text-[11px] font-medium whitespace-nowrap cursor-pointer shrink-0"
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-teal-900/60 border border-slate-700 text-slate-300 text-[11px] font-medium whitespace-nowrap cursor-pointer shrink-0 inline-flex items-center gap-1"
                     >
-                      👤 {tp.name}
+                      <User className="w-3 h-3 text-teal-400" />
+                      <span>{tp.name}</span>
                     </button>
                   ))}
                 </div>

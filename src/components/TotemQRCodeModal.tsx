@@ -4,15 +4,16 @@ import {
   X,
   Printer,
   Download,
-  CheckCircle2,
   QrCode,
   Sparkles,
-  MapPin,
   Building2,
   Copy,
   Check,
   Smartphone,
   ExternalLink,
+  Megaphone,
+  FileCode2,
+  Link2,
 } from 'lucide-react';
 
 interface TotemQRCodeModalProps {
@@ -21,40 +22,95 @@ interface TotemQRCodeModalProps {
   onSimulateScan?: (clinicId: number, clinicName: string) => void;
 }
 
+const OFFICIAL_DOMAIN = 'https://bertuolflow.app-bertuol.tech';
+
 export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
   isOpen,
   onClose,
   onSimulateScan,
 }) => {
+  const [activeMode, setActiveMode] = useState<'marketing' | 'totem'>(
+    onSimulateScan ? 'totem' : 'marketing'
+  );
   const [selectedClinic, setSelectedClinic] = useState<{ id: number; name: string; address: string }>({
     id: 1,
     name: 'Unidade Matriz Palmas',
     address: '104 Sul, Av. JK, Palmas - TO',
   });
+
+  // Marketing folder options
+  const [marketingPreset, setMarketingPreset] = useState<'patient_portal' | 'home' | 'custom'>('patient_portal');
+  const [customUrl, setCustomUrl] = useState<string>(`${OFFICIAL_DOMAIN}/paciente`);
+  const [qrColor, setQrColor] = useState<'#147A80' | '#0F172A'>('#147A80');
+  const [transparentBg, setTransparentBg] = useState<boolean>(false);
+
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [qrHighResDataUrl, setQrHighResDataUrl] = useState<string>('');
+  const [qrSvgMarkup, setQrSvgMarkup] = useState<string>('');
   const [copiedPayload, setCopiedPayload] = useState(false);
 
-  // Generate QR Code with checkin URL
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://bertuolodontologia.com.br';
-  const qrPayload = `${baseUrl}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
+  // Sync mode when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveMode(onSimulateScan ? 'totem' : 'marketing');
+    }
+  }, [isOpen, onSimulateScan]);
+
+  const totemBaseUrl =
+    typeof window !== 'undefined' ? window.location.origin : OFFICIAL_DOMAIN;
+  const totemPayload = `${totemBaseUrl}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
     selectedClinic.name
   )}`;
 
+  const marketingPayload =
+    marketingPreset === 'patient_portal'
+      ? `${OFFICIAL_DOMAIN}/paciente`
+      : marketingPreset === 'home'
+        ? `${OFFICIAL_DOMAIN}/`
+        : customUrl.trim() || `${OFFICIAL_DOMAIN}/paciente`;
+
+  const qrPayload = activeMode === 'marketing' ? marketingPayload : totemPayload;
+
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen || !qrPayload) return;
+
+    const darkColor = activeMode === 'marketing' ? qrColor : '#147A80';
+    const lightColor = activeMode === 'marketing' && transparentBg ? '#00000000' : '#FFFFFF';
+
+    let cancelled = false;
+
+    Promise.all([
       QRCode.toDataURL(qrPayload, {
         width: 400,
         margin: 2,
-        color: {
-          dark: '#147A80', // Bertuol brand deep teal
-          light: '#FFFFFF',
-        },
+        color: { dark: darkColor, light: lightColor },
         errorCorrectionLevel: 'H',
+      }),
+      QRCode.toDataURL(qrPayload, {
+        width: 1200,
+        margin: 2,
+        color: { dark: darkColor, light: lightColor },
+        errorCorrectionLevel: 'H',
+      }),
+      QRCode.toString(qrPayload, {
+        type: 'svg',
+        margin: 2,
+        color: { dark: darkColor, light: lightColor },
+        errorCorrectionLevel: 'H',
+      }),
+    ])
+      .then(([previewUrl, highResUrl, svgStr]) => {
+        if (cancelled) return;
+        setQrCodeDataUrl(previewUrl);
+        setQrHighResDataUrl(highResUrl);
+        setQrSvgMarkup(svgStr);
       })
-        .then((url) => setQrCodeDataUrl(url))
-        .catch((err) => console.error('Erro ao gerar QRCode:', err));
-    }
-  }, [isOpen, selectedClinic]);
+      .catch((err) => console.error('Erro ao gerar QRCode:', err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, qrPayload, activeMode, qrColor, transparentBg]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(qrPayload);
@@ -62,17 +118,34 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
     setTimeout(() => setCopiedPayload(false), 2000);
   };
 
-  const handleDownload = () => {
-    if (!qrCodeDataUrl) return;
+  const handleDownloadPng = () => {
+    const urlToDownload = qrHighResDataUrl || qrCodeDataUrl;
+    if (!urlToDownload) return;
     const a = document.createElement('a');
-    a.href = qrCodeDataUrl;
-    a.download = `totem-checkin-bertuol-${selectedClinic.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+    a.href = urlToDownload;
+    a.download =
+      activeMode === 'marketing'
+        ? `qrcode-portal-paciente-bertuol-1200px.png`
+        : `totem-checkin-bertuol-${selectedClinic.name.toLowerCase().replace(/\s+/g, '-')}.png`;
     a.click();
+  };
+
+  const handleDownloadSvg = () => {
+    if (!qrSvgMarkup) return;
+    const blob = new Blob([qrSvgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download =
+      activeMode === 'marketing'
+        ? `qrcode-portal-paciente-bertuol-vetor.svg`
+        : `totem-checkin-bertuol-${selectedClinic.name.toLowerCase().replace(/\s+/g, '-')}.svg`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handlePrint = () => {
     try {
-      // 1. Tenta impressão em iframe isolado sem as barras da página
       const existingFrame = document.getElementById('bertuol-print-frame');
       if (existingFrame) existingFrame.remove();
 
@@ -129,7 +202,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
               <div class="clinic">${selectedClinic.name} • ${selectedClinic.address}</div>
               <div class="qr-box"><img class="qr-img" src="${qrCodeDataUrl}" alt="QR Code Totem" /></div>
               <div class="instruction">Aponte a câmera do seu celular para este código ao chegar</div>
-              <div class="points-pill">⭐ Ganhe +20 pontos no Clube Sorriso!</div>
+              <div class="points-pill">Ganhe +20 pontos no Clube Sorriso</div>
               <div class="footer">Seu dentista é avisado instantaneamente na sala de atendimento.</div>
             </div>
           </body>
@@ -145,7 +218,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
         try {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
-        } catch (e) {
+        } catch {
           window.print();
         }
         const elapsed = performance.now() - t0;
@@ -153,7 +226,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
           window.open(`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`, '_blank', 'noopener,noreferrer');
         }
       }, 250);
-    } catch (err) {
+    } catch {
       window.open(`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`, '_blank', 'noopener,noreferrer');
     }
   };
@@ -161,163 +234,353 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[94vh] overflow-hidden animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] animate-in fade-in">
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 flex flex-col max-h-[94vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-linear-to-r from-[#147A80] to-[#0f5c61] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xs border border-white/20">
-              <QrCode className="w-5 h-5 text-amber-300" />
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+              <QrCode className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="text-base font-black tracking-tight">Totem de Check-in • QR Code de Balcão</h2>
-              <p className="text-xs text-teal-100 font-medium">Display Oficial para Leitura dos Pacientes (RF03)</p>
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-slate-900 truncate">
+                Central de QR Code · Bertuol Flow
+              </h2>
+              <p className="text-xs text-slate-500">
+                Gere QR Codes para folders de marketing ou para o totem da recepção
+              </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+            aria-label="Fechar modal de QR Code"
+            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Clinic Unit Switcher */}
-        <div className="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between text-xs">
-          <span className="font-bold text-gray-600 flex items-center gap-1.5">
-            <Building2 className="w-4 h-4 text-[#147A80]" />
-            Selecione a Unidade do Totem:
-          </span>
-          <div className="flex gap-1.5">
-            <button
-              onClick={() =>
-                setSelectedClinic({
-                  id: 1,
-                  name: 'Unidade Matriz Palmas',
-                  address: '104 Sul, Av. JK, Palmas - TO',
-                })
-              }
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-                selectedClinic.id === 1
-                  ? 'bg-[#147A80] text-white shadow-xs'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              Palmas
-            </button>
-            <button
-              onClick={() =>
-                setSelectedClinic({
-                  id: 2,
-                  name: 'Unidade Paraíso do Tocantins',
-                  address: 'Av. Bernardo Sayão, Paraíso - TO',
-                })
-              }
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-                selectedClinic.id === 2
-                  ? 'bg-[#147A80] text-white shadow-xs'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              Paraíso
-            </button>
-          </div>
+        {/* Mode Tabs */}
+        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveMode('marketing')}
+            className={`flex-1 h-9 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+              activeMode === 'marketing'
+                ? 'bg-[#147A80] text-white shadow-xs'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <Megaphone className="w-3.5 h-3.5" />
+            <span>Folder Marketing (Pacientes)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode('totem')}
+            className={`flex-1 h-9 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+              activeMode === 'totem'
+                ? 'bg-[#147A80] text-white shadow-xs'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Totem de Check-in (Recepção)</span>
+          </button>
         </div>
 
-        {/* Printable Totem Card Body */}
-        <div className="p-6 overflow-y-auto space-y-4 text-center flex-1 bg-[#FAFAFA]">
-          {/* Acrylic Display Mockup */}
-          <div
-            id="printable-totem-display"
-            className="max-w-xs mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-[#147A80]/20 space-y-4 relative overflow-hidden"
-          >
-            {/* Top Badge */}
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-[#147A80] flex items-center justify-center text-white font-black text-sm">
-                b
-              </div>
-              <div className="text-left leading-none">
-                <span className="text-sm font-black text-[#147A80] tracking-tight block">bertuol</span>
-                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">
-                  Odontologia Avançada
-                </span>
-              </div>
-            </div>
-
-            {/* Checkin Title */}
+        {/* Sub-controls per mode */}
+        {activeMode === 'marketing' ? (
+          <div className="px-5 py-3.5 bg-white border-b border-slate-200 space-y-3 text-xs">
             <div>
-              <span className="px-3 py-1 rounded-full bg-teal-50 text-[#147A80] font-black text-[10px] uppercase tracking-wider border border-teal-200">
-                Totem de Autoatendimento
+              <span className="text-[11px] font-semibold text-slate-600 block mb-1.5">
+                Link de Destino para o Folder
               </span>
-              <h3 className="text-lg font-black text-gray-900 mt-2">Check-in de Chegada</h3>
-              <p className="text-xs text-gray-500 mt-0.5">{selectedClinic.name}</p>
-            </div>
-
-            {/* QR Code Canvas */}
-            <div className="p-3 bg-white rounded-2xl border-2 border-dashed border-[#147A80]/40 shadow-inner flex items-center justify-center">
-              {qrCodeDataUrl ? (
-                <img
-                  src={qrCodeDataUrl}
-                  alt={`QR Code Check-in ${selectedClinic.name}`}
-                  className="w-56 h-56 object-contain rounded-xl"
-                />
-              ) : (
-                <div className="w-56 h-56 flex items-center justify-center text-gray-400 text-xs">
-                  Gerando QR Code...
-                </div>
-              )}
-            </div>
-
-            {/* Instruction */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-bold text-gray-800 leading-tight">
-                Aponte a câmera do seu celular para este código ao chegar
-              </p>
-              <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-bold flex items-center justify-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span>Ganhe +20 pontos no Clube Sorriso!</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMarketingPreset('patient_portal')}
+                  className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    marketingPreset === 'patient_portal'
+                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  Portal do Paciente (/paciente)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMarketingPreset('home')}
+                  className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    marketingPreset === 'home'
+                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  Endereço Principal (/)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMarketingPreset('custom')}
+                  className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    marketingPreset === 'custom'
+                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  URL Personalizada
+                </button>
               </div>
             </div>
 
-            <div className="text-[9px] text-gray-400 border-t border-gray-100 pt-2 font-medium">
-              Seu dentista é avisado instantaneamente na sala de atendimento.
+            {marketingPreset === 'custom' && (
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                  Cole ou edite o endereço (ex: com parâmetros de campanha UTM)
+                </label>
+                <div className="relative">
+                  <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="url"
+                    value={customUrl}
+                    onChange={(e) => setCustomUrl(e.target.value)}
+                    placeholder="https://bertuolflow.app-bertuol.tech/paciente"
+                    className="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Print styling options */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-slate-600">Cor:</span>
+                <button
+                  type="button"
+                  onClick={() => setQrColor('#147A80')}
+                  className={`h-8 px-2.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer ${
+                    qrColor === '#147A80'
+                      ? 'border-[#147A80] bg-teal-50 text-[#147A80]'
+                      : 'border-slate-200 bg-white text-slate-600'
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-sm bg-[#147A80]" />
+                  <span>Teal Bertuol</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrColor('#0F172A')}
+                  className={`h-8 px-2.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer ${
+                    qrColor === '#0F172A'
+                      ? 'border-slate-900 bg-slate-100 text-slate-900'
+                      : 'border-slate-200 bg-white text-slate-600'
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-sm bg-slate-900" />
+                  <span>Preto Gráfico</span>
+                </button>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={transparentBg}
+                  onChange={(e) => setTransparentBg(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 accent-[#147A80] cursor-pointer"
+                />
+                <span className="text-[11px] font-semibold text-slate-700">
+                  Fundo Transparente (para arte)
+                </span>
+              </label>
             </div>
           </div>
-
-          {/* Quick Simulation Button (for laptop/browser testers) */}
-          {onSimulateScan && (
-            <div className="pt-2">
+        ) : (
+          <div className="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between text-xs gap-2">
+            <span className="font-medium text-slate-600 flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-[#147A80]" />
+              Unidade do Totem:
+            </span>
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               <button
+                type="button"
+                onClick={() =>
+                  setSelectedClinic({
+                    id: 1,
+                    name: 'Unidade Matriz Palmas',
+                    address: '104 Sul, Av. JK, Palmas - TO',
+                  })
+                }
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  selectedClinic.id === 1
+                    ? 'bg-[#147A80] text-white'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Palmas
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedClinic({
+                    id: 2,
+                    name: 'Unidade Paraíso do Tocantins',
+                    address: 'Av. Bernardo Sayão, Paraíso - TO',
+                  })
+                }
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  selectedClinic.id === 2
+                    ? 'bg-[#147A80] text-white'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Paraíso
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Body */}
+        <div className="p-5 overflow-y-auto space-y-4 text-center flex-1 bg-[#F8FAFC]">
+          {activeMode === 'marketing' ? (
+            <div className="max-w-sm mx-auto space-y-3">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-3">
+                <div className="text-center">
+                  <span className="text-[11px] font-semibold text-[#147A80] block">
+                    Arte Pronta para Impressão (300 DPI / Vetor)
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                    {marketingPreset === 'patient_portal'
+                      ? 'Portal do Paciente & Clube Sorriso'
+                      : marketingPreset === 'home'
+                        ? 'Acesso Bertuol Flow'
+                        : 'QR Code Personalizado'}
+                  </h3>
+                </div>
+
+                <div
+                  className={`p-4 rounded-xl border border-slate-200 flex items-center justify-center ${
+                    transparentBg
+                      ? 'bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px] bg-slate-50'
+                      : 'bg-white'
+                  }`}
+                >
+                  {qrCodeDataUrl ? (
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code Portal do Paciente Bertuol"
+                      className="w-52 h-52 object-contain"
+                    />
+                  ) : (
+                    <div className="w-52 h-52 flex items-center justify-center text-slate-400 text-xs">
+                      Gerando QR Code...
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left">
+                  <span className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                    URL codificada neste QR Code:
+                  </span>
+                  <p className="text-[11px] font-mono text-[#147A80] break-all select-all">
+                    {qrPayload}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Dica para gráfica: prefira o arquivo <strong>SVG (Vetor)</strong> para ampliar sem perder nitidez, ou o <strong>PNG 1200px</strong> para uso rápido em Canva e redes sociais.
+              </p>
+            </div>
+          ) : (
+            <div
+              id="printable-totem-display"
+              className="max-w-xs mx-auto bg-white rounded-2xl p-6 shadow-sm border-2 border-[#147A80]/30 space-y-4"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#147A80] flex items-center justify-center text-white font-bold text-sm">
+                  b
+                </div>
+                <div className="text-left leading-none">
+                  <span className="text-sm font-bold text-[#147A80] tracking-tight block">bertuol</span>
+                  <span className="text-[9px] font-medium text-slate-400 tracking-wider block">
+                    Odontologia Avançada
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-semibold text-[#147A80] block">
+                  Totem de Autoatendimento
+                </span>
+                <h3 className="text-lg font-bold text-slate-900 mt-1">Check-in de Chegada</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{selectedClinic.name}</p>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-dashed border-[#147A80]/40 flex items-center justify-center">
+                {qrCodeDataUrl ? (
+                  <img
+                    src={qrCodeDataUrl}
+                    alt={`QR Code Check-in ${selectedClinic.name}`}
+                    className="w-52 h-52 object-contain rounded-lg"
+                  />
+                ) : (
+                  <div className="w-52 h-52 flex items-center justify-center text-slate-400 text-xs">
+                    Gerando QR Code...
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-800 leading-tight">
+                  Aponte a câmera do seu celular para este código ao chegar
+                </p>
+                <div className="p-2 rounded-lg bg-teal-50 border border-teal-200/70 text-[#0f5c61] text-xs font-medium flex items-center justify-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
+                  <span>Ganhe +20 pontos no Clube Sorriso</span>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-slate-400 border-t border-slate-100 pt-2">
+                Seu dentista é avisado instantaneamente na sala de atendimento.
+              </div>
+            </div>
+          )}
+
+          {activeMode === 'totem' && onSimulateScan && (
+            <div className="pt-1">
+              <button
+                type="button"
                 onClick={() => {
                   onSimulateScan(selectedClinic.id, selectedClinic.name);
                   onClose();
                 }}
-                className="w-full py-3 px-4 rounded-2xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#147A80]/20 transition-all cursor-pointer active:scale-98"
+                className="w-full h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <Smartphone className="w-4 h-4 text-amber-300" />
-                <span>Simular Leitura deste QR Code Agora (+20 pts)</span>
+                <Smartphone className="w-4 h-4" />
+                <span>Simular Leitura deste QR Code (+20 pts)</span>
               </button>
-              <p className="text-[11px] text-gray-400 mt-1.5">
-                (Clique para testar o check-in imediato com este QR Code sem precisar de um 2º aparelho)
+              <p className="text-xs text-slate-500 mt-1.5">
+                Teste o check-in imediato sem precisar de um segundo aparelho.
               </p>
             </div>
           )}
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-gray-200 bg-white flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="px-5 py-3.5 border-t border-slate-200 bg-white flex flex-wrap items-center justify-between gap-2 text-xs">
           <button
+            type="button"
             onClick={handleCopyLink}
-            className="px-3 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             {copiedPayload ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Link Copiado!</span>
+                <span className="text-emerald-700">Link Copiado</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-gray-500" />
+                <Copy className="w-3.5 h-3.5 text-slate-500" />
                 <span>Copiar Link</span>
               </>
             )}
@@ -325,34 +588,49 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={handleDownload}
-              className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
+              type="button"
+              onClick={handleDownloadPng}
+              className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-gray-600" />
-              <span>Baixar Imagem</span>
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Baixar PNG (Alta Res.)</span>
             </button>
 
             <button
-              onClick={handlePrint}
-              className="px-3 py-2 rounded-xl border border-teal-300 bg-teal-50 hover:bg-teal-100 text-[#147A80] font-bold flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
-              title="Tentar imprimir diretamente nesta janela"
+              type="button"
+              onClick={handleDownloadSvg}
+              className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Formato vetorial ideal para gráfica e folders"
             >
-              <Printer className="w-3.5 h-3.5 text-[#147A80]" />
-              <span>Imprimir Direto</span>
+              <FileCode2 className="w-3.5 h-3.5" />
+              <span>Baixar SVG (Vetor)</span>
             </button>
 
-            {/* Link direto que abre fora do iframe e chama a impressora nativa do Windows */}
-            <a
-              href={`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-black flex items-center gap-2 transition-all shadow-md shadow-[#147A80]/20 cursor-pointer text-xs active:scale-95"
-              title="Abre a folha A4 em nova guia e abre a impressora do Windows imediatamente"
-            >
-              <Printer className="w-4 h-4 text-amber-300" />
-              <span>Imprimir no Windows (A4)</span>
-              <ExternalLink className="w-3.5 h-3.5 text-teal-200" />
-            </a>
+            {activeMode === 'totem' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="h-9 px-3 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-[#147A80] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Tentar imprimir diretamente nesta janela"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Imprimir Direto</span>
+                </button>
+
+                <a
+                  href={`/totem-imprimir?clinic_id=${selectedClinic.id}&autoprint=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Abre a folha A4 em nova guia e abre a impressora do Windows imediatamente"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Imprimir A4</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -91,103 +91,79 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
   const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}` : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] animate-in fade-in duration-200">
       <div
-        className="bg-white w-full max-w-xl max-h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
+        className="bg-white w-full max-w-xl max-h-[92vh] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-200"
         role="dialog"
         aria-modal="true"
       >
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 bg-white border-b border-gray-100 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span
-              className="w-3.5 h-3.5 rounded-full shrink-0"
-              style={{ backgroundColor: categoryColor }}
-            />
+        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+              <Stethoscope className="w-4 h-4" />
+            </div>
             <div className="min-w-0">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
+              <span className="text-xs font-medium text-slate-500 block">
                 Detalhes da Consulta (Clinicorp)
               </span>
-              <h2 className="text-lg sm:text-xl font-bold text-[#1A1A1A] truncate">
+              <h2 className="text-base sm:text-lg font-semibold text-slate-900 truncate">
                 {appointment.PatientName}
               </h2>
             </div>
           </div>
 
-          {/* Close button with 48x48 min touch target */}
           <button
             onClick={onClose}
             aria-label="Fechar detalhes"
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] rounded-2xl bg-[#F8F9FA] hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-          {/* Top Quick Badges */}
-          <div className="flex items-center flex-wrap gap-2.5">
-            {/* Time Badge in prominent teal */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 text-[#199A9F] font-bold text-sm border border-teal-200">
-              <Clock className="w-4 h-4 text-[#4BBCBE]" />
-              <span>
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#F8FAFC]/40">
+          {/* Unified Clinical Metadata Strip */}
+          <div className="bg-white rounded-xl p-3.5 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-slate-700">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-900 tabular-nums">
+                <Clock className="w-3.5 h-3.5 text-[#147A80]" />
                 {appointment.fromTime} – {appointment.toTime}
+              </span>
+              <span className="text-slate-300">·</span>
+              <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: categoryColor }}
+                />
+                {categoryName}
+              </span>
+              <span className="text-slate-300">·</span>
+              <span className="inline-flex items-center gap-1 text-slate-600">
+                <Shield className="w-3.5 h-3.5 text-slate-400" />
+                {patient?.insurancePlanName || 'Particular'}
               </span>
             </div>
 
-            {/* Category Badge */}
-            <span
-              className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-2xs"
-              style={{ backgroundColor: categoryColor }}
-            >
-              {categoryName}
-            </span>
-
-            {/* Professional / Dentist Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 border border-slate-300 text-xs font-bold shadow-2xs">
-              <Stethoscope className="w-3.5 h-3.5 text-[#199A9F]" />
+            <div className="text-slate-700 font-medium flex items-center gap-1.5">
+              <Stethoscope className="w-3.5 h-3.5 text-[#147A80]" />
               <span>{appointment.dentist?.Name || appointment.dentist_name || 'Dr(a). Profissional'}</span>
-            </div>
-
-            {/* Insurance Plan */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-semibold">
-              <Shield className="w-3.5 h-3.5 text-gray-500" />
-              <span>{patient?.insurancePlanName || 'Particular'}</span>
-            </div>
-          </div>
-
-          {/* Professional / Dentist Card */}
-          <div className="bg-[#FAF9F6] rounded-2xl p-3.5 sm:p-4 border border-gray-200 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#199A9F] flex items-center justify-center shrink-0">
-                <Stethoscope className="w-5 h-5 text-[#199A9F]" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#199A9F] block">
-                  Profissional Responsável
-                </span>
-                <h4 className="text-sm sm:text-base font-bold text-gray-900">
-                  {appointment.dentist?.Name || appointment.dentist_name || 'Dr(a). Profissional'}
-                </h4>
-                {appointment.dentist?.specialty && (
-                  <p className="text-xs text-gray-600 mt-0.5 font-medium">
-                    {appointment.dentist.specialty}
-                  </p>
-                )}
-              </div>
+              {appointment.dentist?.specialty && (
+                <span className="text-slate-400">· {appointment.dentist.specialty}</span>
+              )}
             </div>
           </div>
 
           {/* Patient Card (RF04) */}
-          <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-gray-200/80 space-y-3">
-            <div className="flex items-center justify-between border-b border-gray-200/60 pb-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-[#4BBCBE]" />
+          <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#147A80]" />
                 Dados do Paciente
               </span>
               {patient?.Age && (
-                <span className="text-xs font-bold text-gray-700 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                <span className="text-xs font-medium text-slate-600 tabular-nums">
                   {patient.Age} anos
                 </span>
               )}
@@ -195,18 +171,18 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-xs text-gray-500 block">Nome Completo</span>
-                <p className="font-bold text-[#1A1A1A]">{appointment.PatientName}</p>
+                <span className="text-xs text-slate-500 block">Nome Completo</span>
+                <p className="font-semibold text-slate-900 mt-0.5">{appointment.PatientName}</p>
               </div>
 
               <div>
-                <span className="text-xs text-gray-500 block">Telefone / Contato</span>
+                <span className="text-xs text-slate-500 block">Telefone / Contato</span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <a
                     href={`tel:${cleanPhone}`}
-                    className="font-semibold text-gray-800 hover:text-amber-600 transition-colors flex items-center gap-1"
+                    className="font-medium text-slate-800 hover:text-[#147A80] transition-colors flex items-center gap-1.5 tabular-nums"
                   >
-                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
                     {appointment.MobilePhone || 'Não cadastrado'}
                   </a>
 
@@ -216,7 +192,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Abrir WhatsApp"
-                      className="p-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors inline-flex items-center gap-1 text-[11px] font-medium"
+                      className="px-2 py-1 rounded-lg bg-teal-50 text-[#147A80] hover:bg-teal-100 border border-teal-200/70 transition-colors inline-flex items-center gap-1 text-xs font-medium"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
                       WhatsApp
@@ -228,47 +204,47 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           </div>
 
           {/* Procedure Card */}
-          <div className="bg-white rounded-2xl p-4 border border-gray-200/90 shadow-2xs space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-              <Stethoscope className="w-3.5 h-3.5 text-[#4BBCBE]" />
+          <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-1.5">
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Stethoscope className="w-3.5 h-3.5 text-[#147A80]" />
               Procedimento Previsto
             </span>
-            <p className="text-base font-bold text-[#1A1A1A] leading-snug">
+            <p className="text-sm sm:text-base font-semibold text-slate-900 leading-snug">
               {appointment.Procedures}
             </p>
           </div>
 
           {/* Clinical Notes / History (RF04) */}
-          <div className="bg-white rounded-2xl p-4 border border-gray-200/90 shadow-2xs space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-[#199A9F]" />
-              Observações Clínicas Anteriores (Notes)
+          <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-2">
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-[#147A80]" />
+              Observações Clínicas Anteriores
             </span>
-            <div className="bg-gray-50 rounded-xl p-3 text-sm text-[#1A1A1A] leading-relaxed font-normal border border-gray-100">
+            <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-800 leading-relaxed border border-slate-200/70">
               {appointment.Notes || patient?.Notes || (
-                <span className="text-gray-400 italic">Nenhuma anotação prévia registrada.</span>
+                <span className="text-slate-400 italic">Nenhuma anotação prévia registrada.</span>
               )}
             </div>
           </div>
 
           {/* RF05 - AI Clinical Summary Section */}
-          <div className="rounded-2xl border-2 border-[#4BBCBE]/40 bg-teal-50/20 p-4 sm:p-5 space-y-3 relative overflow-hidden">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#4BBCBE] text-white flex items-center justify-center shadow-xs">
-                  <Sparkles className="w-4 h-4 fill-white" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-[#1A1A1A]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm font-semibold text-slate-900">
                       Resumo Clínico Executivo (IA)
                     </h4>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/90 text-amber-900 border border-amber-300">
+                    <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
                       Desativado na Fase de Testes
                     </span>
                   </div>
-                  <span className="text-[11px] text-amber-900/70 font-medium">
-                    Google AI Studio • Gemini Flash
+                  <span className="text-xs text-slate-500">
+                    Síntese clínica · Gemini Flash
                   </span>
                 </div>
               </div>
@@ -278,7 +254,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                   <button
                     onClick={handleCopySummary}
                     title="Copiar Resumo"
-                    className="p-2 rounded-xl bg-white hover:bg-amber-100 text-gray-700 transition-colors border border-amber-200 flex items-center gap-1 text-xs font-medium"
+                    className="h-9 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 transition-colors border border-slate-200 flex items-center gap-1.5 text-xs font-medium cursor-pointer"
                   >
                     {copied ? (
                       <>
@@ -287,17 +263,16 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5 text-gray-600" />
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
                         <span>Copiar</span>
                       </>
                     )}
                   </button>
 
-                  {/* Regenerate button disabled during test phase */}
                   <button
                     disabled={true}
                     title="Regeneração de IA provisoriamente desativada na fase de testes"
-                    className="p-2 rounded-xl bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60"
+                    className="w-9 h-9 rounded-lg bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center cursor-not-allowed opacity-70"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                   </button>
@@ -305,40 +280,39 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               )}
             </div>
 
-            {/* Error message */}
             {errorMessage && (
-              <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* AI Summary Display or Trigger Button */}
             {appointment.ai_summary ? (
-              <div className="bg-white rounded-xl p-3.5 border border-amber-200/80 shadow-xs space-y-2 animate-in fade-in">
-                <p className="text-sm text-[#1A1A1A] leading-relaxed font-medium">
+              <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-2">
+                <p className="text-sm text-slate-800 leading-relaxed">
                   {appointment.ai_summary}
                 </p>
-                <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-100">
-                  <span>Gravado na tabela appointments (Supabase)</span>
-                  <span className="font-semibold text-emerald-600">✓ Em cache</span>
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-1.5 border-t border-slate-200/70">
+                  <span>Gravado no Supabase</span>
+                  <span className="font-medium text-emerald-700 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Em cache
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="space-y-3 pt-1">
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Gera uma síntese executiva em até 3 frases sobre os pontos críticos, histórico e cuidados imediatos antes de iniciar o atendimento.
                 </p>
 
-                {/* Primary Orange AI Action Button - Provisoriamente desativado na fase de testes */}
                 <button
                   type="button"
                   disabled={true}
                   title="Geração de resumo clínico provisoriamente desativada na fase de testes"
-                  className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-400 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-none cursor-not-allowed select-none opacity-80"
+                  className="w-full h-10 px-4 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 font-medium text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed select-none"
                 >
-                  <Lock className="w-4 h-4 text-gray-400" />
-                  <span>Gerar Resumo Clínico (IA) • Desativado na Fase de Testes</span>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span>Gerar Resumo Clínico (IA) · Desativado na Fase de Testes</span>
                 </button>
               </div>
             )}
@@ -346,15 +320,15 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-[#F8F9FA] border-t border-gray-100 flex items-center justify-between gap-3">
-          <div className="text-xs text-gray-500 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5 text-gray-400" />
-            <span>Clinic_BusinessId: {appointment.Clinic_BusinessId}</span>
+        <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 tabular-nums">
+            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span>Unidade ID: {appointment.Clinic_BusinessId}</span>
           </div>
 
           <button
             onClick={onClose}
-            className="min-h-[48px] px-6 py-2.5 rounded-xl bg-white hover:bg-gray-200/70 border border-gray-300 text-[#1A1A1A] font-bold text-sm transition-all"
+            className="h-10 px-5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-medium text-sm transition-colors cursor-pointer"
           >
             Fechar
           </button>

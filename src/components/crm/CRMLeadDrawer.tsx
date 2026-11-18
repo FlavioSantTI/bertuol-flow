@@ -220,21 +220,21 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
-        <div className="bg-slate-900 px-5 py-4 text-white shrink-0 space-y-3">
+        <div className="bg-white border-b border-slate-200 px-5 py-4 shrink-0 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-[11px] text-teal-300 font-semibold uppercase tracking-wide">
-                <span>Ficha Livre do Atendimento</span>
+              <div className="flex items-center gap-2 text-xs text-[#147A80] font-semibold">
+                <span>Ficha do atendimento</span>
                 {opportunity.contactAttempts > 0 && (
-                  <span className="font-mono tabular-nums text-slate-300">
+                  <span className="font-mono tabular-nums text-slate-500">
                     · {opportunity.contactAttempts}ª tentativa
                   </span>
                 )}
               </div>
-              <h3 className="font-bold text-base text-white truncate mt-0.5">
+              <h3 className="font-bold text-base text-slate-900 truncate mt-0.5">
                 {patientName || opportunity.patientName}
               </h3>
-              <p className="text-xs text-slate-300 font-mono tabular-nums">
+              <p className="text-xs text-slate-500 font-mono tabular-nums">
                 {CRMService.formatPhoneDisplay(patientPhone || opportunity.patientPhone)}
               </p>
             </div>
@@ -242,7 +242,8 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer shrink-0"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0 transition-colors"
+              aria-label="Fechar ficha"
             >
               <X className="w-5 h-5" />
             </button>
@@ -253,7 +254,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
             <button
               type="button"
               onClick={() => onOpenQuickContact(opportunity)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+              className="h-9 flex items-center gap-1.5 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>WhatsApp</span>
@@ -262,16 +263,16 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
             <button
               type="button"
               onClick={() => onOpenQuickSchedule(opportunity)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold cursor-pointer whitespace-nowrap"
+              className="h-9 flex items-center gap-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
             >
-              <CalendarPlus className="w-3.5 h-3.5 text-teal-300" />
+              <CalendarPlus className="w-3.5 h-3.5 text-[#147A80]" />
               <span>Agendar na Grade</span>
             </button>
 
             <select
               value={opportunity.stage}
               onChange={(e) => onStageChangeRequest(opportunity, e.target.value)}
-              className="ml-auto bg-slate-800 border border-slate-700 text-white text-xs font-semibold rounded-lg px-2.5 py-1.5 cursor-pointer"
+              className="h-9 ml-auto bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
             >
               {pipelineStages.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -325,8 +326,8 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
             <form onSubmit={handleSaveFicha} className="space-y-4">
               {/* Primary Contact Info */}
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  Dados do Contato (Edição Livre)
+                <h4 className="text-xs font-bold text-slate-800">
+                  Dados do contato
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -339,7 +340,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       required
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
@@ -352,21 +353,21 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       value={patientPhone}
                       onChange={(e) => setPatientPhone(e.target.value)}
                       placeholder="(63) 99999-9999 ou @perfil"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Interesse / Assunto Livre (o que a atendente anotou)
+                    Interesse / Assunto livre
                   </label>
                   <textarea
                     rows={2}
                     value={treatmentDescription}
                     onChange={(e) => setTreatmentDescription(e.target.value)}
                     placeholder="Escreva livremente: Ex. Quer saber valor de clareamento e avaliação para implante..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                   />
                 </div>
 
@@ -376,7 +377,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                     <select
                       value={clinicId}
                       onChange={(e) => setClinicId(Number(e.target.value))}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900"
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     >
                       {clinics
                         .filter((c) => c.active)
@@ -395,7 +396,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                     <select
                       value={dentistName}
                       onChange={(e) => setDentistName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900"
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     >
                       <option value="Sem preferência">Sem preferência</option>
                       {dentists.map((d) => (
@@ -413,7 +414,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                     <select
                       value={priority}
                       onChange={(e) => setPriority(e.target.value as CRMPriority)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900"
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     >
                       <option value="high">Alta</option>
                       <option value="medium">Média</option>
@@ -425,14 +426,14 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                 {/* Channel / Source Free Input + Quick Chips */}
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Canal / Origem do Contato
+                    Canal / Origem do contato
                   </label>
                   <input
                     type="text"
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                     placeholder="Ex: Instagram, WhatsApp, Indicação..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-900 mb-1.5"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-xs font-medium text-slate-900 mb-1.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                   />
                   <div className="flex flex-wrap gap-1">
                     {SOURCE_SUGGESTIONS.map((s) => (
@@ -440,9 +441,9 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                         key={s}
                         type="button"
                         onClick={() => setSource(s)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold border cursor-pointer ${
+                        className={`px-2 py-0.5 rounded text-[11px] font-semibold border cursor-pointer transition-colors ${
                           source === s
-                            ? 'bg-slate-900 text-white border-slate-900'
+                            ? 'bg-[#147A80] text-white border-[#147A80]'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
@@ -500,10 +501,10 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
               {/* Dynamic Free-Form Custom Fields */}
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                    Campos Livres da Atendente
+                  <h4 className="text-xs font-bold text-slate-800">
+                    Campos livres da atendente
                   </h4>
-                  <span className="text-[11px] text-slate-400">Adicione qualquer informação extra</span>
+                  <span className="text-[11px] text-slate-400">Informações extras</span>
                 </div>
 
                 {/* Preset quick chips */}
@@ -533,14 +534,14 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                           value={cf.label}
                           onChange={(e) => handleUpdateCustomField(cf.id, 'label', e.target.value)}
                           placeholder="Campo"
-                          className="w-1/3 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700"
+                          className="w-1/3 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-semibold text-slate-700"
                         />
                         <input
                           type="text"
                           value={cf.value}
                           onChange={(e) => handleUpdateCustomField(cf.id, 'value', e.target.value)}
                           placeholder="Valor / Informação livre..."
-                          className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#147A80]"
+                          className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                         />
                         <button
                           type="button"
@@ -562,22 +563,22 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                     value={newFieldLabel}
                     onChange={(e) => setNewFieldLabel(e.target.value)}
                     placeholder="Nome do campo (ex: Cidade)"
-                    className="w-1/3 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
+                    className="w-1/3 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs text-slate-900"
                   />
                   <input
                     type="text"
                     value={newFieldValue}
                     onChange={(e) => setNewFieldValue(e.target.value)}
                     placeholder="Conteúdo..."
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
+                    className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs text-slate-900"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddCustomField()}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer shrink-0 flex items-center gap-1"
+                    className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
+                    <span>Adicionar</span>
                   </button>
                 </div>
               </div>
@@ -586,8 +587,8 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-[#147A80]" /> Próximo Follow-up
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#147A80]" /> Próximo follow-up
                     </span>
                     {nextContactDate && (
                       <button
@@ -604,26 +605,26 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       type="date"
                       value={nextContactDate}
                       onChange={(e) => setNextContactDate(e.target.value)}
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900"
+                      className="h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-mono text-slate-900"
                     />
                     <button
                       type="button"
                       onClick={() => quickOffsetFollowUp(1)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                      className="h-9 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
                     >
                       Amanhã
                     </button>
                     <button
                       type="button"
                       onClick={() => quickOffsetFollowUp(3)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                      className="h-9 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
                     >
                       +3 dias
                     </button>
                     <button
                       type="button"
                       onClick={() => quickOffsetFollowUp(7)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                      className="h-9 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
                     >
                       +7 dias
                     </button>
@@ -631,7 +632,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 flex items-center gap-1">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Tag className="w-3.5 h-3.5 text-[#147A80]" /> Rótulos
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -644,7 +645,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                             onClick={() => onToggleLabel(opportunity.id, lbl.id)}
                             className={`px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
                               active
-                                ? `${LABEL_COLOR_CLASSES[lbl.color]} ring-2 ring-slate-900/15`
+                                ? `${LABEL_COLOR_CLASSES[lbl.color]} ring-2 ring-[#147A80]/20`
                                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
@@ -668,12 +669,12 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       value={newLabelName}
                       onChange={(e) => setNewLabelName(e.target.value)}
                       placeholder="Criar novo rótulo..."
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                      className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs"
                     />
                     <select
                       value={newLabelColor}
                       onChange={(e) => setNewLabelColor(e.target.value as CRMLabel['color'])}
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs"
+                      className="h-9 bg-slate-50 border border-slate-200 rounded-lg px-2 text-xs"
                     >
                       <option value="teal">Turquesa</option>
                       <option value="amber">Âmbar</option>
@@ -689,7 +690,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                         onCreateLabel(newLabelName.trim(), newLabelColor);
                         setNewLabelName('');
                       }}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                      className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer"
                     >
                       Criar
                     </button>
@@ -700,7 +701,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
               <div className="sticky bottom-0 bg-slate-50 pt-2 pb-1 flex items-center justify-end gap-2">
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-10 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>Salvar Alterações da Ficha</span>
@@ -710,8 +711,8 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
           ) : (
             <div className="space-y-4">
               <form onSubmit={handleSendNote} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5">
-                <label className="block text-[11px] font-bold uppercase text-slate-500">
-                  Registrar Nova Nota / Evolução do Atendimento
+                <label className="block text-xs font-bold text-slate-800">
+                  Registrar nova nota do atendimento
                 </label>
                 <textarea
                   rows={3}

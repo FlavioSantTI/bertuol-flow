@@ -134,17 +134,17 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-[#147A80] px-6 py-4 text-white flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#147A80]">
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">Disparar WhatsApp</h3>
-              <p className="text-xs text-teal-100 font-mono tabular-nums">
+              <h3 className="font-bold text-sm text-slate-900">Disparar WhatsApp</h3>
+              <p className="text-xs text-slate-500 font-mono tabular-nums">
                 {opportunity.patientName} · {CRMService.formatPhoneDisplay(opportunity.patientPhone)}
               </p>
             </div>
@@ -153,7 +153,8 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -178,13 +179,13 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
 
           {/* Select Template */}
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1.5">
-              Modelo de Mensagem
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Modelo de mensagem
             </label>
             <select
               value={selectedTemplateId}
               onChange={(e) => handleTemplateChange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-xs rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#147A80] focus:bg-white cursor-pointer"
+              className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-xs rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:bg-white cursor-pointer"
             >
               {opportunity.mensagemWhatsapp && (
                 <option value={SUPABASE_PREFILLED_TEMPLATE_ID}>
@@ -202,8 +203,8 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
           {/* Message Editor */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[11px] font-bold uppercase text-slate-500">
-                Texto da Mensagem
+              <label className="block text-xs font-semibold text-slate-700">
+                Texto da mensagem
               </label>
               <button
                 type="button"
@@ -218,16 +219,16 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
               rows={5}
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-xl p-3 focus:ring-2 focus:ring-[#147A80] focus:bg-white leading-relaxed"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] focus:bg-white leading-relaxed"
               placeholder="Digite sua mensagem para o WhatsApp..."
             />
           </div>
 
           {/* Follow-up Reminder Scheduler */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-slate-600">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Calendar className="w-3.5 h-3.5 text-[#147A80]" />
-              <span>Agendar Próximo Follow-up caso não responda</span>
+              <span>Agendar próximo follow-up caso não responda</span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               {(
@@ -243,9 +244,9 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
                   key={opt.id}
                   type="button"
                   onClick={() => setNextFollowUpDays(opt.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                     nextFollowUpDays === opt.id
-                      ? 'bg-slate-900 text-white border-slate-900'
+                      ? 'bg-[#147A80] text-white border-[#147A80]'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -258,7 +259,7 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
                 type="date"
                 value={customFollowUpDate}
                 onChange={(e) => setCustomFollowUpDate(e.target.value)}
-                className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900"
+                className="h-9 bg-white border border-slate-200 rounded-lg px-2.5 text-xs font-mono text-slate-900"
               />
             )}
           </div>
@@ -269,7 +270,7 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
+            className="h-9 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-100 cursor-pointer"
           >
             Cancelar
           </button>
@@ -277,11 +278,11 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
           <button
             type="button"
             onClick={handleSendWhatsApp}
-            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer flex items-center gap-2"
+            className="h-9 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-2"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Abrir no WhatsApp e Registrar Contato</span>
-            <ExternalLink className="w-3.5 h-3.5 text-emerald-200" />
+            <ExternalLink className="w-3.5 h-3.5 text-teal-100" />
           </button>
         </div>
       </div>

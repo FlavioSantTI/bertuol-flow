@@ -44,7 +44,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
             download
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
             title="Baixar arquivo"
           >
             <Download className="w-4 h-4" />
@@ -82,8 +82,8 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
         )}
 
         {mediaType === 'document' && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-lg w-full text-center text-white space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-3xl bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center mx-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-lg w-full text-center text-white space-y-4 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center mx-auto">
               <FileText className="w-8 h-8" />
             </div>
             <div>
@@ -97,7 +97,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
               download
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Baixar Documento</span>

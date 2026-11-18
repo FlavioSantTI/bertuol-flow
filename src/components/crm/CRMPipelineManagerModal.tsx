@@ -164,18 +164,18 @@ export const CRMPipelineManagerModal: React.FC<CRMPipelineManagerModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header */}
-        <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center">
-              <Layers className="w-4 h-4 text-teal-300" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center">
+              <Layers className="w-4 h-4 text-[#147A80]" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">Gerenciador de Funis & Etapas</h3>
-              <p className="text-xs text-slate-300">
-                Crie novos funis comerciais, customize colunas e configure notas operacionais da equipe
+              <h3 className="font-bold text-sm text-slate-900">Gerenciador de Funis e Etapas</h3>
+              <p className="text-xs text-slate-500">
+                Crie novos funis comerciais, customize colunas e configure diretrizes operacionais
               </p>
             </div>
           </div>
@@ -183,7 +183,8 @@ export const CRMPipelineManagerModal: React.FC<CRMPipelineManagerModalProps> = (
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -193,8 +194,8 @@ export const CRMPipelineManagerModal: React.FC<CRMPipelineManagerModalProps> = (
           {/* Left column: Existing Pipelines List */}
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Funis Ativos ({pipelines.length})
+              <h4 className="text-xs font-bold text-slate-700">
+                Funis ativos ({pipelines.length})
               </h4>
               <button
                 type="button"

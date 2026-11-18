@@ -20,6 +20,8 @@ import {
   Check,
   TrendingUp,
   Sparkles,
+  Pause,
+  Play,
 } from 'lucide-react';
 import type { RewardRedemption, RewardCatalogItem, GamificationRule } from '../types/database';
 
@@ -293,40 +295,38 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] animate-in fade-in font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-linear-to-r from-[#147A80] via-[#0f5c61] to-[#147A80] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xs border border-white/20">
-              <Gift className="w-5 h-5 text-amber-300" />
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+              <Gift className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-black tracking-tight">Gestão da Gamificação & Clube Sorriso</h2>
-                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 font-black text-[10px]">
-                  CRUD Ativo
-                </span>
-              </div>
-              <p className="text-xs text-teal-100 font-medium">Controle de Regras (RF05), Prêmios (RF06), Vouchers e Pontos</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-slate-900 truncate">
+                Gestão da Gamificação e Clube Sorriso
+              </h2>
+              <p className="text-xs text-slate-500">Controle de regras, prêmios, vouchers e pontos</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+            aria-label="Fechar modal"
+            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-gray-200 bg-gray-50/80 px-3 pt-2 gap-1.5 overflow-x-auto text-xs font-bold scrollbar-none">
+        <div className="flex border-b border-slate-200 bg-slate-50/70 px-4 pt-2 gap-1.5 overflow-x-auto text-xs font-medium no-scrollbar">
           <button
             onClick={() => setActiveTab('claim')}
-            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+            className={`pb-2.5 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
               activeTab === 'claim'
-                ? 'border-[#147A80] text-[#147A80]'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-[#147A80] text-[#147A80] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <QrCode className="w-4 h-4" />
@@ -335,34 +335,34 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
 
           <button
             onClick={() => setActiveTab('rules')}
-            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+            className={`pb-2.5 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 tabular-nums ${
               activeTab === 'rules'
-                ? 'border-[#147A80] text-[#147A80]'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-[#147A80] text-[#147A80] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Sliders className="w-4 h-4" />
-            <span>CRUD Regras ({rules.length})</span>
+            <span>Regras ({rules.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('rewards')}
-            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+            className={`pb-2.5 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 tabular-nums ${
               activeTab === 'rewards'
-                ? 'border-[#147A80] text-[#147A80]'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-[#147A80] text-[#147A80] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Package className="w-4 h-4" />
-            <span>CRUD Prêmios ({rewards.length})</span>
+            <span>Prêmios ({rewards.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('patients')}
-            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+            className={`pb-2.5 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
               activeTab === 'patients'
-                ? 'border-[#147A80] text-[#147A80]'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-[#147A80] text-[#147A80] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -371,10 +371,10 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
 
           <button
             onClick={() => setActiveTab('vouchers')}
-            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+            className={`pb-2.5 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 tabular-nums ${
               activeTab === 'vouchers'
-                ? 'border-[#147A80] text-[#147A80]'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-[#147A80] text-[#147A80] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Ticket className="w-4 h-4" />
@@ -383,25 +383,22 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
         </div>
 
         {/* Body Content */}
-        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
-          {/* ========================================================
-              TAB 1: VALIDAR VOUCHER / BAIXA
-          ======================================================== */}
+        <div className="p-5 overflow-y-auto space-y-4 flex-1 bg-[#F8FAFC]/40">
           {activeTab === 'claim' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
-                <Gift className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
+                <Gift className="w-4 h-4 text-[#147A80] shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold">Como funciona a entrega do brinde:</p>
-                  <p className="text-[11px] text-amber-800 mt-0.5">
+                  <p className="font-semibold text-slate-900">Como funciona a entrega do brinde:</p>
+                  <p className="text-slate-600 mt-0.5">
                     O paciente apresentará o código no celular dele (ex: <strong>BT-4892</strong>). Digite o código abaixo para dar a baixa e entregar o brinde correspondente.
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-700 block">
-                  Código do Voucher (ex: BT-1234):
+                <label className="text-xs font-medium text-slate-700 block">
+                  Código do Voucher (ex: BT-1234)
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -409,19 +406,19 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                     value={secretCode}
                     onChange={(e) => setSecretCode(e.target.value.toUpperCase())}
                     placeholder="BT-____"
-                    className="flex-1 px-4 py-3 rounded-2xl border border-gray-300 text-lg font-black tracking-widest text-[#147A80] uppercase focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    className="flex-1 h-11 px-4 rounded-lg bg-white border border-slate-300 text-base font-semibold tracking-widest text-[#147A80] uppercase focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                   />
                   <button
                     disabled={isProcessing || !secretCode.trim()}
                     onClick={() => handleClaim()}
-                    className="px-6 py-3 rounded-2xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-sm flex items-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                    className="h-11 px-5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
                   >
                     {isProcessing ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Validar & Entregar</span>
+                        <span>Validar e Entregar</span>
                       </>
                     )}
                   </button>
@@ -456,69 +453,65 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
             </div>
           )}
 
-          {/* ========================================================
-              TAB 2: CRUD DE REGRAS DE PONTUAÇÃO (RF05)
-          ======================================================== */}
           {activeTab === 'rules' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  <h3 className="text-xs font-semibold text-slate-700">
                     Regras de Pontuação Automática
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Defina quantos pontos o paciente ganha por ação no consultório ou no app.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAddingRule(!isAddingRule)}
-                  className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Nova Regra</span>
                 </button>
               </div>
 
-              {/* Add Rule Form */}
               {isAddingRule && (
                 <form
                   onSubmit={handleCreateRule}
-                  className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3 animate-in fade-in"
+                  className="p-4 rounded-xl bg-white border border-slate-200 space-y-3"
                 >
-                  <h4 className="text-xs font-black text-[#147A80] uppercase">Criar Nova Regra de Pontuação</h4>
+                  <h4 className="text-xs font-semibold text-[#147A80]">Criar Nova Regra de Pontuação</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2">
-                      <label className="text-[11px] font-bold text-gray-700 block mb-1">Título da Ação:</label>
+                      <label className="text-xs font-medium text-slate-700 block mb-1">Título da Ação</label>
                       <input
                         type="text"
                         required
                         placeholder="Ex: Indicação de Paciente"
                         value={newRuleTitle}
                         onChange={(e) => setNewRuleTitle(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                        className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-gray-700 block mb-1">Pontos Ganhos:</label>
+                      <label className="text-xs font-medium text-slate-700 block mb-1">Pontos Ganhos</label>
                       <input
                         type="number"
                         required
                         min="1"
                         value={newRulePoints}
                         onChange={(e) => setNewRulePoints(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                        className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-gray-700 block mb-1">Descrição Detalhada:</label>
+                    <label className="text-xs font-medium text-slate-700 block mb-1">Descrição Detalhada</label>
                     <input
                       type="text"
                       placeholder="Ex: Paciente indicou um colega que compareceu"
                       value={newRuleDesc}
                       onChange={(e) => setNewRuleDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
@@ -526,13 +519,13 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsAddingRule(false)}
-                      className="px-3 py-1.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      className="h-9 px-3.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs cursor-pointer shadow-xs"
+                      className="h-9 px-4 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs cursor-pointer"
                     >
                       Salvar Regra
                     </button>
@@ -540,40 +533,39 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                 </form>
               )}
 
-              {/* Rules List */}
-              <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
                 {rules.map((rule) => (
-                  <div key={rule.id} className="p-3.5 flex items-center justify-between text-xs hover:bg-gray-50 transition-colors">
+                  <div key={rule.id} className="p-3.5 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
                     <div className="min-w-0 pr-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 text-xs">{rule.title}</span>
+                        <span className="font-semibold text-slate-900">{rule.title}</span>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            rule.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                          className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+                            rule.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                           }`}
                         >
                           {rule.is_active ? 'Ativa' : 'Desativada'}
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{rule.description}</p>
-                      <span className="text-[10px] text-gray-400 font-mono">Gatilho: {rule.trigger_event}</span>
+                      <p className="text-xs text-slate-500 mt-0.5">{rule.description}</p>
+                      <span className="text-[11px] text-slate-400 font-mono">Gatilho: {rule.trigger_event}</span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+                      <span className="text-xs font-semibold text-[#147A80] tabular-nums">
                         +{rule.points_reward} pts
                       </span>
                       <button
                         onClick={() => handleToggleRule(rule)}
                         title={rule.is_active ? 'Desativar Regra' : 'Ativar Regra'}
-                        className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 cursor-pointer"
+                        className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
                       >
-                        {rule.is_active ? '⏸' : '▶'}
+                        {rule.is_active ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                       </button>
                       <button
                         onClick={() => handleDeleteRule(rule.id)}
                         title="Remover Regra"
-                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer"
+                        className="w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -584,80 +576,76 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
             </div>
           )}
 
-          {/* ========================================================
-              TAB 3: CRUD DO CATÁLOGO DE PRÊMIOS (RF06)
-          ======================================================== */}
           {activeTab === 'rewards' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                    Catálogo de Brindes & Prêmios
+                  <h3 className="text-xs font-semibold text-slate-700">
+                    Catálogo de Brindes e Prêmios
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Cadastre novos mimos, controle de estoque e pontuação necessária para resgate.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAddingReward(!isAddingReward)}
-                  className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Novo Prêmio</span>
                 </button>
               </div>
 
-              {/* Add Reward Form */}
               {isAddingReward && (
                 <form
                   onSubmit={handleCreateReward}
-                  className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-3 animate-in fade-in"
+                  className="p-4 rounded-xl bg-white border border-slate-200 space-y-3"
                 >
-                  <h4 className="text-xs font-black text-amber-900 uppercase">Cadastrar Novo Brinde</h4>
+                  <h4 className="text-xs font-semibold text-[#147A80]">Cadastrar Novo Brinde</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-2">
-                      <label className="text-[11px] font-bold text-gray-700 block mb-1">Título do Brinde:</label>
+                      <label className="text-xs font-medium text-slate-700 block mb-1">Título do Brinde</label>
                       <input
                         type="text"
                         required
                         placeholder="Ex: Kit Clareamento Caseiro"
                         value={newRewardTitle}
                         onChange={(e) => setNewRewardTitle(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                        className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-gray-700 block mb-1">Pontos Exigidos:</label>
+                      <label className="text-xs font-medium text-slate-700 block mb-1">Pontos Exigidos</label>
                       <input
                         type="number"
                         required
                         min="10"
                         value={newRewardPoints}
                         onChange={(e) => setNewRewardPoints(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                        className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-gray-700 block mb-1">Estoque Inicial:</label>
+                      <label className="text-xs font-medium text-slate-700 block mb-1">Estoque Inicial</label>
                       <input
                         type="number"
                         required
                         min="0"
                         value={newRewardStock}
                         onChange={(e) => setNewRewardStock(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                        className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-gray-700 block mb-1">Descrição:</label>
+                    <label className="text-xs font-medium text-slate-700 block mb-1">Descrição</label>
                     <input
                       type="text"
                       placeholder="Ex: Estojo completo com bisnagas e moldeira"
                       value={newRewardDesc}
                       onChange={(e) => setNewRewardDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
@@ -665,13 +653,13 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsAddingReward(false)}
-                      className="px-3 py-1.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      className="h-9 px-3.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs cursor-pointer shadow-xs"
+                      className="h-9 px-4 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs cursor-pointer"
                     >
                       Salvar Brinde
                     </button>
@@ -679,43 +667,41 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                 </form>
               )}
 
-              {/* Rewards Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {rewards.map((reward) => (
                   <div
                     key={reward.id}
-                    className="p-4 rounded-2xl bg-white border border-gray-200 text-xs space-y-2 relative shadow-xs"
+                    className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2.5"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 pr-2">
-                        <h4 className="font-bold text-gray-900 text-sm truncate">{reward.title}</h4>
-                        <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{reward.description}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-slate-900 text-sm truncate">{reward.title}</h4>
+                        <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{reward.description}</p>
                       </div>
                       <button
                         onClick={() => handleDeleteReward(reward.id)}
-                        className="text-gray-400 hover:text-rose-600 transition-colors p-1"
+                        className="text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                         title="Excluir Prêmio"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between border-t border-gray-100">
-                      <span className="font-black text-sm text-[#147A80]">{reward.points_required} pts</span>
+                    <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                      <span className="font-semibold text-sm text-[#147A80] tabular-nums">{reward.points_required} pts</span>
 
-                      {/* Stock Adjustment Controls */}
-                      <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-xl border border-gray-200">
-                        <span className="text-[10px] text-gray-500 font-bold">Estoque:</span>
+                      <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 tabular-nums">
+                        <span className="text-[11px] text-slate-500 font-medium">Estoque:</span>
                         <button
                           onClick={() => handleUpdateStock(reward.id, reward.stock_available, -1)}
-                          className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 font-bold text-xs flex items-center justify-center cursor-pointer"
+                          className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 font-semibold text-xs flex items-center justify-center cursor-pointer"
                         >
                           -
                         </button>
-                        <span className="font-black text-gray-900 px-1">{reward.stock_available}</span>
+                        <span className="font-semibold text-slate-900 px-1">{reward.stock_available}</span>
                         <button
                           onClick={() => handleUpdateStock(reward.id, reward.stock_available, 1)}
-                          className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 font-bold text-xs flex items-center justify-center cursor-pointer"
+                          className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 font-semibold text-xs flex items-center justify-center cursor-pointer"
                         >
                           +
                         </button>
@@ -727,76 +713,72 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
             </div>
           )}
 
-          {/* ========================================================
-              TAB 4: GESTÃO DE PONTOS DE PACIENTES
-          ======================================================== */}
           {activeTab === 'patients' && (
             <div className="space-y-4">
-              {/* Credit Points Form */}
               <form
                 onSubmit={handleCreditPoints}
-                className="p-4 rounded-2xl bg-linear-to-r from-teal-50 to-emerald-50 border border-teal-200 space-y-3"
+                className="p-4 rounded-xl bg-white border border-slate-200 space-y-3"
               >
-                <div className="flex items-center gap-2 text-[#147A80] font-black text-xs uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                <div className="flex items-center gap-2 text-[#147A80] font-semibold text-xs">
+                  <Sparkles className="w-4 h-4" />
                   <span>Lançamento Manual de Pontos Avulsos</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-[11px] font-bold text-gray-700 block mb-1">Telefone do Paciente:</label>
+                    <label className="text-xs font-medium text-slate-700 block mb-1">Telefone do Paciente</label>
                     <input
                       type="text"
                       required
                       placeholder="63984123456"
                       value={creditPhone}
                       onChange={(e) => setCreditPhone(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-gray-700 block mb-1">Nome (opcional):</label>
+                    <label className="text-xs font-medium text-slate-700 block mb-1">Nome (opcional)</label>
                     <input
                       type="text"
                       placeholder="Carlos Henrique"
                       value={creditName}
                       onChange={(e) => setCreditName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-gray-700 block mb-1">Quantidade de Pontos:</label>
+                    <label className="text-xs font-medium text-slate-700 block mb-1">Quantidade de Pontos</label>
                     <input
                       type="number"
                       required
                       value={creditPoints}
                       onChange={(e) => setCreditPoints(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs font-bold text-[#147A80] focus:ring-2 focus:ring-[#147A80]"
+                      className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#147A80] focus:outline-none focus:ring-2 focus:ring-[#147A80] tabular-nums"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-gray-700 block mb-1">Motivo do Lançamento:</label>
+                  <label className="text-xs font-medium text-slate-700 block mb-1">Motivo do Lançamento</label>
                   <input
                     type="text"
                     required
                     placeholder="Ex: Cortesia de aniversário / Gincana de prevenção"
                     value={creditDesc}
                     onChange={(e) => setCreditDesc(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-gray-300 text-xs focus:ring-2 focus:ring-[#147A80]"
+                    className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                   />
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
                   {creditStatus ? (
-                    <span className="text-xs font-bold text-emerald-700 animate-in fade-in">{creditStatus}</span>
+                    <span className="text-xs font-medium text-emerald-700">{creditStatus}</span>
                   ) : <span />}
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    className="h-9 px-4 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     <span>Lançar Pontuação</span>
@@ -804,28 +786,23 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                 </div>
               </form>
 
-              {/* Patients Points Table */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-gray-700 uppercase">
+                <h4 className="text-xs font-semibold text-slate-700 tabular-nums">
                   Pacientes com Pontuação Ativa ({patients.length})
                 </h4>
                 {patients.length === 0 ? (
-                  <p className="text-xs text-gray-400 py-4 text-center">Nenhum paciente com pontos registrados ainda.</p>
+                  <p className="text-xs text-slate-400 py-4 text-center">Nenhum paciente com pontos registrados ainda.</p>
                 ) : (
-                  <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
                     {patients.map((p) => (
-                      <div key={p.phone} className="p-3 flex items-center justify-between text-xs hover:bg-gray-50">
+                      <div key={p.phone} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50">
                         <div>
-                          <p className="font-bold text-gray-900">{p.patientName}</p>
-                          <p className="text-[11px] text-gray-400 font-mono">{p.phone}</p>
+                          <p className="font-semibold text-slate-900">{p.patientName}</p>
+                          <p className="text-[11px] text-slate-400 font-mono tabular-nums">{p.phone}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                            Nível {p.tier}
-                          </span>
-                          <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
-                            {p.totalPoints} pts
-                          </span>
+                        <div className="flex items-center gap-2.5 tabular-nums">
+                          <span className="text-xs text-slate-500">Nível {p.tier}</span>
+                          <span className="font-semibold text-[#147A80]">{p.totalPoints} pts</span>
                         </div>
                       </div>
                     ))}
@@ -835,17 +812,14 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
             </div>
           )}
 
-          {/* ========================================================
-              TAB 5: HISTÓRICO DE VOUCHERS GERADOS
-          ======================================================== */}
           {activeTab === 'vouchers' && (
             <div className="space-y-3">
               {vouchers.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-xs">
+                <div className="text-center py-8 text-slate-400 text-xs">
                   Nenhum resgate de voucher registrado ainda.
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+                <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
                   {vouchers.map((v) => {
                     const code = v.secretCode || v.secret_code || 'BT-0000';
                     const title = v.rewardTitle || v.reward?.title || 'Brinde';
@@ -853,35 +827,35 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
                     const phone = v.patientPhone || v.patient_phone || '';
                     const claimedDate = v.claimedAt || v.claimed_at;
                     return (
-                      <div key={v.id} className="p-3.5 bg-white hover:bg-gray-50 flex items-center justify-between text-xs">
+                      <div key={v.id} className="p-3.5 bg-white hover:bg-slate-50 flex items-center justify-between text-xs">
                         <div className="min-w-0 pr-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-sm text-[#147A80] tracking-wider">{code}</span>
+                            <span className="font-semibold text-sm text-[#147A80] tracking-wider tabular-nums">{code}</span>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
                                 v.status === 'claimed'
-                                  ? 'bg-gray-100 text-gray-600'
-                                  : 'bg-emerald-100 text-emerald-800'
+                                  ? 'bg-slate-100 text-slate-600'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               }`}
                             >
                               {v.status === 'claimed' ? 'Entregue' : 'Pendente de Retirada'}
                             </span>
                           </div>
-                          <p className="font-bold text-gray-900 mt-0.5">{title}</p>
-                          <p className="text-[10px] text-gray-400">
-                            Paciente: <strong>{name}</strong> ({phone})
+                          <p className="font-semibold text-slate-900 mt-0.5">{title}</p>
+                          <p className="text-xs text-slate-500">
+                            Paciente: <strong className="font-medium text-slate-700">{name}</strong> ({phone})
                           </p>
                         </div>
 
                         {v.status !== 'claimed' ? (
                           <button
                             onClick={() => handleClaim(code)}
-                            className="px-3 py-1.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-bold text-xs shrink-0 cursor-pointer shadow-2xs"
+                            className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-medium text-xs shrink-0 cursor-pointer"
                           >
                             Dar Baixa
                           </button>
                         ) : (
-                          <span className="text-[10px] text-gray-400 shrink-0">
+                          <span className="text-xs text-slate-400 shrink-0 tabular-nums">
                             Retirado em {new Date(claimedDate || '').toLocaleDateString('pt-BR')}
                           </span>
                         )}
@@ -895,14 +869,14 @@ export const VoucherRedemptionModal: React.FC<VoucherRedemptionModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs text-gray-500">
-          <span className="flex items-center gap-1.5 font-medium text-[11px]">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="px-5 py-3.5 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
+          <span className="flex items-center gap-1.5 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#147A80]" />
             Controle de Gamificação Bertuol Odontologia
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 font-bold text-xs text-gray-800 transition-colors cursor-pointer"
+            className="h-10 px-4 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 font-medium text-xs sm:text-sm text-slate-700 transition-colors cursor-pointer"
           >
             Fechar
           </button>

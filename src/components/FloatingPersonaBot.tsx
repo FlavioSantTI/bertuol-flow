@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, X, Check, Stethoscope, Crown, Users, Sparkles, ChevronRight, ShieldCheck, Building, KeyRound, LogOut } from 'lucide-react';
+import { Bot, X, Check, Stethoscope, Crown, Users, ShieldCheck, Building, KeyRound, LogOut } from 'lucide-react';
 import { AppUserContext, Dentist, Clinic } from '../types/database';
 
 interface FloatingPersonaBotProps {
@@ -83,23 +83,24 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end pointer-events-auto">
       {/* Floating Chat/Widget Card */}
       {isOpen && (
-        <div className="mb-3 w-[340px] sm:w-[380px] bg-white rounded-3xl shadow-2xl border border-amber-200/80 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="mb-3 w-[340px] sm:w-[380px] bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Bot Card Header */}
-          <div className="bg-linear-to-r from-[#FFB347] to-[#ff981a] p-4 text-white flex items-center justify-between shadow-xs">
+          <div className="px-4 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-inner">
-                <Bot className="w-6 h-6 animate-bounce" />
+              <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] flex items-center justify-center shrink-0">
+                <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold leading-tight">Robô Simulador de Visão</h3>
-                <span className="text-[11px] text-amber-100 font-medium">
-                  Alterne papéis para testar a UI/UX
+                <h3 className="text-sm font-bold text-slate-900 leading-tight">Simulador de Visão</h3>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Alterne papéis para testar a interface
                 </span>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               title="Fechar janela"
             >
               <X className="w-4 h-4" />
@@ -107,16 +108,17 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
           </div>
 
           {/* Bot Card Content */}
-          <div className="p-4 space-y-3 bg-[#FAF8F5]">
-            <div className="text-xs text-gray-600 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs">
-              <span className="font-bold text-gray-900 block mb-0.5">Olá! Eu sou o assistente de testes 🤖</span>
-              Escolha qual perfil você quer simular agora para verificar o que o usuário deve ou não enxergar na tela:
+          <div className="p-4 space-y-2.5 bg-slate-50/70">
+            <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-900 block mb-0.5">Assistente de Testes de Perfil</span>
+              Escolha qual perfil simular agora para verificar as permissões na tela:
             </div>
 
             {/* Profile 1: Dentist View */}
             <button
+              type="button"
               onClick={() => handleSelectRole('dentist')}
-              className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+              className={`w-full p-3 rounded-xl border text-left transition-colors cursor-pointer flex items-start gap-3 ${
                 isDentist
                   ? 'bg-emerald-50/90 border-emerald-400 ring-2 ring-emerald-500/20 shadow-xs'
                   : 'bg-white hover:bg-emerald-50/40 border-gray-200'
@@ -232,14 +234,15 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
             {/* User Management Direct Button */}
             {(isAdmin || isClinicaAdmin) && onOpenUserManagementModal && (
               <button
+                type="button"
                 onClick={() => {
                   setIsOpen(false);
                   onOpenUserManagementModal();
                 }}
-                className="w-full py-2.5 px-3 rounded-2xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer mt-1"
+                className="w-full h-9 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer mt-1"
               >
                 <Users className="w-4 h-4" />
-                <span>Abrir Gestão de Usuários (CRUDs)</span>
+                <span>Abrir Gestão de Usuários</span>
               </button>
             )}
 
@@ -273,40 +276,36 @@ export const FloatingPersonaBot: React.FC<FloatingPersonaBotProps> = ({
           </div>
 
           {/* Footer Info */}
-          <div className="p-3 bg-amber-50 border-t border-amber-200/70 text-[11px] text-amber-900 flex items-center justify-between">
-            <span className="flex items-center gap-1 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+          <div className="px-4 py-2.5 bg-white border-t border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#147A80]" />
               Fase de Testes • Unidade Palmas
             </span>
-            <span className="font-bold text-amber-800">Piloto Ativo</span>
+            <span className="font-semibold text-[#147A80]">Piloto Ativo</span>
           </div>
         </div>
       )}
 
-      {/* Robot Floating Action Button (Widget Bubble) */}
+      {/* Robot Floating Action Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative flex items-center gap-2 px-3.5 py-3 rounded-full bg-linear-to-r from-[#FFB347] to-[#ff981a] hover:from-[#ffa328] hover:to-[#f08c10] active:scale-95 text-white font-bold text-xs shadow-xl shadow-amber-500/30 transition-all cursor-pointer border-2 border-white"
-        title="Simulador de Perfil (Robozinho)"
-        aria-label="Abrir Robô Simulador de Visão"
+        className="group relative flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-lg transition-colors cursor-pointer border border-white/20"
+        title="Simulador de Perfil"
+        aria-label="Abrir Simulador de Visão"
       >
-        {/* Animated Robot Icon */}
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
-          <Bot className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+        <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0">
+          <Bot className="w-4 h-4" />
         </div>
 
-        {/* Text Pill Badge */}
         <div className="flex flex-col text-left pr-1">
-          <span className="text-[10px] uppercase tracking-wider text-amber-100 font-extrabold leading-none">
+          <span className="text-[10px] text-teal-100 font-medium leading-none">
             Simulador
           </span>
-          <span className="text-xs font-black leading-tight">
-            {isDentist ? '🩺 Dentista' : isAdmin ? '👑 Admin' : '🛎️ Recepção'}
+          <span className="text-xs font-bold leading-tight mt-0.5">
+            {isDentist ? 'Dentista' : isAdmin ? 'Admin' : 'Recepção'}
           </span>
         </div>
-
-        {/* Pulse Indicator */}
-        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
       </button>
     </div>
   );

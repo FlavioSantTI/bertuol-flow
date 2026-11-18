@@ -27,20 +27,15 @@ export const BertuolBotAvatar: React.FC<BertuolBotAvatarProps> = ({
 
   return (
     <div className={`relative inline-flex items-center justify-center shrink-0 ${sizeMap[size]} ${className}`}>
-      {/* Animated Radar Pulse Waves (Gold & Teal glow) */}
+      {/* Subtle Radar Ring */}
       {isAlert && showRadarWaves && (
-        <>
-          <span className="absolute -inset-1.5 rounded-full bg-amber-400/50 animate-ping opacity-85" />
-          <span className="absolute -inset-3 rounded-full bg-amber-500/30 animate-pulse delay-150" />
-        </>
+        <span className="absolute -inset-1 rounded-full bg-amber-400/20" />
       )}
 
-      {/* Futuristic Animated SVG Bertuol Bot com Bordas Douradas Bertuol */}
+      {/* Bertuol Bot SVG */}
       <svg
         viewBox="0 0 100 100"
-        className={`w-full h-full drop-shadow-[0_4px_8px_rgba(217,119,6,0.35)] select-none ${
-          isAlert ? 'animate-[bounce_1.5s_infinite]' : isHappy ? 'animate-[pulse_1s_infinite]' : 'animate-[bounce_3s_infinite]'
-        }`}
+        className="w-full h-full drop-shadow-[0_2px_6px_rgba(20,122,128,0.2)] select-none"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -102,10 +97,7 @@ export const BertuolBotAvatar: React.FC<BertuolBotAvatarProps> = ({
 
         {/* --- Antenna & Radar Orb (Borda Dourada) --- */}
         <line x1="50" y1="20" x2="50" y2="9" stroke="url(#botGoldBorder)" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="50" cy="8" r="5" fill="url(#botAmber)" stroke="url(#botGoldBorder)" strokeWidth="1.5" className="animate-pulse" />
-        {isAlert && (
-          <circle cx="50" cy="8" r="8.5" stroke="url(#botGoldBorder)" strokeWidth="1.5" opacity="0.75" className="animate-ping" />
-        )}
+        <circle cx="50" cy="8" r="5" fill="url(#botAmber)" stroke="url(#botGoldBorder)" strokeWidth="1.5" />
 
         {/* --- Ear Pods com Borda Dourada --- */}
         <rect x="13" y="37" width="7" height="19" rx="3.5" fill="url(#botTeal)" stroke="url(#botGoldBorder)" strokeWidth="1.5" />
