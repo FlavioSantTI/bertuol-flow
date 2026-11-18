@@ -2421,6 +2421,9 @@ class DataService {
     toTime: string;
     procedures: string;
     notes?: string;
+    externalAppointmentId?: number;
+    patientPersonId?: number;
+    categoryId?: string;
   }): Appointment {
     const clinic = this.getClinicById(payload.clinicId) || this.clinics[0];
     const dentist = this.dentists.find((d) => d.id === payload.dentistId) || this.dentists[0];
@@ -2430,13 +2433,14 @@ class DataService {
     const cleanPhone = payload.patientPhone.replace(/\D/g, '');
     let patient = this.patients.find(
       (p) =>
+        (payload.patientPersonId && Number(p.id) === Number(payload.patientPersonId)) ||
         (cleanPhone && p.MobilePhone.replace(/\D/g, '').endsWith(cleanPhone.slice(-8))) ||
         p.Name.trim().toLowerCase() === payload.patientName.trim().toLowerCase()
     );
 
     if (!patient) {
       patient = {
-        id: Math.floor(Date.now() % 1000000000),
+        id: payload.patientPersonId || Math.floor(Date.now() % 1000000000),
         Name: payload.patientName.trim(),
         MobilePhone: payload.patientPhone.trim(),
         Age: 32,
@@ -2447,16 +2451,16 @@ class DataService {
       this.patients.unshift(patient);
     }
 
-    const numericId = Math.floor(Date.now() % 1000000000);
+    const numericId = payload.externalAppointmentId || Math.floor(Date.now() % 1000000000);
     const atomicDate = Number(payload.dateKey.replace(/-/g, '') + payload.fromTime.replace(':', ''));
-    const defaultCategory = this.categories[0]?.id || '5857665617494016';
+    const defaultCategory = payload.categoryId || this.categories[0]?.id || '5857665617494016';
 
     const newAppt: Appointment = {
       id: numericId,
       AtomicDate: atomicDate,
       Clinic_BusinessId: clinicBusinessId,
       Dentist_PersonId: dentist?.id || payload.dentistId,
-      Patient_PersonId: patient.id,
+      Patient_PersonId: payload.patientPersonId || patient.id,
       PatientName: payload.patientName.trim(),
       MobilePhone: payload.patientPhone.trim(),
       Procedures: payload.procedures.trim() || 'Consulta / Avaliação Odontológica',

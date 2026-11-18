@@ -2627,6 +2627,424 @@ app.get('/api/clinicorp/appointments', async (req: Request, res: Response) => {
   }
 });
 
+// Helper: Resolve Clinicorp credentials & businessId for a clinic
+const resolveClinicorpContext = (clinicId?: number, businessId?: number) => {
+  const clinic = MULTI_TENANT_CLINICS.find(
+    (c: any) =>
+      (clinicId && Number(c.id) === Number(clinicId)) ||
+      (businessId && Number(c.clinicorp_business_id) === Number(businessId))
+  );
+
+  const clinicKey = (clinic?.clinicorp_key || '').trim();
+  const hasRealClinicKey =
+    Boolean(clinicKey) &&
+    !clinicKey.startsWith('f77112ec-') &&
+    clinicKey !== 'live-key-configured';
+
+  const user = (
+    (hasRealClinicKey
+      ? clinic?.clinicorp_user
+      : process.env.CLINICORP_USER || clinic?.clinicorp_user) || 'qsparaisoto'
+  ).trim();
+  const key = (
+    hasRealClinicKey ? clinicKey : process.env.CLINICORP_KEY || ''
+  ).trim();
+  const baseUrl = getClinicorpBaseUrl();
+  const resolvedBusinessId = Number(
+    businessId || clinic?.clinicorp_business_id || 5053762760081408
+  );
+
+  return {
+    configured: Boolean(user && key),
+    user,
+    key,
+    baseUrl,
+    clinicBusinessId: resolvedBusinessId,
+    authHeader: 'Basic ' + Buffer.from(`${user}:${key}`).toString('base64'),
+  };
+};
+
+const parseHHMMToMinutes = (val?: string | null): number | null => {
+  if (!val || typeof val !== 'string') return null;
+  const parts = val.trim().split(':');
+  if (parts.length < 2) return null;
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+};
+
+const normalizeHHMM = (val?: string | null, fallback = '09:00'): string => {
+  if (!val || typeof val !== 'string') return fallback;
+  const parts = val.trim().split(':');
+  if (parts.length < 2) return fallback;
+  const h = String(Math.max(0, Math.min(23, Number(parts[0]) || 0))).padStart(2, '0');
+  const m = String(Math.max(0, Math.min(59, Number(parts[1]) || 0))).padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+// Endpoint: Fetch dentist live schedule & available time slots from Clinicorp API
+app.get('/api/clinicorp/dentist-schedule', async (req: Request, res: Response) => {
+  try {
+    const date = ((req.query.date as string) || new Date().toISOString().split('T')[0]).trim();
+    const dentistId = Number(req.query.dentistId || 0);
+    const clinicId = Number(req.query.clinicId || 0);
+    const businessId = Number(req.query.businessId || 0);
+
+    const ctx = resolveClinicorpContext(clinicId || undefined, businessId || undefined);
+    if (!ctx.configured) {
+      return res.status(400).json({
+        success: false,
+        code: 'CLINICORP_NOT_CONFIGURED',
+        error: 'Credenciais da API do Clinicorp (CLINICORP_KEY) não configuradas no servidor.',
+      });
+    }
+
+    const listUrl = `${ctx.baseUrl}/appointment/list?from=${encodeURIComponent(date)}&to=${encodeURIComponent(date)}&includeAssigns=X`;
+    const response = await fetch(listUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: ctx.authHeader,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({
+        success: false,
+        error: `Falha na API do Clinicorp ao consultar agenda (HTTP ${response.status})`,
+        details: errText,
+      });
+    }
+
+    const raw = await response.json();
+    const allItems = Array.isArray(raw) ? raw : [];
+
+    // Filter out canceled/deleted and match selected dentist when provided
+    const dentistItems = allItems.filter((item: any) => {
+      if (
+        item?.Canceled === 'X' ||
+        item?.Deleted === 'X' ||
+        String(item?.Status || '').toUpperCase() === 'CANCELED'
+      ) {
+        return false;
+      }
+      if (!dentistId) return true;
+      const itemDentistId = Number(
+        item?.Dentist_PersonId || item?.ScheduleToId || item?.ProfessionalId || 0
+      );
+      if (itemDentistId > 0) {
+        return itemDentistId === dentistId;
+      }
+      // Clinic-wide blocking event without specific dentist
+      return item?.ItemType === 'EVENT';
+    });
+
+    const normalized = dentistItems
+      .map((item: any, idx: number) => {
+        const fromTime = normalizeHHMM(item?.fromTime || item?.StartTime, '09:00');
+        const toTime = normalizeHHMM(item?.toTime || item?.EndTime, '09:45');
+        const itemType = String(item?.ItemType || 'APPOINTMENT').toUpperCase();
+        const label =
+          itemType === 'APPOINTMENT'
+            ? (item?.PatientName || item?.Name || 'Consulta Agendada').trim()
+            : (item?.Name || item?.Description || item?.Title || item?.Notes || 'Bloqueio / Compromisso').trim();
+
+        return {
+          id: Number(item?.id || item?.AppointmentId || 9000000 + idx),
+          itemType,
+          fromTime,
+          toTime,
+          patientName: label,
+          procedures: (item?.Procedures || item?.CategoryDescription || '').trim(),
+          status: item?.Status || item?.StatusDescription || '',
+          clinicBusinessId: Number(item?.Clinic_BusinessId || ctx.clinicBusinessId),
+          dentistPersonId: Number(item?.Dentist_PersonId || item?.ScheduleToId || dentistId),
+        };
+      })
+      .sort((a: any, b: any) => (parseHHMMToMinutes(a.fromTime) ?? 0) - (parseHHMMToMinutes(b.fromTime) ?? 0));
+
+    // Build 30-min availability slots from 08:00 to 18:30
+    const slots: Array<{ time: string; available: boolean; conflictLabel?: string }> = [];
+    for (let min = 8 * 60; min <= 18 * 60 + 30; min += 30) {
+      const hh = String(Math.floor(min / 60)).padStart(2, '0');
+      const mm = String(min % 60).padStart(2, '0');
+      const slotTime = `${hh}:${mm}`;
+      const slotEnd = min + 30;
+
+      const conflict = normalized.find((appt: any) => {
+        const s = parseHHMMToMinutes(appt.fromTime);
+        const e = parseHHMMToMinutes(appt.toTime);
+        if (s === null || e === null) return false;
+        return min < e && slotEnd > s;
+      });
+
+      slots.push({
+        time: slotTime,
+        available: !conflict,
+        conflictLabel: conflict ? `${conflict.fromTime}-${conflict.toTime} · ${conflict.patientName}` : undefined,
+      });
+    }
+
+    return res.json({
+      success: true,
+      date,
+      dentistId,
+      clinicBusinessId: ctx.clinicBusinessId,
+      appointments: normalized,
+      slots,
+      totalItemsInDay: allItems.length,
+    });
+  } catch (error: any) {
+    console.error('Erro ao consultar agenda do dentista no Clinicorp:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao consultar agenda do dentista no Clinicorp.',
+      message: error?.message,
+    });
+  }
+});
+
+// Endpoint: Locate/Create Patient + Create Appointment directly in Clinicorp API
+app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Response) => {
+  try {
+    const {
+      patientName,
+      patientPhone,
+      patientEmail,
+      patientDocumentId,
+      clinicId,
+      clinicBusinessId,
+      dentistId,
+      dateKey,
+      fromTime,
+      toTime,
+      procedures,
+      notes,
+      categoryId,
+      categoryDescription,
+    } = req.body || {};
+
+    if (!patientName || !String(patientName).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome do paciente é obrigatório para agendar no Clinicorp.',
+      });
+    }
+    if (!dateKey || !fromTime || !toTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Data, horário de início e horário de término são obrigatórios.',
+      });
+    }
+
+    const ctx = resolveClinicorpContext(
+      clinicId ? Number(clinicId) : undefined,
+      clinicBusinessId ? Number(clinicBusinessId) : undefined
+    );
+
+    if (!ctx.configured) {
+      return res.status(400).json({
+        success: false,
+        code: 'CLINICORP_NOT_CONFIGURED',
+        error: 'Credenciais da API do Clinicorp (CLINICORP_KEY) não configuradas no servidor.',
+      });
+    }
+
+    const cleanName = String(patientName).trim();
+    const cleanPhone = String(patientPhone || '').replace(/\D/g, '');
+    const cleanDoc = String(patientDocumentId || '').replace(/\D/g, '');
+
+    // Step 1: Locate patient in Clinicorp via GET /patient/get
+    let patientPersonId: number | undefined;
+    let patientWasCreated = false;
+
+    const extractPatientId = (data: any): number | undefined => {
+      const obj = Array.isArray(data) ? data[0] : data;
+      const rawId = obj?.id || obj?.PatientId || obj?.PersonId || obj?.Patient_PersonId;
+      return rawId ? Number(rawId) : undefined;
+    };
+
+    try {
+      if (cleanPhone.length >= 8 || cleanDoc.length >= 11) {
+        const query = new URLSearchParams({ subscriber_id: ctx.user });
+        if (cleanPhone.length >= 8) query.set('Phone', cleanPhone);
+        else if (cleanDoc.length >= 11) query.set('OtherDocumentId', cleanDoc);
+
+        const getRes = await fetch(`${ctx.baseUrl}/patient/get?${query.toString()}`, {
+          method: 'GET',
+          headers: {
+            Authorization: ctx.authHeader,
+            Accept: 'application/json',
+          },
+        });
+        if (getRes.ok) {
+          const getJson = await getRes.json();
+          patientPersonId = extractPatientId(getJson);
+        }
+      }
+    } catch (lookupErr) {
+      console.warn('[Clinicorp] Aviso ao buscar paciente via /patient/get:', lookupErr);
+    }
+
+    // Step 2: Create patient via POST /patient/create if not found
+    if (!patientPersonId) {
+      try {
+        const createPatientBody: Record<string, any> = {
+          subscriber_id: ctx.user,
+          Name: cleanName,
+          IgnoreSameName: 'X',
+        };
+        if (cleanPhone.length >= 8) {
+          const numericPhone = Number(cleanPhone);
+          if (!Number.isNaN(numericPhone) && numericPhone > 0) {
+            createPatientBody.MobilePhone = numericPhone;
+          }
+        }
+        if (patientEmail && String(patientEmail).includes('@')) {
+          createPatientBody.Email = String(patientEmail).trim();
+        }
+        if (cleanDoc.length >= 11) {
+          const numericDoc = Number(cleanDoc);
+          if (!Number.isNaN(numericDoc)) {
+            createPatientBody.OtherDocumentId = numericDoc;
+          }
+        }
+        if (notes) {
+          createPatientBody.Notes = String(notes).trim();
+        }
+
+        const createRes = await fetch(`${ctx.baseUrl}/patient/create`, {
+          method: 'POST',
+          headers: {
+            Authorization: ctx.authHeader,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(createPatientBody),
+        });
+
+        if (createRes.ok) {
+          const createJson = await createRes.json();
+          patientPersonId = extractPatientId(createJson);
+          if (patientPersonId) patientWasCreated = true;
+        } else {
+          const errCreate = await createRes.text();
+          console.warn(`[Clinicorp] /patient/create retornou HTTP ${createRes.status}:`, errCreate);
+        }
+      } catch (createErr) {
+        console.warn('[Clinicorp] Aviso ao criar paciente via /patient/create:', createErr);
+      }
+    }
+
+    // Step 3: Resolve CategoryId if not supplied
+    let resolvedCategoryId = categoryId ? Number(categoryId) : undefined;
+    let resolvedCategoryDesc = categoryDescription ? String(categoryDescription).trim() : undefined;
+
+    if (!resolvedCategoryId) {
+      try {
+        const catRes = await fetch(`${ctx.baseUrl}/appointment/list_categories`, {
+          method: 'GET',
+          headers: {
+            Authorization: ctx.authHeader,
+            Accept: 'application/json',
+          },
+        });
+        if (catRes.ok) {
+          const catList = await catRes.json();
+          if (Array.isArray(catList) && catList.length > 0) {
+            const preferred =
+              catList.find((c: any) =>
+                /consulta|avalia|retorno|proced/i.test(String(c?.Description || c?.description || c?.Name || ''))
+              ) || catList[0];
+            resolvedCategoryId = Number(preferred?.id || preferred?.CategoryId) || undefined;
+            if (!resolvedCategoryDesc) {
+              resolvedCategoryDesc = preferred?.Description || preferred?.description || preferred?.Name;
+            }
+          }
+        }
+      } catch (catErr) {
+        console.warn('[Clinicorp] Aviso ao buscar categorias:', catErr);
+      }
+    }
+
+    // Step 4: Create appointment via POST /appointment/create_appointment_by_api
+    const apptBody: Record<string, any> = {
+      PatientName: cleanName,
+      fromTime: normalizeHHMM(fromTime, '09:00'),
+      toTime: normalizeHHMM(toTime, '09:45'),
+      date: `${String(dateKey).trim()}T03:00:00.000Z`,
+      Clinic_BusinessId: ctx.clinicBusinessId,
+      Procedures: String(procedures || 'Avaliação / Consulta Odontológica').trim(),
+    };
+
+    if (patientPersonId) apptBody.Patient_PersonId = patientPersonId;
+    if (patientPhone && String(patientPhone).trim()) apptBody.MobilePhone = String(patientPhone).trim();
+    if (patientEmail && String(patientEmail).includes('@')) apptBody.Email = String(patientEmail).trim();
+    if (dentistId && Number(dentistId) > 0) apptBody.Dentist_PersonId = Number(dentistId);
+    if (resolvedCategoryId) apptBody.CategoryId = resolvedCategoryId;
+    if (resolvedCategoryDesc) apptBody.CategoryDescription = resolvedCategoryDesc;
+
+    console.log('[Clinicorp API] Enviando agendamento via /appointment/create_appointment_by_api:', {
+      ...apptBody,
+      subscriber: ctx.user,
+    });
+
+    const apptRes = await fetch(`${ctx.baseUrl}/appointment/create_appointment_by_api`, {
+      method: 'POST',
+      headers: {
+        Authorization: ctx.authHeader,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(apptBody),
+    });
+
+    const rawText = await apptRes.text();
+    let parsedAppt: any = null;
+    try {
+      parsedAppt = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      parsedAppt = { raw: rawText };
+    }
+
+    if (!apptRes.ok) {
+      console.warn(`[Clinicorp API] Erro ao criar agendamento (HTTP ${apptRes.status}):`, rawText);
+      return res.status(apptRes.status).json({
+        success: false,
+        syncedWithClinicorp: false,
+        error: `Falha ao gravar consulta no Clinicorp (HTTP ${apptRes.status})`,
+        details: parsedAppt?.message || parsedAppt?.error || rawText,
+      });
+    }
+
+    const createdObj = Array.isArray(parsedAppt) ? parsedAppt[0] : parsedAppt;
+    const clinicorpAppointmentId = Number(
+      createdObj?.id || createdObj?.AppointmentId || createdObj?.Id || 0
+    ) || undefined;
+
+    return res.json({
+      success: true,
+      syncedWithClinicorp: true,
+      clinicorpAppointmentId,
+      patientPersonId,
+      patientWasCreated,
+      categoryIdUsed: resolvedCategoryId,
+      clinicBusinessId: ctx.clinicBusinessId,
+      appointment: createdObj,
+    });
+  } catch (error: any) {
+    console.error('Erro ao criar agendamento no Clinicorp:', error);
+    return res.status(500).json({
+      success: false,
+      syncedWithClinicorp: false,
+      error: 'Erro interno ao enviar agendamento para o Clinicorp.',
+      message: error?.message,
+    });
+  }
+});
+
 // Endpoint to sync appointment categories from Clinicorp API
 app.post('/api/clinicorp/sync-categories', async (req: Request, res: Response) => {
   try {
@@ -3226,6 +3644,275 @@ app.post('/api/patient/auth/session', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message });
+  }
+});
+
+// 1b. Autenticação completa do Paciente no Portal (Celular/CPF + Senha/Token, Token Mágico ou Primeiro Acesso)
+app.post('/api/patient/auth/login', async (req: Request, res: Response) => {
+  try {
+    const {
+      mode = 'credentials',
+      identifier = '',
+      passwordOrToken = '',
+      name = '',
+      phone = '',
+      activationToken = '',
+      clinicId = 1,
+    } = req.body || {};
+
+    const cleanIdentifier = sanitizePhone(String(identifier || phone || ''));
+    const cleanTokenInput = String(passwordOrToken || activationToken || '').trim();
+    const cleanNameInput = String(name || '').trim();
+
+    // Helper: fetch patient from Supabase by phone suffix, CPF, or activation_token
+    const findPatientInSupabase = async (opts: {
+      digits?: string;
+      token?: string;
+    }): Promise<any | null> => {
+      try {
+        if (opts.token) {
+          const { data } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('activation_token', opts.token)
+            .maybeSingle();
+          if (data) return data;
+        }
+        if (opts.digits && opts.digits.length >= 8) {
+          const last8 = opts.digits.slice(-8);
+          const { data: byPhone } = await supabase
+            .from('patients')
+            .select('*')
+            .ilike('mobile_phone', `%${last8}%`)
+            .limit(1);
+          if (Array.isArray(byPhone) && byPhone.length > 0) return byPhone[0];
+
+          if (opts.digits.length >= 11) {
+            const { data: byDoc } = await supabase
+              .from('patients')
+              .select('*')
+              .ilike('document_id', `%${opts.digits}%`)
+              .limit(1);
+            if (Array.isArray(byDoc) && byDoc.length > 0) return byDoc[0];
+          }
+        }
+      } catch (err) {
+        console.warn('[Patient Auth] Aviso ao consultar Supabase:', err);
+      }
+      return null;
+    };
+
+    // Helper: lookup patient in Clinicorp API if configured
+    const findPatientInClinicorp = async (digits: string): Promise<any | null> => {
+      try {
+        if (!digits || digits.length < 8) return null;
+        const ctx = resolveClinicorpContext(Number(clinicId) || 1);
+        if (!ctx.configured) return null;
+
+        const q = new URLSearchParams({ subscriber_id: ctx.user });
+        if (digits.length === 11 && !digits.startsWith('639') && !digits.startsWith('119')) {
+          q.set('OtherDocumentId', digits);
+        } else {
+          q.set('Phone', digits);
+        }
+
+        const cRes = await fetch(`${ctx.baseUrl}/patient/get?${q.toString()}`, {
+          method: 'GET',
+          headers: { Authorization: ctx.authHeader, Accept: 'application/json' },
+        });
+        if (!cRes.ok) return null;
+        const raw = await cRes.json();
+        const obj = Array.isArray(raw) ? raw[0] : raw;
+        if (obj && (obj.Name || obj.PatientName)) {
+          return {
+            name: obj.Name || obj.PatientName,
+            mobile_phone: String(obj.MobilePhone || obj.Phone || digits).replace(/\D/g, ''),
+            document_id: obj.OtherDocumentId ? String(obj.OtherDocumentId) : null,
+            app_access_status: 'active',
+            is_active: true,
+          };
+        }
+      } catch {
+        // Ignore Clinicorp transient lookup error
+      }
+      return null;
+    };
+
+    // Mode A: Activation token auto-login from invite link
+    if (mode === 'token' || (activationToken && !cleanIdentifier)) {
+      if (!cleanTokenInput) {
+        return res.status(400).json({ success: false, error: 'Token de ativação ausente.' });
+      }
+      const matched = await findPatientInSupabase({ token: cleanTokenInput });
+      if (!matched) {
+        return res.status(401).json({
+          success: false,
+          error: 'Link de ativação expirado ou não encontrado. Entre com seu celular e senha.',
+        });
+      }
+      if (matched.app_access_status === 'blocked' || matched.is_active === false) {
+        return res.status(403).json({
+          success: false,
+          error: 'Seu acesso está bloqueado no momento. Entre em contato com a recepção.',
+        });
+      }
+
+      const resolvedPhone = sanitizePhone(matched.mobile_phone || matched.document_id || '');
+      const resolvedName = String(matched.name || 'Paciente Bertuol').trim();
+      const sessionToken = Buffer.from(`${resolvedPhone || matched.id}_${Date.now()}`).toString('base64url');
+
+      return res.json({
+        success: true,
+        token: sessionToken,
+        patient: {
+          id: matched.id,
+          name: resolvedName,
+          phone: resolvedPhone,
+          clinicId: String(matched.tenant_id || '').includes('5d30567b') ? 2 : 1,
+        },
+      });
+    }
+
+    // Mode B: Primeiro Acesso (Cadastro rápido / vinculação via QR Code do Folder)
+    if (mode === 'register') {
+      if (cleanNameInput.length < 3 || cleanIdentifier.length < 8) {
+        return res.status(400).json({
+          success: false,
+          error: 'Informe seu nome completo e celular com DDD para continuar.',
+        });
+      }
+
+      let matched = await findPatientInSupabase({ digits: cleanIdentifier });
+      if (matched && (matched.app_access_status === 'blocked' || matched.is_active === false)) {
+        return res.status(403).json({
+          success: false,
+          error: 'Este cadastro encontra-se bloqueado. Fale com a recepção da clínica.',
+        });
+      }
+
+      if (!matched) {
+        matched = await findPatientInClinicorp(cleanIdentifier);
+      }
+
+      const resolvedName = matched?.name ? String(matched.name).trim() : cleanNameInput;
+      const resolvedPhone = sanitizePhone(matched?.mobile_phone || cleanIdentifier);
+
+      if (!memoryPoints[resolvedPhone]) {
+        memoryPoints[resolvedPhone] = {
+          points: 30,
+          history: [
+            {
+              id: `pt_${Date.now()}`,
+              patient_phone: resolvedPhone,
+              patient_name: resolvedName,
+              points: 30,
+              description: 'Bônus de boas-vindas ao Clube Sorriso Bertuol',
+              created_at: new Date().toISOString(),
+            },
+          ],
+        };
+      }
+
+      const sessionToken = Buffer.from(`${resolvedPhone}_${Date.now()}`).toString('base64url');
+      return res.json({
+        success: true,
+        token: sessionToken,
+        patient: {
+          id: matched?.id || `pat_${resolvedPhone}`,
+          name: resolvedName,
+          phone: resolvedPhone,
+          clinicId: Number(clinicId) || 1,
+        },
+      });
+    }
+
+    // Mode C: Credentials Login (Celular/CPF + Senha Provisória / Token)
+    if (cleanIdentifier.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Informe um número de celular (com DDD) ou CPF válido.',
+      });
+    }
+    if (!cleanTokenInput) {
+      return res.status(400).json({
+        success: false,
+        error: 'Informe sua senha provisória ou token de ativação.',
+      });
+    }
+
+    let matched = await findPatientInSupabase({ digits: cleanIdentifier });
+    if (!matched) {
+      matched = await findPatientInClinicorp(cleanIdentifier);
+    }
+
+    if (!matched) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cadastro não encontrado com este celular/CPF. Use a aba "Primeiro acesso" para entrar.',
+      });
+    }
+
+    if (matched.app_access_status === 'blocked' || matched.is_active === false) {
+      return res.status(403).json({
+        success: false,
+        error: 'Seu acesso ao portal está bloqueado. Entre em contato com a recepção.',
+      });
+    }
+
+    const storedToken = String(matched.activation_token || '').trim().toUpperCase();
+    const inputUpper = cleanTokenInput.toUpperCase();
+    const isProvisionalPassword =
+      cleanTokenInput === 'Bertuol@2026' || /^Bertuol@\d{4}$/i.test(cleanTokenInput);
+    const isLast4Match =
+      cleanIdentifier.length >= 4 && cleanTokenInput === cleanIdentifier.slice(-4);
+    const isTokenMatch = Boolean(storedToken) && inputUpper === storedToken;
+
+    if (!isTokenMatch && !isProvisionalPassword && !isLast4Match) {
+      return res.status(401).json({
+        success: false,
+        error:
+          'Senha ou token incorreto. Use o token enviado no WhatsApp, "Bertuol@2026" ou os 4 últimos dígitos do seu celular no primeiro acesso.',
+      });
+    }
+
+    const resolvedPhone = sanitizePhone(matched.mobile_phone || cleanIdentifier);
+    const resolvedName = String(matched.name || 'Paciente Bertuol').trim();
+    const resolvedClinicId = String(matched.tenant_id || '').includes('5d30567b') ? 2 : 1;
+
+    if (!memoryPoints[resolvedPhone]) {
+      memoryPoints[resolvedPhone] = {
+        points: 30,
+        history: [
+          {
+            id: `pt_${Date.now()}`,
+            patient_phone: resolvedPhone,
+            patient_name: resolvedName,
+            points: 30,
+            description: 'Bônus de boas-vindas ao Clube Sorriso Bertuol',
+            created_at: new Date().toISOString(),
+          },
+        ],
+      };
+    }
+
+    const sessionToken = Buffer.from(`${resolvedPhone}_${Date.now()}`).toString('base64url');
+    return res.json({
+      success: true,
+      token: sessionToken,
+      patient: {
+        id: matched.id || `pat_${resolvedPhone}`,
+        name: resolvedName,
+        phone: resolvedPhone,
+        clinicId: resolvedClinicId,
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro no login do paciente:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao autenticar paciente.',
+      message: error?.message,
+    });
   }
 });
 

@@ -16,7 +16,11 @@ import { CRMQuickContactModal } from './CRMQuickContactModal';
 import { CRMNewOpportunityModal } from './CRMNewOpportunityModal';
 import { CRMPipelineManagerModal } from './CRMPipelineManagerModal';
 import { CRMLeadDrawer } from './CRMLeadDrawer';
-import { CRMQuickScheduleModal } from './CRMQuickScheduleModal';
+import {
+  CRMQuickScheduleModal,
+  QuickSchedulePayload,
+  QuickScheduleResult,
+} from './CRMQuickScheduleModal';
 import { CRMLostReasonModal } from './CRMLostReasonModal';
 import {
   X,
@@ -244,16 +248,57 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     showToast('Motivo de perda registrado no CRM.');
   };
 
-  const handleConfirmQuickSchedule = (payload: {
-    opportunity: CRMLeadOpportunity;
-    clinicId: number;
-    dentistId: number;
-    dateKey: string;
-    fromTime: string;
-    toTime: string;
-    procedures: string;
-    notes: string;
-  }) => {
+  const handleConfirmQuickSchedule = async (
+    payload: QuickSchedulePayload
+  ): Promise<QuickScheduleResult> => {
+    let clinicorpAppointmentId: number | undefined;
+    let patientPersonId: number | undefined;
+    let syncedWithClinicorp = false;
+
+    if (!payload.forceLocalOnly) {
+      try {
+        const res = await fetch('/api/clinicorp/schedule-appointment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientName: payload.opportunity.patientName,
+            patientPhone: payload.opportunity.patientPhone,
+            clinicId: payload.clinicId,
+            dentistId: payload.dentistId,
+            dateKey: payload.dateKey,
+            fromTime: payload.fromTime,
+            toTime: payload.toTime,
+            procedures: payload.procedures,
+            notes: payload.notes,
+            categoryId: payload.categoryId,
+            categoryDescription: payload.categoryDescription,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success || !data?.syncedWithClinicorp) {
+          return {
+            ok: false,
+            error:
+              data?.details ||
+              data?.error ||
+              `Erro ao agendar no Clinicorp (HTTP ${res.status}).`,
+            allowLocalFallback: true,
+          };
+        }
+
+        clinicorpAppointmentId = data.clinicorpAppointmentId;
+        patientPersonId = data.patientPersonId;
+        syncedWithClinicorp = true;
+      } catch (err: any) {
+        return {
+          ok: false,
+          error: err?.message || 'Falha de comunicação com o servidor ao enviar ao Clinicorp.',
+          allowLocalFallback: true,
+        };
+      }
+    }
+
     const newAppt = dataService.addAppointmentFromCRM({
       patientName: payload.opportunity.patientName,
       patientPhone: payload.opportunity.patientPhone,
@@ -264,9 +309,13 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       toTime: payload.toTime,
       procedures: payload.procedures,
       notes: payload.notes,
+      externalAppointmentId: clinicorpAppointmentId,
+      patientPersonId,
+      categoryId: payload.categoryId ? String(payload.categoryId) : undefined,
     });
 
-    const oppPipeline = pipelines.find((p) => p.id === payload.opportunity.pipelineId) || activePipeline;
+    const oppPipeline =
+      pipelines.find((p) => p.id === payload.opportunity.pipelineId) || activePipeline;
     const scheduledStageId = CRMService.getStageIdBySemantic(oppPipeline, 'scheduled');
 
     CRMService.updateStage(payload.opportunity.id, scheduledStageId, {
@@ -274,17 +323,25 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       scheduledDate: payload.dateKey,
       scheduledTime: payload.fromTime,
     });
-    CRMService.addNoteToOpportunity(
-      payload.opportunity.id,
-      `Consulta agendada para ${payload.dateKey} às ${payload.fromTime} (${newAppt.dentist_name}).`,
-      currentUserName
-    );
+
+    const noteText = syncedWithClinicorp
+      ? `Consulta agendada no Clinicorp${clinicorpAppointmentId ? ` (ID #${clinicorpAppointmentId})` : ''} para ${payload.dateKey} às ${payload.fromTime} (${newAppt.dentist_name}).`
+      : `Consulta registrada apenas no CRM/agenda local para ${payload.dateKey} às ${payload.fromTime} (${newAppt.dentist_name}).`;
+
+    CRMService.addNoteToOpportunity(payload.opportunity.id, noteText, currentUserName);
 
     setOpportunities(CRMService.getOpportunities());
     if (onAppointmentCreatedFromCRM) {
       onAppointmentCreatedFromCRM(newAppt);
     }
-    showToast(`Consulta de ${payload.opportunity.patientName} agendada para ${payload.dateKey} às ${payload.fromTime}.`);
+
+    showToast(
+      syncedWithClinicorp
+        ? `Consulta de ${payload.opportunity.patientName} gravada no Clinicorp e agenda para ${payload.dateKey} às ${payload.fromTime}.`
+        : `Consulta de ${payload.opportunity.patientName} registrada apenas na agenda local (${payload.dateKey} às ${payload.fromTime}).`
+    );
+
+    return { ok: true };
   };
 
   const handleDeleteOpportunity = (id: string) => {
@@ -1372,6 +1429,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         opportunity={quickScheduleOpp}
         clinics={clinics}
         dentists={dentists}
+        localAppointments={appointments}
         onConfirmSchedule={handleConfirmQuickSchedule}
       />
 

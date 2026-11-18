@@ -34,6 +34,10 @@ import { VouchersDrawer } from './components/VouchersDrawer';
 import { BirthdayGiftModal } from './components/BirthdayGiftModal';
 import { NotificationsDrawer } from './components/NotificationsDrawer';
 import { PatientMessagingDrawer } from './components/PatientMessagingDrawer';
+import {
+  PatientLoginScreen,
+  PatientLoginSuccessPayload,
+} from './components/PatientLoginScreen';
 
 // Patient Services & Types
 import { patientApiService } from './services/patientApiService';
@@ -120,13 +124,46 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   onSwitchToDentistView,
   onOpenAdminGamificationModal,
 }) => {
-  // Query parameters or local storage
+  // Query parameters or explicit authenticated local session (never auto-login as fallback Alice)
   const urlParams = new URLSearchParams(window.location.search);
-  const initialPhone = urlParams.get('phone') || localStorage.getItem('bertuol_patient_phone') || '63992474826';
-  const initialName = cleanPatientName(urlParams.get('name') || localStorage.getItem('bertuol_patient_name') || 'Alice Póvoa');
-  const initialApptId = urlParams.get('appointment_id') ? Number(urlParams.get('appointment_id')) : 5005;
+  const urlPhoneRaw = (urlParams.get('phone') || '').replace(/\D/g, '');
+  const urlNameRaw = urlParams.get('name') || '';
+  const urlActivationToken = (urlParams.get('activation_token') || '').trim();
 
-  const matchedTestPatient = TEST_PATIENTS.find((p) => p.phone === initialPhone);
+  const hasExplicitUrlPatient = urlPhoneRaw.length >= 8;
+  const hasStoredAuthSession =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('bertuol_patient_authenticated') === 'true' &&
+    Boolean((localStorage.getItem('bertuol_patient_phone') || '').replace(/\D/g, '').length >= 8);
+
+  if (typeof window !== 'undefined' && !hasStoredAuthSession && !hasExplicitUrlPatient) {
+    localStorage.removeItem('bertuol_patient_phone');
+    localStorage.removeItem('bertuol_patient_name');
+  }
+
+  const initialPhone = hasExplicitUrlPatient
+    ? urlPhoneRaw
+    : hasStoredAuthSession
+      ? localStorage.getItem('bertuol_patient_phone') || ''
+      : '';
+
+  const matchedTestPatient = initialPhone
+    ? TEST_PATIENTS.find((p) => p.phone === initialPhone)
+    : undefined;
+
+  const initialName = initialPhone
+    ? cleanPatientName(
+        urlNameRaw ||
+          (hasStoredAuthSession ? localStorage.getItem('bertuol_patient_name') : '') ||
+          matchedTestPatient?.name ||
+          'Paciente Bertuol'
+      )
+    : '';
+
+  const initialApptId = urlParams.get('appointment_id')
+    ? Number(urlParams.get('appointment_id'))
+    : matchedTestPatient?.appointmentId || 5005;
+
   const initialClinicId = urlParams.get('clinic_id')
     ? Number(urlParams.get('clinic_id'))
     : matchedTestPatient?.clinicId || 1;
@@ -135,17 +172,112 @@ export const PatientApp: React.FC<PatientAppProps> = ({
       ? 'Bertuol Odontologia — Unidade Paraíso'
       : 'Unidade Matriz Palmas • 104 Sul, Av. JK';
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    Boolean(hasExplicitUrlPatient || hasStoredAuthSession)
+  );
+  const [isVerifyingToken, setIsVerifyingToken] = useState<boolean>(
+    Boolean(!hasExplicitUrlPatient && !hasStoredAuthSession && urlActivationToken)
+  );
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const [phone, setPhone] = useState(initialPhone);
   const [patientName, setPatientName] = useState(initialName);
   const [appointmentId] = useState(initialApptId);
-  const [appointmentTime, setAppointmentTime] = useState('18:00');
-  const [appointmentDayText, setAppointmentDayText] = useState('Hoje • 18:00');
-  const [dentistId, setDentistId] = useState<number>(5454048267862016);
-  const [dentistName, setDentistName] = useState('Dra. Ariane Bertuol');
-  const [dentistRole, setDentistRole] = useState('Ortodontia & Alinhadores Invisíveis');
+  const [appointmentTime, setAppointmentTime] = useState(matchedTestPatient?.time || '09:00');
+  const [appointmentDayText, setAppointmentDayText] = useState(
+    matchedTestPatient?.dayText || 'Próxima Consulta'
+  );
+  const [dentistId, setDentistId] = useState<number>(
+    matchedTestPatient?.dentistId || 5454048267862016
+  );
+  const [dentistName, setDentistName] = useState(
+    matchedTestPatient?.dentistName || 'Equipe Bertuol Odontologia'
+  );
+  const [dentistRole, setDentistRole] = useState(
+    matchedTestPatient?.dentistRole || 'Atendimento Odontológico'
+  );
   const [clinicId, setClinicId] = useState<number>(initialClinicId);
   const [clinicName, setClinicName] = useState(initialClinicName);
-  const [procedures, setProcedures] = useState('Consulta Odontológica');
+  const [procedures, setProcedures] = useState(
+    matchedTestPatient?.procedures || 'Consulta / Avaliação Odontológica'
+  );
+
+  // Verify activation_token from URL automatically when arriving from invite without phone param
+  useEffect(() => {
+    if (isAuthenticated || !urlActivationToken) return;
+    let active = true;
+    setIsVerifyingToken(true);
+
+    fetch('/api/patient/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'token', activationToken: urlActivationToken }),
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!active) return;
+        if (ok && data?.success && data?.patient) {
+          const pName = cleanPatientName(data.patient.name);
+          const pPhone = String(data.patient.phone || '');
+          const pClinicId = Number(data.patient.clinicId || initialClinicId || 1);
+          setPhone(pPhone);
+          setPatientName(pName);
+          setClinicId(pClinicId);
+          setClinicName(
+            pClinicId === 2
+              ? 'Bertuol Odontologia — Unidade Paraíso'
+              : 'Unidade Matriz Palmas • 104 Sul, Av. JK'
+          );
+          localStorage.setItem('bertuol_patient_authenticated', 'true');
+          localStorage.setItem('bertuol_patient_phone', pPhone);
+          localStorage.setItem('bertuol_patient_name', pName);
+          setIsAuthenticated(true);
+        } else {
+          setLoginError(data?.error || 'Token de ativação inválido ou expirado.');
+        }
+      })
+      .catch(() => {
+        if (active) setLoginError('Não foi possível validar seu link de ativação.');
+      })
+      .finally(() => {
+        if (active) setIsVerifyingToken(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, urlActivationToken, initialClinicId]);
+
+  const handlePatientLoginSuccess = (payload: PatientLoginSuccessPayload) => {
+    const cleanName = cleanPatientName(payload.name);
+    const cleanPhone = payload.phone.replace(/\D/g, '');
+    const targetClinicId = payload.clinicId || initialClinicId || 1;
+    const matched = TEST_PATIENTS.find((p) => p.phone === cleanPhone);
+
+    setPhone(cleanPhone);
+    setPatientName(cleanName);
+    setClinicId(targetClinicId);
+    setClinicName(
+      targetClinicId === 2
+        ? 'Bertuol Odontologia — Unidade Paraíso'
+        : 'Unidade Matriz Palmas • 104 Sul, Av. JK'
+    );
+
+    if (matched) {
+      setAppointmentTime(matched.time);
+      setAppointmentDayText(matched.dayText);
+      setDentistId(matched.dentistId);
+      setDentistName(matched.dentistName);
+      setDentistRole(matched.dentistRole);
+      setProcedures(matched.procedures);
+    }
+
+    localStorage.setItem('bertuol_patient_authenticated', 'true');
+    localStorage.setItem('bertuol_patient_phone', cleanPhone);
+    localStorage.setItem('bertuol_patient_name', cleanName);
+    setLoginError(null);
+    setIsAuthenticated(true);
+  };
 
   const initialAba = urlParams.get('aba');
   const initialOpenMsg = urlParams.get('chat') === 'true' || urlParams.get('msg') === 'true' || urlParams.get('mensagens') === 'true';
@@ -251,7 +383,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // Carregar contagem de mensagens de chat não lidas do paciente
   useEffect(() => {
-    if (!phone && !patientName) return;
+    if (!isAuthenticated || (!phone && !patientName)) return;
     const fetchPatientUnread = async () => {
       try {
         const queryParams = new URLSearchParams();
@@ -371,6 +503,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // Consultar Aniversariantes do Clinicorp ao vivo
   useEffect(() => {
+    if (!isAuthenticated || !phone) return;
     const checkBirthdays = async () => {
       try {
         const res = await fetch(`/api/clinicorp/birthdays?clinic_id=${clinicId}`);
@@ -415,7 +548,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     };
 
     checkBirthdays();
-  }, [phone, clinicId, patientName]);
+  }, [isAuthenticated, phone, clinicId, patientName]);
 
   const handleSubscribePush = async () => {
     setIsSubscribingPush(true);
@@ -622,15 +755,18 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   };
 
   const handleLogout = () => {
-    if (confirm('Deseja realmente sair da sua conta do Clube Sorriso?')) {
-      localStorage.removeItem('bertuol_patient_phone');
-      localStorage.removeItem('bertuol_patient_name');
-      if (onSwitchToDentistView) {
-        onSwitchToDentistView();
-      } else {
-        window.location.href = '/paciente';
-      }
-    }
+    localStorage.removeItem('bertuol_patient_authenticated');
+    localStorage.removeItem('bertuol_patient_phone');
+    localStorage.removeItem('bertuol_patient_name');
+    setIsAuthenticated(false);
+    setPhone('');
+    setPatientName('');
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('phone');
+    url.searchParams.delete('name');
+    url.searchParams.delete('activation_token');
+    window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
   };
 
   // 3. Resgatar Prêmio
@@ -781,9 +917,28 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   };
 
   useEffect(() => {
+    if (!isAuthenticated || !phone) return;
     loadProfile();
     loadRewards();
-  }, [loadProfile]);
+  }, [isAuthenticated, phone, loadProfile]);
+
+  if (!isAuthenticated) {
+    return (
+      <PatientLoginScreen
+        initialClinicId={clinicId}
+        isVerifyingToken={isVerifyingToken}
+        initialError={loginError}
+        onLoginSuccess={handlePatientLoginSuccess}
+        onSwitchToStaffLogin={() => {
+          if (onSwitchToDentistView) {
+            onSwitchToDentistView();
+          } else {
+            window.location.href = '/';
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-800 antialiased selection:bg-[#147A80]/20">

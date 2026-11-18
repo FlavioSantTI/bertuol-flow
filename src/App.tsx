@@ -691,21 +691,9 @@ export default function App() {
   const handleSwitchToDentist = () => {
     const url = new URL(window.location.href);
     url.searchParams.delete('app');
-    window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+    const nextPath = url.pathname.toLowerCase().startsWith('/portal') ? '/' : url.pathname;
+    window.history.pushState({}, '', nextPath + (url.search ? url.search : ''));
     setAppMode('dentist');
-    if (!userContext.isAuthenticated) {
-      const rootAdmin = dataService.getSystemUsers().find((u) => u.role === 'admin_root') || {
-        id: 'usr_root',
-        name: 'Favuca Dias (Admin Root)',
-        email: 'favuca.dias@gmail.com',
-        role: 'admin_root' as const,
-        clinicId: 1,
-        allowedClinicIds: [1, 2, 3],
-        active: true,
-        mustChangePassword: false,
-      };
-      handleSimulateUser(rootAdmin as any);
-    }
   };
 
   const handleSwitchToPatient = () => {

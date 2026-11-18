@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.2
+# 🦷 Bertuol Odontologia Avançada — Versão 1.5.3
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Ficha Livre & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Integração Bidirecional Clinicorp & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.2-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.3-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,20 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.2
+## 🌟 Visão Geral da Jornada & Versão 1.5.3
 
-O **Bertuol Flow** chega à **Versão 1.5.2** com uma reorganização completa de **UI/UX Clínica (60-30-10)** em todo o sistema e a nova **Central de QR Code para Marketing & Totem**, mantendo todas as capacidades da v1.5.1 (CRM Multi-Funil com Ficha Livre) e da v1.5.0 (Central Admin Root `/root` / `/tutoriais`).
+O **Bertuol Flow** chega à **Versão 1.5.3** com **integração bidirecional em tempo real com a API do Clinicorp no CRM** e **Tela de Login dedicada no Portal do Paciente**, mantendo todas as melhorias de UI/UX Clínica e Central de QR Code da v1.5.2.
 
-### 🆕 Novidades da v1.5.2 — UI/UX Clínica & Central de QR Code para Marketing
+### 🆕 Novidades da v1.5.3 — Integração Clinicorp no CRM & Login do Portal do Paciente
+
+- **🔗 Agendamento Bidirecional com Clinicorp no CRM (`CRMQuickScheduleModal` & `/api/clinicorp/*`)**:
+  - Leitura ao vivo da agenda do dentista selecionado (`GET /api/clinicorp/dentist-schedule`), exibindo grade de horários livres/ocupados, bloqueios `ASSIGN` (férias, viagens, restrições) e alerta de conflito de horário.
+  - Gravação direta no Clinicorp ao confirmar no CRM (`POST /api/clinicorp/schedule-appointment`): localiza ou cadastra o paciente (`/patient/get` → `/patient/create`), resolve a categoria e registra a consulta oficial via `/appointment/create_appointment_by_api`, mantendo opção explícita de contingência local em caso de erro de API.
+- **🔐 Tela de Login Segura no Portal do Paciente (`PatientLoginScreen` & `/api/patient/auth/login`)**:
+  - Removido qualquer login automático em perfil de demonstração ao acessar `/paciente` ou `/portal` via link externo/QR Code.
+  - Autenticação por **Celular (WhatsApp) / CPF + Senha ou Token de Ativação**, aba de **Primeiro Acesso** e validação automática de links de convite com `activation_token`.
+
+### 🎨 Recursos da v1.5.2 — UI/UX Clínica & Central de QR Code para Marketing
 
 - **🎨 Reorganização Completa de UI/UX Clínica (`Header`, `Agenda`, `CRM` e `Modais`)**:
   - Padronização visual 60-30-10 com superfícies limpas (`#F8FAFC` / `#FFFFFF`), bordas sutis (`border-slate-200`), tipografia numérica alinhada (`tabular-nums`) e acento principal único em **`#147A80`**.
@@ -122,7 +131,7 @@ O **Bertuol Flow** chega à **Versão 1.5.2** com uma reorganização completa d
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
 │   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, crm/MiniCRMModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.2)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.3)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
@@ -214,6 +223,6 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.2`
+- **Versão**: `v1.5.3`
 - **Gestão**: Flávio Santiago & Favuca Dias
 
