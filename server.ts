@@ -1237,6 +1237,20 @@ app.get('/api/access-logs', (_req: Request, res: Response) => {
   }
 });
 
+const normalizeUserRole = (role?: string | null): string => {
+  const raw = String(role || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (!raw) return 'dentist';
+  if (raw === 'recepcao' || raw === 'receptionist' || raw === 'atendente' || raw === 'atendimento' || raw === 'reception') {
+    return 'receptionist';
+  }
+  if (raw === 'dentista') return 'dentist';
+  return String(role).trim();
+};
+
 // POST: Add a new access log (called on login or on app initialization)
 app.post('/api/access-logs', (req: Request, res: Response) => {
   try {
@@ -1251,7 +1265,7 @@ app.post('/api/access-logs', (req: Request, res: Response) => {
       usuario_id,
       name,
       email,
-      role: role === 'recepcao' ? 'receptionist' : role,
+      role: normalizeUserRole(role),
       device: device || 'Dispositivo Desconhecido',
       timestamp: new Date().toISOString()
     };
@@ -1276,15 +1290,20 @@ app.get('/api/system-users', async (_req: Request, res: Response) => {
     const formatted = (data || []).map((u) => {
       const isFavuca = u.email === 'favuca.dias@gmail.com' || u.role === 'admin_root';
       const isAvaliador = u.email === 'suporte@flaviosantiago.com.br' || u.nome?.includes('Avaliador');
-      const dentistId = isAvaliador ? 6036933394890752 : u.dentista_id;
-      const role = u.role || 'dentist';
+      const normalizedRole = normalizeUserRole(u.role);
+      const dentistId =
+        normalizedRole === 'receptionist'
+          ? null
+          : isAvaliador
+            ? 6036933394890752
+            : u.dentista_id;
 
       return {
         id: u.id,
         name: u.nome || 'Usuário Sem Nome',
         email: u.email,
         phone: u.telefone || '',
-        role: role === 'recepcao' ? 'receptionist' : role,
+        role: normalizedRole,
         dentist_id: dentistId,
         clinicId: 1,
         allowedClinicIds: isFavuca || isAvaliador ? [1, 2, 3] : [1],
@@ -1323,12 +1342,13 @@ app.post('/api/system-users', async (req: Request, res: Response) => {
       existing?.pin_hash ||
       'Bertuol@2026';
 
+    const normalizedIncomingRole = normalizeUserRole(incomingUser.role);
     const payload: any = {
       nome: incomingUser.name || incomingUser.nome,
       email: cleanEmail,
       telefone: formatPhoneForDatabase(incomingUser.phone || incomingUser.telefone || ''),
-      role: incomingUser.role === 'receptionist' ? 'recepcao' : (incomingUser.role || 'dentist'),
-      dentista_id: incomingUser.dentist_id || incomingUser.dentista_id || null,
+      role: normalizedIncomingRole === 'receptionist' ? 'recepcao' : normalizedIncomingRole,
+      dentista_id: normalizedIncomingRole === 'receptionist' ? null : (incomingUser.dentist_id || incomingUser.dentista_id || null),
       pin_hash: pinToSave,
       ativo: incomingUser.active ?? incomingUser.ativo ?? true,
     };
@@ -1353,6 +1373,7 @@ app.post('/api/system-users', async (req: Request, res: Response) => {
       resultUser = data;
     }
 
+    const resultRole = normalizeUserRole(resultUser.role);
     return res.json({
       success: true,
       user: {
@@ -1360,8 +1381,8 @@ app.post('/api/system-users', async (req: Request, res: Response) => {
         name: resultUser.nome,
         email: resultUser.email,
         phone: resultUser.telefone,
-        role: resultUser.role === 'recepcao' ? 'receptionist' : resultUser.role,
-        dentist_id: resultUser.dentista_id,
+        role: resultRole,
+        dentist_id: resultRole === 'receptionist' ? null : resultUser.dentista_id,
         clinicId: 1,
         allowedClinicIds: [1],
         active: resultUser.ativo,
@@ -1389,10 +1410,14 @@ app.put('/api/system-users/:id', async (req: Request, res: Response) => {
     if (incomingUser.phone !== undefined || incomingUser.telefone !== undefined) {
       payload.telefone = formatPhoneForDatabase(incomingUser.phone || incomingUser.telefone || '');
     }
-    if (incomingUser.role) {
-      payload.role = incomingUser.role === 'receptionist' ? 'recepcao' : incomingUser.role;
+    const normalizedUpdateRole = incomingUser.role ? normalizeUserRole(incomingUser.role) : null;
+    if (normalizedUpdateRole) {
+      payload.role = normalizedUpdateRole === 'receptionist' ? 'recepcao' : normalizedUpdateRole;
+      if (normalizedUpdateRole === 'receptionist') {
+        payload.dentista_id = null;
+      }
     }
-    if (incomingUser.dentist_id !== undefined || incomingUser.dentista_id !== undefined) {
+    if (normalizedUpdateRole !== 'receptionist' && (incomingUser.dentist_id !== undefined || incomingUser.dentista_id !== undefined)) {
       payload.dentista_id = incomingUser.dentist_id || incomingUser.dentista_id || null;
     }
     if (incomingUser.active !== undefined || incomingUser.ativo !== undefined) {
@@ -1413,6 +1438,7 @@ app.put('/api/system-users/:id', async (req: Request, res: Response) => {
       return res.status(500).json({ success: false, error: error.message });
     }
 
+    const updatedRole = data ? normalizeUserRole(data.role) : null;
     return res.json({
       success: true,
       user: data
@@ -1421,8 +1447,8 @@ app.put('/api/system-users/:id', async (req: Request, res: Response) => {
             name: data.nome,
             email: data.email,
             phone: data.telefone,
-            role: data.role === 'recepcao' ? 'receptionist' : data.role,
-            dentist_id: data.dentista_id,
+            role: updatedRole,
+            dentist_id: updatedRole === 'receptionist' ? null : data.dentista_id,
             clinicId: 1,
             allowedClinicIds: [1],
             active: data.ativo,
@@ -1629,18 +1655,36 @@ app.post('/api/login', async (req: Request, res: Response) => {
 
       if (authData?.user && !authError) {
         const meta = authData.user.user_metadata || {};
+        // Also check public.usuarios so role/profile updates from UserManagementModal take precedence
+        let dbProfile: any = null;
+        try {
+          const { data: profileRow } = await supabase
+            .from('usuarios')
+            .select('*')
+            .ilike('email', authData.user.email || term)
+            .maybeSingle();
+          dbProfile = profileRow;
+        } catch {}
+
         const isAvaliador = term === 'suporte@flaviosantiago.com.br' || (meta.name && meta.name.includes('Avaliador'));
-        const dentistId = isAvaliador ? 6036933394890752 : (meta.dentist_id || 5229563695136768);
+        const resolvedRole = normalizeUserRole(dbProfile?.role || meta.role || 'dentist');
+        const dentistId =
+          resolvedRole === 'receptionist'
+            ? null
+            : isAvaliador
+              ? 6036933394890752
+              : (dbProfile?.dentista_id || meta.dentist_id || 5229563695136768);
         const user = {
-          id: authData.user.id,
-          name: isAvaliador ? 'Avaliador Bertuol' : (meta.name || meta.display_name || 'Profissional Bertuol'),
+          id: dbProfile?.id || authData.user.id,
+          name: isAvaliador ? 'Avaliador Bertuol' : (dbProfile?.nome || meta.name || meta.display_name || 'Profissional Bertuol'),
           email: authData.user.email,
-          phone: authData.user.phone || meta.phone || '(63) 98148-7023',
-          role: meta.role || 'dentist',
+          phone: dbProfile?.telefone || authData.user.phone || meta.phone || '(63) 98148-7023',
+          role: resolvedRole,
           dentist_id: dentistId,
           clinicId: 1,
-          allowedClinicIds: [1, 2, 3],
-          active: true,
+          receptionClinicId: resolvedRole === 'receptionist' ? 1 : undefined,
+          allowedClinicIds: resolvedRole === 'receptionist' ? [1] : [1, 2, 3],
+          active: dbProfile?.ativo ?? true,
           mustChangePassword: false,
         };
 
@@ -1717,7 +1761,13 @@ app.post('/api/login', async (req: Request, res: Response) => {
           dbUser.role === 'admin_root';
 
         const isAvaliador = term === 'suporte@flaviosantiago.com.br' || (dbUser.nome && dbUser.nome.includes('Avaliador'));
-        const dentistId = isAvaliador ? 6036933394890752 : (dbUser.dentista_id || 5229563695136768);
+        const resolvedRole = isRootUser ? 'admin_root' : normalizeUserRole(dbUser.role);
+        const dentistId =
+          resolvedRole === 'receptionist'
+            ? null
+            : isAvaliador
+              ? 6036933394890752
+              : (dbUser.dentista_id || 5229563695136768);
 
         const user = {
           id: dbUser.id || 'usr_flavio_root',
@@ -1728,10 +1778,11 @@ app.post('/api/login', async (req: Request, res: Response) => {
             : dbUser.nome || 'Profissional Bertuol',
           email: dbUser.email,
           phone: dbUser.telefone || '(63) 98148-7023',
-          role: isRootUser ? 'admin_root' : dbUser.role || 'dentist',
+          role: resolvedRole,
           dentist_id: dentistId,
           clinicId: 1,
-          allowedClinicIds: [1, 2, 3],
+          receptionClinicId: resolvedRole === 'receptionist' ? 1 : undefined,
+          allowedClinicIds: resolvedRole === 'receptionist' ? [1] : [1, 2, 3],
           active: true,
           mustChangePassword: false,
         };
@@ -2284,17 +2335,24 @@ app.post('/api/auth/webauthn/login/verify', async (req: Request, res: Response) 
           const isAvaliador =
             storedCred.userEmail === 'suporte@flaviosantiago.com.br' ||
             (dbUser.nome && dbUser.nome.includes('Avaliador'));
-          const dentistId = isAvaliador ? 6036933394890752 : dbUser.dentista_id || 5229563695136768;
+          const resolvedRole = normalizeUserRole(dbUser.role);
+          const dentistId =
+            resolvedRole === 'receptionist'
+              ? null
+              : isAvaliador
+                ? 6036933394890752
+                : dbUser.dentista_id || 5229563695136768;
 
           user = {
             id: dbUser.id,
             name: isAvaliador ? 'Avaliador Bertuol' : dbUser.nome || storedCred.userName,
             email: dbUser.email || storedCred.userEmail,
             phone: dbUser.telefone || '',
-            role: dbUser.role || 'dentist',
+            role: resolvedRole,
             dentist_id: dentistId,
             clinicId: 1,
-            allowedClinicIds: [1, 2, 3],
+            receptionClinicId: resolvedRole === 'receptionist' ? 1 : undefined,
+            allowedClinicIds: resolvedRole === 'receptionist' ? [1] : [1, 2, 3],
             active: dbUser.ativo ?? true,
             mustChangePassword: false,
           };

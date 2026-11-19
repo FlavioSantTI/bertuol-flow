@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Smile,
 } from 'lucide-react';
-import { dataService } from '../services/dataService';
+import { dataService, getDefaultPermissionsForRole, normalizeUserRole } from '../services/dataService';
 import { webauthnService } from '../services/webauthnService';
 import { SystemUser, AppUserContext } from '../types/database';
 import { APP_VERSION, APP_NAME } from '../config/version';
@@ -105,7 +105,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.users)) {
-          data.users.forEach((su: SystemUser) => dataService.upsertSystemUser(su));
+          data.users.forEach((su: SystemUser) => dataService.upsertSystemUser(su, { skipRemoteSync: true }));
           const updatedUsers = dataService.getSystemUsers();
           setSystemUsers(updatedUsers);
 
@@ -135,16 +135,32 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       setIsBiometricLoading(false);
 
       if (res.success && res.user) {
+        const normalizedRole = normalizeUserRole(res.user.role);
+        const mergedPermissions = {
+          ...getDefaultPermissionsForRole(normalizedRole),
+          ...(res.user.permissions || {}),
+        };
         // Sync local representation
-        dataService.upsertSystemUser(res.user);
+        dataService.upsertSystemUser(
+          {
+            ...res.user,
+            role: normalizedRole,
+            permissions: mergedPermissions,
+          },
+          { skipRemoteSync: true }
+        );
 
         // Set authenticated user context
         dataService.setUserContext({
           userId: res.user.id,
           userName: res.user.name,
-          role: res.user.role,
+          email: res.user.email,
+          role: normalizedRole,
           clinicId: res.user.clinicId || 1,
-          dentistId: res.user.dentist_id || 5229563695136768,
+          receptionClinicId: normalizedRole === 'receptionist' ? (res.user.clinicId || 1) : undefined,
+          allowedClinicIds: res.user.allowedClinicIds || [res.user.clinicId || 1],
+          dentistId: normalizedRole === 'dentist' ? (res.user.dentist_id || 5229563695136768) : undefined,
+          permissions: mergedPermissions,
           isAuthenticated: true,
           mustChangePassword: false,
         });
@@ -182,12 +198,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       if (apiData.success && apiData.user) {
         setIsLoading(false);
+        const normalizedRole = normalizeUserRole(apiData.user.role);
+        const mergedPermissions = {
+          ...getDefaultPermissionsForRole(normalizedRole),
+          ...(apiData.user.permissions || {}),
+        };
         // Sync local representation
-        dataService.upsertSystemUser({
-          ...apiData.user,
-          password: password.trim(),
-          mustChangePassword: Boolean(apiData.mustChangePassword),
-        });
+        dataService.upsertSystemUser(
+          {
+            ...apiData.user,
+            role: normalizedRole,
+            permissions: mergedPermissions,
+            password: password.trim(),
+            mustChangePassword: Boolean(apiData.mustChangePassword),
+          },
+          { skipRemoteSync: true }
+        );
 
         if (apiData.mustChangePassword) {
           setPendingFirstAccessUser(apiData.user);
@@ -199,9 +225,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           userId: apiData.user.id,
           userName: apiData.user.name,
           email: apiData.user.email || email.trim(),
-          role: apiData.user.role,
+          role: normalizedRole,
           clinicId: apiData.user.clinicId || 1,
-          dentistId: apiData.user.dentist_id || 5229563695136768,
+          receptionClinicId: normalizedRole === 'receptionist' ? (apiData.user.clinicId || 1) : undefined,
+          allowedClinicIds: apiData.user.allowedClinicIds || [apiData.user.clinicId || 1],
+          dentistId: normalizedRole === 'dentist' ? (apiData.user.dentist_id || 5229563695136768) : undefined,
+          permissions: mergedPermissions,
           isAuthenticated: true,
           mustChangePassword: false,
         });

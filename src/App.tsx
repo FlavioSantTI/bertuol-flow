@@ -30,7 +30,7 @@ import { PatientLayout } from './routes/(patient)/PatientLayout';
 import { ClinicLayout } from './routes/(clinic)/ClinicLayout';
 import { RootLayout } from './routes/(root)/RootLayout';
 import { APP_VERSION } from './config/version';
-import { dataService, formatDateKey, getDefaultPermissionsForRole } from './services/dataService';
+import { dataService, formatDateKey, getDefaultPermissionsForRole, normalizeUserRole } from './services/dataService';
 import {
   fetchDentistas,
   fetchPatients,
@@ -114,14 +114,16 @@ export function canAccessComponent(componentKey: string, context: AppUserContext
   const rule = COMPONENT_ACCESS_MAP[componentKey];
   if (!rule) return true;
 
+  const normalizedRole = normalizeUserRole(context.role);
+
   const isSuperAdminRole =
-    context.role === 'admin_root' ||
-    context.role === 'admin' ||
-    context.role === 'admin_tecnico';
+    normalizedRole === 'admin_root' ||
+    normalizedRole === 'admin' ||
+    normalizedRole === 'admin_tecnico';
 
   if (isSuperAdminRole) return true;
 
-  const roleAllowed = rule.allowedRoles.includes(context.role);
+  const roleAllowed = rule.allowedRoles.includes(normalizedRole);
   if (rule.anyPermissionKeys && rule.anyPermissionKeys.length > 0) {
     const anyPermAllowed = rule.anyPermissionKeys.some((k) => Boolean(context.permissions?.[k]));
     return roleAllowed && anyPermAllowed;
@@ -217,12 +219,15 @@ export default function App() {
   }, [userContext]);
 
   const effectiveUserContext = useMemo(() => {
-    const baseRole = simulatedRole !== 'none' && realUserIsRoot ? simulatedRole : userContext.role;
+    const baseRole = normalizeUserRole(
+      simulatedRole !== 'none' && realUserIsRoot ? simulatedRole : userContext.role
+    );
     const defaultPerms = getDefaultPermissionsForRole(baseRole);
 
     const mergedPermissions = {
       ...defaultPerms,
       ...(userContext.permissions || {}),
+      ...(baseRole === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
     };
 
     if (simulatedRole !== 'none' && realUserIsRoot) {
@@ -233,6 +238,7 @@ export default function App() {
         ...userContext,
         role: simulatedRole,
         clinicId: boundClinicId,
+        receptionClinicId: simulatedRole === 'receptionist' ? boundClinicId : undefined,
         allowedClinicIds: boundAllowedClinics,
         permissions: getDefaultPermissionsForRole(simulatedRole),
       };
@@ -332,28 +338,74 @@ export default function App() {
     }
 
     // Find initial dentist from query param or cache if available
+    const currentCtx = dataService.getUserContext();
+    const currentNormalizedRole = normalizeUserRole(currentCtx.role);
     let initialDentist: Dentist | null = null;
-    if (paramDentist) {
+    if (paramDentist && paramDentist !== 'all') {
       initialDentist =
         list.find((d) => String(d.id) === paramDentist) ||
         list.find((d) => d.Name.toLowerCase().includes(paramDentist)) ||
         null;
-    }
-    if (!initialDentist && userContext.dentistId) {
-      initialDentist = list.find((d) => d.id === userContext.dentistId) || null;
-    }
-    if (!initialDentist) {
+    } else if (paramDentist === 'all') {
+      initialDentist = null;
+    } else if (currentNormalizedRole === 'receptionist') {
       const selectedId = dataService.getSelectedDentistId();
-      initialDentist = list.find((d) => d.id === selectedId) || list.find((d) => d.id === 6036933394890752) || list[0] || null;
+      initialDentist = selectedId === 0 ? null : list.find((d) => d.id === selectedId) || null;
+    } else {
+      if (currentCtx.dentistId && currentNormalizedRole === 'dentist') {
+        initialDentist = list.find((d) => d.id === currentCtx.dentistId) || null;
+      }
+      if (!initialDentist) {
+        const selectedId = dataService.getSelectedDentistId();
+        if (selectedId === 0 && currentNormalizedRole !== 'dentist') {
+          initialDentist = null;
+        } else {
+          initialDentist = list.find((d) => d.id === selectedId) || list.find((d) => d.id === 6036933394890752) || list[0] || null;
+        }
+      }
     }
     setSelectedDentist(initialDentist);
 
-    // Background multi-device sync
+    // Background multi-device sync (also refreshes the logged-in user's role/permissions from DB)
     fetch('/api/system-users')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.users) && data.users.length > 0) {
-          data.users.forEach((su: SystemUser) => dataService.upsertSystemUser(su));
+          data.users.forEach((su: SystemUser) => dataService.upsertSystemUser(su, { skipRemoteSync: true }));
+          const activeCtx = dataService.getUserContext();
+          if (activeCtx?.isAuthenticated && (activeCtx.userId || activeCtx.email)) {
+            const freshRecord = data.users.find(
+              (su: SystemUser) =>
+                (activeCtx.userId && su.id === activeCtx.userId) ||
+                (activeCtx.email && su.email && su.email.toLowerCase() === activeCtx.email.toLowerCase())
+            );
+            if (freshRecord) {
+              const freshRole = normalizeUserRole(freshRecord.role);
+              const freshClinicId = freshRecord.clinicId || activeCtx.clinicId || 1;
+              const syncedCtx: AppUserContext = {
+                ...activeCtx,
+                userId: freshRecord.id,
+                userName: freshRecord.name || activeCtx.userName,
+                email: freshRecord.email || activeCtx.email,
+                role: freshRole,
+                clinicId: freshClinicId,
+                receptionClinicId: freshRole === 'receptionist' ? freshClinicId : activeCtx.receptionClinicId,
+                allowedClinicIds: freshRecord.allowedClinicIds || activeCtx.allowedClinicIds || [freshClinicId],
+                dentistId: freshRole === 'receptionist' ? undefined : (freshRecord.dentist_id ?? activeCtx.dentistId),
+                permissions: {
+                  ...getDefaultPermissionsForRole(freshRole),
+                  ...(freshRecord.permissions || {}),
+                  ...(freshRole === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
+                },
+              };
+              dataService.setUserContext(syncedCtx);
+              setUserContext(dataService.getUserContext());
+              if (freshRole === 'receptionist') {
+                setSelectedClinicId(freshClinicId);
+                dataService.setSelectedClinicId(freshClinicId);
+              }
+            }
+          }
         }
       })
       .catch(() => {});
@@ -367,11 +419,16 @@ export default function App() {
           const updatedList = dataService.getDentists();
           setDentists(updatedList);
           setSelectedDentist((prev) => {
+            if (paramDentist === 'all') return null;
             if (paramDentist) {
               const matchedParam =
                 updatedList.find((d) => String(d.id) === paramDentist) ||
                 updatedList.find((d) => d.Name.toLowerCase().includes(paramDentist));
               if (matchedParam) return matchedParam;
+            }
+            const activeRole = normalizeUserRole(dataService.getUserContext().role);
+            if (!prev && (activeRole === 'receptionist' || dataService.getSelectedDentistId() === 0)) {
+              return null;
             }
             if (!prev) return updatedList.find((d) => d.id === 5229563695136768) || updatedList[0] || null;
             return updatedList.find((d) => d.id === prev.id) || updatedList.find((d) => d.id === 5229563695136768) || updatedList[0] || null;
@@ -403,11 +460,10 @@ export default function App() {
 
   // Keep URL query parameters in sync with selected dentist and date
   useEffect(() => {
-    if (!selectedDentist) return;
     try {
       const dateKey = formatDateKey(currentDate);
       const params = new URLSearchParams(window.location.search);
-      params.set('dentist', String(selectedDentist.id));
+      params.set('dentist', selectedDentist ? String(selectedDentist.id) : 'all');
       params.set('date', dateKey);
       const newRelativePathQuery = `${window.location.pathname}?${params.toString()}`;
       window.history.replaceState(null, '', newRelativePathQuery);
@@ -416,14 +472,14 @@ export default function App() {
     }
   }, [selectedDentist, currentDate]);
 
-  // Load appointments when selectedDentist, currentDate, selectedClinicId, or userContext changes
+  // Load appointments when selectedDentist, currentDate, selectedClinicId, or effectiveUserContext changes
   useEffect(() => {
     setIsLoading(true);
     const dateKey = formatDateKey(currentDate);
     const dentistId = selectedDentist?.id || 0;
 
     // Initial load from local cache with multi-tenant filtering
-    const cached = dataService.getAppointments(dentistId, dateKey, selectedClinicId, userContext);
+    const cached = dataService.getAppointments(dentistId, dateKey, selectedClinicId, effectiveUserContext);
     setAppointments(cached);
 
     // Fetch directly from live Clinicorp appointments API
@@ -432,7 +488,7 @@ export default function App() {
       .then((resData) => {
         if (resData.success && Array.isArray(resData.appointments)) {
           dataService.syncAppointmentsFromClinicorp(resData.appointments, dateKey);
-          const fresh = dataService.getAppointments(dentistId, dateKey, selectedClinicId, userContext);
+          const fresh = dataService.getAppointments(dentistId, dateKey, selectedClinicId, effectiveUserContext);
           setAppointments(fresh);
         } else if (cached.length > 0) {
           setAppointments(cached);
@@ -446,7 +502,7 @@ export default function App() {
         }
         setIsLoading(false);
       });
-  }, [selectedDentist, currentDate, selectedClinicId, userContext]);
+  }, [selectedDentist, currentDate, selectedClinicId, effectiveUserContext]);
 
   // Listener em tempo real para avisar chegada de paciente no Totem (RF04)
   useEffect(() => {
@@ -534,9 +590,9 @@ export default function App() {
     };
   }, [effectiveUserContext, selectedClinicId, dentists]);
 
-  const handleSelectDentist = (dentist: Dentist) => {
+  const handleSelectDentist = (dentist: Dentist | null) => {
     setSelectedDentist(dentist);
-    dataService.setSelectedDentistId(dentist.id);
+    dataService.setSelectedDentistId(dentist ? dentist.id : 0);
   };
 
   const handleSelectClinic = (clinicId: number | 'all') => {
@@ -545,12 +601,15 @@ export default function App() {
   };
 
   const handleUpdateUserContext = (ctx: AppUserContext) => {
-    setUserContext(ctx);
-    dataService.setUserContext(ctx);
-    if (ctx.role === 'receptionist') {
-      const recClinicId = ctx.receptionClinicId || 1;
+    const normalizedRole = normalizeUserRole(ctx.role);
+    dataService.setUserContext({ ...ctx, role: normalizedRole });
+    setUserContext(dataService.getUserContext());
+    if (normalizedRole === 'receptionist') {
+      const recClinicId = ctx.receptionClinicId || ctx.clinicId || 1;
       setSelectedClinicId(recClinicId);
       dataService.setSelectedClinicId(recClinicId);
+      setSelectedDentist(null);
+      dataService.setSelectedDentistId(0);
     }
   };
 
@@ -631,30 +690,37 @@ export default function App() {
   };
 
   const handleSimulateUser = (user: SystemUser) => {
+    const normalizedRole = normalizeUserRole(user.role);
     const newContext: AppUserContext = {
       userId: user.id,
-      role: user.role,
+      role: normalizedRole,
       userName: user.name,
       email: user.email,
-      dentistId: user.dentist_id,
+      dentistId: normalizedRole === 'receptionist' ? undefined : user.dentist_id,
       clinicId: user.clinicId,
       allowedClinicIds: user.allowedClinicIds,
-      receptionClinicId: user.role === 'receptionist' ? user.clinicId : undefined,
-      canAccessConfig: user.role === 'admin_root' || user.role === 'admin',
-      permissions: user.permissions,
+      receptionClinicId: normalizedRole === 'receptionist' ? user.clinicId : undefined,
+      canAccessConfig: normalizedRole === 'admin_root' || normalizedRole === 'admin',
+      permissions: {
+        ...getDefaultPermissionsForRole(normalizedRole),
+        ...(user.permissions || {}),
+      },
       mustChangePassword: user.mustChangePassword,
+      isAuthenticated: true,
     };
     handleUpdateUserContext(newContext);
 
-    if (user.dentist_id) {
-      const foundDentist = dentists.find((d) => d.id === user.dentist_id);
-      if (foundDentist) handleSelectDentist(foundDentist);
-    }
-
-    if (user.role === 'receptionist') {
-      handleSelectClinic(user.clinicId);
-    } else if (user.clinicId) {
-      handleSelectClinic(user.clinicId);
+    if (normalizedRole === 'receptionist') {
+      handleSelectDentist(null);
+      handleSelectClinic(user.clinicId || 1);
+    } else {
+      if (user.dentist_id) {
+        const foundDentist = dentists.find((d) => d.id === user.dentist_id);
+        if (foundDentist) handleSelectDentist(foundDentist);
+      }
+      if (user.clinicId) {
+        handleSelectClinic(user.clinicId);
+      }
     }
 
     if (user.mustChangePassword) {
@@ -663,22 +729,29 @@ export default function App() {
   };
 
   const handleLoginSuccess = (context: AppUserContext) => {
-    setUserContext(context);
-    if (context.clinicId) {
-      dataService.setSelectedClinicId(context.clinicId);
-      setSelectedClinicId(context.clinicId);
+    const normalizedRole = normalizeUserRole(context.role);
+    dataService.setUserContext({ ...context, role: normalizedRole });
+    const normalizedCtx = dataService.getUserContext();
+    setUserContext(normalizedCtx);
+
+    if (normalizedCtx.clinicId) {
+      dataService.setSelectedClinicId(normalizedCtx.clinicId);
+      setSelectedClinicId(normalizedCtx.clinicId);
     }
-    if (context.dentistId) {
+    if (normalizedRole === 'receptionist') {
+      setSelectedDentist(null);
+      dataService.setSelectedDentistId(0);
+    } else if (normalizedCtx.dentistId) {
       const allDentists = dataService.getDentists();
       const foundDentist =
-        allDentists.find((d) => d.id === context.dentistId) ||
-        dentists.find((d) => d.id === context.dentistId);
+        allDentists.find((d) => d.id === normalizedCtx.dentistId) ||
+        dentists.find((d) => d.id === normalizedCtx.dentistId);
       if (foundDentist) {
         setSelectedDentist(foundDentist);
         dataService.setSelectedDentistId(foundDentist.id);
       }
     }
-    if (context.mustChangePassword) {
+    if (normalizedCtx.mustChangePassword) {
       setIsChangePasswordModalOpen(true);
     }
   };
@@ -810,6 +883,9 @@ export default function App() {
                 onChange={(e) => {
                   const nextRole = e.target.value as UserRole | 'none';
                   setSimulatedRole(nextRole);
+                  if (nextRole === 'receptionist') {
+                    handleSelectDentist(null);
+                  }
                   if (
                     (nextRole === 'receptionist' || nextRole === 'dentist' || nextRole === 'admin_clinica') &&
                     selectedClinicId === 'all'
@@ -993,7 +1069,7 @@ export default function App() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 text-xs text-slate-600">
                         <span className="font-semibold text-slate-900 truncate">
-                          Resumo do dia · {selectedDentist?.Name || 'Geral'}
+                          Resumo do dia · {selectedDentist?.Name || 'Todos os Dentistas'}
                         </span>
                         <span aria-hidden="true" className="text-slate-300">·</span>
                         <span className="tabular-nums shrink-0">{appointments.length} consultas</span>
@@ -1343,13 +1419,11 @@ export default function App() {
           userContext={effectiveUserContext}
           selectedClinicIdFilter={selectedClinicId}
           onAppointmentCreatedFromCRM={(newAppt) => {
-            if (selectedDentist) {
-              const dateKey = formatDateKey(currentDate);
-              if (newAppt.date === dateKey) {
-                setAppointments(
-                  dataService.getAppointments(selectedDentist.id, dateKey, selectedClinicId, userContext)
-                );
-              }
+            const dateKey = formatDateKey(currentDate);
+            if (newAppt.date === dateKey) {
+              setAppointments(
+                dataService.getAppointments(selectedDentist?.id || 0, dateKey, selectedClinicId, effectiveUserContext)
+              );
             }
           }}
         />

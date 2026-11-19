@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
-import { getDefaultPermissionsForRole } from '../services/dataService';
+import { getDefaultPermissionsForRole, normalizeUserRole } from '../services/dataService';
 import { BertuolLogo } from './BertuolLogo';
 import {
   ChevronDown,
@@ -32,7 +32,7 @@ import {
 interface HeaderProps {
   dentists: Dentist[];
   selectedDentist: Dentist | null;
-  onSelectDentist: (dentist: Dentist) => void;
+  onSelectDentist: (dentist: Dentist | null) => void;
   clinics: Clinic[];
   selectedClinicId: number | 'all';
   onSelectClinic: (id: number | 'all') => void;
@@ -114,13 +114,15 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const isDentist = userContext.role === 'dentist';
-  const isGerente = userContext.role === 'gerente_atendimento';
-  const isClinicaAdmin = userContext.role === 'admin_clinica';
+  const normalizedRole = normalizeUserRole(userContext.role);
+  const isDentist = normalizedRole === 'dentist';
+  const isReceptionist = normalizedRole === 'receptionist';
+  const isGerente = normalizedRole === 'gerente_atendimento';
+  const isClinicaAdmin = normalizedRole === 'admin_clinica';
   const isAdmin =
-    userContext.role === 'admin_root' ||
-    userContext.role === 'admin' ||
-    userContext.role === 'admin_tecnico';
+    normalizedRole === 'admin_root' ||
+    normalizedRole === 'admin' ||
+    normalizedRole === 'admin_tecnico';
   const isAvaliador =
     userContext.dentistId === 6036933394890752 ||
     Boolean(userContext.userName && userContext.userName.includes('Avaliador')) ||
@@ -128,8 +130,9 @@ export const Header: React.FC<HeaderProps> = ({
     Boolean(selectedDentist?.Name && selectedDentist.Name.includes('Avaliador'));
 
   const effectivePermissions = {
-    ...getDefaultPermissionsForRole(userContext.role),
+    ...getDefaultPermissionsForRole(normalizedRole),
     ...userContext.permissions,
+    ...(isReceptionist ? { canViewAllDentistsAgenda: true } : {}),
   };
 
   const canAccessCRM = !isDentist && Boolean(effectivePermissions.canAccessCRM);
@@ -139,8 +142,11 @@ export const Header: React.FC<HeaderProps> = ({
   const canManageClientAccounts =
     !isDentist && (isAdmin || isClinicaAdmin || Boolean(effectivePermissions.canManageClientAccounts));
   const canSwitchDentist =
-    !isDentist &&
-    (isAdmin || isClinicaAdmin || isGerente || Boolean(effectivePermissions.canViewAllDentistsAgenda));
+    isAdmin ||
+    isClinicaAdmin ||
+    isGerente ||
+    isReceptionist ||
+    Boolean(effectivePermissions.canViewAllDentistsAgenda);
   const canSwitchAllClinics =
     isAdmin ||
     isGerente ||
@@ -154,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
     clinics[0];
 
   const getRoleLabel = () => {
-    switch (userContext.role) {
+    switch (normalizedRole) {
       case 'admin_root':
       case 'admin':
         return 'Admin Root';
@@ -452,16 +458,21 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative shrink-0">
               <select
                 id="dentist-select-desktop"
-                value={selectedDentist?.id || ''}
+                value={selectedDentist ? String(selectedDentist.id) : 'all'}
                 onChange={(e) => {
+                  if (e.target.value === 'all') {
+                    onSelectDentist(null);
+                    return;
+                  }
                   const val = Number(e.target.value);
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="appearance-none bg-slate-50 hover:bg-white border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-3 pr-7 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 focus:border-[#147A80] transition-colors cursor-pointer max-w-[175px] truncate"
+                className="appearance-none bg-slate-50 hover:bg-white border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-3 pr-7 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 focus:border-[#147A80] transition-colors cursor-pointer max-w-[190px] truncate"
               >
+                <option value="all">Todos os Dentistas</option>
                 {dentists.length === 0 ? (
-                  <option value="">Carregando profissionais...</option>
+                  <option value="" disabled>Carregando profissionais...</option>
                 ) : (
                   dentists.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -681,16 +692,21 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative flex-1 min-w-0">
               <select
                 id="dentist-select-mobile"
-                value={selectedDentist?.id || ''}
+                value={selectedDentist ? String(selectedDentist.id) : 'all'}
                 onChange={(e) => {
+                  if (e.target.value === 'all') {
+                    onSelectDentist(null);
+                    return;
+                  }
                   const val = Number(e.target.value);
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
                 className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-2.5 pr-6 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
               >
+                <option value="all">Todos os Dentistas</option>
                 {dentists.length === 0 ? (
-                  <option value="">Carregando...</option>
+                  <option value="" disabled>Carregando...</option>
                 ) : (
                   dentists.map((d) => (
                     <option key={d.id} value={d.id}>

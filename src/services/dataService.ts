@@ -74,13 +74,35 @@ export const INITIAL_CUSTOM_ROLES: CustomRoleDefinition[] = [
   },
 ];
 
+export const normalizeUserRole = (role?: string | null): UserRole => {
+  const raw = String(role || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (!raw) return 'dentist';
+  if (raw === 'recepcao' || raw === 'receptionist' || raw === 'atendente' || raw === 'atendimento' || raw === 'reception') {
+    return 'receptionist';
+  }
+  if (raw === 'dentista') return 'dentist';
+  return String(role).trim() as UserRole;
+};
+
 export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions => {
+  const normalizedRole = normalizeUserRole(role);
+
   // Check system role overrides first
   try {
     const storedOverrides = localStorage.getItem('bertuol_system_role_overrides_v1');
     if (storedOverrides) {
       const overrides: Record<string, UserPermissions> = JSON.parse(storedOverrides);
-      if (overrides[role]) return overrides[role];
+      if (overrides[normalizedRole]) {
+        const overridePerms = overrides[normalizedRole];
+        if (normalizedRole === 'receptionist') {
+          return { ...overridePerms, canViewAllDentistsAgenda: true };
+        }
+        return overridePerms;
+      }
     }
   } catch (e) {}
 
@@ -88,13 +110,13 @@ export const getDefaultPermissionsForRole = (role: UserRole): UserPermissions =>
   try {
     const stored = localStorage.getItem('bertuol_custom_roles_v1');
     const customRoles: CustomRoleDefinition[] = stored ? JSON.parse(stored) : INITIAL_CUSTOM_ROLES;
-    const found = customRoles.find((r) => r.id === role);
+    const found = customRoles.find((r) => r.id === normalizedRole);
     if (found) return found.defaultPermissions;
   } catch (e) {
     // ignore
   }
 
-  switch (role) {
+  switch (normalizedRole) {
     case 'admin_root':
     case 'admin':
       return {
@@ -1165,6 +1187,12 @@ class DataService {
 
       // Ensure Super Admin root accounts are strictly enforced as admin_root with full permissions
       this.systemUsers.forEach((u) => {
+        u.role = normalizeUserRole(u.role);
+        u.permissions = {
+          ...getDefaultPermissionsForRole(u.role),
+          ...(u.permissions || {}),
+          ...(u.role === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
+        };
         if (
           (u.email && (u.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || u.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
           (u.name && (u.name.includes('Flavio') || u.name.includes('Favuca'))) ||
@@ -1181,6 +1209,19 @@ class DataService {
       });
 
       if (this.userContext) {
+        this.userContext.role = normalizeUserRole(this.userContext.role);
+        if (this.userContext.role === 'receptionist') {
+          const recClinicId = this.userContext.receptionClinicId || this.userContext.clinicId || 1;
+          this.userContext.receptionClinicId = recClinicId;
+          this.userContext.clinicId = recClinicId;
+          this.userContext.dentistId = undefined;
+          this.userContext.permissions = {
+            ...getDefaultPermissionsForRole('receptionist'),
+            ...(this.userContext.permissions || {}),
+            canViewAllDentistsAgenda: true,
+          };
+        }
+
         const isRoot =
           (this.userContext.email && (this.userContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || this.userContext.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
           (this.userContext.userName && (this.userContext.userName.includes('Flavio') || this.userContext.userName.includes('Favuca'))) ||
@@ -1431,23 +1472,42 @@ class DataService {
   }
 
   public setUserContext(context: AppUserContext) {
+    const normalizedRole = normalizeUserRole(context.role);
+    const nextContext: AppUserContext = {
+      ...context,
+      role: normalizedRole,
+      permissions: {
+        ...getDefaultPermissionsForRole(normalizedRole),
+        ...(context.permissions || {}),
+        ...(normalizedRole === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
+      },
+    };
+
+    if (normalizedRole === 'receptionist') {
+      const recClinicId = nextContext.receptionClinicId || nextContext.clinicId || 1;
+      nextContext.receptionClinicId = recClinicId;
+      nextContext.clinicId = recClinicId;
+      nextContext.allowedClinicIds = nextContext.allowedClinicIds?.length ? nextContext.allowedClinicIds : [recClinicId];
+      nextContext.dentistId = undefined;
+    }
+
     const isRoot =
-      (context.email && (context.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || context.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
-      (context.userName && (context.userName.includes('Flavio') || context.userName.includes('Favuca'))) ||
-      (context.userId && (context.userId === 'usr_flavio_ti' || context.userId === 'usr_favuca_root' || context.userId === 'usr_flavio_root'));
+      (nextContext.email && (nextContext.email.toLowerCase() === 'flavio.santiago.ti@outlook.com' || nextContext.email.toLowerCase() === 'favuca.dias@gmail.com')) ||
+      (nextContext.userName && (nextContext.userName.includes('Flavio') || nextContext.userName.includes('Favuca'))) ||
+      (nextContext.userId && (nextContext.userId === 'usr_flavio_ti' || nextContext.userId === 'usr_favuca_root' || nextContext.userId === 'usr_flavio_root'));
 
     if (isRoot) {
-      context.role = 'admin_root';
-      context.allowedClinicIds = [1, 2, 3];
-      context.canAccessConfig = true;
-      context.permissions = getDefaultPermissionsForRole('admin_root');
-      if (!context.email) {
-        context.email = context.userName?.includes('Favuca') ? 'favuca.dias@gmail.com' : 'flavio.santiago.ti@outlook.com';
+      nextContext.role = 'admin_root';
+      nextContext.allowedClinicIds = [1, 2, 3];
+      nextContext.canAccessConfig = true;
+      nextContext.permissions = getDefaultPermissionsForRole('admin_root');
+      if (!nextContext.email) {
+        nextContext.email = nextContext.userName?.includes('Favuca') ? 'favuca.dias@gmail.com' : 'flavio.santiago.ti@outlook.com';
       }
     }
     this.userContext = {
-      ...context,
-      canAccessConfig: this.canUserAccessConfig(context.role),
+      ...nextContext,
+      canAccessConfig: this.canUserAccessConfig(nextContext.role),
     };
     localStorage.setItem(STORAGE_KEYS.USER_CONTEXT, JSON.stringify(this.userContext));
   }
@@ -1656,27 +1716,40 @@ class DataService {
     return this.systemUsers.find((u) => u.id === id);
   }
 
-  public upsertSystemUser(user: SystemUser): void {
+  public upsertSystemUser(user: SystemUser, options?: { skipRemoteSync?: boolean }): void {
+    const normalizedRole = normalizeUserRole(user.role);
+    const normalizedUser: SystemUser = {
+      ...user,
+      role: normalizedRole,
+      dentist_id: normalizedRole === 'receptionist' ? undefined : user.dentist_id,
+      permissions: {
+        ...getDefaultPermissionsForRole(normalizedRole),
+        ...(user.permissions || {}),
+        ...(normalizedRole === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
+      },
+    };
     const idx = this.systemUsers.findIndex(
-      (u) => u.id === user.id || (user.email && u.email.toLowerCase() === user.email.toLowerCase())
+      (u) => u.id === normalizedUser.id || (normalizedUser.email && u.email.toLowerCase() === normalizedUser.email.toLowerCase())
     );
     if (idx >= 0) {
       this.systemUsers[idx] = {
         ...this.systemUsers[idx],
-        ...user,
+        ...normalizedUser,
       };
     } else {
-      this.systemUsers.push(user);
+      this.systemUsers.push(normalizedUser);
     }
     this.saveAll();
 
-    try {
-      fetch('/api/system-users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user),
-      }).catch(() => {});
-    } catch {}
+    if (!options?.skipRemoteSync) {
+      try {
+        fetch('/api/system-users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(normalizedUser),
+        }).catch(() => {});
+      } catch {}
+    }
   }
 
   public createSystemUser(
@@ -1999,6 +2072,9 @@ class DataService {
 
   public getSelectedDentistId(): number {
     const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_DENTIST);
+    if (saved === '0') {
+      return 0;
+    }
     if (saved) {
       const id = Number(saved);
       if (this.dentists.some((d) => d.id === id)) {
@@ -2243,16 +2319,21 @@ class DataService {
     const categoriesMap = new Map(this.categories.map((c) => [c.id, c]));
     const patientsMap = new Map(this.patients.map((p) => [p.id, p]));
     const ctx = overrideContext || this.userContext;
+    const effectiveRole = normalizeUserRole(ctx.role);
 
     // Determine active clinic filtering
     let targetClinicBusinessId: number | null = null;
     let allowedBusinessIds: number[] | null = null;
 
-    if (ctx.role === 'receptionist') {
+    if (effectiveRole === 'receptionist') {
       // Strictly isolate to the receptionist's assigned clinic (LGPD compliant)
-      const recClinic = this.getClinicById(ctx.receptionClinicId || 1);
+      const recClinicId =
+        ctx.receptionClinicId ||
+        ctx.clinicId ||
+        (typeof clinicFilter === 'number' ? clinicFilter : 1);
+      const recClinic = this.getClinicById(recClinicId);
       targetClinicBusinessId = recClinic?.clinicorp_business_id || CLINIC_BUSINESS_ID_PALMAS;
-    } else if (ctx.role === 'gerente_atendimento') {
+    } else if (effectiveRole === 'gerente_atendimento') {
       if (ctx.allowedClinicIds && ctx.allowedClinicIds.length > 0) {
         allowedBusinessIds = ctx.allowedClinicIds
           .map((cid) => this.getClinicById(cid)?.clinicorp_business_id)
@@ -2269,14 +2350,11 @@ class DataService {
 
     return this.appointments
       .filter((app) => {
-        // In receptionist mode: show all appointments for the clinic regardless of dentist
-        // In dentist mode: strictly show appointments for that dentist
-        // In gerente/admin mode: show selected dentist or all if dentistPersonId is empty
+        // In dentist mode (without canViewAllDentistsAgenda): strictly show appointments for that dentist
+        // In receptionist/gerente/admin mode: show selected dentist or ALL dentists of the clinic when dentistPersonId is 0
         let matchDentist = true;
-        if (ctx.role === 'dentist') {
+        if (effectiveRole === 'dentist' && !ctx.permissions?.canViewAllDentistsAgenda) {
           matchDentist = app.Dentist_PersonId === dentistPersonId;
-        } else if (ctx.role === 'receptionist') {
-          matchDentist = true;
         } else {
           matchDentist = dentistPersonId ? app.Dentist_PersonId === dentistPersonId : true;
         }
