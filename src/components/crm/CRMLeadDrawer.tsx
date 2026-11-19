@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CRMCustomField,
   CRMLabel,
@@ -210,9 +211,9 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
 
   const history = opportunity.notesHistory || [];
 
-  return (
+  const drawerContent = (
     <div
-      className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex justify-end"
+      className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[2px] flex justify-end"
       onClick={onClose}
     >
       <div
@@ -498,6 +499,57 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                 </div>
               </div>
 
+              {/* Clinicorp Estimate Active Procedures (Filtered: no Deleted / NotApproved) */}
+              {opportunity.estimateProcedures && opportunity.estimateProcedures.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-slate-800">
+                        Itens do Orçamento (Clinicorp)
+                      </h4>
+                      <p className="text-[11px] text-slate-500 tabular-nums mt-0.5">
+                        {opportunity.estimateId ? `Orçamento #${opportunity.estimateId}` : 'Orçamento ativo'}
+                        {opportunity.estimateDate
+                          ? ` · ${opportunity.estimateDate.split('-').reverse().join('/')}`
+                          : ''}
+                        {` · ${opportunity.estimateProcedures.length} ${
+                          opportunity.estimateProcedures.length === 1 ? 'procedimento ativo' : 'procedimentos ativos'
+                        }`}
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-[#147A80] tabular-nums shrink-0">
+                      R${' '}
+                      {(opportunity.estimatedValue || 0).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {opportunity.estimateProcedures.map((proc) => (
+                      <div
+                        key={proc.id}
+                        className="px-4 py-2.5 flex items-start justify-between gap-3 text-xs hover:bg-slate-50/70 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 leading-snug">
+                            {proc.description}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-0.5 tabular-nums">
+                            {proc.tooth ? `Dente ${proc.tooth}` : 'Arcada / Geral'}
+                            {proc.dentistName ? ` · ${proc.dentistName}` : ''}
+                            {proc.statusDescription ? ` · ${proc.statusDescription}` : ''}
+                          </p>
+                        </div>
+                        <span className="font-mono font-semibold text-slate-800 tabular-nums shrink-0">
+                          R$ {Number(proc.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Dynamic Free-Form Custom Fields */}
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -773,4 +825,6 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(drawerContent, document.body) : drawerContent;
 };

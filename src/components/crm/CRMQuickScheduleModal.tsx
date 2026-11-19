@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { CRMLeadOpportunity } from '../../types/crm';
 import { Appointment, Clinic, Dentist } from '../../types/database';
 import {
@@ -343,8 +344,8 @@ export const CRMQuickScheduleModal: React.FC<CRMQuickScheduleModalProps> = ({
     executeSchedule(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -703,4 +704,6 @@ export const CRMQuickScheduleModal: React.FC<CRMQuickScheduleModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

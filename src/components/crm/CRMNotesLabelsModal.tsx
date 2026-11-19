@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CRMLabel, CRMLeadOpportunity, CRMPipeline } from '../../types/crm';
 import { X, Tag, FileText, Plus, Calendar, ArrowRightLeft, Send, Trash2 } from 'lucide-react';
 
@@ -77,8 +78,8 @@ export const CRMNotesLabelsModal: React.FC<CRMNotesLabelsModalProps> = ({
 
   const history = opportunity.notesHistory || [];
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between shrink-0">
@@ -310,4 +311,6 @@ export const CRMNotesLabelsModal: React.FC<CRMNotesLabelsModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

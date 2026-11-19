@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Fingerprint,
+  ArrowRight,
+  Smile,
 } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { webauthnService } from '../services/webauthnService';
@@ -338,7 +340,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           </div>
         </div>
 
-        {/* Card Container */}
+        {/* Highlighted Patient Portal Entry Card (separates patients from staff form immediately) */}
+        <a
+          href="/paciente"
+          className="mb-4 block bg-gradient-to-r from-teal-50 via-emerald-50/60 to-white border border-teal-200 hover:border-[#0D9488] rounded-2xl p-4 shadow-xs transition-colors group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white border border-teal-200 flex items-center justify-center shrink-0">
+                <Smile className="w-5 h-5 text-[#0D9488]" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-xs font-bold text-slate-900 block truncate">
+                  Sou Paciente · Clube Sorriso
+                </span>
+                <span className="text-[11px] text-slate-600 block truncate">
+                  Consultas · Check-in sem fila · Pontos e brindes
+                </span>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0D9488] group-hover:bg-[#0F766E] text-white text-xs font-semibold whitespace-nowrap shrink-0 transition-colors">
+              <span>Entrar</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </a>
+
+        {/* Card Container (Corporate Staff Login) */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           {/* STEP 1: Standard Login Form */}
           {!pendingFirstAccessUser && (
@@ -364,10 +392,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Acessar Sistema
+                  Acesso da Equipe Clínica
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Informe seus dados de acesso cadastrados ou entre com sua biometria
+                  Dentistas, recepção e administração · Entre com e-mail funcional ou biometria
                 </p>
               </div>
 
@@ -616,18 +644,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="text-center mt-6 space-y-2.5 text-xs text-slate-500">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <a
-              href="/paciente"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#147A80] border border-teal-200 font-semibold text-[11px] transition-colors"
-            >
-              <span>Portal do Paciente & Clube Sorriso</span>
-            </a>
-            <a
               href="/manual-instalacao.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 font-semibold text-[11px] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 font-semibold text-[11px] transition-colors whitespace-nowrap"
             >
               <span>Manual de Instalação</span>
             </a>

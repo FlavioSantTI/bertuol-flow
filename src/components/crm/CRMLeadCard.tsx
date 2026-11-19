@@ -158,6 +158,23 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
                 </span>
               </>
             )}
+            {opportunity.estimateDate && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums">
+                  Orç. {opportunity.estimateDate.split('-').reverse().slice(0, 2).join('/')}
+                </span>
+              </>
+            )}
+            {opportunity.estimateProcedures && opportunity.estimateProcedures.length > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums font-medium text-slate-700">
+                  {opportunity.estimateProcedures.length}{' '}
+                  {opportunity.estimateProcedures.length === 1 ? 'procedimento' : 'procedimentos'}
+                </span>
+              </>
+            )}
             {opportunity.scheduledDate && (
               <>
                 <span aria-hidden="true">·</span>
@@ -326,6 +343,17 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
           {opportunity.dentistName && opportunity.dentistName !== 'Sem preferência' && (
             <span> · {opportunity.dentistName}</span>
           )}
+          {opportunity.estimateDate && (
+            <span className="tabular-nums">
+              {' '}· Orç. {opportunity.estimateDate.split('-').reverse().slice(0, 2).join('/')}
+            </span>
+          )}
+          {opportunity.estimateProcedures && opportunity.estimateProcedures.length > 0 && (
+            <span className="tabular-nums font-medium text-slate-700">
+              {' '}· {opportunity.estimateProcedures.length}{' '}
+              {opportunity.estimateProcedures.length === 1 ? 'item' : 'itens'}
+            </span>
+          )}
           {opportunity.diasDesdeUltimo && opportunity.type === 'recall_6m' ? (
             <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d</span>
           ) : null}
@@ -333,7 +361,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
 
         {/* Treatment / Free Description */}
         {opportunity.treatmentDescription && (
-          <p className="text-xs text-slate-700 line-clamp-1">
+          <p className="text-xs text-slate-700 line-clamp-2 leading-snug">
             {opportunity.treatmentDescription}
           </p>
         )}

@@ -129,6 +129,8 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   const urlPhoneRaw = (urlParams.get('phone') || '').replace(/\D/g, '');
   const urlNameRaw = urlParams.get('name') || '';
   const urlActivationToken = (urlParams.get('activation_token') || '').trim();
+  const isTotemQrArrival = urlParams.get('checkin') === 'totem';
+  const urlTotemClinicName = (urlParams.get('clinic_name') || '').trim();
 
   const hasExplicitUrlPatient = urlPhoneRaw.length >= 8;
   const hasStoredAuthSession =
@@ -168,9 +170,10 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     ? Number(urlParams.get('clinic_id'))
     : matchedTestPatient?.clinicId || 1;
   const initialClinicName =
-    initialClinicId === 2
+    urlTotemClinicName ||
+    (initialClinicId === 2
       ? 'Bertuol Odontologia — Unidade Paraíso'
-      : 'Unidade Matriz Palmas • 104 Sul, Av. JK';
+      : 'Unidade Matriz Palmas • 104 Sul, Av. JK');
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     Boolean(hasExplicitUrlPatient || hasStoredAuthSession)
@@ -285,11 +288,12 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   const [activeTab, setActiveTab] = useState<'appointment' | 'messages' | 'checkin' | 'rewards' | 'vouchers'>(() => {
     if (initialAba === 'mensagens' || initialAba === 'messages' || initialAba === 'chat') return 'messages';
-    if (initialAba === 'checkin') return 'checkin';
+    if (initialAba === 'checkin' || isTotemQrArrival) return 'checkin';
     if (initialAba === 'rewards' || initialAba === 'premios') return 'rewards';
     if (initialAba === 'vouchers') return 'vouchers';
     return 'appointment';
   });
+  const pendingTotemCheckinRef = useRef<boolean>(isTotemQrArrival);
   const [rewardsSubTab, setRewardsSubTab] = useState<'catalog' | 'extrato' | 'dashboard'>('dashboard');
   const [extratoFilter, setExtratoFilter] = useState<'all' | 'earn' | 'redeem'>('all');
   const [internalAdminModalOpen, setInternalAdminModalOpen] = useState(false);
@@ -920,12 +924,25 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     if (!isAuthenticated || !phone) return;
     loadProfile();
     loadRewards();
+
+    if (pendingTotemCheckinRef.current && !isCheckedIn) {
+      pendingTotemCheckinRef.current = false;
+      setActiveTab('checkin');
+      handleCheckin(initialClinicId, initialClinicName);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('checkin');
+        url.searchParams.delete('clinic_name');
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      } catch {}
+    }
   }, [isAuthenticated, phone, loadProfile]);
 
   if (!isAuthenticated) {
     return (
       <PatientLoginScreen
         initialClinicId={clinicId}
+        totemCheckinClinicName={isTotemQrArrival ? initialClinicName : null}
         isVerifyingToken={isVerifyingToken}
         initialError={loginError}
         onLoginSuccess={handlePatientLoginSuccess}

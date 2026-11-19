@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CRMLeadOpportunity } from '../../types/crm';
 import { CRM_LOST_REASONS } from '../../services/crmService';
 import { X, AlertTriangle, Check } from 'lucide-react';
@@ -36,8 +37,8 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
         <div className="bg-white border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -115,4 +116,6 @@ export const CRMLostReasonModal: React.FC<CRMLostReasonModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

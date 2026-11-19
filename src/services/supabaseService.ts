@@ -213,28 +213,98 @@ export async function fetchPatients(clinicId?: string): Promise<SupabasePatient[
 export async function searchPatientsByNameInSupabase(searchQuery: string): Promise<SupabasePatient[]> {
   const trimmed = searchQuery.trim();
   if (!trimmed) return [];
+  const normText = (s: string) =>
+    String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
   const localOverrides = getLocalPatientAccountOverrides();
   try {
-    const tokens = trimmed.split(/\s+/).filter(Boolean);
+    const rawTokens = trimmed
+      .split(/\s+/)
+      .map((t) => t.replace(/[%_,]/g, '').trim())
+      .filter(Boolean);
+    const normTokens = normText(trimmed).split(/\s+/).filter(Boolean);
+    const digits = trimmed.replace(/\D/g, '');
+    const isNumericSearch = digits.length >= 4 && rawTokens.length === 1 && /^\d+$/.test(trimmed.replace(/[\s().-]/g, ''));
+
     let query = supabase.from('patients').select('*').order('name', { ascending: true }).limit(250);
 
-    for (const token of tokens) {
-      query = query.ilike('name', `%${token}%`);
+    if (isNumericSearch) {
+      query = query.or(`mobile_phone.ilike.%${digits}%,document_id.ilike.%${digits}%`);
+    } else if (rawTokens.length > 1) {
+      query = query.or(rawTokens.map((token) => `name.ilike.%${token}%`).join(','));
+    } else if (rawTokens.length === 1) {
+      query = query.ilike('name', `%${rawTokens[0]}%`);
     }
 
     const { data, error } = await query;
-    if (error || !data) return [];
+    const mergedMap = new Map<string, SupabasePatient>();
 
-    return (data as SupabasePatient[]).map((p) => ({
-      ...p,
-      ...(localOverrides[p.id] || {}),
-      app_access_status:
-        localOverrides[p.id]?.app_access_status ||
-        p.app_access_status ||
-        (p.is_active === false ? 'blocked' : 'pending_activation'),
-    }));
+    if (!error && Array.isArray(data)) {
+      for (const p of data as SupabasePatient[]) {
+        const merged: SupabasePatient = {
+          ...p,
+          ...(localOverrides[p.id] || {}),
+          app_access_status:
+            localOverrides[p.id]?.app_access_status ||
+            p.app_access_status ||
+            (p.is_active === false ? 'blocked' : 'pending_activation'),
+        };
+        if (merged.is_deleted) continue;
+        if (!isNumericSearch && normTokens.length > 0) {
+          const pNorm = normText(merged.name || '');
+          if (!normTokens.every((t) => pNorm.includes(t))) continue;
+        }
+        mergedMap.set(merged.id, merged);
+      }
+    }
+
+    // Also search locally cached/created overrides
+    const lowerQNorm = normText(trimmed);
+    Object.values(localOverrides).forEach((lp) => {
+      if (!lp || !lp.id || !lp.name || lp.is_deleted) return;
+      const lpNorm = normText(lp.name);
+      const nameMatch = normTokens.every((t) => lpNorm.includes(t));
+      const phoneMatch = digits.length >= 3 && (lp.mobile_phone || '').replace(/\D/g, '').includes(digits);
+      const docMatch = digits.length >= 3 && (lp.document_id || '').replace(/\D/g, '').includes(digits);
+      if (nameMatch || phoneMatch || docMatch || lpNorm.includes(lowerQNorm)) {
+        if (!mergedMap.has(lp.id)) {
+          mergedMap.set(lp.id, lp as SupabasePatient);
+        }
+      }
+    });
+
+    return Array.from(mergedMap.values()).slice(0, 50);
   } catch {
     return [];
+  }
+}
+
+export async function deletePatientInSupabase(
+  patientId: string
+): Promise<{ success: boolean; error?: string }> {
+  saveLocalPatientAccountOverride(patientId, { is_deleted: true, is_active: false });
+  try {
+    const { error } = await supabase
+      .from('patients')
+      .update({
+        is_deleted: true,
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', patientId);
+
+    if (error) {
+      console.warn('Aviso ao excluir paciente no Supabase (marcado localmente):', error.message);
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.warn('Falha ao excluir paciente no Supabase:', err);
+    return { success: true };
   }
 }
 
@@ -368,7 +438,7 @@ export function formatPatientPortalUrl(
   if (token || patient.activation_token) {
     params.set('activation_token', token || patient.activation_token || '');
   }
-  return `${baseUrl}/paciente.html?${params.toString()}`;
+  return `${baseUrl}/paciente?${params.toString()}`;
 }
 
 export function formatPatientInviteMessage(

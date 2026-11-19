@@ -47,10 +47,20 @@ export interface CRMCustomField {
   value: string;
 }
 
+export interface CRMEstimateProcedure {
+  id: string;
+  description: string;
+  tooth?: string;
+  dentistName?: string;
+  amount: number;
+  statusDescription?: string;
+}
+
 export interface CRMLeadOpportunity {
   id: string;
   pipelineId: string; // Ex: 'recall_6m', 'campaigns', 'budgets', ou slug customizado
-  patientId?: number | null; // patient_id do Clinicorp / Supabase crm_leads_recall
+  patientId?: number | string | null; // patient_id do Clinicorp / Supabase patients UUID
+  patientCpf?: string;
   patientName: string; // patient_name
   primeiroNome?: string; // primeiro_nome
   patientPhone: string; // mobile_phone ou @instagram / contato livre
@@ -66,6 +76,9 @@ export interface CRMLeadOpportunity {
   tipoMensagem?: string; // tipo_mensagem ('A', 'B', 'C')
   mensagemWhatsapp?: string; // mensagem_whatsapp gerada pelo n8n
   estimatedValue?: number;
+  estimateId?: number; // ID do orçamento no Clinicorp (/estimates/list)
+  estimateDate?: string; // Data do orçamento no Clinicorp (YYYY-MM-DD)
+  estimateProcedures?: CRMEstimateProcedure[]; // Procedimentos ativos do orçamento (sem Deleted/NotApproved)
   pointsBonus?: number; // Pontos do Clube Sorriso Bertuol oferecidos no agendamento
   notes?: string; // Resumo rápido visível no card
   notesHistory?: CRMNoteEntry[]; // Timeline cronológica de notas da recepção

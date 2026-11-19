@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CRMLabel,
   CRMLeadOpportunity,
@@ -121,6 +122,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   // Sync / feedback state
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncToast, setSyncToast] = useState<string | null>(null);
+  const estimateSyncInFlightRef = useRef(false);
 
   const showToast = (msg: string) => {
     setSyncToast(msg);
@@ -157,6 +159,26 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     if (!supaPipelines.some((p) => p.id === activePipelineId) && supaPipelines[0]) {
       setActivePipelineId(supaPipelines[0].id);
     }
+
+    // Automatic Clinicorp OPEN estimates sync (D-3 to today)
+    if (!estimateSyncInFlightRef.current) {
+      estimateSyncInFlightRef.current = true;
+      CRMService.syncOpenEstimatesFromClinicorp(clinics)
+        .then((estRes) => {
+          if (estRes.success) {
+            setOpportunities(estRes.opportunities);
+            if (estRes.added > 0 || estRes.approvedUpdated > 0) {
+              const parts: string[] = [];
+              if (estRes.added > 0) parts.push(`${estRes.added} orçamento(s) OPEN importado(s)`);
+              if (estRes.approvedUpdated > 0) parts.push(`${estRes.approvedUpdated} aprovado(s) atualizado(s)`);
+              showToast(`Clinicorp (D-3): ${parts.join(' · ')}.`);
+            }
+          }
+        })
+        .finally(() => {
+          estimateSyncInFlightRef.current = false;
+        });
+    }
   };
 
   const activePipeline = useMemo(
@@ -179,8 +201,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     userContext.permissions?.canAccessCRM === true;
 
   if (!hasCRMAccess) {
-    return (
-      <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+    const deniedModal = (
+      <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border border-slate-200">
           <div className="w-11 h-11 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl flex items-center justify-center mx-auto">
             <Lock className="w-5 h-5" />
@@ -199,6 +221,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         </div>
       </div>
     );
+    return typeof document !== 'undefined' ? createPortal(deniedModal, document.body) : deniedModal;
   }
 
   const currentUserName = userContext.userName || 'Recepção Bertuol';
@@ -210,11 +233,23 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       CRMService.fetchFromSupabase(),
     ]);
     CRMService.syncAutomaticRecalls(patients, appointments, clinics);
-    const merged = CRMService.getOpportunities();
+    const estRes = await CRMService.syncOpenEstimatesFromClinicorp(clinics, {
+      clinicId: selectedClinicId,
+    });
+    const finalList = estRes.success ? estRes.opportunities : CRMService.getOpportunities();
     setPipelines(supaPipelines);
-    setOpportunities(merged.length > supaOpps.length ? merged : supaOpps);
+    setOpportunities(finalList.length >= supaOpps.length ? finalList : supaOpps);
     setIsSyncing(false);
-    showToast(`Dados sincronizados com sucesso (${supaOpps.length} registros ativos no CRM).`);
+
+    if (estRes.success) {
+      showToast(
+        `Sincronizado: ${estRes.openCount} orçamento(s) OPEN em D-3..D (${estRes.added} novo(s), ${estRes.approvedUpdated} aprovado(s)).`
+      );
+    } else {
+      showToast(
+        `Supabase atualizado (${supaOpps.length} leads). Aviso Clinicorp: ${estRes.error || 'indisponível'}.`
+      );
+    }
   };
 
   const handleCreateOpportunity = (
@@ -261,8 +296,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            patientId: payload.opportunity.patientId || undefined,
             patientName: payload.opportunity.patientName,
             patientPhone: payload.opportunity.patientPhone,
+            patientDocumentId: payload.opportunity.patientCpf || undefined,
             clinicId: payload.clinicId,
             dentistId: payload.dentistId,
             dateKey: payload.dateKey,
@@ -555,8 +592,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
   const pipelineStages = activePipeline?.stages || [];
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
+  const crmMainOverlay = (
+    <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
       <div className="bg-slate-50 rounded-2xl w-full max-w-[1440px] h-[95vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         {/* 1. Clean Clinical Single-Row Header */}
         <header className="bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between gap-4 shrink-0">
@@ -1101,8 +1138,23 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               ) : (
                 <div className="space-y-2.5">
                   {filteredOpps.length === 0 ? (
-                    <div className="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500 text-xs">
-                      Nenhuma oportunidade encontrada neste filtro.
+                    <div className="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-3 text-slate-500 text-xs">
+                      <p>
+                        {activePipeline.id === 'budgets'
+                          ? 'Nenhum orçamento OPEN encontrado na janela dos últimos 3 dias (D-3 até hoje) para este filtro.'
+                          : 'Nenhuma oportunidade encontrada neste filtro.'}
+                      </p>
+                      {activePipeline.id === 'budgets' && (
+                        <button
+                          type="button"
+                          onClick={handleRefreshFromSupabase}
+                          disabled={isSyncing}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs cursor-pointer transition-colors disabled:opacity-60"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                          <span>Sincronizar Orçamentos Clinicorp (D-3)</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     filteredOpps.map((opp) => (
@@ -1409,8 +1461,35 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           )}
         </div>
       </div>
+    </div>
+  );
 
-      {/* Sub-modals */}
+  return (
+    <>
+      {typeof document !== 'undefined' ? createPortal(crmMainOverlay, document.body) : crmMainOverlay}
+
+      {/* Ficha lateral do Lead (z-[110]) */}
+      <CRMLeadDrawer
+        isOpen={Boolean(drawerOpp)}
+        onClose={() => setDrawerOppId(null)}
+        opportunity={drawerOpp}
+        clinics={clinics}
+        dentists={dentists}
+        pipelines={pipelines}
+        labels={labels}
+        currentUserName={currentUserName}
+        onSaveOpportunity={handleSaveOpportunityDrawer}
+        onStageChangeRequest={handleStageChangeRequest}
+        onMovePipeline={handleMovePipeline}
+        onAddNote={handleAddNote}
+        onToggleLabel={handleToggleLabel}
+        onCreateLabel={handleCreateLabel}
+        onDeleteLabel={handleDeleteLabel}
+        onOpenQuickContact={(o) => setQuickContactOpp(o)}
+        onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
+      />
+
+      {/* Modais de Ação e Formulários do CRM (z-[120] via Portal — sempre à frente) */}
       <CRMQuickContactModal
         isOpen={Boolean(quickContactOpp)}
         onClose={() => setQuickContactOpp(null)}
@@ -1431,26 +1510,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         dentists={dentists}
         localAppointments={appointments}
         onConfirmSchedule={handleConfirmQuickSchedule}
-      />
-
-      <CRMLeadDrawer
-        isOpen={Boolean(drawerOpp)}
-        onClose={() => setDrawerOppId(null)}
-        opportunity={drawerOpp}
-        clinics={clinics}
-        dentists={dentists}
-        pipelines={pipelines}
-        labels={labels}
-        currentUserName={currentUserName}
-        onSaveOpportunity={handleSaveOpportunityDrawer}
-        onStageChangeRequest={handleStageChangeRequest}
-        onMovePipeline={handleMovePipeline}
-        onAddNote={handleAddNote}
-        onToggleLabel={handleToggleLabel}
-        onCreateLabel={handleCreateLabel}
-        onDeleteLabel={handleDeleteLabel}
-        onOpenQuickContact={(o) => setQuickContactOpp(o)}
-        onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
       />
 
       <CRMLostReasonModal
@@ -1481,6 +1540,6 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         onCreate={handleCreateOpportunity}
         defaultClinicId={selectedClinicId}
       />
-    </div>
+    </>
   );
 };

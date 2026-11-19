@@ -1,5 +1,6 @@
 import {
   CRMCustomField,
+  CRMEstimateProcedure,
   CRMLabel,
   CRMLeadOpportunity,
   CRMMessageTemplate,
@@ -484,6 +485,13 @@ export class CRMService {
       ? localCached!.customFields
       : [];
 
+    const sourceText = String(row.source || localCached?.source || 'Supabase crm_leads_recall');
+    const sourceEstMatch = sourceText.match(/Clinicorp Orçamento #(\d+)/i);
+    const estimateId =
+      row.estimate_id != null
+        ? Number(row.estimate_id)
+        : localCached?.estimateId ?? (sourceEstMatch ? Number(sourceEstMatch[1]) : undefined);
+
     return {
       id: cycleKey,
       pipelineId,
@@ -503,6 +511,13 @@ export class CRMService {
       tipoMensagem: row.tipo_mensagem ? String(row.tipo_mensagem).trim() : undefined,
       mensagemWhatsapp: row.mensagem_whatsapp ? String(row.mensagem_whatsapp).trim() : undefined,
       estimatedValue: row.estimated_value != null ? Number(row.estimated_value) : 280,
+      estimateId,
+      estimateDate: row.estimate_date
+        ? String(row.estimate_date).split('T')[0]
+        : localCached?.estimateDate || (estimateId ? lastVisitDate : undefined),
+      estimateProcedures: Array.isArray(row.estimate_procedures)
+        ? row.estimate_procedures
+        : localCached?.estimateProcedures,
       pointsBonus: row.points_bonus != null ? Number(row.points_bonus) : 50,
       notes: row.notes || localCached?.notes || undefined,
       notesHistory,
@@ -527,7 +542,7 @@ export class CRMService {
       scheduledTime: row.scheduled_time || localCached?.scheduledTime,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
-      source: row.source || localCached?.source || 'Supabase crm_leads_recall',
+      source: sourceText,
     };
   }
 
@@ -622,10 +637,32 @@ export class CRMService {
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        const mapped = this.sanitizeOpportunities(data.map((r) => this.mapRowToOpportunity(r, cachedById)));
+        const cachedByEstId = new Map<number, CRMLeadOpportunity>();
+        localBefore.forEach((o) => {
+          if (o.estimateId) cachedByEstId.set(o.estimateId, o);
+        });
+
+        const mapped = this.sanitizeOpportunities(
+          data.map((r) => {
+            const opp = this.mapRowToOpportunity(r, cachedById);
+            if (opp.estimateId && !opp.estimateProcedures) {
+              const prev = cachedByEstId.get(opp.estimateId);
+              if (prev?.estimateProcedures) {
+                opp.estimateProcedures = prev.estimateProcedures;
+              }
+            }
+            return opp;
+          })
+        );
         // Preserve any purely local unsynced leads (e.g. offline created)
         const remoteIds = new Set(mapped.map((m) => m.id));
-        const localOnly = localBefore.filter((l) => !l.id.startsWith('opp-row-') && !remoteIds.has(l.id));
+        const remoteEstimateIds = new Set(mapped.map((m) => m.estimateId).filter(Boolean));
+        const localOnly = localBefore.filter(
+          (l) =>
+            !l.id.startsWith('opp-row-') &&
+            !remoteIds.has(l.id) &&
+            !(l.estimateId && remoteEstimateIds.has(l.estimateId))
+        );
         const merged = [...localOnly, ...mapped];
         this.saveOpportunities(merged);
         return merged;
@@ -945,8 +982,19 @@ export class CRMService {
       if (!p.Name || FICTIONAL_CRM_NAMES.has(p.Name.trim().toLowerCase())) return;
       if ([101, 102, 103, 104, 105].includes(Number(p.id))) return;
 
+      const normRecallName = (v: string) =>
+        String(v || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .trim();
+      const pNameNorm = normRecallName(p.Name);
+
       const patientApps = appointments.filter(
-        (a) => a.Patient_PersonId === p.id || (p.MobilePhone && a.MobilePhone === p.MobilePhone)
+        (a) =>
+          a.Patient_PersonId === p.id ||
+          (a.PatientName && normRecallName(a.PatientName) === pNameNorm)
       );
 
       let lastAppTime: number | null = null;
@@ -967,9 +1015,7 @@ export class CRMService {
 
       if (lastAppTime !== null && lastAppIso && now - lastAppTime >= SIX_MONTHS_MS) {
         const existing = opportunities.find(
-          (o) =>
-            (p.MobilePhone && o.patientPhone.replace(/\D/g, '') === p.MobilePhone.replace(/\D/g, '')) ||
-            o.patientName.toLowerCase() === p.Name.toLowerCase()
+          (o) => normRecallName(o.patientName) === pNameNorm
         );
 
         if (!existing) {
@@ -1009,6 +1055,297 @@ export class CRMService {
       this.saveOpportunities(opportunities);
     }
     return addedCount;
+  }
+
+  static async syncOpenEstimatesFromClinicorp(
+    clinics: Clinic[],
+    options?: { from?: string; to?: string; clinicId?: number | 'all' }
+  ): Promise<{
+    success: boolean;
+    added: number;
+    updated: number;
+    approvedUpdated: number;
+    openCount: number;
+    fromDate?: string;
+    toDate?: string;
+    opportunities: CRMLeadOpportunity[];
+    error?: string;
+  }> {
+    const current = this.getOpportunities();
+    try {
+      const qs = new URLSearchParams();
+      if (options?.from) qs.set('from', options.from);
+      if (options?.to) qs.set('to', options.to);
+      if (options?.clinicId && options.clinicId !== 'all') {
+        qs.set('clinicId', String(options.clinicId));
+      }
+
+      const res = await fetch(`/api/clinicorp/open-estimates${qs.toString() ? `?${qs.toString()}` : ''}`);
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        return {
+          success: false,
+          added: 0,
+          updated: 0,
+          approvedUpdated: 0,
+          openCount: 0,
+          opportunities: current,
+          error: json?.error || `HTTP ${res.status}`,
+        };
+      }
+
+      const openEstimates: Array<{
+        id: number;
+        estimateDate: string;
+        createDate: string;
+        amount: number;
+        clinicId: number;
+        professionalName: string;
+        patientId: number;
+        patientName: string;
+        patientPhone: string;
+        procedures: CRMEstimateProcedure[];
+      }> = Array.isArray(json.openEstimates) ? json.openEstimates : [];
+
+      const approvedIds = new Set<number>(
+        (Array.isArray(json.approvedEstimateIds) ? json.approvedEstimateIds : []).map((id: any) => Number(id))
+      );
+
+      const pipelines = this.getPipelines();
+      const budgetPipeline = pipelines.find((p) => p.id === 'budgets') || pipelines[0];
+      const newStageId = this.getStageIdBySemantic(budgetPipeline, 'new');
+      const convertedStageId = this.getStageIdBySemantic(budgetPipeline, 'converted');
+
+      let opportunities = [...current];
+      let added = 0;
+      let updated = 0;
+      let approvedUpdated = 0;
+
+      const buildProcedureSummary = (procs: CRMEstimateProcedure[]): string => {
+        if (!procs || procs.length === 0) return 'Plano de Tratamento em Aberto';
+        const firstTwo = procs.slice(0, 2).map((p) => (p.tooth ? `${p.description} (D.${p.tooth})` : p.description));
+        return procs.length > 2
+          ? `${firstTwo.join(' · ')} +${procs.length - 2}`
+          : firstTwo.join(' · ');
+      };
+
+      // 1. Reconcile estimates that changed to APPROVED in Clinicorp
+      if (approvedIds.size > 0) {
+        opportunities = opportunities.map((opp) => {
+          if (!opp.estimateId || !approvedIds.has(Number(opp.estimateId))) return opp;
+          const oppPipeline = pipelines.find((p) => p.id === opp.pipelineId) || budgetPipeline;
+          const sem = this.resolveStageSemantic(oppPipeline, opp.stage);
+          if (sem === 'converted' || sem === 'lost') return opp;
+
+          const targetConverted = this.getStageIdBySemantic(oppPipeline, 'converted');
+          const approvalNote: CRMNoteEntry = {
+            id: `note-appr-${opp.estimateId}-${Date.now()}`,
+            text: `Orçamento #${opp.estimateId} aprovado no Clinicorp (atualização automática).`,
+            author: 'Clinicorp Sincronização',
+            createdAt: new Date().toISOString(),
+          };
+          approvedUpdated++;
+          const nextOpp: CRMLeadOpportunity = {
+            ...opp,
+            stage: targetConverted || convertedStageId,
+            notes: approvalNote.text,
+            notesHistory: [approvalNote, ...(opp.notesHistory || [])],
+            updatedAt: new Date().toISOString(),
+          };
+          // Persist stage update to Supabase asynchronously
+          this.syncEstimateUpdateToSupabase(nextOpp);
+          return nextOpp;
+        });
+      }
+
+      // 2. Insert or refresh OPEN estimates from Clinicorp
+      for (const est of openEstimates) {
+        if (!est || !est.id) continue;
+        const summary = buildProcedureSummary(est.procedures);
+        const existingIdx = opportunities.findIndex(
+          (o) =>
+            Number(o.estimateId) === Number(est.id) ||
+            (o.pipelineId === 'budgets' &&
+              Number(o.patientId) === Number(est.patientId) &&
+              o.lastVisitDate === est.estimateDate &&
+              !o.estimateId)
+        );
+
+        const clinicValid =
+          clinics.find((c) => Number(c.id) === Number(est.clinicId))?.id || clinics[0]?.id || 1;
+        const daysSince = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(`${est.estimateDate}T12:00:00`).getTime()) / 86400000)
+        );
+
+        if (existingIdx >= 0) {
+          const existing = opportunities[existingIdx];
+          const oppPipeline = pipelines.find((p) => p.id === existing.pipelineId) || budgetPipeline;
+          const sem = this.resolveStageSemantic(oppPipeline, existing.stage);
+          if (sem === 'converted' || sem === 'lost') {
+            // Preserve closed/lost decision, just attach procedures if missing
+            if (!existing.estimateProcedures && est.procedures.length > 0) {
+              opportunities[existingIdx] = {
+                ...existing,
+                estimateId: est.id,
+                estimateDate: est.estimateDate,
+                estimateProcedures: est.procedures,
+              };
+            }
+            continue;
+          }
+
+          const changedValue = Number(existing.estimatedValue || 0) !== Number(est.amount || 0);
+          const changedProcCount =
+            (existing.estimateProcedures?.length || 0) !== est.procedures.length;
+
+          const refreshed: CRMLeadOpportunity = {
+            ...existing,
+            estimateId: est.id,
+            estimateDate: est.estimateDate,
+            estimateProcedures: est.procedures,
+            estimatedValue: est.amount,
+            treatmentDescription: summary,
+            dentistName: est.professionalName || existing.dentistName,
+            patientPhone: existing.patientPhone || est.patientPhone,
+            diasDesdeUltimo: daysSince,
+            updatedAt: changedValue || changedProcCount ? new Date().toISOString() : existing.updatedAt,
+          };
+          opportunities[existingIdx] = refreshed;
+          if (changedValue || changedProcCount) {
+            updated++;
+            this.syncEstimateUpdateToSupabase(refreshed);
+          }
+        } else {
+          const nowIso = new Date().toISOString();
+          const newOpp: CRMLeadOpportunity = {
+            id: `opp-est-${est.id}`,
+            pipelineId: 'budgets',
+            patientId: est.patientId || undefined,
+            patientName: est.patientName,
+            primeiroNome: est.patientName.split(' ')[0],
+            patientPhone: est.patientPhone || '',
+            clinicId: clinicValid,
+            type: 'treatment_pending',
+            stage: newStageId,
+            priority: est.amount >= 2000 ? 'high' : 'medium',
+            labels: [],
+            lastVisitDate: est.estimateDate,
+            dentistName: est.professionalName || 'Corpo Clínico Bertuol',
+            treatmentDescription: summary,
+            diasDesdeUltimo: daysSince,
+            tipoMensagem: 'B',
+            estimatedValue: est.amount,
+            estimateId: est.id,
+            estimateDate: est.estimateDate,
+            estimateProcedures: est.procedures,
+            pointsBonus: budgetPipeline?.defaultPointsBonus ?? 100,
+            notes: `${est.procedures.length} procedimento(s) em aberto no Clinicorp.`,
+            notesHistory: [
+              {
+                id: `note-est-${est.id}`,
+                text: `Orçamento #${est.id} importado do Clinicorp (${est.procedures.length} procedimento(s) ativos, total R$ ${est.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`,
+                author: 'Clinicorp Sincronização',
+                createdAt: nowIso,
+              },
+            ],
+            customFields: [],
+            contactAttempts: 0,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+            source: `Clinicorp Orçamento #${est.id}`,
+          };
+          opportunities.unshift(newOpp);
+          added++;
+
+          // Persist new estimate card in Supabase resiliently
+          const fullRow = this.mapOpportunityToFullRow(newOpp);
+          supabase
+            .from('crm_leads_recall')
+            .insert(fullRow)
+            .select('id')
+            .single()
+            .then(({ data, error }) => {
+              if (error) {
+                supabase
+                  .from('crm_leads_recall')
+                  .insert(this.mapOpportunityToBaseRow(newOpp))
+                  .select('id')
+                  .single()
+                  .then(({ data: baseData }) => {
+                    if (baseData?.id) {
+                      this.replaceLocalId(newOpp.id, `opp-row-${baseData.id}`);
+                    }
+                  });
+              } else if (data?.id) {
+                this.replaceLocalId(newOpp.id, `opp-row-${data.id}`);
+              }
+            });
+        }
+      }
+
+      this.saveOpportunities(opportunities);
+
+      return {
+        success: true,
+        added,
+        updated,
+        approvedUpdated,
+        openCount: openEstimates.length,
+        fromDate: json.fromDate,
+        toDate: json.toDate,
+        opportunities,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        added: 0,
+        updated: 0,
+        approvedUpdated: 0,
+        openCount: 0,
+        opportunities: current,
+        error: err?.message || 'Erro ao sincronizar orçamentos do Clinicorp.',
+      };
+    }
+  }
+
+  private static syncEstimateUpdateToSupabase(opp: CRMLeadOpportunity) {
+    const basePayload = {
+      stage: opp.stage,
+      estimated_value: opp.estimatedValue ?? 0,
+      ultimo_procedimento: opp.treatmentDescription || null,
+      dentist_name: opp.dentistName || null,
+      notes: opp.notes || null,
+      updated_at: opp.updatedAt,
+    };
+    const fullPayload = {
+      ...basePayload,
+      notes_history: opp.notesHistory || [],
+    };
+    const apply = (payload: Record<string, any>) => {
+      if (opp.id.startsWith('opp-row-')) {
+        const rowId = Number(opp.id.replace('opp-row-', ''));
+        return supabase.from('crm_leads_recall').update(payload).eq('id', rowId);
+      }
+      if (opp.patientId && opp.lastVisitDate) {
+        return supabase
+          .from('crm_leads_recall')
+          .update(payload)
+          .eq('patient_id', opp.patientId)
+          .eq('data_ultimo_agendamento', opp.lastVisitDate);
+      }
+      return null;
+    };
+    const req = apply(fullPayload);
+    if (req) {
+      req.then(({ error }) => {
+        if (error) {
+          const fb = apply(basePayload);
+          if (fb) fb.then(() => {});
+        }
+      });
+    }
   }
 
   static getStats(

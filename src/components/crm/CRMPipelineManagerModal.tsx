@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CRMPipeline,
   CRMPipelineColor,
@@ -163,8 +164,8 @@ export const CRMPipelineManagerModal: React.FC<CRMPipelineManagerModalProps> = (
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header */}
         <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
@@ -481,4 +482,6 @@ export const CRMPipelineManagerModal: React.FC<CRMPipelineManagerModalProps> = (
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

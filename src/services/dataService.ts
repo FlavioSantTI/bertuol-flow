@@ -2429,13 +2429,37 @@ class DataService {
     const dentist = this.dentists.find((d) => d.id === payload.dentistId) || this.dentists[0];
     const clinicBusinessId = clinic?.clinicorp_business_id || CLINIC_BUSINESS_ID_PALMAS;
 
-    // Locate or create patient record locally
-    const cleanPhone = payload.patientPhone.replace(/\D/g, '');
+    // Locate or create patient record locally (prioritize exact ID or name LIKE match — never blind phone match across family members)
+    const normName = (s: string) =>
+      String(s || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+    const targetNameNorm = normName(payload.patientName);
+    const targetTokens = targetNameNorm.split(' ').filter((w) => w.length >= 2);
+    const namesCompatible = (candidate: string): boolean => {
+      const cNorm = normName(candidate);
+      if (!cNorm || !targetNameNorm) return false;
+      if (cNorm === targetNameNorm) return true;
+      const cTokens = cNorm.split(' ').filter((w) => w.length >= 2);
+      if (!cTokens.length || !targetTokens.length) return false;
+      const firstMatch =
+        cTokens[0] === targetTokens[0] ||
+        (cTokens[0].length >= 3 &&
+          targetTokens[0].length >= 3 &&
+          (cTokens[0].startsWith(targetTokens[0]) || targetTokens[0].startsWith(cTokens[0])));
+      if (!firstMatch) return false;
+      return targetTokens.every((t) => cNorm.includes(t)) || cTokens.every((t) => targetNameNorm.includes(t));
+    };
+
     let patient = this.patients.find(
       (p) =>
-        (payload.patientPersonId && Number(p.id) === Number(payload.patientPersonId)) ||
-        (cleanPhone && p.MobilePhone.replace(/\D/g, '').endsWith(cleanPhone.slice(-8))) ||
-        p.Name.trim().toLowerCase() === payload.patientName.trim().toLowerCase()
+        (payload.patientPersonId &&
+          Number(p.id) === Number(payload.patientPersonId) &&
+          namesCompatible(p.Name)) ||
+        namesCompatible(p.Name)
     );
 
     if (!patient) {

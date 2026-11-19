@@ -38,10 +38,10 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
     address: '104 Sul, Av. JK, Palmas - TO',
   });
 
-  // Marketing folder options
-  const [marketingPreset, setMarketingPreset] = useState<'patient_portal' | 'home' | 'custom'>('patient_portal');
-  const [customUrl, setCustomUrl] = useState<string>(`${OFFICIAL_DOMAIN}/paciente`);
-  const [qrColor, setQrColor] = useState<'#147A80' | '#0F172A'>('#147A80');
+  // Marketing folder options (always rooted at /paciente so patients never land on staff login)
+  const [marketingPreset, setMarketingPreset] = useState<'patient_portal' | 'checkin_direct' | 'custom'>('patient_portal');
+  const [customUrl, setCustomUrl] = useState<string>(`${OFFICIAL_DOMAIN}/paciente?utm_source=folder`);
+  const [qrColor, setQrColor] = useState<'#0D9488' | '#0F172A'>('#0D9488');
   const [transparentBg, setTransparentBg] = useState<boolean>(false);
 
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -65,8 +65,10 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
   const marketingPayload =
     marketingPreset === 'patient_portal'
       ? `${OFFICIAL_DOMAIN}/paciente`
-      : marketingPreset === 'home'
-        ? `${OFFICIAL_DOMAIN}/`
+      : marketingPreset === 'checkin_direct'
+        ? `${OFFICIAL_DOMAIN}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
+            selectedClinic.name
+          )}`
         : customUrl.trim() || `${OFFICIAL_DOMAIN}/paciente`;
 
   const qrPayload = activeMode === 'marketing' ? marketingPayload : totemPayload;
@@ -74,7 +76,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
   useEffect(() => {
     if (!isOpen || !qrPayload) return;
 
-    const darkColor = activeMode === 'marketing' ? qrColor : '#147A80';
+    const darkColor = activeMode === 'marketing' ? qrColor : '#0D9488';
     const lightColor = activeMode === 'marketing' && transparentBg ? '#00000000' : '#FFFFFF';
 
     let cancelled = false;
@@ -178,15 +180,15 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
                 display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh;
               }
               .card {
-                border: 4px solid #147A80; border-radius: 36px; padding: 40px 30px;
+                border: 4px solid #0D9488; border-radius: 36px; padding: 40px 30px;
                 max-width: 440px; margin: 0 auto; text-align: center;
               }
-              .brand { font-size: 26px; font-weight: 900; color: #147A80; margin-bottom: 2px; }
+              .brand { font-size: 26px; font-weight: 900; color: #0F766E; margin-bottom: 2px; }
               .subbrand { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 20px; }
               .badge { display: inline-block; background: #f0fdfa; border: 1px solid #99f6e4; color: #0f766e; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; }
               .title { font-size: 26px; font-weight: 900; margin: 0 0 6px 0; color: #0f172a; }
               .clinic { font-size: 13px; color: #475569; margin-bottom: 20px; font-weight: 600; }
-              .qr-box { border: 3px dashed #147A80; border-radius: 24px; padding: 14px; display: inline-block; background: #ffffff; margin-bottom: 20px; }
+              .qr-box { border: 3px dashed #0D9488; border-radius: 24px; padding: 14px; display: inline-block; background: #ffffff; margin-bottom: 20px; }
               .qr-img { width: 250px; height: 250px; display: block; }
               .instruction { font-size: 15px; font-weight: 800; color: #1e293b; margin-bottom: 12px; line-height: 1.4; }
               .points-pill { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 12px; display: inline-block; margin-bottom: 16px; }
@@ -302,29 +304,29 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
                   onClick={() => setMarketingPreset('patient_portal')}
                   className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
                     marketingPreset === 'patient_portal'
-                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                      ? 'bg-teal-50 border-[#0D9488] text-[#0F766E]'
                       : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  Portal do Paciente (/paciente)
+                  Portal Clube Sorriso (/paciente)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMarketingPreset('home')}
+                  onClick={() => setMarketingPreset('checkin_direct')}
                   className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
-                    marketingPreset === 'home'
-                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                    marketingPreset === 'checkin_direct'
+                      ? 'bg-teal-50 border-[#0D9488] text-[#0F766E]'
                       : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  Endereço Principal (/)
+                  Check-in Direto (?checkin=totem)
                 </button>
                 <button
                   type="button"
                   onClick={() => setMarketingPreset('custom')}
                   className={`h-9 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
                     marketingPreset === 'custom'
-                      ? 'bg-teal-50 border-[#147A80] text-[#147A80]'
+                      ? 'bg-teal-50 border-[#0D9488] text-[#0F766E]'
                       : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
@@ -336,7 +338,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
             {marketingPreset === 'custom' && (
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                  Cole ou edite o endereço (ex: com parâmetros de campanha UTM)
+                  Cole ou edite o endereço exclusivo de pacientes (ex: com UTM)
                 </label>
                 <div className="relative">
                   <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -344,8 +346,8 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
                     type="url"
                     value={customUrl}
                     onChange={(e) => setCustomUrl(e.target.value)}
-                    placeholder="https://bertuolflow.app-bertuol.tech/paciente"
-                    className="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    placeholder="https://bertuolflow.app-bertuol.tech/paciente?utm_source=folder"
+                    className="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
                   />
                 </div>
               </div>
@@ -357,15 +359,15 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
                 <span className="text-[11px] font-semibold text-slate-600">Cor:</span>
                 <button
                   type="button"
-                  onClick={() => setQrColor('#147A80')}
+                  onClick={() => setQrColor('#0D9488')}
                   className={`h-8 px-2.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer ${
-                    qrColor === '#147A80'
-                      ? 'border-[#147A80] bg-teal-50 text-[#147A80]'
+                    qrColor === '#0D9488'
+                      ? 'border-[#0D9488] bg-teal-50 text-[#0F766E]'
                       : 'border-slate-200 bg-white text-slate-600'
                   }`}
                 >
-                  <span className="w-3 h-3 rounded-sm bg-[#147A80]" />
-                  <span>Teal Bertuol</span>
+                  <span className="w-3 h-3 rounded-sm bg-[#0D9488]" />
+                  <span>Verde Teal (Paciente)</span>
                 </button>
                 <button
                   type="button"
@@ -386,7 +388,7 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
                   type="checkbox"
                   checked={transparentBg}
                   onChange={(e) => setTransparentBg(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 accent-[#147A80] cursor-pointer"
+                  className="w-4 h-4 rounded border-slate-300 accent-[#0D9488] cursor-pointer"
                 />
                 <span className="text-[11px] font-semibold text-slate-700">
                   Fundo Transparente (para arte)
@@ -445,15 +447,15 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
             <div className="max-w-sm mx-auto space-y-3">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-3">
                 <div className="text-center">
-                  <span className="text-[11px] font-semibold text-[#147A80] block">
+                  <span className="text-[11px] font-semibold text-[#0F766E] block">
                     Arte Pronta para Impressão (300 DPI / Vetor)
                   </span>
                   <h3 className="text-base font-bold text-slate-900 mt-0.5">
                     {marketingPreset === 'patient_portal'
                       ? 'Portal do Paciente & Clube Sorriso'
-                      : marketingPreset === 'home'
-                        ? 'Acesso Bertuol Flow'
-                        : 'QR Code Personalizado'}
+                      : marketingPreset === 'checkin_direct'
+                        ? `Check-in Direto · ${selectedClinic.name}`
+                        : 'QR Code Personalizado (Paciente)'}
                   </h3>
                 </div>
 
@@ -494,29 +496,29 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
           ) : (
             <div
               id="printable-totem-display"
-              className="max-w-xs mx-auto bg-white rounded-2xl p-6 shadow-sm border-2 border-[#147A80]/30 space-y-4"
+              className="max-w-xs mx-auto bg-white rounded-2xl p-6 shadow-sm border-2 border-[#0D9488]/35 space-y-4"
             >
               <div className="flex items-center justify-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#147A80] flex items-center justify-center text-white font-bold text-sm">
+                <div className="w-7 h-7 rounded-lg bg-[#0D9488] flex items-center justify-center text-white font-bold text-sm">
                   b
                 </div>
                 <div className="text-left leading-none">
-                  <span className="text-sm font-bold text-[#147A80] tracking-tight block">bertuol</span>
+                  <span className="text-sm font-bold text-[#0F766E] tracking-tight block">bertuol</span>
                   <span className="text-[9px] font-medium text-slate-400 tracking-wider block">
-                    Odontologia Avançada
+                    Clube Sorriso · Paciente
                   </span>
                 </div>
               </div>
 
               <div>
-                <span className="text-xs font-semibold text-[#147A80] block">
+                <span className="text-xs font-semibold text-[#0F766E] block">
                   Totem de Autoatendimento
                 </span>
                 <h3 className="text-lg font-bold text-slate-900 mt-1">Check-in de Chegada</h3>
                 <p className="text-xs text-slate-500 mt-0.5">{selectedClinic.name}</p>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-dashed border-[#147A80]/40 flex items-center justify-center">
+              <div className="p-3 bg-white rounded-xl border border-dashed border-[#0D9488]/45 flex items-center justify-center">
                 {qrCodeDataUrl ? (
                   <img
                     src={qrCodeDataUrl}
