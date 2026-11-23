@@ -25,6 +25,8 @@ import {
   QuickScheduleResult,
 } from './CRMQuickScheduleModal';
 import { CRMLostReasonModal } from './CRMLostReasonModal';
+import { CRMDashboardView } from './CRMDashboardView';
+import { CRMEstimatesBackfillModal } from './CRMEstimatesBackfillModal';
 import {
   X,
   RefreshCw,
@@ -44,6 +46,7 @@ import {
   CheckCircle2,
   Tag,
   Calendar,
+  History,
 } from 'lucide-react';
 import {
   CRM_DATE_FIELD_OPTIONS,
@@ -92,6 +95,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [labels, setLabels] = useState<CRMLabel[]>(() => CRMService.getLabels());
   const [activeView, setActiveView] = useState<'pipeline' | 'templates' | 'dashboard'>('pipeline');
   const [activePipelineId, setActivePipelineId] = useState<string>('recall_6m');
+  const [dashboardScope, setDashboardScope] = useState<'all' | string>('all');
 
   const [opportunities, setOpportunities] = useState<CRMLeadOpportunity[]>([]);
   const [templates, setTemplates] = useState<CRMMessageTemplate[]>([]);
@@ -117,6 +121,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [isNewOppModalOpen, setIsNewOppModalOpen] = useState(false);
   const [isPipelineManagerOpen, setIsPipelineManagerOpen] = useState(false);
   const [isLabelsManagerOpen, setIsLabelsManagerOpen] = useState(false);
+  const [isEstimatesBackfillOpen, setIsEstimatesBackfillOpen] = useState(false);
   const [notesLabelsOppId, setNotesLabelsOppId] = useState<string | null>(null);
 
   // Quick 1-line free capture bar
@@ -254,6 +259,14 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     );
     return typeof document !== 'undefined' ? createPortal(deniedModal, document.body) : deniedModal;
   }
+
+  const normalizedUserRole = String(userContext.role || '').trim().toLowerCase();
+  const canRunEstimatesBackfill =
+    normalizedUserRole === 'admin_root' ||
+    normalizedUserRole === 'admin' ||
+    normalizedUserRole === 'admin_clinica' ||
+    normalizedUserRole === 'admin_tecnico' ||
+    normalizedUserRole === 'gerente_atendimento';
 
   const currentUserName = userContext.userName || 'Recepção Bertuol';
 
@@ -593,26 +606,30 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     pipelines
   );
 
+  const dashboardStripStats: CRMSummaryStats =
+    dashboardScope === 'all'
+      ? globalStats
+      : CRMService.getStats(dateFilteredOpportunities, selectedClinicId, dashboardScope, pipelines);
+
+  const displayedStripStats: CRMSummaryStats =
+    activeView === 'pipeline'
+      ? stats
+      : activeView === 'dashboard'
+      ? dashboardStripStats
+      : globalStats;
+
+  const displayedStripScopeTitle =
+    activeView === 'pipeline'
+      ? 'Fila do funil'
+      : activeView === 'dashboard' && dashboardScope !== 'all'
+      ? `Fila · ${pipelines.find((p) => p.id === dashboardScope)?.name || 'Funil'}`
+      : 'Fila global ativa';
+
   const urgentCount = pipelineOpps.filter(
     (o) =>
       (selectedClinicId === 'all' || o.clinicId === selectedClinicId) &&
       (CRMService.isFollowUpDue(o, activePipeline) || CRMService.isSLAAlert(o, activePipeline))
   ).length;
-
-  // Loss reasons breakdown for dashboard
-  const lostLeads = dateFilteredOpportunities.filter((o) => {
-    const p = pipelines.find((pl) => pl.id === o.pipelineId);
-    const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
-    return matchesClinic && CRMService.resolveStageSemantic(p, o.stage) === 'lost';
-  });
-
-  const lossBreakdown = Object.entries(
-    lostLeads.reduce<Record<string, number>>((acc, curr) => {
-      const reason = curr.lostReason || 'Motivo não informado';
-      acc[reason] = (acc[reason] || 0) + 1;
-      return acc;
-    }, {})
-  ).sort((a, b) => b[1] - a[1]);
 
   // Template Actions
   const handleSaveTemplate = () => {
@@ -652,10 +669,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const pipelineStages = activePipeline?.stages || [];
 
   const crmMainOverlay = (
-    <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-slate-50 rounded-2xl w-full max-w-[1440px] h-[95vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div className="crm-modal-backdrop fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
+      <div className="crm-modal-shell bg-slate-50 rounded-2xl w-full max-w-[1440px] h-[95vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         {/* 1. Clean Clinical Single-Row Header */}
-        <header className="bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between gap-4 shrink-0">
+        <header className="crm-no-print bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-5 min-w-0">
             <h2 className="font-bold text-base tracking-tight text-slate-900 whitespace-nowrap shrink-0">
               CRM Bertuol
@@ -751,6 +768,21 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               <span className="hidden sm:inline">Gerenciar Funis</span>
             </button>
 
+            {canRunEstimatesBackfill && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEstimatesBackfillOpen(true);
+                }}
+                title="Importar histórico de até 1 ano de orçamentos em aberto (OPEN) do Clinicorp"
+                className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-teal-50/70 hover:bg-teal-100/80 border border-teal-200 text-[#0f5c61] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <History className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
+                <span className="hidden sm:inline">Importar Histórico</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleRefreshFromSupabase}
@@ -783,7 +815,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         </header>
 
         {/* Mobile/Tablet Navigation Strip */}
-        <div className="lg:hidden bg-slate-50 px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 shrink-0">
+        <div className="crm-no-print lg:hidden bg-slate-50 px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 shrink-0">
           {pipelines.map((pl) => {
             const isActive = activeView === 'pipeline' && activePipeline?.id === pl.id;
             return (
@@ -830,7 +862,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
         {/* Toast Notification */}
         {syncToast && (
-          <div className="bg-teal-50 border-b border-teal-200 px-5 py-2 text-xs font-semibold text-[#0f5c61] flex items-center justify-between shrink-0">
+          <div className="crm-no-print bg-teal-50 border-b border-teal-200 px-5 py-2 text-xs font-semibold text-[#0f5c61] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#147A80]" />
               <span>{syncToast}</span>
@@ -846,11 +878,11 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         )}
 
         {/* 2. Clean Clinical KPI Strip */}
-        <div className="bg-white border-b border-slate-200 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shrink-0">
+        <div className="crm-no-print bg-white border-b border-slate-200 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shrink-0">
           <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
             <div>
               <span className="text-[11px] font-medium text-slate-500 block">
-                {activeView === 'pipeline' ? 'Fila do funil' : 'Fila global ativa'}
+                {displayedStripScopeTitle}
                 {resolvedDateRange.isActive && (
                   <span className="text-[#147A80] font-semibold">
                     {' '}· {resolvedDateRange.summaryLabel}
@@ -858,15 +890,11 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 )}
               </span>
               <span className="text-base font-bold text-slate-900 tabular-nums">
-                {activeView === 'pipeline' ? stats.totalActive : globalStats.totalActive} leads
+                {displayedStripStats.totalActive} leads
               </span>
             </div>
             <span className="text-xs font-mono font-semibold text-slate-600 tabular-nums">
-              R${' '}
-              {(activeView === 'pipeline'
-                ? stats.totalPipelineValue
-                : globalStats.totalPipelineValue
-              ).toLocaleString('pt-BR')}
+              R$ {displayedStripStats.totalPipelineValue.toLocaleString('pt-BR')}
             </span>
           </div>
 
@@ -876,18 +904,15 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 Follow-ups e SLA
               </span>
               <span className="text-base font-bold text-amber-700 tabular-nums">
-                {activeView === 'pipeline' ? stats.totalFollowUpsDue : globalStats.totalFollowUpsDue}{' '}
-                pendentes
+                {displayedStripStats.totalFollowUpsDue} pendentes
               </span>
             </div>
             <span
               className={`text-xs font-semibold tabular-nums ${
-                (activeView === 'pipeline' ? stats.totalSLAAlert : globalStats.totalSLAAlert) > 0
-                  ? 'text-rose-700'
-                  : 'text-slate-400'
+                displayedStripStats.totalSLAAlert > 0 ? 'text-rose-700' : 'text-slate-400'
               }`}
             >
-              {activeView === 'pipeline' ? stats.totalSLAAlert : globalStats.totalSLAAlert} SLA &gt;48h
+              {displayedStripStats.totalSLAAlert} SLA &gt;48h
             </span>
           </div>
 
@@ -897,8 +922,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 Agendados na grade
               </span>
               <span className="text-base font-bold text-[#147A80] tabular-nums">
-                {activeView === 'pipeline' ? stats.totalScheduled : globalStats.totalScheduled}{' '}
-                consultas
+                {displayedStripStats.totalScheduled} consultas
               </span>
             </div>
             <span className="text-xs text-slate-500">1-clique agenda</span>
@@ -910,16 +934,11 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 Receita convertida
               </span>
               <span className="text-base font-bold text-emerald-700 font-mono tabular-nums">
-                R${' '}
-                {(activeView === 'pipeline'
-                  ? stats.convertedRevenueMonth
-                  : globalStats.convertedRevenueMonth
-                ).toLocaleString('pt-BR')}
+                R$ {displayedStripStats.convertedRevenueMonth.toLocaleString('pt-BR')}
               </span>
             </div>
             <span className="text-xs font-semibold text-emerald-700 tabular-nums">
-              {activeView === 'pipeline' ? stats.totalConvertedMonth : globalStats.totalConvertedMonth}{' '}
-              ganhos
+              {displayedStripStats.totalConvertedMonth} ganhos
             </span>
           </div>
         </div>
@@ -1017,6 +1036,18 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {activePipeline?.id === 'budgets' && canRunEstimatesBackfill && (
+                <button
+                  type="button"
+                  onClick={() => setIsEstimatesBackfillOpen(true)}
+                  className="h-9 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border bg-white hover:bg-teal-50 text-[#0f5c61] border-teal-200 transition-colors cursor-pointer whitespace-nowrap"
+                  title="Buscar orçamentos em aberto (OPEN) dos últimos 12 meses no Clinicorp"
+                >
+                  <History className="w-3.5 h-3.5 text-[#147A80]" />
+                  <span>Importar Histórico (1 Ano)</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setIsQuickCaptureOpen((v) => !v)}
@@ -1164,7 +1195,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         )}
 
         {/* 4. Main Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-50">
+        <div className="crm-modal-scroll flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-50">
           {activeView === 'pipeline' && activePipeline && (
             <div className="space-y-3 h-full flex flex-col">
               {/* Pipeline Operational Note Banner */}
@@ -1368,15 +1399,27 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                           </button>
                         )}
                         {activePipeline.id === 'budgets' && (
-                          <button
-                            type="button"
-                            onClick={handleRefreshFromSupabase}
-                            disabled={isSyncing}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer transition-colors disabled:opacity-60"
-                          >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                            <span>Sincronizar Orçamentos Clinicorp (D-3)</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={handleRefreshFromSupabase}
+                              disabled={isSyncing}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer transition-colors disabled:opacity-60"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                              <span>Sincronizar Orçamentos Clinicorp (D-3)</span>
+                            </button>
+                            {canRunEstimatesBackfill && (
+                              <button
+                                type="button"
+                                onClick={() => setIsEstimatesBackfillOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs cursor-pointer transition-colors"
+                              >
+                                <History className="w-3.5 h-3.5" />
+                                <span>Importar Histórico (1 Ano)</span>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -1546,143 +1589,42 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
           {/* TAB: RELATÓRIOS & CONVERSÃO */}
           {activeView === 'dashboard' && (
-            <div className="space-y-5">
-              {/* Performance by Pipeline */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                <h3 className="font-bold text-slate-900 text-sm mb-3">
-                  Desempenho por Funil Comercial
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-semibold">
-                        <th className="py-2.5 px-3">Funil</th>
-                        <th className="py-2.5 px-3 text-right">Leads ativos</th>
-                        <th className="py-2.5 px-3 text-right">Follow-ups / SLA</th>
-                        <th className="py-2.5 px-3 text-right">Agendados</th>
-                        <th className="py-2.5 px-3 text-right">Convertidos</th>
-                        <th className="py-2.5 px-3 text-right">Em negociação (R$)</th>
-                        <th className="py-2.5 px-3 text-right">Convertido (R$)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-800">
-                      {pipelines.map((pl) => {
-                        const plStats = CRMService.getStats(opportunities, selectedClinicId, pl.id, pipelines);
-                        return (
-                          <tr key={pl.id} className="hover:bg-slate-50">
-                            <td className="py-2.5 px-3 font-bold text-slate-900">{pl.name}</td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
-                              {plStats.totalActive}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums text-amber-700 font-semibold">
-                              {plStats.totalFollowUpsDue + plStats.totalSLAAlert}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums text-indigo-700 font-semibold">
-                              {plStats.totalScheduled}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-700 font-semibold">
-                              {plStats.totalConvertedMonth}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
-                              R$ {plStats.totalPipelineValue.toLocaleString('pt-BR')}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-emerald-700">
-                              R$ {plStats.convertedRevenueMonth.toLocaleString('pt-BR')}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Performance by Unit */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                  <h3 className="font-bold text-slate-900 text-sm mb-3">
-                    Desempenho por Unidade
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-semibold">
-                          <th className="py-2.5 px-3">Unidade</th>
-                          <th className="py-2.5 px-3 text-right">Ativos</th>
-                          <th className="py-2.5 px-3 text-right">Agendados</th>
-                          <th className="py-2.5 px-3 text-right">Convertidos</th>
-                          <th className="py-2.5 px-3 text-right">Faturamento</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-800">
-                        {clinics
-                          .filter((c) => c.active)
-                          .map((clinic) => {
-                            const cStats = CRMService.getStats(opportunities, clinic.id, undefined, pipelines);
-                            return (
-                              <tr key={clinic.id} className="hover:bg-slate-50">
-                                <td className="py-2.5 px-3 font-bold text-slate-900">{clinic.shortName}</td>
-                                <td className="py-2.5 px-3 text-right font-mono tabular-nums">
-                                  {cStats.totalActive}
-                                </td>
-                                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-indigo-700 font-semibold">
-                                  {cStats.totalScheduled}
-                                </td>
-                                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-emerald-700 font-semibold">
-                                  {cStats.totalConvertedMonth}
-                                </td>
-                                <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-emerald-700">
-                                  R$ {cStats.convertedRevenueMonth.toLocaleString('pt-BR')}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Loss Reasons Breakdown */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-slate-900 text-sm">
-                      Ranking de Motivos de Perda
-                    </h3>
-                    <span className="text-xs text-slate-500 tabular-nums">
-                      Total perdido: {lostLeads.length}
-                    </span>
-                  </div>
-
-                  {lossBreakdown.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-6 text-center">
-                      Nenhum lead marcado como perdido até o momento.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {lossBreakdown.map(([reason, count]) => {
-                        const pct = Math.round((count / Math.max(lostLeads.length, 1)) * 100);
-                        return (
-                          <div key={reason} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium text-slate-800">{reason}</span>
-                              <span className="font-mono tabular-nums text-slate-600 font-semibold">
-                                {count} ({pct}%)
-                              </span>
-                            </div>
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-rose-500 rounded-full"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <CRMDashboardView
+              dateFilteredOpportunities={dateFilteredOpportunities}
+              totalUnfilteredCount={opportunities.length}
+              pipelines={pipelines}
+              activePipeline={activePipeline}
+              clinics={clinics}
+              labels={labels}
+              dashboardScope={dashboardScope}
+              onChangeDashboardScope={setDashboardScope}
+              selectedClinicId={selectedClinicId}
+              onChangeClinicId={setSelectedClinicId}
+              dateField={dateField}
+              datePreset={datePreset}
+              customStartDate={customStartDate}
+              customEndDate={customEndDate}
+              resolvedDateRange={resolvedDateRange}
+              onChangeDateField={setDateField}
+              onChangeDatePreset={(preset) => {
+                setDatePreset(preset);
+                if (preset !== 'custom') {
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                }
+              }}
+              onChangeCustomStartDate={(val) => {
+                setCustomStartDate(val);
+                setDatePreset('custom');
+              }}
+              onChangeCustomEndDate={(val) => {
+                setCustomEndDate(val);
+                setDatePreset('custom');
+              }}
+              onClearDateFilter={handleClearDateFilter}
+              onOpenLead={(oppId) => setDrawerOppId(oppId)}
+              onNotify={showToast}
+            />
           )}
         </div>
       </div>
@@ -1793,6 +1735,22 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         onCreate={handleCreateOpportunity}
         onCreateLabel={(name, color) => handleCreateLabel(name, color)}
         defaultClinicId={selectedClinicId}
+      />
+
+      <CRMEstimatesBackfillModal
+        isOpen={isEstimatesBackfillOpen}
+        onClose={() => setIsEstimatesBackfillOpen(false)}
+        clinics={clinics}
+        userContext={userContext}
+        defaultClinicId={selectedClinicId}
+        onAfterBackfill={(addedCount) => {
+          CRMService.fetchFromSupabase().then((fresh) => {
+            setOpportunities(fresh);
+            showToast(
+              `Carga histórica concluída: ${addedCount} orçamento(s) OPEN adicionado(s) ao CRM.`
+            );
+          });
+        }}
       />
     </>
   );

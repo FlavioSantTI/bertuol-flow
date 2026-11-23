@@ -69,3 +69,61 @@ html, body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Scoped executive PDF/Print layout for CRM Dashboard Report */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body.crm-report-printing {
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body.crm-report-printing #root {
+    display: none !important;
+  }
+
+  body.crm-report-printing .crm-modal-backdrop {
+    position: static !important;
+    inset: auto !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+
+  body.crm-report-printing .crm-modal-shell {
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  body.crm-report-printing .crm-modal-scroll {
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  body.crm-report-printing .crm-no-print {
+    display: none !important;
+  }
+
+  body.crm-report-printing .crm-print-only {
+    display: block !important;
+  }
+
+  body.crm-report-printing .crm-print-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+

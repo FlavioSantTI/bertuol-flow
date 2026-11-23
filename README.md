@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.8
+# 🦷 Bertuol Odontologia Avançada — Versão 1.5.9
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.8-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.9-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,24 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.8
+## 🌟 Visão Geral da Jornada & Versão 1.5.9
 
-O **Bertuol Flow** chega à **Versão 1.5.8** consolidando **Filtro por Data Avançado no CRM (com recálculo dinâmico dos KPIs)**, **Gestão Completa de Rótulos no CRM**, **Mensageria Interna Multi-Participante com Atribuição Automática de Conversas** e **Normalização RBAC de Atendentes com Agenda Completa de Dentistas**.
+O **Bertuol Flow** chega à **Versão 1.5.9** entregando o **Dashboard Gerencial de Relatórios do CRM** (com funil de conversão, financeiro de orçamentos, motivos de perda, SLA, comparativos e exportação CSV/PDF A4) e a **Carga Histórica de até 1 Ano de Orçamentos em Aberto (`OPEN`) do Clinicorp** tanto via **Modal no CRM** quanto via **Script CLI**, gravando diretamente no Supabase sem duplicidade e gerando backup em **CSV e JSON**.
 
-### 🆕 Novidades da v1.5.8 — Filtro por Data no CRM, Gestão de Rótulos & Mensageria Multi-Participante
+### 🆕 Novidades da v1.5.9 — Relatórios Gerenciais do CRM & Carga Histórica de Orçamentos (1 Ano)
+
+- **📊 Dashboard de Relatórios do CRM (`CRMDashboardView` & `src/utils/crmAnalytics.ts`)**:
+  - Nova aba **Relatórios** dentro do CRM com alternância instantânea entre **Todos os Funis** e o **funil atual**, sincronizada com os filtros de **data** e **unidade**.
+  - **KPIs Executivos & Funil de Conversão**: visualização de leads, valor em pipeline, receita convertida, ticket médio e taxas de conversão entre etapas com gráficos Recharts.
+  - **Financeiro de Orçamentos, Motivos de Perda & Gargalos de SLA**: ranking de motivos de perda com impacto financeiro em `R$`, alertas de SLA (>48h) com clique direto para abrir a ficha do lead (`CRMLeadDrawer`) e tabelas comparativas por **unidade**, **dentista** e **origem**.
+  - **Exportação Gerencial**: geração de planilha **CSV (PT-BR / Excel)** e impressão formatada em **PDF A4** (`@media print` isolado para o relatório).
+- **📥 Carga Histórica de 1 Ano de Orçamentos em Aberto (`OPEN`) do Clinicorp (`CRMEstimatesBackfillModal`, `crmEstimatesBackfill.ts`, `scripts/backfill-clinicorp-estimates.ts` & `POST /api/clinicorp/estimates-backfill-chunk`)**:
+  - **Botão no CRM ("Importar Histórico" / "Importar Histórico (1 Ano)")**: disponível no cabeçalho do CRM e diretamente na aba **Orçamentos em Aberto** para administradores e gerência (`admin_root`, `admin`, `admin_clinica`, `admin_tecnico`, `gerente_atendimento`).
+  - **Consulta Fatiada & Segura**: divide intervalos de até 366 dias em janelas sequenciais (7, 15 ou 30 dias), filtra estritamente orçamentos `OPEN`, ignora registros já existentes no CRM (por `estimate_id` ou `patient_id + data`), enriquece telefones ausentes via base `public.patients` e grava diretamente no funil **Orçamentos em Aberto** (`budgets`) do Supabase.
+  - **Modo Simulação (Dry-Run) + Backup CSV/JSON**: permite conferir quantidades e valores antes de gravar e baixar os arquivos **CSV (Excel)** e **JSON** completos da execução.
+  - **Script CLI Oficial**: `npm run crm:backfill-estimates -- --days=365` (com suporte a `--dry-run`, `--clinic=1|2|all`, `--from=YYYY-MM-DD`, `--to=YYYY-MM-DD` e `--chunk=15`), salvando os arquivos em `exports/`.
+
+### 📅 Recursos da v1.5.8 — Filtro por Data no CRM, Gestão de Rótulos & Mensageria Multi-Participante
 
 - **📅 Filtro por Data no CRM com Recálculo de KPIs (`src/utils/crmDateFilter.ts` & `MiniCRMModal`)**:
   - Seletor do campo de data analisado: **Data de Entrada**, **Follow-up**, **Data do Orçamento**, **Última Consulta** e **Agendamento**.
@@ -154,14 +167,16 @@ O **Bertuol Flow** chega à **Versão 1.5.8** consolidando **Filtro por Data Ava
 │   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.8)
+│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMDashboardView, CRMEstimatesBackfillModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.9)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
 │   │   ├── services/         # DataService, SupabaseService, CRMService, WebAuthn, Messaging
 │   │   ├── types/            # Tipagem TypeScript (database.ts, crm.ts, Clinic, UserRole, UserPermissions)
-│   │   └── utils/            # Scripts SQL, Filtro de Datas do CRM (crmDateFilter.ts), Formatadores e Auxiliares
+│   │   └── utils/            # Scripts SQL, Analytics do CRM (crmAnalytics.ts), Backfill de Orçamentos (crmEstimatesBackfill.ts), Filtro de Datas (crmDateFilter.ts)
+├── scripts/
+│   └── backfill-clinicorp-estimates.ts # CLI de carga histórica (1 ano) de orçamentos OPEN do Clinicorp + CSV/JSON
 ├── server (Node.js Express + TSX Proxy Server)
 │   └── server.ts             # APIs REST & SSE (/api/clinics, /api/login, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
 ```
@@ -242,11 +257,20 @@ npm run dev
 ```
 O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 
+### 5. Carga Histórica de Orçamentos em Aberto via CLI (Opcional)
+```bash
+# Simulação (gera CSV/JSON em exports/ sem gravar no Supabase)
+npm run crm:backfill-estimates -- --days=365 --dry-run
+
+# Importação real (grava novos orçamentos OPEN no CRM + gera CSV/JSON em exports/)
+npm run crm:backfill-estimates -- --days=365
+```
+
 ---
 
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.8`
+- **Versão**: `v1.5.9`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

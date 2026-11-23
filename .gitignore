@@ -10,3 +10,4 @@ coverage/
 .aistudio/
 patient_credentials_store.json
 patients_store.json
+exports/

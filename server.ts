@@ -3453,6 +3453,570 @@ app.get('/api/clinicorp/open-estimates', async (req: Request, res: Response) => 
   }
 });
 
+// In-memory short-lived cache for patient phone enrichment during sequential backfill chunks
+let backfillPatientPhoneCache: {
+  loadedAt: number;
+  byExternalId: Map<string, string>;
+  byName: Map<string, string>;
+} | null = null;
+let estimatesBackfillChunkInFlight = false;
+
+const normalizeBackfillNameKey = (name?: string | null): string =>
+  String(name || '')
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const extractBackfillEstimateId = (source?: string | null): number | null => {
+  if (!source) return null;
+  const m = String(source).match(/Or[cç]amento\s*#(\d+)/i);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+async function getBackfillPatientPhoneCache() {
+  const TTL_MS = 5 * 60 * 1000;
+  if (backfillPatientPhoneCache && Date.now() - backfillPatientPhoneCache.loadedAt < TTL_MS) {
+    return backfillPatientPhoneCache;
+  }
+
+  const byExternalId = new Map<string, string>();
+  const byName = new Map<string, string>();
+  const pageSize = 1000;
+  let offset = 0;
+
+  while (offset < 25000) {
+    const { data, error } = await supabase
+      .from('patients')
+      .select('external_id, name, mobile_phone, landline')
+      .range(offset, offset + pageSize - 1);
+
+    if (error || !data) break;
+    for (const p of data as any[]) {
+      const phone = String(p.mobile_phone || p.landline || '').trim();
+      if (!phone) continue;
+      if (p.external_id) {
+        byExternalId.set(String(p.external_id).trim(), phone);
+      }
+      const nKey = normalizeBackfillNameKey(p.name);
+      if (nKey && !byName.has(nKey)) {
+        byName.set(nKey, phone);
+      }
+    }
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  backfillPatientPhoneCache = { loadedAt: Date.now(), byExternalId, byName };
+  return backfillPatientPhoneCache;
+}
+
+// Endpoint: Chunked historical backfill of OPEN Clinicorp estimates (max 31 days per chunk, ignores existing CRM rows)
+app.post('/api/clinicorp/estimates-backfill-chunk', async (req: Request, res: Response) => {
+  const ALLOWED_BACKFILL_ROLES = new Set([
+    'admin_root',
+    'admin',
+    'admin_clinica',
+    'admin_tecnico',
+    'gerente_atendimento',
+  ]);
+
+  const rawRole = String(req.headers['x-user-role'] || req.body?.userRole || '').trim().toLowerCase();
+  if (!ALLOWED_BACKFILL_ROLES.has(rawRole)) {
+    return res.status(403).json({
+      success: false,
+      code: 'FORBIDDEN',
+      error: 'Apenas administradores ou gerência podem executar a carga histórica de orçamentos.',
+    });
+  }
+
+  const callerEmail = String(req.headers['x-user-email'] || '').trim().toLowerCase();
+  if (callerEmail && callerEmail !== 'favuca.dias@gmail.com') {
+    try {
+      const { data: dbUser } = await supabase
+        .from('system_users')
+        .select('role, active')
+        .eq('email', callerEmail)
+        .maybeSingle();
+      if (dbUser) {
+        const dbRole = String(dbUser.role || '').trim().toLowerCase();
+        if (dbUser.active === false || !ALLOWED_BACKFILL_ROLES.has(dbRole)) {
+          return res.status(403).json({
+            success: false,
+            code: 'FORBIDDEN',
+            error: 'Usuário sem permissão ativa para executar carga histórica de orçamentos.',
+          });
+        }
+      }
+    } catch {
+      // Non-blocking fallback when system_users table is unavailable
+    }
+  }
+
+  const ymdRe = /^\d{4}-\d{2}-\d{2}$/;
+  const fromDate = String(req.body?.from || '').trim();
+  const toDate = String(req.body?.to || '').trim();
+  const dryRun = Boolean(req.body?.dryRun);
+  const rawClinicId = req.body?.clinicId;
+  const requestedClinicId =
+    rawClinicId && rawClinicId !== 'all' && Number.isFinite(Number(rawClinicId)) && Number(rawClinicId) > 0
+      ? Number(rawClinicId)
+      : undefined;
+
+  if (!ymdRe.test(fromDate) || !ymdRe.test(toDate) || fromDate > toDate) {
+    return res.status(400).json({
+      success: false,
+      code: 'INVALID_DATE_RANGE',
+      error: 'Informe datas válidas no formato YYYY-MM-DD (from <= to).',
+    });
+  }
+
+  const [fy, fm, fd] = fromDate.split('-').map(Number);
+  const [ty, tm, td] = toDate.split('-').map(Number);
+  const spanDays =
+    Math.floor(
+      (Date.UTC(ty, tm - 1, td, 12) - Date.UTC(fy, fm - 1, fd, 12)) / 86400000
+    ) + 1;
+
+  if (spanDays > 31) {
+    return res.status(400).json({
+      success: false,
+      code: 'WINDOW_TOO_LARGE',
+      error: 'Cada janela de carga histórica pode cobrir no máximo 31 dias.',
+    });
+  }
+
+  if (estimatesBackfillChunkInFlight) {
+    return res.status(409).json({
+      success: false,
+      code: 'BACKFILL_IN_PROGRESS',
+      error: 'Já existe uma janela de importação histórica em andamento. Aguarde a conclusão.',
+    });
+  }
+
+  estimatesBackfillChunkInFlight = true;
+
+  try {
+    const targetClinics = requestedClinicId
+      ? MULTI_TENANT_CLINICS.filter((c: any) => Number(c.id) === requestedClinicId)
+      : MULTI_TENANT_CLINICS.filter((c: any) => c.active);
+
+    const contextsToQuery: Array<{
+      clinicId: number;
+      clinicName: string;
+      user: string;
+      key: string;
+      baseUrl: string;
+      authHeader: string;
+    }> = [];
+    const seenAuth = new Set<string>();
+
+    for (const c of targetClinics) {
+      const ctx = resolveClinicorpContext(Number(c.id), Number(c.clinicorp_business_id));
+      if (!ctx.configured) continue;
+      const sig = `${ctx.baseUrl}::${ctx.user}::${ctx.key}`;
+      if (seenAuth.has(sig)) continue;
+      seenAuth.add(sig);
+      contextsToQuery.push({
+        clinicId: Number(c.id),
+        clinicName: c.shortName || c.name || `Unidade ${c.id}`,
+        user: ctx.user,
+        key: ctx.key,
+        baseUrl: ctx.baseUrl,
+        authHeader: ctx.authHeader,
+      });
+    }
+
+    if (contextsToQuery.length === 0) {
+      const fallbackCtx = resolveClinicorpContext(requestedClinicId);
+      if (fallbackCtx.configured) {
+        const fbClinic = MULTI_TENANT_CLINICS.find(
+          (c: any) => Number(c.id) === (requestedClinicId || 1)
+        );
+        contextsToQuery.push({
+          clinicId: requestedClinicId || 1,
+          clinicName: fbClinic?.shortName || `Unidade ${requestedClinicId || 1}`,
+          user: fallbackCtx.user,
+          key: fallbackCtx.key,
+          baseUrl: fallbackCtx.baseUrl,
+          authHeader: fallbackCtx.authHeader,
+        });
+      }
+    }
+
+    if (contextsToQuery.length === 0) {
+      return res.status(400).json({
+        success: false,
+        code: 'CLINICORP_NOT_CONFIGURED',
+        error: 'Credenciais da API do Clinicorp (CLINICORP_KEY) não configuradas no servidor.',
+      });
+    }
+
+    const estimateById = new Map<number, any>();
+    const warnings: string[] = [];
+
+    // 1. Fetch window from Clinicorp with retry on transient 429/5xx
+    for (const qCtx of contextsToQuery) {
+      let fetchedOk = false;
+      let lastErr = '';
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const primaryQs = new URLSearchParams({ from: fromDate, to: toDate });
+          let apiRes = await fetch(`${qCtx.baseUrl}/estimates/list?${primaryQs.toString()}`, {
+            method: 'GET',
+            headers: { Authorization: qCtx.authHeader, Accept: 'application/json' },
+          });
+
+          if (apiRes.status === 400) {
+            const retryQs = new URLSearchParams({
+              subscriber_id: qCtx.user,
+              from: fromDate,
+              to: toDate,
+            });
+            apiRes = await fetch(`${qCtx.baseUrl}/estimates/list?${retryQs.toString()}`, {
+              method: 'GET',
+              headers: { Authorization: qCtx.authHeader, Accept: 'application/json' },
+            });
+          }
+
+          if (apiRes.ok) {
+            const rawJson = await apiRes.json().catch(() => null);
+            const list = Array.isArray(rawJson)
+              ? rawJson
+              : Array.isArray(rawJson?.data)
+              ? rawJson.data
+              : [];
+            for (const item of list) {
+              const estId = Number(item?.id || 0);
+              if (!estId || estimateById.has(estId)) continue;
+              estimateById.set(estId, {
+                ...item,
+                _fallbackClinicId: qCtx.clinicId,
+                _fallbackClinicName: qCtx.clinicName,
+              });
+            }
+            fetchedOk = true;
+            break;
+          }
+
+          const errTxt = (await apiRes.text().catch(() => '')).slice(0, 120);
+          lastErr = `HTTP ${apiRes.status} ${errTxt}`.trim();
+          if ((apiRes.status === 429 || apiRes.status >= 500) && attempt < 3) {
+            await new Promise((r) => setTimeout(r, attempt * 750));
+            continue;
+          }
+          break;
+        } catch (err: any) {
+          lastErr = err?.message || 'Erro de conexão';
+          if (attempt < 3) {
+            await new Promise((r) => setTimeout(r, attempt * 750));
+            continue;
+          }
+        }
+      }
+
+      if (!fetchedOk) {
+        warnings.push(`${qCtx.clinicName} (${fromDate}..${toDate}): ${lastErr}`);
+      }
+    }
+
+    // 2. Load existing CRM deduplication keys from Supabase (paginated safely)
+    const existingEstimateIds = new Set<number>();
+    const existingCompositeKeys = new Set<string>();
+    const pageSize = 1000;
+    let offset = 0;
+
+    while (offset < 25000) {
+      const { data: existingRows, error: exErr } = await supabase
+        .from('crm_leads_recall')
+        .select('id, patient_id, data_ultimo_agendamento, pipeline_id, source')
+        .range(offset, offset + pageSize - 1);
+
+      if (exErr || !existingRows) {
+        if (exErr) warnings.push(`Leitura de deduplicação Supabase: ${exErr.message}`);
+        break;
+      }
+
+      for (const row of existingRows as any[]) {
+        const estId = extractBackfillEstimateId(row.source);
+        if (estId) existingEstimateIds.add(estId);
+        const pid = Number(row.patient_id || 0);
+        const dt = String(row.data_ultimo_agendamento || '').split('T')[0];
+        if ((row.pipeline_id === 'budgets' || !row.pipeline_id) && pid > 0 && dt) {
+          existingCompositeKeys.add(`${pid}::${dt}`);
+        }
+      }
+
+      if (existingRows.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    // 3. Load cached patient phone lookup for missing phone enrichment
+    const phoneLookup = await getBackfillPatientPhoneCache();
+
+    // 4. Filter strictly OPEN estimates & classify (GRAVADO / IGNORADO_EXISTENTE / SIMULADO)
+    const records: any[] = [];
+    const toInsert: any[] = [];
+    let openFound = 0;
+    let added = 0;
+    let skippedExisting = 0;
+    let simulated = 0;
+    let failedInsert = 0;
+    let newValueTotal = 0;
+
+    for (const item of estimateById.values()) {
+      const estId = Number(item.id);
+      const status = String(item.Status || '').trim().toUpperCase();
+      if (status !== 'OPEN') continue;
+
+      const businessId = Number(item.BusinessId || 0);
+      const matchedClinic = MULTI_TENANT_CLINICS.find(
+        (c: any) => Number(c.clinicorp_business_id) === businessId
+      );
+      const clinicId = matchedClinic
+        ? Number(matchedClinic.id)
+        : Number(item._fallbackClinicId || 1);
+      const clinicName =
+        matchedClinic?.shortName ||
+        matchedClinic?.name ||
+        String(item._fallbackClinicName || `Unidade ${clinicId}`);
+
+      if (requestedClinicId && clinicId !== requestedClinicId) continue;
+
+      openFound += 1;
+
+      const rawPatientName = String(item.PatientName || '').trim();
+      const patientName =
+        rawPatientName.replace(/\s*\(\d+\)\s*$/, '').trim() || rawPatientName || 'Paciente';
+      const professionalName = String(item.ProfessionalName || 'Corpo Clínico Bertuol')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const rawProcedures = Array.isArray(item.ProcedureList) ? item.ProcedureList : [];
+      const activeProcedures = rawProcedures
+        .filter((p: any) => p && p.Deleted !== 'X' && p.NotApproved !== 'X')
+        .map((p: any, idx: number) => ({
+          id: String(p.id || p.PriceId || `${estId}_${idx}`),
+          description: String(p.OperationDescription || 'Procedimento Odontológico')
+            .replace(/\s+/g, ' ')
+            .trim(),
+          tooth: String(p.Tooth || '').trim() || undefined,
+          dentistName:
+            String(p.DentistName || professionalName || '').replace(/\s+/g, ' ').trim() || undefined,
+          amount: Number(p.FinalAmount ?? p.Amount ?? 0),
+          statusDescription: String(p.StatusDescription || '').trim() || undefined,
+        }));
+
+      const proceduresSum = activeProcedures.reduce(
+        (acc: number, p: any) => acc + (Number(p.amount) || 0),
+        0
+      );
+      const amount = Number(item.Amount) > 0 ? Number(item.Amount) : proceduresSum;
+
+      const isoRaw = String(item.Date || item.CreateDate || '').trim();
+      const estimateDate = isoRaw ? isoRaw.split('T')[0] : toDate;
+      const createDate = String(item.CreateDate || isoRaw || '').split('T')[0] || estimateDate;
+      const patientId = Number(item.PatientId || 0);
+
+      let patientPhone = String(item.PatientMobilePhone || '').trim();
+      let phoneEnriched = false;
+      if (!patientPhone) {
+        const fromId = patientId > 0 ? phoneLookup.byExternalId.get(String(patientId)) : undefined;
+        const fromName = phoneLookup.byName.get(normalizeBackfillNameKey(patientName));
+        if (fromId || fromName) {
+          patientPhone = fromId || fromName || '';
+          phoneEnriched = true;
+        }
+      }
+
+      const firstTwo = activeProcedures
+        .slice(0, 2)
+        .map((p: any) => (p.tooth ? `${p.description} (D.${p.tooth})` : p.description));
+      const procedureSummary =
+        activeProcedures.length === 0
+          ? 'Plano de Tratamento em Aberto'
+          : activeProcedures.length > 2
+          ? `${firstTwo.join(' · ')} +${activeProcedures.length - 2}`
+          : firstTwo.join(' · ');
+
+      const compositeKey = patientId > 0 ? `${patientId}::${estimateDate}` : '';
+      const alreadyExists =
+        existingEstimateIds.has(estId) ||
+        (compositeKey !== '' && existingCompositeKeys.has(compositeKey));
+
+      const rec = {
+        estimateId: estId,
+        estimateDate,
+        createDate,
+        status: 'OPEN' as const,
+        businessId,
+        clinicId,
+        clinicName,
+        patientId,
+        patientName,
+        patientPhone,
+        phoneEnrichedFromSupabase: phoneEnriched,
+        dentistName: professionalName,
+        amount,
+        procedures: activeProcedures,
+        procedureSummary,
+        action: alreadyExists ? 'IGNORADO_EXISTENTE' : dryRun ? 'SIMULADO' : 'GRAVADO',
+      };
+
+      if (alreadyExists) {
+        skippedExisting += 1;
+        records.push(rec);
+      } else {
+        newValueTotal += amount;
+        existingEstimateIds.add(estId);
+        if (compositeKey) existingCompositeKeys.add(compositeKey);
+        if (dryRun) {
+          simulated += 1;
+          records.push(rec);
+        } else {
+          toInsert.push(rec);
+        }
+      }
+    }
+
+    // 5. Batch-insert new OPEN estimates into Supabase public.crm_leads_recall
+    if (!dryRun && toInsert.length > 0) {
+      const nowIso = new Date().toISOString();
+      const buildRows = (rec: any) => {
+        const daysSince = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(`${rec.estimateDate}T12:00:00`).getTime()) / 86400000)
+        );
+        const firstName = rec.patientName.split(' ')[0] || rec.patientName;
+        const noteText = `Orçamento #${rec.estimateId} importado via carga histórica (${rec.procedures.length} procedimento(s) ativos, total R$ ${Number(rec.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`;
+
+        const baseRow = {
+          patient_id: rec.patientId || rec.estimateId,
+          patient_name: rec.patientName,
+          primeiro_nome: firstName,
+          mobile_phone: rec.patientPhone || '',
+          data_ultimo_agendamento: rec.estimateDate,
+          ultimo_procedimento: rec.procedureSummary,
+          dias_desde_ultimo: daysSince,
+          tipo_mensagem: 'B',
+          mensagem_whatsapp: null,
+          stage: 'new',
+          priority: rec.amount >= 2000 ? 'high' : 'medium',
+          clinic_id: rec.clinicId || 1,
+          dentist_name: rec.dentistName || 'Corpo Clínico Bertuol',
+          estimated_value: rec.amount,
+          points_bonus: 100,
+          notes: `${rec.procedures.length} procedimento(s) em aberto no Clinicorp.`,
+          last_contact_date: null,
+          updated_at: nowIso,
+        };
+
+        return {
+          baseRow,
+          fullRow: {
+            ...baseRow,
+            pipeline_id: 'budgets',
+            type: 'treatment_pending',
+            labels: [],
+            notes_history: [
+              {
+                id: `note-est-${rec.estimateId}`,
+                text: noteText,
+                author: 'Clinicorp Carga Histórica',
+                createdAt: nowIso,
+              },
+            ],
+            custom_fields: [],
+            assigned_user: null,
+            contact_attempts: 0,
+            next_contact_date: null,
+            lost_reason: null,
+            scheduled_appointment_id: null,
+            scheduled_date: null,
+            scheduled_time: null,
+            source: `Clinicorp Orçamento #${rec.estimateId}`,
+          },
+        };
+      };
+
+      const batchSize = 25;
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const mapped = batch.map(buildRows);
+        const { error: batchErr } = await supabase
+          .from('crm_leads_recall')
+          .insert(mapped.map((m) => m.fullRow));
+
+        if (!batchErr) {
+          added += batch.length;
+          records.push(...batch);
+        } else {
+          for (let j = 0; j < batch.length; j++) {
+            const rec = batch[j];
+            const { error: fullErr } = await supabase
+              .from('crm_leads_recall')
+              .insert(mapped[j].fullRow);
+            if (!fullErr) {
+              added += 1;
+              records.push(rec);
+              continue;
+            }
+            const { error: baseErr } = await supabase
+              .from('crm_leads_recall')
+              .insert(mapped[j].baseRow);
+            if (!baseErr) {
+              added += 1;
+              records.push(rec);
+            } else {
+              failedInsert += 1;
+              rec.action = 'ERRO_GRAVACAO';
+              rec.errorMessage = baseErr.message;
+              records.push(rec);
+            }
+          }
+        }
+      }
+    }
+
+    records.sort((a, b) => {
+      if (b.estimateDate !== a.estimateDate) return b.estimateDate.localeCompare(a.estimateDate);
+      return b.amount - a.amount;
+    });
+
+    return res.json({
+      success: true,
+      fromDate,
+      toDate,
+      dryRun,
+      counts: {
+        totalFetched: estimateById.size,
+        openFound,
+        added,
+        skippedExisting,
+        simulated,
+        failedInsert,
+      },
+      newValueTotal,
+      records,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    });
+  } catch (error: any) {
+    console.error('Erro na janela de carga histórica de orçamentos:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao importar janela histórica de orçamentos.',
+      message: error?.message,
+    });
+  } finally {
+    estimatesBackfillChunkInFlight = false;
+  }
+});
+
 // Endpoint to sync appointment categories from Clinicorp API
 app.post('/api/clinicorp/sync-categories', async (req: Request, res: Response) => {
   try {
