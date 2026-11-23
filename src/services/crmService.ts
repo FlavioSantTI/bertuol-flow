@@ -421,15 +421,38 @@ export class CRMService {
     }
   }
 
-  static addLabel(name: string, color: CRMLabel['color'] = 'teal'): CRMLabel[] {
+  static addLabelAndGet(
+    name: string,
+    color: CRMLabel['color'] = 'teal'
+  ): { labels: CRMLabel[]; created: CRMLabel | null } {
     const clean = name.trim();
-    if (!clean) return this.getLabels();
     const current = this.getLabels();
-    const id = `lbl_${Date.now()}`;
+    if (!clean) return { labels: current, created: null };
+
+    const existing = current.find((l) => l.name.trim().toLowerCase() === clean.toLowerCase());
+    if (existing) {
+      return { labels: current, created: existing };
+    }
+
+    const id = `lbl_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`;
     const newLabel: CRMLabel = { id, name: clean, color };
     const updated = [...current, newLabel];
     this.saveLabelsLocal(updated);
 
+    supabase.from('crm_labels').upsert({ id, name: clean, color }, { onConflict: 'id' }).then(() => {});
+    return { labels: updated, created: newLabel };
+  }
+
+  static addLabel(name: string, color: CRMLabel['color'] = 'teal'): CRMLabel[] {
+    return this.addLabelAndGet(name, color).labels;
+  }
+
+  static updateLabel(id: string, name: string, color: CRMLabel['color']): CRMLabel[] {
+    const clean = name.trim();
+    const current = this.getLabels();
+    if (!clean) return current;
+    const updated = current.map((l) => (l.id === id ? { ...l, name: clean, color } : l));
+    this.saveLabelsLocal(updated);
     supabase.from('crm_labels').upsert({ id, name: clean, color }, { onConflict: 'id' }).then(() => {});
     return updated;
   }
@@ -437,6 +460,19 @@ export class CRMService {
   static deleteLabel(id: string): CRMLabel[] {
     const updated = this.getLabels().filter((l) => l.id !== id);
     this.saveLabelsLocal(updated);
+    // Remove referências do rótulo excluído nas oportunidades locais
+    const opps = this.getOpportunities();
+    let changed = false;
+    const cleanedOpps = opps.map((o) => {
+      if (o.labels && o.labels.includes(id)) {
+        changed = true;
+        return { ...o, labels: o.labels.filter((lid) => lid !== id) };
+      }
+      return o;
+    });
+    if (changed) {
+      this.saveOpportunities(cleanedOpps);
+    }
     supabase.from('crm_labels').delete().eq('id', id).then(() => {});
     return updated;
   }

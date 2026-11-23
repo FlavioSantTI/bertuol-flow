@@ -16,6 +16,8 @@ import { CRMLeadCard } from './CRMLeadCard';
 import { CRMQuickContactModal } from './CRMQuickContactModal';
 import { CRMNewOpportunityModal } from './CRMNewOpportunityModal';
 import { CRMPipelineManagerModal } from './CRMPipelineManagerModal';
+import { CRMLabelsManagerModal } from './CRMLabelsManagerModal';
+import { CRMNotesLabelsModal } from './CRMNotesLabelsModal';
 import { CRMLeadDrawer } from './CRMLeadDrawer';
 import {
   CRMQuickScheduleModal,
@@ -40,7 +42,18 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
+  Tag,
+  Calendar,
 } from 'lucide-react';
+import {
+  CRM_DATE_FIELD_OPTIONS,
+  CRM_DATE_PRESET_OPTIONS,
+  CRMDateField,
+  CRMDatePreset,
+  getCRMDateFieldLabel,
+  matchesCRMDateFilter,
+  resolveCRMDateRange,
+} from '../../utils/crmDateFilter';
 
 interface MiniCRMModalProps {
   isOpen: boolean;
@@ -86,6 +99,10 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<CRMType | 'all'>('all');
   const [selectedLabelFilter, setSelectedLabelFilter] = useState<string>('all');
   const [onlyFollowUpsFilter, setOnlyFollowUpsFilter] = useState<boolean>(false);
+  const [dateField, setDateField] = useState<CRMDateField>('createdAt');
+  const [datePreset, setDatePreset] = useState<CRMDatePreset>('all');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
@@ -99,6 +116,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   } | null>(null);
   const [isNewOppModalOpen, setIsNewOppModalOpen] = useState(false);
   const [isPipelineManagerOpen, setIsPipelineManagerOpen] = useState(false);
+  const [isLabelsManagerOpen, setIsLabelsManagerOpen] = useState(false);
+  const [notesLabelsOppId, setNotesLabelsOppId] = useState<string | null>(null);
 
   // Quick 1-line free capture bar
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
@@ -189,6 +208,18 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const drawerOpp = useMemo(
     () => opportunities.find((o) => o.id === drawerOppId) || null,
     [opportunities, drawerOppId]
+  );
+
+  // Resolved Date Filter Range (local calendar YYYY-MM-DD)
+  const resolvedDateRange = useMemo(
+    () => resolveCRMDateRange(datePreset, customStartDate, customEndDate),
+    [datePreset, customStartDate, customEndDate]
+  );
+
+  // Opportunities filtered by date first (drives KPIs + Kanban + List together)
+  const dateFilteredOpportunities = useMemo(
+    () => opportunities.filter((o) => matchesCRMDateFilter(o, dateField, resolvedDateRange)),
+    [opportunities, dateField, resolvedDateRange]
   );
 
   if (!isOpen) return null;
@@ -417,14 +448,36 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     setOpportunities(CRMService.getOpportunities());
   };
 
-  const handleCreateLabel = (name: string, color: CRMLabel['color']) => {
-    const updated = CRMService.addLabel(name, color);
+  const handleCreateLabel = (
+    name: string,
+    color: CRMLabel['color'],
+    attachToOppId?: string
+  ): CRMLabel | null => {
+    const { labels: updated, created } = CRMService.addLabelAndGet(name, color);
     setLabels(updated);
+    if (created && attachToOppId) {
+      const opp = CRMService.getOpportunities().find((o) => o.id === attachToOppId);
+      if (opp && !(opp.labels || []).includes(created.id)) {
+        CRMService.toggleOpportunityLabel(attachToOppId, created.id);
+        setOpportunities(CRMService.getOpportunities());
+      }
+    }
+    if (created) {
+      showToast(`Rótulo "${created.name}" disponível no CRM.`);
+    }
+    return created;
+  };
+
+  const handleUpdateLabel = (labelId: string, name: string, color: CRMLabel['color']) => {
+    const updated = CRMService.updateLabel(labelId, name, color);
+    setLabels(updated);
+    showToast('Rótulo atualizado.');
   };
 
   const handleDeleteLabel = (labelId: string) => {
     const updated = CRMService.deleteLabel(labelId);
     setLabels(updated);
+    setOpportunities(CRMService.getOpportunities());
     if (selectedLabelFilter === labelId) setSelectedLabelFilter('all');
   };
 
@@ -495,8 +548,14 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     showToast(`Paciente transferido para "${targetName}".`);
   };
 
+  const handleClearDateFilter = () => {
+    setDatePreset('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
+
   // Pipeline-scoped opportunities & filters
-  const pipelineOpps = opportunities.filter((o) => o.pipelineId === activePipeline?.id);
+  const pipelineOpps = dateFilteredOpportunities.filter((o) => o.pipelineId === activePipeline?.id);
 
   const filteredOpps = pipelineOpps.filter((o) => {
     const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
@@ -521,14 +580,14 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   });
 
   const stats: CRMSummaryStats = CRMService.getStats(
-    opportunities,
+    dateFilteredOpportunities,
     selectedClinicId,
     activePipeline?.id,
     pipelines
   );
 
   const globalStats: CRMSummaryStats = CRMService.getStats(
-    opportunities,
+    dateFilteredOpportunities,
     selectedClinicId,
     undefined,
     pipelines
@@ -541,7 +600,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   ).length;
 
   // Loss reasons breakdown for dashboard
-  const lostLeads = opportunities.filter((o) => {
+  const lostLeads = dateFilteredOpportunities.filter((o) => {
     const p = pipelines.find((pl) => pl.id === o.pipelineId);
     const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
     return matchesClinic && CRMService.resolveStageSemantic(p, o.stage) === 'lost';
@@ -671,6 +730,19 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
+              onClick={() => setIsLabelsManagerOpen(true)}
+              title="Criar, editar ou excluir rótulos do CRM"
+              className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <Tag className="w-3.5 h-3.5 text-[#147A80]" />
+              <span className="hidden sm:inline">Rótulos</span>
+              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[10px] font-mono tabular-nums">
+                {labels.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsPipelineManagerOpen(true)}
               title="Criar, editar ou reorganizar funis comerciais"
               className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
@@ -779,6 +851,11 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             <div>
               <span className="text-[11px] font-medium text-slate-500 block">
                 {activeView === 'pipeline' ? 'Fila do funil' : 'Fila global ativa'}
+                {resolvedDateRange.isActive && (
+                  <span className="text-[#147A80] font-semibold">
+                    {' '}· {resolvedDateRange.summaryLabel}
+                  </span>
+                )}
               </span>
               <span className="text-base font-bold text-slate-900 tabular-nums">
                 {activeView === 'pipeline' ? stats.totalActive : globalStats.totalActive} leads
@@ -899,19 +976,30 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   ))}
               </select>
 
-              <select
-                value={selectedLabelFilter}
-                onChange={(e) => setSelectedLabelFilter(e.target.value)}
-                className="h-9 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
-                title="Filtrar por Rótulo"
-              >
-                <option value="all">Todos os Rótulos</option>
-                {labels.map((lbl) => (
-                  <option key={lbl.id} value={lbl.id}>
-                    {lbl.name}
-                  </option>
-                ))}
-              </select>
+              <div className="inline-flex items-center gap-1">
+                <select
+                  value={selectedLabelFilter}
+                  onChange={(e) => setSelectedLabelFilter(e.target.value)}
+                  className="h-9 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                  title="Filtrar por Rótulo"
+                >
+                  <option value="all">Todos os Rótulos</option>
+                  {labels.map((lbl) => (
+                    <option key={lbl.id} value={lbl.id}>
+                      {lbl.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIsLabelsManagerOpen(true)}
+                  title="Incluir ou gerenciar rótulos"
+                  className="h-9 px-2.5 rounded-lg bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-slate-600 hover:text-[#147A80] text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Rótulo</span>
+                </button>
+              </div>
 
               <select
                 value={selectedTypeFilter}
@@ -967,6 +1055,110 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   <span>Lista</span>
                 </button>
               </div>
+            </div>
+
+            {/* Date Filter Row (Tipo de data + Atalhos rápidos + Período De/Até) */}
+            <div className="w-full pt-2 mt-0.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-1.5">
+                  <Calendar
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      resolvedDateRange.isActive ? 'text-[#147A80]' : 'text-slate-400'
+                    }`}
+                  />
+                  <select
+                    value={dateField}
+                    onChange={(e) => setDateField(e.target.value as CRMDateField)}
+                    aria-label="Campo de data do filtro"
+                    title="Escolha qual data do lead será filtrada"
+                    className={`h-8 rounded-lg px-2.5 text-xs font-semibold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80] ${
+                      resolvedDateRange.isActive
+                        ? 'bg-teal-50/70 border-teal-300 text-[#0f5c61]'
+                        : 'bg-slate-50 border-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {CRM_DATE_FIELD_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="inline-flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 overflow-x-auto max-w-full">
+                  {CRM_DATE_PRESET_OPTIONS.map((preset) => {
+                    const active = datePreset === preset.value;
+                    return (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => {
+                          setDatePreset(preset.value);
+                          if (preset.value !== 'custom') {
+                            setCustomStartDate('');
+                            setCustomEndDate('');
+                          }
+                        }}
+                        className={`h-7 px-2.5 rounded-md text-[11px] font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                          active
+                            ? 'bg-white text-[#147A80] shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {datePreset === 'custom' && (
+                  <div className="inline-flex items-center gap-1.5 flex-wrap">
+                    <label className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                      <span>De</span>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => {
+                          setCustomStartDate(e.target.value);
+                          setDatePreset('custom');
+                        }}
+                        className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-xs font-mono tabular-nums text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                      />
+                    </label>
+                    <label className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                      <span>Até</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => {
+                          setCustomEndDate(e.target.value);
+                          setDatePreset('custom');
+                        }}
+                        className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-xs font-mono tabular-nums text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {resolvedDateRange.isActive && (
+                <div className="flex items-center gap-2 text-[11px] text-slate-600 shrink-0">
+                  <span className="font-medium text-slate-500 tabular-nums">
+                    {getCRMDateFieldLabel(dateField)} ·{' '}
+                    <strong className="text-slate-800">{resolvedDateRange.summaryLabel}</strong> ·{' '}
+                    <strong className="text-[#147A80]">{filteredOpps.length}</strong>{' '}
+                    {filteredOpps.length === 1 ? 'lead' : 'leads'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearDateFilter}
+                    className="h-7 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Limpar data</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1052,6 +1244,23 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 </form>
               )}
 
+              {viewMode === 'kanban' && filteredOpps.length === 0 && resolvedDateRange.isActive && (
+                <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 shrink-0">
+                  <span>
+                    Nenhum lead encontrado para{' '}
+                    <strong className="text-slate-900">{getCRMDateFieldLabel(dateField)}</strong> no período{' '}
+                    <strong className="text-slate-900">{resolvedDateRange.summaryLabel}</strong>.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearDateFilter}
+                    className="h-8 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer whitespace-nowrap"
+                  >
+                    Limpar filtro de data
+                  </button>
+                </div>
+              )}
+
               {viewMode === 'kanban' ? (
                 <div
                   className="grid gap-3.5 items-start pb-2 overflow-x-auto flex-1"
@@ -1123,6 +1332,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                                 onOpenQuickContact={(o) => setQuickContactOpp(o)}
                                 onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
                                 onOpenDrawer={(o) => setDrawerOppId(o.id)}
+                                onOpenLabels={(o) => setNotesLabelsOppId(o.id)}
                                 onUpdateStage={handleStageChangeRequest}
                                 onDelete={handleDeleteOpportunity}
                                 onDragStartCard={handleDragStartCard}
@@ -1140,21 +1350,35 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   {filteredOpps.length === 0 ? (
                     <div className="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-3 text-slate-500 text-xs">
                       <p>
-                        {activePipeline.id === 'budgets'
+                        {resolvedDateRange.isActive
+                          ? `Nenhuma oportunidade encontrada para ${getCRMDateFieldLabel(dateField)} (${resolvedDateRange.summaryLabel}).`
+                          : activePipeline.id === 'budgets'
                           ? 'Nenhum orçamento OPEN encontrado na janela dos últimos 3 dias (D-3 até hoje) para este filtro.'
                           : 'Nenhuma oportunidade encontrada neste filtro.'}
                       </p>
-                      {activePipeline.id === 'budgets' && (
-                        <button
-                          type="button"
-                          onClick={handleRefreshFromSupabase}
-                          disabled={isSyncing}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs cursor-pointer transition-colors disabled:opacity-60"
-                        >
-                          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                          <span>Sincronizar Orçamentos Clinicorp (D-3)</span>
-                        </button>
-                      )}
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {resolvedDateRange.isActive && (
+                          <button
+                            type="button"
+                            onClick={handleClearDateFilter}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs cursor-pointer transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>Limpar filtro de data</span>
+                          </button>
+                        )}
+                        {activePipeline.id === 'budgets' && (
+                          <button
+                            type="button"
+                            onClick={handleRefreshFromSupabase}
+                            disabled={isSyncing}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer transition-colors disabled:opacity-60"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                            <span>Sincronizar Orçamentos Clinicorp (D-3)</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     filteredOpps.map((opp) => (
@@ -1170,6 +1394,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                         onOpenQuickContact={(o) => setQuickContactOpp(o)}
                         onOpenQuickSchedule={(o) => setQuickScheduleOpp(o)}
                         onOpenDrawer={(o) => setDrawerOppId(o.id)}
+                        onOpenLabels={(o) => setNotesLabelsOppId(o.id)}
                         onUpdateStage={handleStageChangeRequest}
                         onDelete={handleDeleteOpportunity}
                         viewMode="list"
@@ -1528,6 +1753,34 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         onDeletePipeline={handleDeletePipeline}
       />
 
+      <CRMLabelsManagerModal
+        isOpen={isLabelsManagerOpen}
+        onClose={() => setIsLabelsManagerOpen(false)}
+        labels={labels}
+        opportunities={opportunities}
+        onCreateLabel={(name, color) => handleCreateLabel(name, color)}
+        onUpdateLabel={handleUpdateLabel}
+        onDeleteLabel={handleDeleteLabel}
+      />
+
+      <CRMNotesLabelsModal
+        isOpen={Boolean(notesLabelsOppId)}
+        onClose={() => setNotesLabelsOppId(null)}
+        opportunity={opportunities.find((o) => o.id === notesLabelsOppId) || null}
+        labels={labels}
+        pipelines={pipelines}
+        currentUserName={currentUserName}
+        onAddNote={handleAddNote}
+        onToggleLabel={handleToggleLabel}
+        onCreateLabel={(name, color) => handleCreateLabel(name, color, notesLabelsOppId || undefined)}
+        onDeleteLabel={handleDeleteLabel}
+        onUpdateFollowUp={(oppId, nextContactDate) => {
+          CRMService.updateOpportunity(oppId, { nextContactDate });
+          setOpportunities(CRMService.getOpportunities());
+        }}
+        onMovePipeline={handleMovePipeline}
+      />
+
       <CRMNewOpportunityModal
         isOpen={isNewOppModalOpen}
         onClose={() => setIsNewOppModalOpen(false)}
@@ -1538,6 +1791,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         activePipelineId={activePipeline?.id || 'campaigns'}
         currentUserName={currentUserName}
         onCreate={handleCreateOpportunity}
+        onCreateLabel={(name, color) => handleCreateLabel(name, color)}
         defaultClinicId={selectedClinicId}
       />
     </>

@@ -38,7 +38,7 @@ interface CRMLeadDrawerProps {
   onMovePipeline: (oppId: string, targetPipelineId: string) => void;
   onAddNote: (oppId: string, text: string, author: string) => void;
   onToggleLabel: (oppId: string, labelId: string) => void;
-  onCreateLabel: (name: string, color: CRMLabel['color']) => void;
+  onCreateLabel: (name: string, color: CRMLabel['color'], attachToOppId?: string) => CRMLabel | null | void;
   onDeleteLabel: (labelId: string) => void;
   onOpenQuickContact: (opp: CRMLeadOpportunity) => void;
   onOpenQuickSchedule: (opp: CRMLeadOpportunity) => void;
@@ -720,6 +720,14 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       type="text"
                       value={newLabelName}
                       onChange={(e) => setNewLabelName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (!newLabelName.trim()) return;
+                          onCreateLabel(newLabelName.trim(), newLabelColor, opportunity.id);
+                          setNewLabelName('');
+                        }
+                      }}
                       placeholder="Criar novo rótulo..."
                       className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs"
                     />
@@ -739,7 +747,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                       type="button"
                       onClick={() => {
                         if (!newLabelName.trim()) return;
-                        onCreateLabel(newLabelName.trim(), newLabelColor);
+                        onCreateLabel(newLabelName.trim(), newLabelColor, opportunity.id);
                         setNewLabelName('');
                       }}
                       className="h-9 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer"

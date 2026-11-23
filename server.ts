@@ -6803,10 +6803,30 @@ app.get('/api/conversations', async (req: Request, res: Response) => {
         }
         if (role === 'dentist' && (dentistName || dentistId)) {
           const dName = String(dentistName || '').toLowerCase();
+          const dId = dentistId ? String(dentistId) : '';
           const scope = String(req.query.scope || 'all');
           if (scope === 'assigned_only') {
+            const { data: activeParts } = await supabase
+              .from('conversation_participants')
+              .select('conversation_id, user_id, user_name')
+              .eq('is_active', true);
+
+            const participantConvIds = new Set<string>(
+              (activeParts || [])
+                .filter(
+                  (p: any) =>
+                    (dId && p.user_id && String(p.user_id) === dId) ||
+                    (dName && p.user_name && String(p.user_name).toLowerCase().includes(dName))
+                )
+                .map((p: any) => p.conversation_id)
+            );
+
             filtered = filtered.filter((c) => {
-              return c.assigned_to_name && c.assigned_to_name.toLowerCase().includes(dName);
+              const isAssigned = Boolean(
+                (dId && c.assigned_to_user_id && String(c.assigned_to_user_id) === dId) ||
+                  (dName && c.assigned_to_name && c.assigned_to_name.toLowerCase().includes(dName))
+              );
+              return isAssigned || participantConvIds.has(c.id);
             });
           } else if (scope === 'unassigned') {
             filtered = filtered.filter((c) => {
@@ -6955,6 +6975,15 @@ app.post('/api/conversations', async (req: Request, res: Response) => {
 
     let savedToSupabase = false;
 
+    // Se criado por membro da equipe ou dentista, atribui automaticamente como responsável
+    const isStaffOrDentist = senderType === 'dentist' || senderType === 'staff';
+    const assignedUserId: string | undefined = isStaffOrDentist
+      ? (senderUserId ? String(senderUserId) : undefined)
+      : undefined;
+    const assignedName: string | undefined = isStaffOrDentist
+      ? (senderName ? String(senderName).trim() : (senderType === 'dentist' ? 'Dentista Bertuol' : 'Equipe Bertuol'))
+      : undefined;
+
     // Tentar persistir no Supabase se as tabelas já foram criadas
     try {
       const { error: convErr } = await supabase.from('conversations').insert({
@@ -6964,6 +6993,8 @@ app.post('/api/conversations', async (req: Request, res: Response) => {
         patient_phone: patientPhone ? String(patientPhone).trim() : null,
         status: 'open',
         subject: subject ? String(subject).trim() : 'Atendimento Bertuol Flow',
+        assigned_to_user_id: assignedUserId || null,
+        assigned_to_name: assignedName || null,
         created_by: senderName || patientName,
         created_at: now,
         updated_at: now,
@@ -7009,14 +7040,6 @@ app.post('/api/conversations', async (req: Request, res: Response) => {
       }
     } catch (e) {
       console.warn('[Mensageria] Aviso Supabase insert:', e);
-    }
-
-    // Se criado por dentista, atribui automaticamente ao profissional
-    let assignedUserId: string | undefined = undefined;
-    let assignedName: string | undefined = undefined;
-    if (senderType === 'dentist') {
-      assignedUserId = senderUserId || undefined;
-      assignedName = senderName || 'Dentista Bertuol';
     }
 
     // Persistência local/memória para redundância imediata
@@ -7246,7 +7269,18 @@ app.get('/api/conversations/:id/messages', async (req: Request, res: Response) =
         );
 
         const localParts = memoryParticipants.filter((p) => p.conversation_id === id && p.is_active);
-        const finalParts = (Array.isArray(supaParts) && supaParts.length > 0) ? supaParts : localParts;
+        const mergedPartsMap = new Map<string, any>();
+        (Array.isArray(supaParts) ? supaParts : []).forEach((p: any) => {
+          const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+          mergedPartsMap.set(key, p);
+        });
+        localParts.forEach((p: any) => {
+          const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+          if (!mergedPartsMap.has(key)) {
+            mergedPartsMap.set(key, p);
+          }
+        });
+        const finalParts = Array.from(mergedPartsMap.values());
 
         return res.json({
           success: true,
@@ -7396,14 +7430,27 @@ app.post('/api/conversations/:id/messages', async (req: Request, res: Response) 
 
       if (!msgErr) {
         savedToSupabase = true;
+        const convPatch: Record<string, any> = {
+          last_message_at: now,
+          last_message_preview: messageBody.slice(0, 120),
+          updated_at: now,
+          status: 'open',
+        };
+        if ((senderType === 'staff' || senderType === 'dentist') && senderName) {
+          const { data: currentConv } = await supabase
+            .from('conversations')
+            .select('assigned_to_name')
+            .eq('id', id)
+            .maybeSingle();
+          const curAssigned = String(currentConv?.assigned_to_name || '').trim().toLowerCase();
+          if (!curAssigned || curAssigned.includes('recepção') || curAssigned.includes('recepcao')) {
+            convPatch.assigned_to_user_id = senderUserId || null;
+            convPatch.assigned_to_name = senderName;
+          }
+        }
         await supabase
           .from('conversations')
-          .update({
-            last_message_at: now,
-            last_message_preview: messageBody.slice(0, 120),
-            updated_at: now,
-            status: 'open',
-          })
+          .update(convPatch)
           .eq('id', id);
       }
     } catch (e) {
@@ -7418,6 +7465,13 @@ app.post('/api/conversations/:id/messages', async (req: Request, res: Response) 
       conversation.updated_at = now;
       if (conversation.status === 'closed') {
         conversation.status = 'open';
+      }
+      if ((senderType === 'staff' || senderType === 'dentist') && senderName) {
+        const curAssigned = String(conversation.assigned_to_name || '').trim().toLowerCase();
+        if (!curAssigned || curAssigned.includes('recepção') || curAssigned.includes('recepcao')) {
+          conversation.assigned_to_user_id = senderUserId || undefined;
+          conversation.assigned_to_name = senderName;
+        }
       }
       if (!conversation.patient_phone && senderPatientId) {
         conversation.patient_phone = String(senderPatientId).trim();
@@ -7486,17 +7540,24 @@ app.post('/api/conversations/:id/assign', async (req: Request, res: Response) =>
     const { assignedToUserId, assignedToName, actorName, actorType } = req.body;
 
     const now = new Date().toISOString();
+    let supaConv: any = null;
 
     // Atualizar no Supabase
     try {
-      await supabase
+      const { data: updatedConv, error: updErr } = await supabase
         .from('conversations')
         .update({
           assigned_to_user_id: assignedToUserId || null,
           assigned_to_name: assignedToName || null,
           updated_at: now,
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (!updErr && updatedConv) {
+        supaConv = updatedConv;
+      }
 
       await supabase.from('conversation_events').insert({
         id: 'evt-' + crypto.randomUUID(),
@@ -7508,29 +7569,49 @@ app.post('/api/conversations/:id/assign', async (req: Request, res: Response) =>
         created_at: now,
       });
 
-      if (assignedToUserId) {
-        await supabase.from('conversation_participants').insert({
-          id: 'part-' + crypto.randomUUID(),
-          conversation_id: id,
-          user_id: assignedToUserId,
-          user_name: assignedToName,
-          participant_type: assignedToName.toLowerCase().includes('dr') ? 'dentist' : 'staff',
-          added_at: now,
-          is_active: true,
-        });
+      if (assignedToUserId && assignedToName) {
+        const partType = String(assignedToName).toLowerCase().includes('dr') ? 'dentist' : 'staff';
+        const { data: existingSupaPart } = await supabase
+          .from('conversation_participants')
+          .select('id')
+          .eq('conversation_id', id)
+          .eq('user_id', String(assignedToUserId))
+          .maybeSingle();
+
+        if (existingSupaPart) {
+          await supabase
+            .from('conversation_participants')
+            .update({ is_active: true, user_name: assignedToName, participant_type: partType })
+            .eq('id', existingSupaPart.id);
+        } else {
+          await supabase.from('conversation_participants').insert({
+            id: 'part-' + crypto.randomUUID(),
+            conversation_id: id,
+            user_id: String(assignedToUserId),
+            user_name: assignedToName,
+            participant_type: partType,
+            added_by: actorName || 'Sistema',
+            added_at: now,
+            is_active: true,
+          });
+        }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[Mensageria] Aviso Supabase assign:', e);
+    }
 
     const conversation = memoryConversations.find((c) => c.id === id);
-    if (!conversation) {
+    if (!conversation && !supaConv) {
       return res.status(404).json({ success: false, error: 'Conversa não encontrada.' });
     }
 
-    const oldName = conversation.assigned_to_name || 'Nenhum';
-    conversation.assigned_to_user_id = assignedToUserId;
-    conversation.assigned_to_name = assignedToName;
-    conversation.updated_at = now;
-    writeStoredJson(CONVERSATIONS_FILE, memoryConversations);
+    const oldName = conversation?.assigned_to_name || 'Nenhum';
+    if (conversation) {
+      conversation.assigned_to_user_id = assignedToUserId;
+      conversation.assigned_to_name = assignedToName;
+      conversation.updated_at = now;
+      writeStoredJson(CONVERSATIONS_FILE, memoryConversations);
+    }
 
     // Grava evento de auditoria
     memoryEvents.push({
@@ -7545,94 +7626,267 @@ app.post('/api/conversations/:id/assign', async (req: Request, res: Response) =>
     writeStoredJson(EVENTS_FILE, memoryEvents);
 
     // Adiciona o novo responsável como participante se ainda não for
-    if (assignedToUserId && !memoryParticipants.some((p) => p.conversation_id === id && p.user_id === assignedToUserId && p.is_active)) {
-      memoryParticipants.push({
-        id: 'part-' + crypto.randomUUID(),
-        conversation_id: id,
-        user_id: assignedToUserId,
-        user_name: assignedToName,
-        participant_type: assignedToName.toLowerCase().includes('dr') ? 'dentist' : 'staff',
-        added_at: now,
-        is_active: true,
-      });
+    if (assignedToUserId && assignedToName) {
+      const partType = String(assignedToName).toLowerCase().includes('dr') ? 'dentist' : 'staff';
+      const existingLocal = memoryParticipants.find(
+        (p) => p.conversation_id === id && String(p.user_id) === String(assignedToUserId)
+      );
+      if (existingLocal) {
+        existingLocal.is_active = true;
+        existingLocal.user_name = assignedToName;
+      } else {
+        memoryParticipants.push({
+          id: 'part-' + crypto.randomUUID(),
+          conversation_id: id,
+          user_id: String(assignedToUserId),
+          user_name: assignedToName,
+          participant_type: partType,
+          added_by: actorName || 'Sistema',
+          added_at: now,
+          is_active: true,
+        });
+      }
       writeStoredJson(PARTICIPANTS_FILE, memoryParticipants);
     }
 
-    return res.json({ success: true, conversation });
+    return res.json({ success: true, conversation: supaConv || conversation });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }
 });
 
-// 6. Adicionar Participante na Conversa (ex: Dentista em conjunto com a Recepção)
+// 6. Adicionar Participante na Conversa (Dentista ou Membro da Equipe)
 app.post('/api/conversations/:id/participants', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { userId, userName, participantType, addedBy } = req.body;
+    const cleanName = String(userName || '').trim();
+    const cleanUserId = String(userId || cleanName).trim();
+
+    if (!cleanName) {
+      return res.status(400).json({ success: false, error: 'Nome do participante é obrigatório.' });
+    }
+
+    const normalizedType: 'dentist' | 'staff' | 'patient' =
+      participantType === 'dentist' || participantType === 'staff' || participantType === 'patient'
+        ? participantType
+        : 'dentist';
     const now = new Date().toISOString();
 
-    // Supabase
-    try {
-      await supabase.from('conversation_participants').insert({
-        id: 'part-' + crypto.randomUUID(),
-        conversation_id: id,
-        user_id: userId,
-        user_name: userName,
-        participant_type: participantType || 'dentist',
-        added_by: addedBy,
-        added_at: now,
-        is_active: true,
-      });
+    let existsInSupabase = false;
+    let supaParticipants: any[] = [];
 
-      await supabase.from('conversation_events').insert({
-        id: 'evt-' + crypto.randomUUID(),
-        conversation_id: id,
-        actor_name: addedBy || 'Equipe',
-        actor_type: 'staff',
-        event_type: 'participant_added',
-        details: { added_user: userName },
-        created_at: now,
-      });
-    } catch {}
+    // Verificar e persistir no Supabase
+    try {
+      const { data: supaConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (supaConv) {
+        existsInSupabase = true;
+
+        // Evita duplicação verificando por user_id ou user_name nesta conversa
+        const { data: existingRows } = await supabase
+          .from('conversation_participants')
+          .select('*')
+          .eq('conversation_id', id);
+
+        const match = (existingRows || []).find(
+          (p: any) =>
+            (p.user_id && String(p.user_id) === cleanUserId) ||
+            (p.user_name && String(p.user_name).trim().toLowerCase() === cleanName.toLowerCase())
+        );
+
+        if (match) {
+          const { error: updErr } = await supabase
+            .from('conversation_participants')
+            .update({
+              is_active: true,
+              user_id: cleanUserId,
+              user_name: cleanName,
+              participant_type: normalizedType,
+              added_by: addedBy || match.added_by || 'Equipe',
+            })
+            .eq('id', match.id);
+          if (updErr) console.warn('[Mensageria] Erro ao reativar participante Supabase:', updErr.message);
+        } else {
+          const { error: insErr } = await supabase.from('conversation_participants').insert({
+            id: 'part-' + crypto.randomUUID(),
+            conversation_id: id,
+            user_id: cleanUserId,
+            user_name: cleanName,
+            participant_type: normalizedType,
+            added_by: addedBy || 'Equipe',
+            added_at: now,
+            is_active: true,
+          });
+          if (insErr) console.warn('[Mensageria] Erro ao inserir participante Supabase:', insErr.message);
+        }
+
+        await supabase.from('conversation_events').insert({
+          id: 'evt-' + crypto.randomUUID(),
+          conversation_id: id,
+          actor_name: addedBy || 'Equipe',
+          actor_type: 'staff',
+          event_type: 'participant_added',
+          details: { added_user: cleanName, participant_type: normalizedType },
+          created_at: now,
+        });
+
+        const { data: refreshed } = await supabase
+          .from('conversation_participants')
+          .select('*')
+          .eq('conversation_id', id)
+          .eq('is_active', true);
+
+        if (Array.isArray(refreshed)) {
+          supaParticipants = refreshed;
+        }
+      }
+    } catch (e) {
+      console.warn('[Mensageria] Aviso Supabase addParticipant:', e);
+    }
 
     const conversation = memoryConversations.find((c) => c.id === id);
-    if (!conversation) {
+    if (!conversation && !existsInSupabase) {
       return res.status(404).json({ success: false, error: 'Conversa não encontrada.' });
     }
 
-    const existing = memoryParticipants.find(
-      (p) => p.conversation_id === id && p.user_id === userId
+    const existingLocal = memoryParticipants.find(
+      (p) =>
+        p.conversation_id === id &&
+        (String(p.user_id) === cleanUserId ||
+          (p.user_name && p.user_name.trim().toLowerCase() === cleanName.toLowerCase()))
     );
 
-    if (existing) {
-      existing.is_active = true;
+    if (existingLocal) {
+      existingLocal.is_active = true;
+      existingLocal.user_id = cleanUserId;
+      existingLocal.user_name = cleanName;
+      existingLocal.participant_type = normalizedType;
+      existingLocal.added_by = addedBy || existingLocal.added_by;
     } else {
       memoryParticipants.push({
         id: 'part-' + crypto.randomUUID(),
         conversation_id: id,
-        user_id: userId,
-        user_name: userName,
-        participant_type: participantType || 'dentist',
-        added_by: addedBy,
+        user_id: cleanUserId,
+        user_name: cleanName,
+        participant_type: normalizedType,
+        added_by: addedBy || 'Equipe',
         added_at: now,
         is_active: true,
       });
     }
     writeStoredJson(PARTICIPANTS_FILE, memoryParticipants);
 
-    // Grava auditoria
+    // Grava auditoria local
     memoryEvents.push({
       id: 'evt-' + crypto.randomUUID(),
       conversation_id: id,
       actor_name: addedBy || 'Equipe',
       actor_type: 'staff',
       event_type: 'participant_added',
-      details: { added_user: userName },
+      details: { added_user: cleanName, participant_type: normalizedType },
       created_at: now,
     });
     writeStoredJson(EVENTS_FILE, memoryEvents);
 
-    return res.json({ success: true, participants: memoryParticipants.filter((p) => p.conversation_id === id && p.is_active) });
+    const localActive = memoryParticipants.filter((p) => p.conversation_id === id && p.is_active);
+    const mergedMap = new Map<string, any>();
+    supaParticipants.forEach((p: any) => {
+      const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+      mergedMap.set(key, p);
+    });
+    localActive.forEach((p: any) => {
+      const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+      if (!mergedMap.has(key)) mergedMap.set(key, p);
+    });
+
+    return res.json({
+      success: true,
+      participants: Array.from(mergedMap.values()),
+      source: existsInSupabase ? 'supabase' : 'local',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 6b. Remover Participante da Conversa
+app.delete('/api/conversations/:id/participants/:participantKey', async (req: Request, res: Response) => {
+  try {
+    const { id, participantKey } = req.params;
+    const removedBy = String(req.query.removedBy || 'Equipe');
+    const now = new Date().toISOString();
+    let supaParticipants: any[] = [];
+
+    try {
+      const { data: rows } = await supabase
+        .from('conversation_participants')
+        .select('*')
+        .eq('conversation_id', id)
+        .eq('is_active', true);
+
+      const targets = (rows || []).filter(
+        (p: any) => String(p.id) === participantKey || String(p.user_id) === participantKey
+      );
+
+      for (const t of targets) {
+        await supabase
+          .from('conversation_participants')
+          .update({ is_active: false })
+          .eq('id', t.id);
+      }
+
+      if (targets.length > 0) {
+        await supabase.from('conversation_events').insert({
+          id: 'evt-' + crypto.randomUUID(),
+          conversation_id: id,
+          actor_name: removedBy,
+          actor_type: 'staff',
+          event_type: 'participant_removed',
+          details: { removed_user: targets[0].user_name || participantKey },
+          created_at: now,
+        });
+      }
+
+      const { data: refreshed } = await supabase
+        .from('conversation_participants')
+        .select('*')
+        .eq('conversation_id', id)
+        .eq('is_active', true);
+
+      if (Array.isArray(refreshed)) {
+        supaParticipants = refreshed;
+      }
+    } catch (e) {
+      console.warn('[Mensageria] Aviso Supabase removeParticipant:', e);
+    }
+
+    memoryParticipants.forEach((p) => {
+      if (
+        p.conversation_id === id &&
+        (String(p.id) === participantKey || String(p.user_id) === participantKey)
+      ) {
+        p.is_active = false;
+      }
+    });
+    writeStoredJson(PARTICIPANTS_FILE, memoryParticipants);
+
+    const localActive = memoryParticipants.filter((p) => p.conversation_id === id && p.is_active);
+    const mergedMap = new Map<string, any>();
+    supaParticipants.forEach((p: any) => {
+      const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+      mergedMap.set(key, p);
+    });
+    localActive.forEach((p: any) => {
+      const key = `${p.participant_type || 'staff'}:${String(p.user_id || p.user_name || p.id).toLowerCase()}`;
+      if (!mergedMap.has(key)) mergedMap.set(key, p);
+    });
+
+    return res.json({ success: true, participants: Array.from(mergedMap.values()) });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }
@@ -7644,6 +7898,7 @@ app.patch('/api/conversations/:id/status', async (req: Request, res: Response) =
     const { id } = req.params;
     const { status, actorName, actorType } = req.body;
     const now = new Date().toISOString();
+    let supaConv: any = null;
 
     // Supabase
     try {
@@ -7654,7 +7909,16 @@ app.patch('/api/conversations/:id/status', async (req: Request, res: Response) =
       if (status === 'closed') {
         updateData.closed_at = now;
       }
-      await supabase.from('conversations').update(updateData).eq('id', id);
+      const { data: updatedConv, error: updErr } = await supabase
+        .from('conversations')
+        .update(updateData)
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (!updErr && updatedConv) {
+        supaConv = updatedConv;
+      }
 
       await supabase.from('conversation_events').insert({
         id: 'evt-' + crypto.randomUUID(),
@@ -7668,16 +7932,18 @@ app.patch('/api/conversations/:id/status', async (req: Request, res: Response) =
     } catch {}
 
     const conversation = memoryConversations.find((c) => c.id === id);
-    if (!conversation) {
+    if (!conversation && !supaConv) {
       return res.status(404).json({ success: false, error: 'Conversa não encontrada.' });
     }
 
-    conversation.status = status;
-    conversation.updated_at = now;
-    if (status === 'closed') {
-      conversation.closed_at = now;
+    if (conversation) {
+      conversation.status = status;
+      conversation.updated_at = now;
+      if (status === 'closed') {
+        conversation.closed_at = now;
+      }
+      writeStoredJson(CONVERSATIONS_FILE, memoryConversations);
     }
-    writeStoredJson(CONVERSATIONS_FILE, memoryConversations);
 
     memoryEvents.push({
       id: 'evt-' + crypto.randomUUID(),
@@ -7690,7 +7956,7 @@ app.patch('/api/conversations/:id/status', async (req: Request, res: Response) =
     });
     writeStoredJson(EVENTS_FILE, memoryEvents);
 
-    return res.json({ success: true, conversation });
+    return res.json({ success: true, conversation: supaConv || conversation });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }

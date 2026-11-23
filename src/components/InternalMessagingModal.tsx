@@ -31,6 +31,8 @@ import {
   Volume2,
   RotateCcw,
   Video as VideoIcon,
+  Users,
+  UserPlus,
 } from 'lucide-react';
 import {
   Conversation,
@@ -39,6 +41,7 @@ import {
   MediaType,
 } from '../types/database';
 import { messagingService } from '../services/messagingService';
+import { dataService } from '../services/dataService';
 import { MediaViewerModal } from './MediaViewerModal';
 import { TEST_PATIENTS } from '../patient/PatientApp';
 
@@ -379,6 +382,13 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isNewConvModalOpen, setIsNewConvModalOpen] = useState(false);
+  const [staffUsers, setStaffUsers] = useState<Array<{ id: string; name: string; role: string }>>([]);
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [updatingParticipantKey, setUpdatingParticipantKey] = useState<string | null>(null);
+  const [participantFeedback, setParticipantFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Formulário de Nova Conversa
   const [newConvPatientName, setNewConvPatientName] = useState('');
@@ -481,6 +491,27 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadConversations(false);
+      // Carrega lista de equipe (atendentes, gestores, etc.) para inclusão como participantes
+      fetch('/api/system-users')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          const list = Array.isArray(data?.users) ? data.users : dataService.getSystemUsers();
+          const mapped = (list || [])
+            .filter((u: any) => u && u.active !== false && u.name && u.role !== 'dentist')
+            .map((u: any) => ({
+              id: String(u.id),
+              name: String(u.name),
+              role: String(u.role || 'staff'),
+            }));
+          setStaffUsers(mapped);
+        })
+        .catch(() => {
+          const local = dataService
+            .getSystemUsers()
+            .filter((u) => u.active !== false && u.role !== 'dentist')
+            .map((u) => ({ id: u.id, name: u.name, role: u.role }));
+          setStaffUsers(local);
+        });
     }
   }, [isOpen, loadConversations]);
 
@@ -833,19 +864,67 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
     }
   };
 
-  // Adicionar Dentista
-  const handleAddParticipant = async (dentistId: number, dentistName: string) => {
-    if (!selectedConversationId) return;
-    const ok = await messagingService.addParticipant(
-      selectedConversationId,
-      String(dentistId),
-      dentistName,
-      'dentist',
-      userContext.userName || 'Recepção'
-    );
-    if (ok) {
-      setIsAddParticipantModalOpen(false);
-      loadMessages(selectedConversationId, true);
+  const showParticipantNotice = (type: 'success' | 'error', text: string) => {
+    setParticipantFeedback({ type, text });
+    window.setTimeout(() => {
+      setParticipantFeedback((prev) => (prev?.text === text ? null : prev));
+    }, 4000);
+  };
+
+  // Adicionar Participante (Dentista ou Equipe)
+  const handleAddParticipant = async (
+    participantId: string | number,
+    participantName: string,
+    participantType: 'dentist' | 'staff' = 'dentist'
+  ) => {
+    if (!selectedConversationId || updatingParticipantKey) return;
+    const key = `${participantType}:${participantId}`;
+    setUpdatingParticipantKey(key);
+    try {
+      const res = await messagingService.addParticipant(
+        selectedConversationId,
+        String(participantId),
+        participantName,
+        participantType,
+        userContext.userName || 'Recepção'
+      );
+      if (res.ok) {
+        if (res.participants) {
+          setParticipants(res.participants);
+        }
+        showParticipantNotice('success', `${participantName} adicionado(a) à conversa.`);
+        setIsAddParticipantModalOpen(false);
+        setParticipantSearch('');
+        loadMessages(selectedConversationId, true);
+      } else {
+        showParticipantNotice('error', res.error || 'Não foi possível adicionar o participante.');
+      }
+    } finally {
+      setUpdatingParticipantKey(null);
+    }
+  };
+
+  // Remover Participante
+  const handleRemoveParticipant = async (participantKey: string, participantName: string) => {
+    if (!selectedConversationId || updatingParticipantKey) return;
+    setUpdatingParticipantKey(`remove:${participantKey}`);
+    try {
+      const res = await messagingService.removeParticipant(
+        selectedConversationId,
+        participantKey,
+        userContext.userName || 'Recepção'
+      );
+      if (res.ok) {
+        if (res.participants) {
+          setParticipants(res.participants);
+        }
+        showParticipantNotice('success', `${participantName} removido(a) da conversa.`);
+        loadMessages(selectedConversationId, true);
+      } else {
+        showParticipantNotice('error', res.error || 'Não foi possível remover o participante.');
+      }
+    } finally {
+      setUpdatingParticipantKey(null);
     }
   };
 
@@ -1101,9 +1180,9 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                           </div>
 
                           {isUnassigned ? (
-                            <span className="text-amber-400 font-semibold flex items-center gap-1">
+                            <span className="text-amber-400 font-semibold flex items-center gap-1" title="Clique em Assumir ou Transferir para definir um responsável">
                               <Clock className="w-3 h-3" />
-                              <span>Pendente</span>
+                              <span>Sem responsável</span>
                             </span>
                           ) : (
                             <span className="text-slate-400 truncate max-w-[120px] font-medium">
@@ -1124,78 +1203,163 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
             {activeConversation ? (
               <>
                 {/* Header Chat */}
-                <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-teal-950 border border-teal-800 text-teal-300 font-bold flex items-center justify-center shrink-0 text-sm shadow-xs">
-                      {activeConversation.patient_name.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-slate-100 truncate">
-                          {activeConversation.patient_name}
-                        </h3>
-                        {activeConversation.patient_phone && (
-                          <span className="text-[11px] text-teal-300 font-mono bg-teal-950/80 px-2 py-0.5 rounded-md border border-teal-800/60">
-                            {formatPhoneNumber(activeConversation.patient_phone)}
+                <div className="px-5 py-3 border-b border-slate-800 bg-slate-900 shrink-0 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-teal-950 border border-teal-800 text-teal-300 font-bold flex items-center justify-center shrink-0 text-sm shadow-xs">
+                        {activeConversation.patient_name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-100 truncate">
+                            {activeConversation.patient_name}
+                          </h3>
+                          {activeConversation.patient_phone && (
+                            <span className="text-[11px] text-teal-300 font-mono bg-teal-950/80 px-2 py-0.5 rounded-md border border-teal-800/60">
+                              {formatPhoneNumber(activeConversation.patient_phone)}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            ({activeConversation.clinic_id === 2 ? 'Paraíso' : 'Palmas'})
                           </span>
-                        )}
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          ({activeConversation.clinic_id === 2 ? 'Paraíso' : 'Palmas'})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                        <span className="text-teal-400 font-semibold truncate">
-                          {activeConversation.subject}
-                        </span>
-                        <span>·</span>
-                        <span>
-                          Responsável:{' '}
-                          <strong className="text-slate-200">
-                            {activeConversation.assigned_to_name || 'Recepção Geral'}
-                          </strong>
-                        </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                          <span className="text-teal-400 font-semibold truncate">
+                            {activeConversation.subject}
+                          </span>
+                          <span>·</span>
+                          <span>
+                            Responsável:{' '}
+                            <strong className="text-slate-200">
+                              {activeConversation.assigned_to_name || 'Recepção Geral'}
+                            </strong>
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {activeConversation.assigned_to_name !== currentDentistName && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {activeConversation.assigned_to_name !== currentDentistName && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleAssign(
+                              userContext.userId || 'usr_staff',
+                              currentDentistName || userContext.userName || 'Profissional'
+                            )
+                          }
+                          className="px-2.5 py-1.5 rounded-xl bg-[#147A80] hover:bg-teal-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                          title="Assumir este atendimento"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span className="hidden md:inline">Assumir</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() =>
-                          handleAssign(
-                            userContext.userId || 'usr_staff',
-                            currentDentistName || userContext.userName || 'Profissional'
-                          )
-                        }
-                        className="px-2.5 py-1.5 rounded-xl bg-[#147A80] hover:bg-teal-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
-                        title="Assumir este atendimento"
+                        onClick={() => setIsAssignModalOpen(true)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Transferir conversa"
                       >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">Assumir</span>
+                        <ArrowRightLeft className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="hidden sm:inline">Transferir</span>
                       </button>
-                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => setIsAssignModalOpen(true)}
-                      className="px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Transferir conversa"
-                    >
-                      <ArrowRightLeft className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="hidden sm:inline">Transferir</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsAddParticipantModalOpen(true)}
-                      className="px-2.5 py-1.5 rounded-xl border border-teal-800 bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Adicionar Dentista"
-                    >
-                      <Stethoscope className="w-3.5 h-3.5 text-teal-400" />
-                      <span className="hidden sm:inline">+ Dentista</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setParticipantSearch('');
+                          setParticipantFeedback(null);
+                          setIsAddParticipantModalOpen(true);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl border border-teal-800 bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Adicionar Participante (Dentista ou Equipe)"
+                      >
+                        <UserPlus className="w-3.5 h-3.5 text-teal-400" />
+                        <span className="hidden sm:inline">+ Participante</span>
+                        {participants.filter((p) => p.is_active !== false && p.user_name).length > 0 && (
+                          <span className="px-1.5 py-0.2 rounded-md bg-teal-900 text-teal-200 text-[10px] font-mono tabular-nums">
+                            {participants.filter((p) => p.is_active !== false && p.user_name).length}
+                          </span>
+                        )}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Faixa de Participantes Ativos na Conversa */}
+                  {participants.filter((p) => p.is_active !== false && p.user_name).length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-slate-800/80">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 inline-flex items-center gap-1 mr-1">
+                        <Users className="w-3 h-3 text-teal-400" />
+                        Participantes:
+                      </span>
+                      {participants
+                        .filter((p) => p.is_active !== false && p.user_name)
+                        .map((p) => {
+                          const isDent = p.participant_type === 'dentist';
+                          return (
+                            <span
+                              key={p.id || `${p.participant_type}-${p.user_id || p.user_name}`}
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-medium border ${
+                                isDent
+                                  ? 'bg-teal-950/70 border-teal-800/70 text-teal-200'
+                                  : 'bg-slate-800/80 border-slate-700 text-slate-200'
+                              }`}
+                            >
+                              {isDent ? (
+                                <Stethoscope className="w-3 h-3 text-teal-400 shrink-0" />
+                              ) : (
+                                <User className="w-3 h-3 text-slate-400 shrink-0" />
+                              )}
+                              <span className="truncate max-w-[160px]">{p.user_name}</span>
+                              {p.participant_type !== 'patient' && (
+                                <button
+                                  type="button"
+                                  disabled={Boolean(updatingParticipantKey)}
+                                  onClick={() =>
+                                    handleRemoveParticipant(
+                                      p.id || p.user_id || p.user_name || '',
+                                      p.user_name || 'Participante'
+                                    )
+                                  }
+                                  title={`Remover ${p.user_name}`}
+                                  className="text-slate-400 hover:text-rose-400 transition-colors cursor-pointer disabled:opacity-40"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </span>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  {participantFeedback && !isAddParticipantModalOpen && (
+                    <div
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between gap-2 ${
+                        participantFeedback.type === 'success'
+                          ? 'bg-emerald-950/70 border border-emerald-800/70 text-emerald-200'
+                          : 'bg-rose-950/70 border border-rose-800/70 text-rose-200'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {participantFeedback.type === 'success' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        )}
+                        <span>{participantFeedback.text}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setParticipantFeedback(null)}
+                        className="text-current/70 hover:text-current cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* MESSAGES FEED */}
@@ -1683,16 +1847,16 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
         </div>
       )}
 
-      {/* MODAL 2: Adicionar Dentista */}
+      {/* MODAL 2: Adicionar Participante (Dentistas e Equipe) */}
       {isAddParticipantModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-[2px] flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl text-slate-100">
+        <div className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl text-slate-100">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h4 className="font-bold text-sm text-slate-100 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-300">
-                  <Stethoscope className="w-4 h-4" />
+                  <UserPlus className="w-4 h-4" />
                 </div>
-                <span>Adicionar Dentista à Conversa</span>
+                <span>Adicionar Participante à Conversa</span>
               </h4>
               <button
                 type="button"
@@ -1703,24 +1867,181 @@ export const InternalMessagingModal: React.FC<InternalMessagingModalProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="max-h-64 overflow-y-auto space-y-1.5 divide-y divide-slate-800 pr-1">
-              {dentists.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => handleAddParticipant(d.id, d.Name)}
-                  className="w-full p-2.5 text-left rounded-xl hover:bg-slate-800 flex items-center justify-between text-xs font-medium cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Stethoscope className="w-4 h-4 text-teal-400" />
+
+            {participantFeedback && (
+              <div
+                className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                  participantFeedback.type === 'success'
+                    ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-200'
+                    : 'bg-rose-950/80 border border-rose-800 text-rose-200'
+                }`}
+              >
+                {participantFeedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span>{participantFeedback.text}</span>
+              </div>
+            )}
+
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={participantSearch}
+                onChange={(e) => setParticipantSearch(e.target.value)}
+                placeholder="Buscar dentista ou membro da equipe..."
+                className="w-full h-9 bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-600"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
+              {(() => {
+                const q = participantSearch.trim().toLowerCase();
+                const activeParticipants = participants.filter((p) => p.is_active !== false);
+                const findExisting = (id: string, name: string) =>
+                  activeParticipants.find(
+                    (p) =>
+                      (p.user_id && String(p.user_id) === String(id)) ||
+                      (p.user_name && p.user_name.trim().toLowerCase() === name.trim().toLowerCase())
+                  );
+
+                const filteredDentists = dentists.filter(
+                  (d) =>
+                    !q ||
+                    d.Name.toLowerCase().includes(q) ||
+                    (d.Specialty || '').toLowerCase().includes(q)
+                );
+                const filteredStaff = staffUsers.filter(
+                  (u) => !q || u.name.toLowerCase().includes(q) || u.role.toLowerCase().includes(q)
+                );
+
+                return (
+                  <>
                     <div>
-                      <p className="font-bold">{d.Name}</p>
-                      {d.Specialty && <p className="text-[10px] text-slate-500">{d.Specialty}</p>}
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">
+                        Dentistas ({filteredDentists.length})
+                      </p>
+                      <div className="space-y-1">
+                        {filteredDentists.map((d) => {
+                          const existing = findExisting(String(d.id), d.Name);
+                          const isBusy =
+                            updatingParticipantKey === `dentist:${d.id}` ||
+                            (existing && updatingParticipantKey === `remove:${existing.id || existing.user_id}`);
+                          return (
+                            <div
+                              key={d.id}
+                              className="w-full p-2.5 rounded-xl hover:bg-slate-800/80 flex items-center justify-between gap-2 text-xs border border-transparent hover:border-slate-800"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Stethoscope className="w-4 h-4 text-teal-400 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-bold truncate">{d.Name}</p>
+                                  {d.Specialty && (
+                                    <p className="text-[10px] text-slate-400 truncate">{d.Specialty}</p>
+                                  )}
+                                </div>
+                              </div>
+                              {existing ? (
+                                <button
+                                  type="button"
+                                  disabled={Boolean(updatingParticipantKey)}
+                                  onClick={() =>
+                                    handleRemoveParticipant(
+                                      existing.id || existing.user_id || d.Name,
+                                      d.Name
+                                    )
+                                  }
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-rose-950/80 border border-emerald-800/70 hover:border-rose-800 text-emerald-300 hover:text-rose-200 text-[11px] font-semibold cursor-pointer shrink-0 transition-colors disabled:opacity-50"
+                                >
+                                  {isBusy ? 'Atualizando...' : 'Na conversa ×'}
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={Boolean(updatingParticipantKey)}
+                                  onClick={() => handleAddParticipant(d.id, d.Name, 'dentist')}
+                                  className="px-2.5 py-1 rounded-lg bg-teal-950 hover:bg-teal-800 border border-teal-800 text-teal-200 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0 transition-colors disabled:opacity-50"
+                                >
+                                  <PlusCircle className="w-3.5 h-3.5" />
+                                  <span>{isBusy ? 'Incluindo...' : 'Incluir'}</span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {filteredDentists.length === 0 && (
+                          <p className="text-xs text-slate-500 px-2 py-2">Nenhum dentista encontrado.</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <PlusCircle className="w-4 h-4 text-teal-400" />
-                </button>
-              ))}
+
+                    {filteredStaff.length > 0 && (
+                      <div className="pt-2 border-t border-slate-800">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">
+                          Equipe / Recepção ({filteredStaff.length})
+                        </p>
+                        <div className="space-y-1">
+                          {filteredStaff.map((u) => {
+                            const existing = findExisting(u.id, u.name);
+                            const isBusy =
+                              updatingParticipantKey === `staff:${u.id}` ||
+                              (existing && updatingParticipantKey === `remove:${existing.id || existing.user_id}`);
+                            const roleLabel =
+                              u.role === 'receptionist'
+                                ? 'Atendimento / Recepção'
+                                : u.role === 'gerente_atendimento'
+                                ? 'Gerente de Atendimento'
+                                : u.role === 'admin' || u.role === 'admin_clinica' || u.role === 'super_admin_root'
+                                ? 'Administração'
+                                : 'Equipe';
+                            return (
+                              <div
+                                key={u.id}
+                                className="w-full p-2.5 rounded-xl hover:bg-slate-800/80 flex items-center justify-between gap-2 text-xs border border-transparent hover:border-slate-800"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <User className="w-4 h-4 text-slate-400 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-bold truncate">{u.name}</p>
+                                    <p className="text-[10px] text-slate-400 truncate">{roleLabel}</p>
+                                  </div>
+                                </div>
+                                {existing ? (
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(updatingParticipantKey)}
+                                    onClick={() =>
+                                      handleRemoveParticipant(
+                                        existing.id || existing.user_id || u.name,
+                                        u.name
+                                      )
+                                    }
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-rose-950/80 border border-emerald-800/70 hover:border-rose-800 text-emerald-300 hover:text-rose-200 text-[11px] font-semibold cursor-pointer shrink-0 transition-colors disabled:opacity-50"
+                                  >
+                                    {isBusy ? 'Atualizando...' : 'Na conversa ×'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(updatingParticipantKey)}
+                                    onClick={() => handleAddParticipant(u.id, u.name, 'staff')}
+                                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-teal-800 border border-slate-700 hover:border-teal-700 text-slate-200 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0 transition-colors disabled:opacity-50"
+                                  >
+                                    <PlusCircle className="w-3.5 h-3.5" />
+                                    <span>{isBusy ? 'Incluindo...' : 'Incluir'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

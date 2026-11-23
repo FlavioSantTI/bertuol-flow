@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.3
+# 🦷 Bertuol Odontologia Avançada — Versão 1.5.8
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Integração Bidirecional Clinicorp & WhatsApp, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.3-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.8-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,35 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.3
+## 🌟 Visão Geral da Jornada & Versão 1.5.8
 
-O **Bertuol Flow** chega à **Versão 1.5.3** com **integração bidirecional em tempo real com a API do Clinicorp no CRM** e **Tela de Login dedicada no Portal do Paciente**, mantendo todas as melhorias de UI/UX Clínica e Central de QR Code da v1.5.2.
+O **Bertuol Flow** chega à **Versão 1.5.8** consolidando **Filtro por Data Avançado no CRM (com recálculo dinâmico dos KPIs)**, **Gestão Completa de Rótulos no CRM**, **Mensageria Interna Multi-Participante com Atribuição Automática de Conversas** e **Normalização RBAC de Atendentes com Agenda Completa de Dentistas**.
 
-### 🆕 Novidades da v1.5.3 — Integração Clinicorp no CRM & Login do Portal do Paciente
+### 🆕 Novidades da v1.5.8 — Filtro por Data no CRM, Gestão de Rótulos & Mensageria Multi-Participante
+
+- **📅 Filtro por Data no CRM com Recálculo de KPIs (`src/utils/crmDateFilter.ts` & `MiniCRMModal`)**:
+  - Seletor do campo de data analisado: **Data de Entrada**, **Follow-up**, **Data do Orçamento**, **Última Consulta** e **Agendamento**.
+  - Atalhos rápidos de período (**Todo período**, **Hoje**, **7 dias**, **30 dias**, **Este mês**) além de intervalo **Personalizado (De / Até)** com botão de limpeza rápida.
+  - Recálculo automático dos **indicadores (KPIs)** no topo do CRM em conjunto com a filtragem em tempo real do **Kanban** e da **Lista**.
+  - Correção da ordem dos hooks React no modal do CRM, garantindo abertura estável sem reinicialização de sessão.
+- **🏷️ Gestão de Rótulos no CRM (`CRMLabelsManagerModal`, `CRMNotesLabelsModal`, `CRMLeadCard`, `CRMNewOpportunityModal`, `CRMLeadDrawer`)**:
+  - Novo modal dedicado **Gerenciar Rótulos** acessível diretamente pelo cabeçalho do CRM (`Rótulos`) e atalho `+ Rótulo` junto à barra de filtros.
+  - Botão de etiquetas rápido em cada card do Kanban, criação inline de rótulos ao cadastrar novas oportunidades e vínculo automático de rótulos recém-criados na gaveta do lead.
+- **💬 Mensageria Interna Multi-Participante & Atribuição Automática (`InternalMessagingModal`, `messagingService.ts`, `server.ts`)**:
+  - Inclusão e remoção funcional de participantes (dentistas + equipe administrativa/recepção) em conversas persistidas no Supabase, com barra de participantes ativos visível no cabeçalho do chat.
+  - Atribuição automática de responsável em conversas iniciadas ou respondidas por membros da equipe, substituindo o rótulo ambíguo `"Pendente"` por `"Sem responsável"` quando ainda não há atendente vinculado.
+
+### 🛡️ Recursos da v1.5.7 — Permissão de Atendentes & Agenda Completa da Clínica
+
+- **👩‍💼 Normalização RBAC para Atendentes/Recepcionistas**:
+  - Usuários com perfil de atendimento (`receptionist`) passam a visualizar automaticamente **todos os dentistas da unidade** na agenda clínica sem bloqueio por filtro individual de profissional.
+
+### 🚀 Recursos da v1.5.6 — Portal Paciente Teal, CRUD CRM & Orçamentos em Aberto Clinicorp (D-3)
+
+- **💰 Importação de Orçamentos em Aberto do Clinicorp (`D-3`)**: Sincronização automática no CRM de orçamentos `OPEN` e atualização de orçamentos aprovados diretamente da API do Clinicorp.
+- **🎨 Portal do Paciente Identidade Teal & Busca por Nome (`LIKE`)**: Novo padrão visual Teal na tela de login do paciente, busca de pacientes otimizada e renderização de modais via React Portals para empilhamento seguro.
+
+### 🔗 Recursos da v1.5.3 — Integração Clinicorp no CRM & Login do Portal do Paciente
 
 - **🔗 Agendamento Bidirecional com Clinicorp no CRM (`CRMQuickScheduleModal` & `/api/clinicorp/*`)**:
   - Leitura ao vivo da agenda do dentista selecionado (`GET /api/clinicorp/dentist-schedule`), exibindo grade de horários livres/ocupados, bloqueios `ASSIGN` (férias, viagens, restrições) e alerta de conflito de horário.
@@ -130,14 +154,14 @@ O **Bertuol Flow** chega à **Versão 1.5.3** com **integração bidirecional em
 │   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, crm/MiniCRMModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.3)
+│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.8)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
-│   │   ├── services/         # DataService, SupabaseService, WebAuthn, Messaging
-│   │   ├── types/            # Tipagem TypeScript (database.ts, Clinic, UserRole, UserPermissions)
-│   │   └── utils/            # Scripts SQL, Formatadores e Auxiliares
+│   │   ├── services/         # DataService, SupabaseService, CRMService, WebAuthn, Messaging
+│   │   ├── types/            # Tipagem TypeScript (database.ts, crm.ts, Clinic, UserRole, UserPermissions)
+│   │   └── utils/            # Scripts SQL, Filtro de Datas do CRM (crmDateFilter.ts), Formatadores e Auxiliares
 ├── server (Node.js Express + TSX Proxy Server)
 │   └── server.ts             # APIs REST & SSE (/api/clinics, /api/login, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
 ```
@@ -223,6 +247,6 @@ O servidor de desenvolvimento iniciará em `http://localhost:3000`.
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.3`
+- **Versão**: `v1.5.8`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

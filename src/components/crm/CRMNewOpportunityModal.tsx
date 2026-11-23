@@ -48,6 +48,7 @@ interface CRMNewOpportunityModalProps {
       labels?: string[];
     }
   ) => void;
+  onCreateLabel?: (name: string, color: CRMLabel['color']) => CRMLabel | null;
   defaultClinicId?: number | 'all';
 }
 
@@ -108,6 +109,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   activePipelineId,
   currentUserName,
   onCreate,
+  onCreateLabel,
   defaultClinicId,
 }) => {
   const initialClinicId =
@@ -149,6 +151,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   const [pointsBonus, setPointsBonus] = useState<string>('50');
   const [nextContactDate, setNextContactDate] = useState<string>('');
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState<CRMLabel['color']>('teal');
   const [customFields, setCustomFields] = useState<CRMCustomField[]>([]);
   const [newFieldLabel, setNewFieldLabel] = useState('');
   const [newFieldValue, setNewFieldValue] = useState('');
@@ -189,6 +193,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
       setEstimatedValue('');
       setNextContactDate('');
       setSelectedLabels([]);
+      setNewLabelName('');
+      setNewLabelColor('teal');
       setCustomFields([]);
       setNewFieldLabel('');
       setNewFieldValue('');
@@ -474,6 +480,16 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
     setSelectedLabels((prev) =>
       prev.includes(lblId) ? prev.filter((id) => id !== lblId) : [...prev, lblId]
     );
+  };
+
+  const handleQuickCreateLabel = () => {
+    const clean = newLabelName.trim();
+    if (!clean || !onCreateLabel) return;
+    const created = onCreateLabel(clean, newLabelColor);
+    if (created?.id) {
+      setSelectedLabels((prev) => (prev.includes(created.id) ? prev : [...prev, created.id]));
+    }
+    setNewLabelName('');
   };
 
   const addCustomField = (preset?: string) => {
@@ -1086,6 +1102,78 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
             </div>
           </div>
 
+          {/* Rótulos (sempre visível + criação rápida) */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
+            <label className="block text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-[#147A80]" />
+              <span>Rótulos</span>
+              <span className="text-[11px] font-normal text-slate-400">
+                (selecione ou crie um novo)
+              </span>
+            </label>
+
+            <div className="flex flex-wrap gap-1.5">
+              {labels.map((lbl) => {
+                const selected = selectedLabels.includes(lbl.id);
+                return (
+                  <button
+                    key={lbl.id}
+                    type="button"
+                    onClick={() => toggleLabel(lbl.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                      selected
+                        ? 'bg-[#147A80] text-white border-[#147A80]'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {selected ? `✓ ${lbl.name}` : lbl.name}
+                  </button>
+                );
+              })}
+              {labels.length === 0 && (
+                <span className="text-xs text-slate-400">Nenhum rótulo cadastrado ainda.</span>
+              )}
+            </div>
+
+            {onCreateLabel && (
+              <div className="flex items-center gap-2 pt-1.5 border-t border-slate-200/70">
+                <input
+                  type="text"
+                  value={newLabelName}
+                  onChange={(e) => setNewLabelName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleQuickCreateLabel();
+                    }
+                  }}
+                  placeholder="Criar novo rótulo (ex: Urgência, VIP)..."
+                  className="flex-1 h-8 bg-white border border-slate-200 rounded-lg px-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                />
+                <select
+                  value={newLabelColor}
+                  onChange={(e) => setNewLabelColor(e.target.value as CRMLabel['color'])}
+                  className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-xs text-slate-700"
+                >
+                  <option value="teal">Turquesa</option>
+                  <option value="amber">Âmbar</option>
+                  <option value="indigo">Índigo</option>
+                  <option value="emerald">Verde</option>
+                  <option value="rose">Vermelho</option>
+                  <option value="slate">Cinza</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleQuickCreateLabel}
+                  disabled={!newLabelName.trim()}
+                  className="h-8 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                >
+                  + Criar
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Dynamic Free Custom Fields */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1179,8 +1267,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
             className="text-xs font-semibold text-[#147A80] hover:underline cursor-pointer"
           >
             {showAdvanced
-              ? 'Ocultar detalhes adicionais (dentista, valor, follow-up, rótulos)'
-              : '+ Mais detalhes (dentista, valor R$, data de follow-up, rótulos)'}
+              ? 'Ocultar detalhes adicionais (dentista, valor, follow-up)'
+              : '+ Mais detalhes (dentista, valor R$, data de follow-up)'}
           </button>
 
           {showAdvanced && (
@@ -1274,33 +1362,6 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                   />
                 </div>
               </div>
-
-              {labels.length > 0 && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-slate-400" /> Rótulos
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {labels.map((lbl) => {
-                      const selected = selectedLabels.includes(lbl.id);
-                      return (
-                        <button
-                          key={lbl.id}
-                          type="button"
-                          onClick={() => toggleLabel(lbl.id)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                            selected
-                              ? 'bg-[#147A80] text-white border-[#147A80]'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {selected ? `✓ ${lbl.name}` : lbl.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">

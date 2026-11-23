@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Calendar,
   GripVertical,
+  Tag,
 } from 'lucide-react';
 
 interface CRMLeadCardProps {
@@ -26,6 +27,7 @@ interface CRMLeadCardProps {
   onOpenQuickContact: (opp: CRMLeadOpportunity) => void;
   onOpenQuickSchedule: (opp: CRMLeadOpportunity) => void;
   onOpenDrawer: (opp: CRMLeadOpportunity) => void;
+  onOpenLabels?: (opp: CRMLeadOpportunity) => void;
   onUpdateStage: (opp: CRMLeadOpportunity, targetStageId: string) => void;
   onDelete: (id: string) => void;
   onDragStartCard?: (e: React.DragEvent, oppId: string) => void;
@@ -61,6 +63,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   onOpenQuickContact,
   onOpenQuickSchedule,
   onOpenDrawer,
+  onOpenLabels,
   onUpdateStage,
   onDelete,
   onDragStartCard,
@@ -225,6 +228,17 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             ) : null}
           </div>
 
+          {onOpenLabels && (
+            <button
+              type="button"
+              onClick={() => onOpenLabels(opportunity)}
+              title="Incluir ou gerenciar rótulos e notas"
+              className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-[#147A80] hover:border-[#147A80] transition-colors cursor-pointer"
+            >
+              <Tag className="w-4 h-4" />
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => onOpenDrawer(opportunity)}
@@ -300,17 +314,32 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             </h4>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDrawer(opportunity);
-            }}
-            title="Abrir Ficha Livre"
-            className="p-1 -mt-0.5 -mr-1 rounded-md text-slate-400 hover:text-[#147A80] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-          >
-            <FileText className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-0.5 -mt-0.5 -mr-1 shrink-0">
+            {onOpenLabels && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenLabels(opportunity);
+                }}
+                title="Rótulos e Notas"
+                className="p-1 rounded-md text-slate-400 hover:text-[#147A80] hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <Tag className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenDrawer(opportunity);
+              }}
+              title="Abrir Ficha Livre"
+              className="p-1 rounded-md text-slate-400 hover:text-[#147A80] hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Contact & Urgent Priority */}

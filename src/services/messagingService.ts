@@ -211,7 +211,7 @@ class MessagingService {
     userName: string,
     participantType: 'dentist' | 'staff',
     addedBy: string
-  ): Promise<boolean> {
+  ): Promise<{ ok: boolean; participants?: ConversationParticipant[]; error?: string }> {
     try {
       const res = await fetch(`${this.baseUrl}/${conversationId}/participants`, {
         method: 'POST',
@@ -223,10 +223,41 @@ class MessagingService {
           addedBy,
         }),
       });
-      return res.ok;
-    } catch (e) {
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return { ok: false, error: data?.error || 'Não foi possível adicionar o participante.' };
+      }
+      return {
+        ok: true,
+        participants: Array.isArray(data.participants) ? data.participants : undefined,
+      };
+    } catch (e: any) {
       console.warn('[MessagingService] Erro ao adicionar participante:', e);
-      return false;
+      return { ok: false, error: e?.message || 'Erro de conexão ao adicionar participante.' };
+    }
+  }
+
+  public async removeParticipant(
+    conversationId: string,
+    participantKey: string,
+    removedBy: string
+  ): Promise<{ ok: boolean; participants?: ConversationParticipant[]; error?: string }> {
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/${conversationId}/participants/${encodeURIComponent(participantKey)}?removedBy=${encodeURIComponent(removedBy)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return { ok: false, error: data?.error || 'Não foi possível remover o participante.' };
+      }
+      return {
+        ok: true,
+        participants: Array.isArray(data.participants) ? data.participants : undefined,
+      };
+    } catch (e: any) {
+      console.warn('[MessagingService] Erro ao remover participante:', e);
+      return { ok: false, error: e?.message || 'Erro de conexão ao remover participante.' };
     }
   }
 
