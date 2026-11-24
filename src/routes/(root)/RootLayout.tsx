@@ -97,11 +97,11 @@ const ROOT_TUTORIAL_RESOURCES: TutorialResource[] = [
   },
   {
     id: 'faq-equipe',
-    badge: 'GUIA DA EQUIPE',
-    title: 'Central de Ajuda & FAQ Interativo (/faq.html)',
+    badge: 'CENTRAL DE SUPORTE + IA + A4',
+    title: 'Central de Suporte Unificada (/suporte)',
     description:
-      'Perguntas e respostas rápidas separadas por perfil (Recepção, Dentistas, Gerência, Senhas e Biometria Face ID).',
-    url: '/faq.html',
+      'FAQ por perfil (Paciente, Dentista e Atendente), Assistente de IA fundamentado na documentação e Cartilhas A4 imprimíveis sincronizadas com o GitHub.',
+    url: '/suporte',
     category: 'equipe',
     accentColor: 'from-indigo-500 to-purple-600',
   },

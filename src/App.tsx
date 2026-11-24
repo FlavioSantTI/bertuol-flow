@@ -22,6 +22,8 @@ import { WebAuthnModal } from './components/WebAuthnModal';
 import { PatientApp } from './patient/PatientApp';
 import { InternalMessagingModal } from './components/InternalMessagingModal';
 import { MiniCRMModal } from './components/crm/MiniCRMModal';
+import { SupportCenterView } from './components/support/SupportCenterView';
+import { SupportCenterModal } from './components/support/SupportCenterModal';
 import { messagingService } from './services/messagingService';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { SkeletonCard } from './components/SkeletonLoader';
@@ -160,6 +162,7 @@ export default function App() {
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
   const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
     patientName: string;
@@ -169,11 +172,19 @@ export default function App() {
   } | null>(null);
   const [lastSeenCheckinId, setLastSeenCheckinId] = useState<string | null>(null);
 
-  const [appMode, setAppMode] = useState<'patient' | 'dentist' | 'root'>(() => {
+  const [appMode, setAppMode] = useState<'patient' | 'dentist' | 'root' | 'support'>(() => {
     const pathname = window.location.pathname.toLowerCase();
     const params = new URLSearchParams(window.location.search);
     const appParam = params.get('app')?.toLowerCase();
 
+    if (
+      pathname.startsWith('/suporte') ||
+      pathname.startsWith('/ajuda') ||
+      appParam === 'suporte' ||
+      appParam === 'support'
+    ) {
+      return 'support';
+    }
     if (
       pathname.startsWith('/root') ||
       pathname.startsWith('/tutoriais') ||
@@ -783,6 +794,33 @@ export default function App() {
     setAppMode('root');
   };
 
+  // 0. Central de Suporte Pública e Imprimível (/suporte e /suporte/imprimir)
+  if (appMode === 'support') {
+    const pathname = window.location.pathname.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const isPrintPath = pathname.includes('/imprimir') || params.get('print') === '1';
+    const rawPerfil = (params.get('perfil') || '').toLowerCase();
+    const requestedProfile =
+      rawPerfil === 'dentist' || rawPerfil === 'receptionist' || rawPerfil === 'patient'
+        ? rawPerfil
+        : undefined;
+    const isAuthenticatedStaff = Boolean(userContext.isAuthenticated);
+
+    return (
+      <SupportCenterView
+        mode="standalone"
+        userRole={isAuthenticatedStaff ? effectiveUserContext.role : null}
+        userName={isAuthenticatedStaff ? effectiveUserContext.userName : null}
+        initialProfile={requestedProfile}
+        initialPrintMode={isPrintPath}
+        onBackToApp={() => {
+          window.history.pushState({}, '', '/');
+          setAppMode('dentist');
+        }}
+      />
+    );
+  }
+
   // 1. Modo SuperAdmin / Root (/root/*)
   if (appMode === 'root') {
     return (
@@ -954,6 +992,7 @@ export default function App() {
         onOpenMessagingModal={() => setIsInternalMessagingOpen(true)}
         unreadMessagesCount={unreadStaffMessagesCount}
         onOpenCRMModal={() => setIsCRMModalOpen(true)}
+        onOpenSupportModal={() => setIsSupportModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1428,6 +1467,13 @@ export default function App() {
           }}
         />
       )}
+      {/* Central de Suporte Unificada (FAQ por perfil, Chat IA & Cartilhas A4) */}
+      <SupportCenterModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        userRole={effectiveUserContext.role}
+        userName={effectiveUserContext.userName}
+      />
         </div>
       </ClinicLayout>
     </TenantProvider>

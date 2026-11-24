@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Bell, LogOut, ShieldCheck, Sparkles, User, MessageSquare } from 'lucide-react';
+import { Award, Bell, HelpCircle, LogOut, ShieldCheck, Sparkles, User, MessageSquare } from 'lucide-react';
 import type { PatientTier } from '../types/patientTypes';
 
 interface PatientHeaderProps {
@@ -10,6 +10,7 @@ interface PatientHeaderProps {
   unreadMessagesCount?: number;
   onOpenNotifications: () => void;
   onOpenMessages?: () => void;
+  onOpenSupport?: () => void;
   onOpenAdminModal?: () => void;
   isBirthdayToday?: boolean;
   onLogout?: () => void;
@@ -57,6 +58,7 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
   unreadMessagesCount = 0,
   onOpenNotifications,
   onOpenMessages,
+  onOpenSupport,
   onOpenAdminModal,
   isBirthdayToday = false,
   onLogout,
@@ -119,6 +121,19 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
                   {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
                 </span>
               )}
+            </button>
+          )}
+
+          {/* Support Center Button (FAQ Paciente, IA & Cartilha A4) */}
+          {onOpenSupport && (
+            <button
+              type="button"
+              onClick={onOpenSupport}
+              className="p-2 rounded-xl text-gray-600 hover:text-[#147A80] hover:bg-teal-50 transition-colors cursor-pointer"
+              title="Central de Suporte (FAQ, Assistente IA e Cartilha A4)"
+              aria-label="Abrir Central de Suporte"
+            >
+              <HelpCircle className="w-5 h-5" />
             </button>
           )}
 

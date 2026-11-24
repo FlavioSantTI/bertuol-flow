@@ -125,5 +125,68 @@ html, body {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  /* Scoped A4 print layout for Support Center Booklets */
+  body.support-booklet-printing {
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body.support-booklet-printing .support-no-print {
+    display: none !important;
+  }
+
+  body.support-booklet-printing.support-booklet-in-portal #root {
+    display: none !important;
+  }
+
+  body.support-booklet-printing .support-modal-backdrop {
+    position: static !important;
+    inset: auto !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+
+  body.support-booklet-printing .support-modal-shell {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  body.support-booklet-printing .support-booklet-root {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  body.support-booklet-printing .support-booklet-sheet {
+    max-width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.support-booklet-printing .support-print-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.support-booklet-printing .support-print-page-break {
+    break-before: page;
+    page-break-before: always;
+  }
 }
+
 

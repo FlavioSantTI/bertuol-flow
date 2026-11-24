@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import {
@@ -2940,15 +2940,37 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
       });
     }
 
+    const stripBrazilDdi = (raw: string): string => {
+      let digits = String(raw || '').replace(/\D/g, '');
+      if ((digits.length === 12 || digits.length === 13) && digits.startsWith('55')) {
+        digits = digits.slice(2);
+      }
+      return digits;
+    };
+
+    const formatClinicorpBrPhone = (raw: string): string => {
+      const digits = stripBrazilDdi(raw);
+      if (digits.length === 11) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+      }
+      if (digits.length === 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+      }
+      return digits;
+    };
+
     const cleanName = String(patientName).trim();
-    const cleanPhone = String(patientPhone || '').replace(/\D/g, '');
+    const cleanPhone = stripBrazilDdi(String(patientPhone || ''));
     const cleanDoc = String(patientDocumentId || '').replace(/\D/g, '');
 
     // Step 1: Locate exact patient by NAME (LIKE) first — never bind blindly by Phone across family members
     let patientPersonId: number | undefined;
+    let clinicorpStoredPhone: string | undefined;
     let patientWasCreated = false;
 
-    const extractMatchingPatientId = (data: any): number | undefined => {
+    const extractMatchingPatient = (
+      data: any
+    ): { id: number; mobilePhone?: string } | undefined => {
       const items = Array.isArray(data) ? data : data ? [data] : [];
       for (const obj of items) {
         if (!obj) continue;
@@ -2957,7 +2979,13 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
           continue;
         }
         const rawId = obj.id || obj.PatientId || obj.PersonId || obj.Patient_PersonId;
-        if (rawId && Number(rawId) > 0) return Number(rawId);
+        if (rawId && Number(rawId) > 0) {
+          const chartPhone = String(obj.MobilePhone || obj.Phone || '').trim();
+          return {
+            id: Number(rawId),
+            mobilePhone: chartPhone || undefined,
+          };
+        }
       }
       return undefined;
     };
@@ -3036,6 +3064,9 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
           exactMatch || clinicorpList.find((cp) => namesMatchLike(cp.name, cleanName));
         if (likeMatch?.external_id && /^\d+$/.test(likeMatch.external_id)) {
           patientPersonId = Number(likeMatch.external_id);
+          if (likeMatch.mobile_phone) {
+            clinicorpStoredPhone = String(likeMatch.mobile_phone).trim();
+          }
         }
       } catch (listErr) {
         console.warn('[Clinicorp] Aviso ao buscar lista de pacientes por nome:', listErr);
@@ -3052,7 +3083,11 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
         });
         if (byNameRes.ok) {
           const byNameJson = await byNameRes.json();
-          patientPersonId = extractMatchingPatientId(byNameJson);
+          const matched = extractMatchingPatient(byNameJson);
+          if (matched) {
+            patientPersonId = matched.id;
+            if (matched.mobilePhone) clinicorpStoredPhone = matched.mobilePhone;
+          }
         }
 
         if (!patientPersonId && cleanDoc.length >= 11) {
@@ -3063,7 +3098,11 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
           });
           if (byDocRes.ok) {
             const byDocJson = await byDocRes.json();
-            patientPersonId = extractMatchingPatientId(byDocJson);
+            const matched = extractMatchingPatient(byDocJson);
+            if (matched) {
+              patientPersonId = matched.id;
+              if (matched.mobilePhone) clinicorpStoredPhone = matched.mobilePhone;
+            }
           }
         }
 
@@ -3075,7 +3114,11 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
           });
           if (byPhoneRes.ok) {
             const byPhoneJson = await byPhoneRes.json();
-            patientPersonId = extractMatchingPatientId(byPhoneJson);
+            const matched = extractMatchingPatient(byPhoneJson);
+            if (matched) {
+              patientPersonId = matched.id;
+              if (matched.mobilePhone) clinicorpStoredPhone = matched.mobilePhone;
+            }
           }
         }
       } catch (lookupErr) {
@@ -3175,33 +3218,63 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
     };
 
     if (patientPersonId) apptBody.Patient_PersonId = patientPersonId;
-    if (patientPhone && String(patientPhone).trim()) apptBody.MobilePhone = String(patientPhone).trim();
+    const resolvedApptPhone = clinicorpStoredPhone
+      ? clinicorpStoredPhone
+      : cleanPhone.length >= 8
+      ? formatClinicorpBrPhone(cleanPhone)
+      : '';
+    if (resolvedApptPhone) apptBody.MobilePhone = resolvedApptPhone;
     if (patientEmail && String(patientEmail).includes('@')) apptBody.Email = String(patientEmail).trim();
     if (dentistId && Number(dentistId) > 0) apptBody.Dentist_PersonId = Number(dentistId);
     if (resolvedCategoryId) apptBody.CategoryId = resolvedCategoryId;
     if (resolvedCategoryDesc) apptBody.CategoryDescription = resolvedCategoryDesc;
 
-    console.log('[Clinicorp API] Enviando agendamento via /appointment/create_appointment_by_api:', {
-      ...apptBody,
-      subscriber: ctx.user,
-    });
+    const sendClinicorpAppointment = async (payload: Record<string, any>) => {
+      console.log('[Clinicorp API] Enviando agendamento via /appointment/create_appointment_by_api:', {
+        ...payload,
+        subscriber: ctx.user,
+      });
+      const response = await fetch(`${ctx.baseUrl}/appointment/create_appointment_by_api`, {
+        method: 'POST',
+        headers: {
+          Authorization: ctx.authHeader,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const text = await response.text();
+      let parsed: any = null;
+      try {
+        parsed = text ? JSON.parse(text) : null;
+      } catch {
+        parsed = { raw: text };
+      }
+      return { response, text, parsed };
+    };
 
-    const apptRes = await fetch(`${ctx.baseUrl}/appointment/create_appointment_by_api`, {
-      method: 'POST',
-      headers: {
-        Authorization: ctx.authHeader,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(apptBody),
-    });
+    let { response: apptRes, text: rawText, parsed: parsedAppt } = await sendClinicorpAppointment(apptBody);
 
-    const rawText = await apptRes.text();
-    let parsedAppt: any = null;
-    try {
-      parsedAppt = rawText ? JSON.parse(rawText) : null;
-    } catch {
-      parsedAppt = { raw: rawText };
+    // Auto-retry once if Clinicorp rejects MobilePhone because patient's existing chart has a different format/8-digit phone
+    if (!apptRes.ok && apptRes.status === 400) {
+      const errMsg = String(parsedAppt?.Message || parsedAppt?.message || parsedAppt?.error || rawText || '');
+      if (/MobilePhone enviado/i.test(errMsg)) {
+        const expectedMatch = errMsg.match(/Envie o n[uú]mero\s*(.*?)\s*na requisi[cç][aã]o/i);
+        const expectedPhone = expectedMatch ? String(expectedMatch[1] || '').trim() : '';
+        const retryBody: Record<string, any> = { ...apptBody };
+        if (expectedPhone) {
+          retryBody.MobilePhone = expectedPhone;
+        } else {
+          delete retryBody.MobilePhone;
+        }
+        console.log(
+          `[Clinicorp API] Ajustando MobilePhone para corresponder ao prontuário no Clinicorp ("${expectedPhone || 'vazio'}") e reenviando...`
+        );
+        const retryResult = await sendClinicorpAppointment(retryBody);
+        apptRes = retryResult.response;
+        rawText = retryResult.text;
+        parsedAppt = retryResult.parsed;
+      }
     }
 
     if (!apptRes.ok) {
@@ -3210,7 +3283,7 @@ app.post('/api/clinicorp/schedule-appointment', async (req: Request, res: Respon
         success: false,
         syncedWithClinicorp: false,
         error: `Falha ao gravar consulta no Clinicorp (HTTP ${apptRes.status})`,
-        details: parsedAppt?.message || parsedAppt?.error || rawText,
+        details: parsedAppt?.Message || parsedAppt?.message || parsedAppt?.error || rawText,
       });
     }
 
@@ -9639,6 +9712,415 @@ app.post('/api/conversations/:id/read', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// CENTRAL DE SUPORTE UNIFICADA (KB VERSIONADA NO GITHUB + CHAT IA GEMINI 4)
+// ============================================================================
+type ServerSupportProfileId = 'patient' | 'dentist' | 'receptionist';
+
+interface ServerSupportArticle {
+  id: string;
+  profile: ServerSupportProfileId;
+  category: string;
+  title: string;
+  summary: string;
+  steps: string[];
+  tip?: string;
+  keywords: string[];
+  includeInPrint: boolean;
+  printOrder: number;
+  updatedInVersion: string;
+  lastReviewedAt: string;
+}
+
+const SUPPORT_KB_DIR = path.resolve(__dirname, 'docs', 'support-kb');
+const SUPPORT_PROFILE_FILES: Record<ServerSupportProfileId, string> = {
+  patient: 'patient.json',
+  dentist: 'dentist.json',
+  receptionist: 'receptionist.json',
+};
+
+function readSupportJsonSafe<T>(filename: string, fallback: T): T {
+  try {
+    const resolved = path.resolve(SUPPORT_KB_DIR, filename);
+    if (!resolved.startsWith(SUPPORT_KB_DIR + path.sep)) {
+      return fallback;
+    }
+    if (!fs.existsSync(resolved)) return fallback;
+    const raw = fs.readFileSync(resolved, 'utf-8');
+    return JSON.parse(raw) as T;
+  } catch (err: any) {
+    console.warn(`[Support KB] Falha ao ler ${filename}:`, err?.message);
+    return fallback;
+  }
+}
+
+function loadServerSupportKB() {
+  const meta = readSupportJsonSafe<Record<string, any>>('meta.json', {
+    version: '1.6.0',
+    lastSyncedAt: new Date().toISOString(),
+    repository: 'FlavioSantTI/bertuol-flow',
+    branch: 'main',
+    supportUrl: 'https://bertuolflow.app-bertuol.tech/suporte',
+    profiles: {},
+    impactMap: [],
+  });
+  const byProfile: Record<ServerSupportProfileId, ServerSupportArticle[]> = {
+    patient: readSupportJsonSafe<ServerSupportArticle[]>(SUPPORT_PROFILE_FILES.patient, []),
+    dentist: readSupportJsonSafe<ServerSupportArticle[]>(SUPPORT_PROFILE_FILES.dentist, []),
+    receptionist: readSupportJsonSafe<ServerSupportArticle[]>(
+      SUPPORT_PROFILE_FILES.receptionist,
+      []
+    ),
+  };
+  return { meta, byProfile };
+}
+
+function resolveServerSupportAccess(req: Request, requestedProfile?: string): {
+  resolvedProfile: ServerSupportProfileId;
+  allowedProfiles: ServerSupportProfileId[];
+} {
+  const supportContext = String(req.headers['x-support-context'] || '').trim().toLowerCase();
+  const rawRole = String(req.headers['x-user-role'] || '').trim().toLowerCase();
+
+  // Visitantes públicos (/suporte) e pacientes logados ficam estritamente isolados no perfil patient
+  let allowedProfiles: ServerSupportProfileId[] = ['patient'];
+  let defaultProfile: ServerSupportProfileId = 'patient';
+
+  if (supportContext !== 'public' && supportContext !== 'patient') {
+    if (
+      rawRole === 'admin_root' ||
+      rawRole === 'admin' ||
+      rawRole === 'admin_clinica' ||
+      rawRole === 'admin_tecnico' ||
+      rawRole === 'gerente_atendimento' ||
+      rawRole === 'gerente'
+    ) {
+      allowedProfiles = ['receptionist', 'dentist', 'patient'];
+      defaultProfile = 'receptionist';
+    } else if (rawRole === 'receptionist' || rawRole === 'recepcionista' || rawRole === 'atendente') {
+      allowedProfiles = ['receptionist', 'patient'];
+      defaultProfile = 'receptionist';
+    } else if (rawRole === 'dentist' || rawRole === 'dentista') {
+      allowedProfiles = ['dentist'];
+      defaultProfile = 'dentist';
+    }
+  }
+
+  const reqProf = String(requestedProfile || '').trim().toLowerCase() as ServerSupportProfileId;
+  const resolvedProfile: ServerSupportProfileId = allowedProfiles.includes(reqProf)
+    ? reqProf
+    : defaultProfile;
+
+  return { resolvedProfile, allowedProfiles };
+}
+
+// Rate limiter simples em memória para proteger a rota pública /api/support/chat (20 req/min por IP)
+const supportChatRateBuckets = new Map<string, number[]>();
+const SUPPORT_CHAT_WINDOW_MS = 60_000;
+const SUPPORT_CHAT_MAX_PER_WINDOW = 20;
+
+function checkSupportChatRateLimit(req: Request): boolean {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const clientIp = forwarded || req.ip || req.socket?.remoteAddress || 'unknown';
+  const now = Date.now();
+  const recent = (supportChatRateBuckets.get(clientIp) || []).filter(
+    (ts) => now - ts < SUPPORT_CHAT_WINDOW_MS
+  );
+  if (recent.length >= SUPPORT_CHAT_MAX_PER_WINDOW) {
+    supportChatRateBuckets.set(clientIp, recent);
+    return false;
+  }
+  recent.push(now);
+  supportChatRateBuckets.set(clientIp, recent);
+  if (supportChatRateBuckets.size > 500) {
+    for (const [key, timestamps] of supportChatRateBuckets.entries()) {
+      if (timestamps.every((ts) => now - ts >= SUPPORT_CHAT_WINDOW_MS)) {
+        supportChatRateBuckets.delete(key);
+      }
+    }
+  }
+  return true;
+}
+
+// Endpoint: Ler artigos e metadados da Central de Suporte (isolado por perfil no servidor)
+app.get('/api/support/kb', (req: Request, res: Response) => {
+  const requested = typeof req.query.profile === 'string' ? req.query.profile : undefined;
+  const { resolvedProfile, allowedProfiles } = resolveServerSupportAccess(req, requested);
+  const { meta, byProfile } = loadServerSupportKB();
+
+  const countsByProfile: Partial<Record<ServerSupportProfileId, number>> = {};
+  for (const prof of allowedProfiles) {
+    countsByProfile[prof] = (byProfile[prof] || []).length;
+  }
+
+  const filteredProfilesMeta: Record<string, any> = {};
+  for (const prof of allowedProfiles) {
+    if (meta.profiles?.[prof]) {
+      filteredProfilesMeta[prof] = meta.profiles[prof];
+    }
+  }
+
+  return res.json({
+    success: true,
+    meta: {
+      ...meta,
+      profiles: filteredProfilesMeta,
+    },
+    resolvedProfile,
+    allowedProfiles,
+    articles: (byProfile[resolvedProfile] || []).slice().sort((a, b) => a.printOrder - b.printOrder),
+    countsByProfile,
+  });
+});
+
+// Endpoint: Chat de Suporte com IA (Gemini 4 Hydrogen) fundamentado exclusivamente na KB do perfil permitido
+app.post('/api/support/chat', async (req: Request, res: Response) => {
+  if (!checkSupportChatRateLimit(req)) {
+    return res.status(429).json({
+      success: false,
+      error: 'Muitas perguntas em sequência. Aguarde alguns segundos antes de tentar novamente.',
+    });
+  }
+
+  const body = req.body || {};
+  const rawMessage = String(body.message || '').trim();
+  if (rawMessage.length < 2 || rawMessage.length > 800) {
+    return res.status(400).json({
+      success: false,
+      error: 'Escreva uma pergunta entre 2 e 800 caracteres.',
+    });
+  }
+
+  const requestedProfile = typeof body.profile === 'string' ? body.profile : undefined;
+  const { resolvedProfile, allowedProfiles } = resolveServerSupportAccess(req, requestedProfile);
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({
+      success: false,
+      resolvedProfile,
+      allowedProfiles,
+      error:
+        'O assistente de IA está indisponível no momento porque a chave GEMINI_API_KEY não está configurada no servidor.',
+    });
+  }
+
+  const { meta, byProfile } = loadServerSupportKB();
+  const permittedArticles = (byProfile[resolvedProfile] || [])
+    .slice()
+    .sort((a, b) => a.printOrder - b.printOrder);
+  const articleMap = new Map(permittedArticles.map((art) => [art.id, art]));
+
+  const profileLabel =
+    meta.profiles?.[resolvedProfile]?.label ||
+    (resolvedProfile === 'patient'
+      ? 'Paciente'
+      : resolvedProfile === 'dentist'
+      ? 'Dentista'
+      : 'Atendente / Recepção');
+
+  const kbContextText = permittedArticles
+    .map(
+      (a) =>
+        `[ID: ${a.id}] Categoria: ${a.category}\nPergunta: ${a.title}\nResumo: ${a.summary}\nPassos:\n${a.steps
+          .map((s, idx) => `${idx + 1}. ${s}`)
+          .join('\n')}${a.tip ? `\nDica: ${a.tip}` : ''}`
+    )
+    .join('\n\n---\n\n');
+
+  const rawHistory = Array.isArray(body.history) ? body.history.slice(-6) : [];
+  const sanitizedHistory = rawHistory
+    .filter(
+      (item: any) =>
+        item &&
+        (item.role === 'user' || item.role === 'assistant') &&
+        typeof item.text === 'string' &&
+        item.text.trim().length > 0
+    )
+    .map((item: any) => ({
+      role: item.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: String(item.text).trim().slice(0, 600) }],
+    }));
+
+  const systemInstruction = `Você é o Assistente Oficial da Central de Suporte da Bertuol Odontologia Avançada (Bertuol Flow v${meta.version || '1.6.0'}).
+Você está atendendo exclusivamente o perfil: ${profileLabel} (${resolvedProfile}).
+
+REGRAS ESTRITAS DE SEGURANÇA E ESCOPO:
+1. Responda APENAS em português do Brasil, de forma clara, objetiva, educada e passo a passo (em texto simples legível, sem HTML).
+2. Baseie suas respostas EXCLUSIVAMENTE nos artigos oficiais fornecidos abaixo para o perfil "${profileLabel}".
+3. NUNCA mencione, revele ou especule sobre telas, processos internos, senhas, CRM, APIs ou fluxos de outros perfis que não estejam nos artigos abaixo.
+4. Se a pergunta do usuário não estiver coberta pelos artigos abaixo (por exemplo: diagnóstico clínico, preço de tratamento específico, remarcação individual ou erro técnico não listado), informe com transparência que esse ponto depende de atendimento humano da clínica e defina "escalateToHuman": true.
+5. Em "citedArticleIds", liste apenas os IDs exatos ([ID: ...]) dos artigos que realmente fundamentaram sua resposta.
+6. Em "followUpSuggestions", sugira até 2 perguntas curtas relacionadas ao perfil "${profileLabel}".
+
+BASE OFICIAL DE CONHECIMENTO (${profileLabel}):
+${kbContextText}`;
+
+  try {
+    const requestContents = [
+      ...sanitizedHistory,
+      {
+        role: 'user',
+        parts: [{ text: rawMessage }],
+      },
+    ];
+
+    const requestConfig = {
+      systemInstruction,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          answer: {
+            type: Type.STRING,
+            description: 'Resposta objetiva e clara em português do Brasil baseada na base oficial.',
+          },
+          citedArticleIds: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Lista de IDs exatos dos artigos usados como fonte.',
+          },
+          escalateToHuman: {
+            type: Type.BOOLEAN,
+            description: 'true quando a dúvida foge da documentação e precisa de atendimento humano.',
+          },
+          followUpSuggestions: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Até 2 perguntas curtas de acompanhamento úteis para este perfil.',
+          },
+        },
+        required: ['answer', 'citedArticleIds', 'escalateToHuman', 'followUpSuggestions'],
+      },
+    };
+
+    const callSupportModel = async () => {
+      const attempts: { model: string; delayMs: number }[] = [
+        { model: 'gemini-4-hydrogen', delayMs: 0 },
+        { model: 'gemini-4-hydrogen', delayMs: 650 },
+        { model: 'gemini-3.1-flash-lite', delayMs: 300 },
+      ];
+      let lastErr: any = null;
+      for (const attempt of attempts) {
+        if (attempt.delayMs > 0) {
+          await new Promise((r) => setTimeout(r, attempt.delayMs));
+        }
+        try {
+          const resModel = await ai.models.generateContent({
+            model: attempt.model,
+            contents: requestContents,
+            config: requestConfig,
+          });
+          return { response: resModel, usedModel: attempt.model };
+        } catch (err: any) {
+          lastErr = err;
+          const code = Number(err?.status || err?.code || 0);
+          const msg = String(err?.message || '');
+          const isTransient = code === 503 || code === 500 || msg.includes('UNAVAILABLE') || msg.includes('high demand');
+          if (!isTransient) {
+            throw err;
+          }
+          console.warn(`[Support AI Chat] Modelo ${attempt.model} indisponível (${code || '503'}), tentando fallback...`);
+        }
+      }
+      throw lastErr;
+    };
+
+    const { response, usedModel } = await callSupportModel();
+
+    const rawText = (response.text || '').trim();
+    let parsed: {
+      answer?: string;
+      citedArticleIds?: string[];
+      escalateToHuman?: boolean;
+      followUpSuggestions?: string[];
+    } = {};
+
+    try {
+      parsed = JSON.parse(rawText);
+    } catch {
+      parsed = {
+        answer: rawText,
+        citedArticleIds: [],
+        escalateToHuman: false,
+        followUpSuggestions: [],
+      };
+    }
+
+    const answer = String(parsed.answer || '').trim();
+    if (!answer) {
+      return res.status(502).json({
+        success: false,
+        resolvedProfile,
+        allowedProfiles,
+        error: 'Não foi possível gerar uma resposta agora. Tente reformular sua pergunta.',
+      });
+    }
+
+    const validCitations = Array.from(
+      new Set(
+        (Array.isArray(parsed.citedArticleIds) ? parsed.citedArticleIds : [])
+          .map((id) => String(id || '').trim())
+          .filter((id) => articleMap.has(id))
+      )
+    ).map((id) => {
+      const art = articleMap.get(id)!;
+      return {
+        id: art.id,
+        title: art.title,
+        category: art.category,
+        profile: art.profile,
+      };
+    });
+
+    const followUpSuggestions = (
+      Array.isArray(parsed.followUpSuggestions) ? parsed.followUpSuggestions : []
+    )
+      .map((s) => String(s || '').trim())
+      .filter(Boolean)
+      .slice(0, 2);
+
+    return res.json({
+      success: true,
+      resolvedProfile,
+      allowedProfiles,
+      answer,
+      citations: validCitations,
+      escalateToHuman: Boolean(parsed.escalateToHuman),
+      followUpSuggestions,
+      model: usedModel,
+    });
+  } catch (err: any) {
+    const rawErrMsg = String(err?.message || err || '');
+    console.error('[Support AI Chat] Erro Gemini:', rawErrMsg);
+    const upstreamStatus = Number(err?.status || err?.code || 0);
+    const isQuota = upstreamStatus === 429 || rawErrMsg.includes('RESOURCE_EXHAUSTED');
+    const isAuth =
+      upstreamStatus === 403 ||
+      upstreamStatus === 401 ||
+      rawErrMsg.includes('API_KEY_INVALID') ||
+      rawErrMsg.includes('PERMISSION_DENIED');
+    const isUnavailable = upstreamStatus === 503 || rawErrMsg.includes('high demand');
+    const statusCode = isQuota ? 429 : isAuth ? 403 : isUnavailable ? 503 : 502;
+    return res.status(statusCode).json({
+      success: false,
+      resolvedProfile,
+      allowedProfiles,
+      error: isQuota
+        ? 'O assistente atingiu o limite temporário de consultas. Tente novamente em instantes.'
+        : isAuth
+        ? 'Chave de IA não autorizada ou ausente no servidor. Verifique GEMINI_API_KEY nas configurações.'
+        : isUnavailable
+        ? 'O serviço de IA está com alta demanda momentânea. Tente novamente em alguns segundos ou consulte o FAQ ao lado.'
+        : 'Não foi possível consultar o assistente de IA agora. Você pode buscar diretamente no FAQ acima ou tentar novamente.',
+    });
+  }
+});
+
+// Redirecionamento de compatibilidade: links/QR codes antigos para /faq.html vão para a Central de Suporte unificada
+app.get('/faq.html', (_req: Request, res: Response) => {
+  return res.redirect(302, '/suporte');
+});
+
 // Proteção de Rotas da API: garante retorno estritamente em JSON
 app.all('/api/*', (req: Request, res: Response) => {
   return res.status(404).json({
@@ -9702,8 +10184,8 @@ if (isProd) {
     }
   });
 
-  // Roteamento explícito do Profissional (Dentistas e Equipe) em Desenvolvimento
-  app.get(['/dentista', '/profissional', '/dentista/*', '/profissional/*'], async (req: Request, res: Response, next) => {
+  // Roteamento explícito do Profissional (Dentistas e Equipe) e Central de Suporte em Desenvolvimento
+  app.get(['/dentista', '/profissional', '/dentista/*', '/profissional/*', '/suporte', '/suporte/*'], async (req: Request, res: Response, next) => {
     try {
       const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
       const html = await vite.transformIndexHtml(req.originalUrl || '/', template);

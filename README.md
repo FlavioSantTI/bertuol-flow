@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.6.0
+# 🦷 Bertuol Odontologia Avançada — Versão 1.7.0
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.6.0-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.7.0-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -23,15 +23,29 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 | **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente.html`](https://bertuolflow.app-bertuol.tech/paciente.html) *(ou `?app=paciente`)* | PWA instalável com confirmação em 1 toque (`+10 pts`), Scanner QR Code de Check-in no Totem (`+30 pts`), Catálogo de Recompensas, Vouchers `BRT-XXXX`, Presente de Aniversário e Chat com a Clínica. |
 | **🎬 Estúdio 3D de Treinamento (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html`](https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html) | Palco Three.js 3D (Cápsulas de Vidro Flutuantes + Rede Neural) com separação em duas telas sincronizadas via `BroadcastChannel` + SSE: **`?mode=projector`** (Só Telão) e **`?mode=presenter`** (Só Trilha + Teleprompter + Cronômetro 60m). |
 | **🎙️ Central de Roteiros HeyGen & Mapa Técnico (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/roteiros-heygen.html`](https://bertuolflow.app-bertuol.tech/roteiros-heygen.html) | 3 roteiros completos de 2 minutos (6 cenas cada: Paciente + Clube, Dentista, Recepção) com cópia em 1 clique, prompts B-roll para Veo/Flow e tabela de mapeamento real dos 16 módulos do código. |
-| **❓ Central de Ajuda (FAQ Interativo)** | [`https://bertuolflow.app-bertuol.tech/faq.html`](https://bertuolflow.app-bertuol.tech/faq.html) | Guia rápido interativo para toda a equipe (Recepção, Dentistas, Gerência e Instalação PWA/Face ID). |
+| **❓ Central de Suporte Unificada (FAQ, IA & Cartilhas A4)** | [`https://bertuolflow.app-bertuol.tech/suporte`](https://bertuolflow.app-bertuol.tech/suporte) *(com redirect de `/faq.html`)* | Base unificada separada por perfil (**Paciente**, **Dentista** e **Recepção & CRM**) com Chat de IA isolado por perfil, citações clicáveis e download/impressão de Cartilhas A4 em PDF. |
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.6.0
+## 🌟 Visão Geral da Jornada & Versão 1.7.0
 
-O **Bertuol Flow** chega à **Versão 1.6.0** entregando o **Pipeline de Aniversariantes no CRM** com **Automação Diária de Vouchers Exclusivos (`BRT-ANIV-XXXX`, validade de 7 dias)**, operando em **motor duplo** (**agendador diário interno no servidor** + **webhook protegido para n8n**), disparo automático via **WhatsApp** com intervalo cadenciado, criação automática de card no CRM (Supabase) com follow-up D+4 e **baixa automática na recepção** convertendo o card para **Voucher Resgatado**.
+O **Bertuol Flow** chega à **Versão 1.7.0** entregando a **Central de Suporte Unificada** (acessível dentro do app e na rota pública `/suporte`) com **FAQ por perfil**, **Chat de IA com isolamento automático e citações**, **Cartilhas A4 separadas prontas para download em PDF/impressão**, **atualização automatizada via GitHub Action + Pull Request**, além de **normalização automática de telefone (`MobilePhone`) no agendamento Clinicorp** (remoção do DDI `55`, prioridade ao número do prontuário e reenvio automático em divergência de 8 vs 9 dígitos).
 
-### 🎂 Novidades da v1.6.0 — Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`)
+### 🧭 Novidades da v1.7.0 — Central de Suporte Unificada, Cartilhas PDF A4 & Correção Clinicorp
+
+- **📚 Base Única Versionada por Perfil (`docs/support-kb/`)**:
+  - 32 guias oficiais segmentados em **Paciente (11)**, **Dentista (10)** e **Recepção & CRM (11)**, servindo como fonte única para o FAQ interativo, o Chat de IA e as Cartilhas A4.
+- **🤖 Chat de Suporte com IA & Isolamento Automático de Perfil (`POST /api/support/chat`)**:
+  - Isolamento estrito no servidor: visitantes da rota pública `/suporte` e pacientes acessam exclusivamente conteúdo de **Paciente**; dentistas acessam **Dentista**; recepção acessa **Recepção & CRM + Paciente**; gerência/admin alterna entre os 3 acervos e consulta o status de sincronização GitHub.
+  - Respostas fundamentadas exclusivamente nos guias permitidos, com citações clicáveis que abrem direto o passo a passo correspondente.
+- **📄 Cartilhas A4 Imprimíveis & Download Direto em PDF (`SupportPrintBooklet` & `jsPDF`)**:
+  - Geração vetorial direta em PDF A4 (`Baixar PDF (A4)`) e impressão sincronizada (`Imprimir` com fallback automático para download em ambientes incorporados), com capa opcional, QR Code para `/suporte`, sumário e paginação no rodapé.
+- **🔄 Atualização Contínua via GitHub Action com Pull Request (`.github/workflows/sync-support-docs.yml`)**:
+  - Mapeamento automático de impacto (`impactMap`): a cada push na `main` que altere fluxos de pacientes, dentistas ou recepção, o workflow gera rascunho de atualização via `scripts/sync-support-docs.ts` e abre Pull Request para revisão humana antes de publicar.
+- **📞 Correção de Telefone (`MobilePhone`) no Agendamento Clinicorp (`/api/clinicorp/schedule-appointment`)**:
+  - Remoção automática do prefixo internacional `55` antes de consultar/criar paciente ou agendar no Clinicorp, priorização do telefone já salvo no prontuário do paciente e reenvio automático em caso de erro HTTP 400 por divergência de 8 vs 9 dígitos.
+
+### 🎂 Recursos da v1.6.0 — Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`)
 
 - **🎉 Funil de Sistema "Aniversariantes" (`birthdays`) no CRM**:
   - Novo funil dedicado com 5 etapas: **Aniversariante do Dia** → **Voucher Enviado** → **Cortesia Agendada** → **Voucher Resgatado** → **Expirado / Sem Retorno**.
@@ -182,18 +196,21 @@ O **Bertuol Flow** chega à **Versão 1.6.0** entregando o **Pipeline de Anivers
 │   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMDashboardView, CRMBirthdayAutomationModal, CRMEstimatesBackfillModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.6.0)
+│   │   ├── components/       # Modais e UI (support/SupportCenterView, SupportPrintBooklet, ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMDashboardView, CRMBirthdayAutomationModal, CRMEstimatesBackfillModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.7.0)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
+│   │   ├── data/             # Loader tipado da Central de Suporte (supportKnowledgeBase.ts)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
 │   │   ├── services/         # DataService, SupabaseService, CRMService, WebAuthn, Messaging
-│   │   ├── types/            # Tipagem TypeScript (database.ts, crm.ts, Clinic, UserRole, UserPermissions)
-│   │   └── utils/            # Scripts SQL, Analytics do CRM (crmAnalytics.ts), Automação de Aniversariantes (crmBirthdayVoucher.ts), Backfill de Orçamentos (crmEstimatesBackfill.ts), Filtro de Datas (crmDateFilter.ts)
+│   │   ├── types/            # Tipagem TypeScript (database.ts, crm.ts, support.ts, Clinic, UserRole, UserPermissions)
+│   │   └── utils/            # Scripts SQL, Gerador de Cartilha PDF A4 (supportBookletPdf.ts), Analytics do CRM, Automação de Aniversariantes, Backfill de Orçamentos
+├── docs/support-kb/          # Base única versionada de suporte por perfil (meta.json, patient.json, dentist.json, receptionist.json)
 ├── scripts/
-│   └── backfill-clinicorp-estimates.ts # CLI de carga histórica (1 ano) de orçamentos OPEN do Clinicorp + CSV/JSON
+│   ├── backfill-clinicorp-estimates.ts # CLI de carga histórica (1 ano) de orçamentos OPEN do Clinicorp + CSV/JSON
+│   └── sync-support-docs.ts            # Automação de detecção de impacto e atualização da Central de Suporte (PR GitHub)
 ├── server (Node.js Express + TSX Proxy Server)
-│   └── server.ts             # APIs REST, Agendador Diário & SSE (/api/clinics, /api/login, /api/crm/birthdays/*, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
+│   └── server.ts             # APIs REST, Central de Suporte (/api/support/*), Agendador Diário & SSE (/api/clinics, /api/login, /api/crm/birthdays/*, /api/clinicorp/*, Gemini Proxy)
 ```
 
 ---
@@ -294,6 +311,6 @@ Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paul
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.6.0`
+- **Versão**: `v1.7.0`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

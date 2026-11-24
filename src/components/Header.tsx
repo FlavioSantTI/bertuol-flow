@@ -55,6 +55,7 @@ interface HeaderProps {
   unreadMessagesCount?: number;
   onOpenCRMModal?: () => void;
   crmBadgeCount?: number;
+  onOpenSupportModal?: () => void;
   onLogout?: () => void;
 }
 
@@ -82,6 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
   unreadMessagesCount,
   onOpenCRMModal,
   crmBadgeCount,
+  onOpenSupportModal,
   onLogout,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -378,16 +380,30 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </>
         )}
-        <a
-          href="/faq.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={closeFn}
-          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
-        >
-          <HelpCircle className="w-4 h-4 text-slate-500 shrink-0" />
-          <span>Central de Ajuda (FAQ)</span>
-        </a>
+        {onOpenSupportModal ? (
+          <button
+            type="button"
+            onClick={() => {
+              closeFn();
+              onOpenSupportModal();
+            }}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+          >
+            <HelpCircle className="w-4 h-4 text-[#147A80] shrink-0" />
+            <span>Central de Suporte (FAQ & IA)</span>
+          </button>
+        ) : (
+          <a
+            href="/suporte"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeFn}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left cursor-pointer"
+          >
+            <HelpCircle className="w-4 h-4 text-[#147A80] shrink-0" />
+            <span>Central de Suporte (FAQ & IA)</span>
+          </a>
+        )}
         {onLogout && (
           <button
             type="button"

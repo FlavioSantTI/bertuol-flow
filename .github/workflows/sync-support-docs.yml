@@ -1,0 +1,73 @@
+name: Atualizar Central de Suporte (PR Automático)
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/support-kb/**'
+      - 'support-sync-report.md'
+      - '.github/workflows/sync-support-docs.yml'
+      - 'README.md'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Perfil alvo para revisão forçada (auto, all, patient, dentist, receptionist)'
+        required: false
+        default: 'auto'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-support-kb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório (histórico completo para diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Analisar impacto por perfil e gerar atualização da Central de Suporte
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SYNC_BASE_SHA: ${{ github.event.before }}
+          SYNC_HEAD_SHA: ${{ github.sha }}
+        run: |
+          PROFILE_ARG=""
+          if [ "${{ inputs.profile }}" != "" ] && [ "${{ inputs.profile }}" != "auto" ]; then
+            PROFILE_ARG="--profile=${{ inputs.profile }}"
+          fi
+          npx tsx scripts/sync-support-docs.ts $PROFILE_ARG
+
+      - name: Verificar se houve atualização na base de conhecimento
+        id: check_diff
+        run: |
+          if git diff --quiet docs/support-kb/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Abrir ou atualizar Pull Request de revisão da Central de Suporte
+        if: steps.check_diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: docs/sync-support-center
+          delete-branch: true
+          commit-message: 'docs(suporte): atualização sugerida da Central de Suporte e Cartilhas A4'
+          title: 'docs(suporte): Atualização automática da Central de Suporte (FAQ, Chat IA e Cartilhas A4)'
+          body-path: support-sync-report.md
+          labels: |
+            documentation
+            support-center

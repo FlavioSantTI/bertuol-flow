@@ -21,6 +21,7 @@ import jsQR from 'jsqr';
 import { TotemQRCodeModal } from '../components/TotemQRCodeModal';
 import { CameraPermissionModal } from '../components/CameraPermissionModal';
 import { AdminGamificationModal } from '../components/AdminGamificationModal';
+import { SupportCenterModal } from '../components/support/SupportCenterModal';
 import { notificationService } from '../services/notificationService';
 import type { RewardCatalogItem } from '../types/database';
 
@@ -310,6 +311,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // In-App Patient Messaging Drawer & Quick New Chat
   const [isMessagingDrawerOpen, setIsMessagingDrawerOpen] = useState(initialOpenMsg || initialNewMsg);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [startNewChatOnOpen, setStartNewChatOnOpen] = useState(initialNewMsg);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
@@ -1022,6 +1024,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           setStartNewChatOnOpen(false);
           setIsMessagingDrawerOpen(true);
         }}
+        onOpenSupport={() => setIsSupportModalOpen(true)}
         onOpenAdminModal={() => {
           if (onOpenAdminGamificationModal) {
             onOpenAdminGamificationModal();
@@ -1346,6 +1349,15 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         clinicId={clinicId}
         initialCreateNew={startNewChatOnOpen}
         onResetCreateNew={() => setStartNewChatOnOpen(false)}
+      />
+
+      {/* Central de Suporte (estritamente isolada no perfil Paciente) */}
+      <SupportCenterModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        userRole="patient"
+        userName={patientName}
+        initialProfile="patient"
       />
     </div>
   );

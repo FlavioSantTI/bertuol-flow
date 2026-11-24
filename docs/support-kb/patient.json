@@ -1,0 +1,201 @@
+[
+  {
+    "id": "pat-primeiro-acesso",
+    "profile": "patient",
+    "category": "Primeiro Acesso e Conta",
+    "title": "Como faço meu primeiro acesso ao Portal do Paciente?",
+    "summary": "Entre usando seu celular (WhatsApp) ou CPF com o token de ativação enviado pela clínica.",
+    "steps": [
+      "Acesse o link oficial do Portal do Paciente enviado no WhatsApp ou escaneie o QR Code da recepção.",
+      "Na tela de login, toque na aba Primeiro Acesso (ou abra diretamente o link de convite com token de ativação).",
+      "Informe seu número de celular (WhatsApp) com DDD ou seu CPF cadastrado na clínica.",
+      "Crie sua senha pessoal definitiva e conclua o login para visualizar suas consultas e pontos do Clube Sorriso."
+    ],
+    "tip": "Se você recebeu um link de convite personalizado pelo WhatsApp, o sistema reconhece seu token automaticamente e facilita a definição da senha.",
+    "keywords": ["login", "entrar", "primeiro acesso", "senha", "cpf", "celular", "token", "convite", "ativacao"],
+    "includeInPrint": true,
+    "printOrder": 1,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-esqueci-senha",
+    "profile": "patient",
+    "category": "Primeiro Acesso e Conta",
+    "title": "Esqueci minha senha ou não recebi meu convite de acesso. O que fazer?",
+    "summary": "A recepção da sua unidade pode reenviar um novo link de ativação em segundos pelo WhatsApp.",
+    "steps": [
+      "Verifique se está digitando o mesmo número de celular (com DDD) ou CPF informado no cadastro da clínica.",
+      "Caso tenha esquecido a senha ou trocado de número, entre em contato com a recepção da unidade (Palmas - TO ou Paraíso do Tocantins - TO).",
+      "Nossa equipe gerará um novo link de ativação seguro e enviará direto para o seu WhatsApp."
+    ],
+    "keywords": ["esqueci", "senha", "recuperar", "acesso", "bloqueado", "troquei celular"],
+    "includeInPrint": true,
+    "printOrder": 2,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-confirmar-consulta",
+    "profile": "patient",
+    "category": "Consultas e Check-in",
+    "title": "Como confirmar minha consulta em 1 toque e ganhar pontos?",
+    "summary": "Confirme sua presença na aba Minha Consulta para agilizar o atendimento e ganhar +10 pontos no Clube Sorriso.",
+    "steps": [
+      "Abra o Portal do Paciente e acesse a aba Minha Consulta.",
+      "Confira a data, o horário, o profissional e a unidade do seu próximo atendimento.",
+      "Toque no botão Confirmar Presença para confirmar em 1 toque.",
+      "A recepção recebe a confirmação na hora e você ganha +10 pontos automaticamente no seu extrato do Clube Sorriso."
+    ],
+    "keywords": ["consulta", "confirmar", "presenca", "agendamento", "10 pontos", "horario"],
+    "includeInPrint": true,
+    "printOrder": 3,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-totem-checkin",
+    "profile": "patient",
+    "category": "Consultas e Check-in",
+    "title": "Como fazer check-in no Totem QR Code ao chegar na clínica?",
+    "summary": "Escaneie o QR Code no balcão da recepção para avisar imediatamente o dentista e ganhar +30 pontos.",
+    "steps": [
+      "Ao chegar na recepção da clínica, abra o Portal do Paciente e toque na aba Check-in.",
+      "Permita o acesso à câmera do celular quando solicitado e aponte para o QR Code do Totem no balcão.",
+      "Aguarde a confirmação na tela: sua chegada é avisada em tempo real para a recepção e para o seu dentista.",
+      "Você acumula +30 pontos automaticamente no Clube Sorriso a cada check-in válido."
+    ],
+    "tip": "Se a câmera não abrir, verifique nas configurações do navegador se a permissão de câmera está liberada para o site da Bertuol.",
+    "keywords": ["totem", "qr code", "check-in", "checkin", "camera", "chegada", "30 pontos"],
+    "includeInPrint": true,
+    "printOrder": 4,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-clube-sorriso",
+    "profile": "patient",
+    "category": "Clube Sorriso e Vouchers",
+    "title": "Como funciona o Clube Sorriso e como acumular pontos?",
+    "summary": "Cada interação no Portal acumula pontos que elevam seu nível e liberam benefícios exclusivos.",
+    "steps": [
+      "Confirmação de consulta em 1 toque no app: +10 pontos.",
+      "Check-in via QR Code no Totem da recepção ao chegar na clínica: +30 pontos.",
+      "Indicações e ações especiais de relacionamento também pontuam conforme campanhas vigentes.",
+      "Acompanhe seu saldo, histórico detalhado (extrato) e nível atual (Bronze, Prata, Ouro ou Diamante) na aba Clube Sorriso."
+    ],
+    "keywords": ["clube sorriso", "pontos", "extrato", "bronze", "prata", "ouro", "diamante", "fidelidade", "recompensas"],
+    "includeInPrint": true,
+    "printOrder": 5,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-resgate-voucher",
+    "profile": "patient",
+    "category": "Clube Sorriso e Vouchers",
+    "title": "Como resgatar e usar um voucher do Clube Sorriso (BRT-XXXX)?",
+    "summary": "Troque seus pontos no catálogo de recompensas e apresente o código gerado na recepção.",
+    "steps": [
+      "Acesse a aba Clube Sorriso e escolha uma recompensa disponível para o seu saldo de pontos.",
+      "Toque em Resgatar para gerar seu código único no formato BRT-XXXX.",
+      "No dia do seu atendimento, informe ou mostre o código do voucher na recepção para validação e baixa."
+    ],
+    "keywords": ["voucher", "brt", "resgatar", "recompensa", "premio", "codigo", "trocar pontos"],
+    "includeInPrint": true,
+    "printOrder": 6,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-voucher-aniversario",
+    "profile": "patient",
+    "category": "Clube Sorriso e Vouchers",
+    "title": "Como funciona o Presente e Voucher de Aniversário (BRT-ANIV)?",
+    "summary": "No dia do seu aniversário você recebe um voucher exclusivo válido por 7 dias para agendar sua cortesia.",
+    "steps": [
+      "Na data exata do seu aniversário, você recebe automaticamente uma mensagem no WhatsApp e um aviso no Portal do Paciente.",
+      "O benefício traz um código exclusivo no formato BRT-ANIV-XXXX, válido por 7 dias corridos.",
+      "Responda a mensagem no WhatsApp ou fale pelo Chat do Portal para reservar o melhor horário na sua unidade.",
+      "Apresente o código BRT-ANIV-XXXX na recepção no dia do atendimento para validar sua cortesia."
+    ],
+    "tip": "Fique atento à data de validade informada na mensagem: o agendamento e uso do voucher devem ocorrer dentro do prazo de 7 dias.",
+    "keywords": ["aniversario", "presente", "cortesia", "brt-aniv", "voucher aniversario", "7 dias", "validade"],
+    "includeInPrint": true,
+    "printOrder": 7,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-instalar-iphone",
+    "profile": "patient",
+    "category": "App no Celular e Notificações",
+    "title": "Como instalar o Portal do Paciente no iPhone (iOS)?",
+    "summary": "Adicione o aplicativo à Tela de Início pelo Safari sem precisar baixar nada na App Store.",
+    "steps": [
+      "Abra o endereço do Portal do Paciente usando o navegador Safari no seu iPhone.",
+      "Toque no botão Compartilhar (ícone de quadrado com seta para cima na barra inferior).",
+      "Role as opções e toque em Adicionar à Tela de Início.",
+      "Confirme em Adicionar e passe a abrir o app sempre pelo ícone criado na tela inicial."
+    ],
+    "tip": "No iPhone, instalar na Tela de Início pelo Safari também é obrigatório para receber notificações push de lembretes e vouchers.",
+    "keywords": ["iphone", "ios", "safari", "instalar", "aplicativo", "pwa", "tela de inicio", "app store"],
+    "includeInPrint": true,
+    "printOrder": 8,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-instalar-android",
+    "profile": "patient",
+    "category": "App no Celular e Notificações",
+    "title": "Como instalar o Portal do Paciente no Android?",
+    "summary": "Instale direto pelo Google Chrome em poucos segundos, sem ocupar espaço da Play Store.",
+    "steps": [
+      "Abra o endereço do Portal do Paciente no navegador Google Chrome.",
+      "Toque no menu de três pontinhos no canto superior direito do navegador.",
+      "Selecione Instalar aplicativo ou Adicionar à tela inicial.",
+      "Confirme em Instalar e acesse o ícone Bertuol Paciente diretamente na tela do celular."
+    ],
+    "keywords": ["android", "chrome", "instalar", "aplicativo", "pwa", "play store"],
+    "includeInPrint": true,
+    "printOrder": 9,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-notificacoes",
+    "profile": "patient",
+    "category": "App no Celular e Notificações",
+    "title": "Como ativar notificações de consultas, pontos e mensagens?",
+    "summary": "Ative os avisos no celular para receber lembretes de consultas, respostas da clínica e vouchers.",
+    "steps": [
+      "Abra o aplicativo instalado na Tela de Início do celular (em iPhone, sempre pelo ícone instalado via Safari).",
+      "Toque no ícone de sino no topo da tela para abrir a Central de Notificações.",
+      "Quando o aparelho solicitar permissão de notificações, toque em Permitir.",
+      "Se havia bloqueado antes, vá em Ajustes/Configurações do celular > Notificações e habilite o app Bertuol Paciente."
+    ],
+    "keywords": ["notificacao", "push", "alerta", "lembrete", "sino", "nao recebo", "permitir"],
+    "includeInPrint": true,
+    "printOrder": 10,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "pat-chat-clinica",
+    "profile": "patient",
+    "category": "Atendimento e Mensagens",
+    "title": "Como falar diretamente com a clínica pelo aplicativo?",
+    "summary": "Use o ícone de mensagens no topo do Portal para enviar dúvidas, áudios ou fotos para a recepção.",
+    "steps": [
+      "No topo do Portal do Paciente, toque no ícone de mensagens (balão de conversa).",
+      "Inicie uma conversa ou continue o atendimento em andamento com a equipe da sua unidade.",
+      "Você pode enviar mensagens de texto, gravar áudio ou anexar imagens diretamente pelo celular."
+    ],
+    "keywords": ["chat", "mensagem", "falar com clinica", "recepcao", "audio", "foto", "duvida", "remarcar"],
+    "includeInPrint": true,
+    "printOrder": 11,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  }
+]
