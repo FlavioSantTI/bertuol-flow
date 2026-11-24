@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.7.0
+# 🦷 Bertuol Odontologia Avançada — Versão 1.8.0
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Data do Orçamento separada da Última Vinda Real à Clínica (Clinicorp), Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro & Ordenação por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.7.0-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.8.0-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,23 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.7.0
+## 🌟 Visão Geral da Jornada & Versão 1.8.0
 
-O **Bertuol Flow** chega à **Versão 1.7.0** entregando a **Central de Suporte Unificada** (acessível dentro do app e na rota pública `/suporte`) com **FAQ por perfil**, **Chat de IA com isolamento automático e citações**, **Cartilhas A4 separadas prontas para download em PDF/impressão**, **atualização automatizada via GitHub Action + Pull Request**, além de **normalização automática de telefone (`MobilePhone`) no agendamento Clinicorp** (remoção do DDI `55`, prioridade ao número do prontuário e reenvio automático em divergência de 8 vs 9 dígitos).
+O **Bertuol Flow** chega à **Versão 1.8.0** trazendo a separação definitiva entre **Data do Orçamento** e **Última Vinda Real à Clínica** (presença efetivamente atendida no Clinicorp) em todos os funis do CRM, com atualização em lote (12 meses) e consulta individual em 1 clique — mantendo os cards e a barra de filtros enxutos e livres de poluição visual.
 
-### 🧭 Novidades da v1.7.0 — Central de Suporte Unificada, Cartilhas PDF A4 & Correção Clinicorp
+### 🗓️ Novidades da v1.8.0 — Data do Orçamento vs. Última Vinda Real à Clínica (Clinicorp)
+
+- **🔎 Detecção Validada de Presença Real no Clinicorp (`GET /api/clinicorp/patient-last-visit` & `POST /api/crm/sync-last-visits`)**:
+  - Consulta janelas paralelas de até 12 meses no Clinicorp com cache em servidor (5 min) e filtragem estrita de comparecimento real (status atendido / sessão registrada), ignorando faltas, cancelamentos, registros excluídos e agendamentos futuros.
+  - Sincronização em lote nos funis do CRM preservando automaticamente a **Data do Orçamento** antes de gravar a **Última Vinda à Clínica**, contagem de dias sem vir e último procedimento realizado.
+- **🧩 Persistência Segura & Transparente (`src/utils/crmSystemFields.ts`)**:
+  - Preserva metadados internos (`__sys_estimate_date`, `__sys_last_visit_proc`, `__sys_last_visit_synced`) no Supabase sem alterar os campos livres editados pelas atendentes.
+- **✨ Interface Limpa no CRM (`CRMLeadCard`, `CRMLeadDrawer`, `CRMNewOpportunityModal`, `MiniCRMModal`)**:
+  - **Cards (Kanban e Lista)**: linha inline discreta em fonte tabular exibindo `Orç. DD/MM/AAAA` junto de `Voltou DD/MM/AAAA` (quando houve retorno após o orçamento), `Últ. vinda DD/MM/AAAA` ou `Sem retorno`.
+  - **Gaveta do Lead & Novo Atendimento**: campos editáveis de **Data do Orçamento** e **Última Vinda à Clínica** com botão de atualização em 1 clique direto do Clinicorp e resumo silencioso de dias/procedimento.
+  - **Ordenação & Sincronização na Barra de Datas**: seletor compacto de ordenação (*Orçamento mais recente/antigo*, *Última vinda recente*, *Mais tempo sem vir*) e botão **Última Vinda** integrados à própria barra de datas já existente, sem criar novas linhas na interface.
+
+### 🧭 Recursos da v1.7.0 — Central de Suporte Unificada, Cartilhas PDF A4 & Correção Clinicorp
 
 - **📚 Base Única Versionada por Perfil (`docs/support-kb/`)**:
   - 32 guias oficiais segmentados em **Paciente (11)**, **Dentista (10)** e **Recepção & CRM (11)**, servindo como fonte única para o FAQ interativo, o Chat de IA e as Cartilhas A4.

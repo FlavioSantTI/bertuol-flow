@@ -12,6 +12,12 @@ import {
 } from '../types/crm';
 import { Appointment, Clinic, Patient } from '../types/database';
 import { supabase } from './supabaseService';
+import {
+  computeDaysSinceYMD,
+  extractSystemCustomMeta,
+  mergeSystemCustomFields,
+  stripSystemCustomFields,
+} from '../utils/crmSystemFields';
 
 const LEGACY_CRM_STORAGE_KEY_V1 = 'bertuol_crm_opportunities_v1';
 const LEGACY_CRM_STORAGE_KEY_V2 = 'bertuol_crm_opportunities_v2';
@@ -580,11 +586,13 @@ export class CRMService {
       ? localCached!.notesHistory
       : [];
 
-    const customFields: CRMCustomField[] = Array.isArray(row.custom_fields)
+    const rawCustomFields: CRMCustomField[] = Array.isArray(row.custom_fields)
       ? row.custom_fields
       : Array.isArray(localCached?.customFields)
       ? localCached!.customFields
       : [];
+    const sysMeta = extractSystemCustomMeta(rawCustomFields);
+    const customFields = stripSystemCustomFields(rawCustomFields);
 
     const sourceText = String(row.source || localCached?.source || 'Supabase crm_leads_recall');
     const sourceEstMatch = sourceText.match(/Clinicorp Orçamento #(\d+)/i);
@@ -592,6 +600,26 @@ export class CRMService {
       row.estimate_id != null
         ? Number(row.estimate_id)
         : localCached?.estimateId ?? (sourceEstMatch ? Number(sourceEstMatch[1]) : undefined);
+
+    const resolvedEstimateDate = row.estimate_date
+      ? String(row.estimate_date).split('T')[0]
+      : sysMeta.estimateDate ||
+        localCached?.estimateDate ||
+        (estimateId && !sysMeta.lastVisitSyncedAt ? lastVisitDate : undefined);
+
+    const resolvedLastVisitProcedure =
+      row.last_visit_procedure ||
+      sysMeta.lastVisitProcedure ||
+      localCached?.lastVisitProcedure ||
+      undefined;
+
+    const resolvedLastVisitSyncedAt =
+      sysMeta.lastVisitSyncedAt || localCached?.lastVisitSyncedAt || undefined;
+
+    const resolvedDiasDesdeUltimo =
+      row.dias_desde_ultimo != null
+        ? Number(row.dias_desde_ultimo)
+        : computeDaysSinceYMD(lastVisitDate) ?? 180;
 
     return {
       id: cycleKey,
@@ -606,16 +634,16 @@ export class CRMService {
       priority,
       labels,
       lastVisitDate,
+      lastVisitProcedure: resolvedLastVisitProcedure,
+      lastVisitSyncedAt: resolvedLastVisitSyncedAt,
       dentistName: row.dentist_name || 'Corpo Clínico Bertuol',
       treatmentDescription: row.ultimo_procedimento || 'Avaliação Preventiva Semestral',
-      diasDesdeUltimo: row.dias_desde_ultimo != null ? Number(row.dias_desde_ultimo) : 180,
+      diasDesdeUltimo: resolvedDiasDesdeUltimo,
       tipoMensagem: row.tipo_mensagem ? String(row.tipo_mensagem).trim() : undefined,
       mensagemWhatsapp: row.mensagem_whatsapp ? String(row.mensagem_whatsapp).trim() : undefined,
       estimatedValue: row.estimated_value != null ? Number(row.estimated_value) : 280,
       estimateId,
-      estimateDate: row.estimate_date
-        ? String(row.estimate_date).split('T')[0]
-        : localCached?.estimateDate || (estimateId ? lastVisitDate : undefined),
+      estimateDate: resolvedEstimateDate,
       estimateProcedures: Array.isArray(row.estimate_procedures)
         ? row.estimate_procedures
         : localCached?.estimateProcedures,
@@ -682,7 +710,11 @@ export class CRMService {
       type: opp.type || 'recall_6m',
       labels: opp.labels || [],
       notes_history: opp.notesHistory || [],
-      custom_fields: opp.customFields || [],
+      custom_fields: mergeSystemCustomFields(opp.customFields, {
+        estimateDate: opp.estimateDate,
+        lastVisitProcedure: opp.lastVisitProcedure,
+        lastVisitSyncedAt: opp.lastVisitSyncedAt,
+      }),
       assigned_user: opp.assignedUser || null,
       contact_attempts: opp.contactAttempts || 0,
       next_contact_date: opp.nextContactDate || null,
@@ -872,47 +904,76 @@ export class CRMService {
     const index = opportunities.findIndex((o) => o.id === id);
     if (index === -1) return null;
 
+    const previousOpp = opportunities[index];
+    const cleanUpdates: Partial<CRMLeadOpportunity> = { ...updates };
+    if (cleanUpdates.customFields !== undefined) {
+      cleanUpdates.customFields = stripSystemCustomFields(cleanUpdates.customFields);
+    }
+    if (cleanUpdates.lastVisitDate !== undefined && cleanUpdates.diasDesdeUltimo === undefined) {
+      const recalc = computeDaysSinceYMD(cleanUpdates.lastVisitDate);
+      if (recalc !== undefined) {
+        cleanUpdates.diasDesdeUltimo = recalc;
+      }
+    }
+
     const updated: CRMLeadOpportunity = {
-      ...opportunities[index],
-      ...updates,
+      ...previousOpp,
+      ...cleanUpdates,
       updatedAt: new Date().toISOString(),
     };
     opportunities[index] = updated;
     this.saveOpportunities(opportunities);
 
     const baseUpdates: Record<string, any> = { updated_at: updated.updatedAt };
-    if (updates.patientName !== undefined) {
-      baseUpdates.patient_name = updates.patientName;
-      baseUpdates.primeiro_nome = updates.patientName.split(' ')[0];
+    if (cleanUpdates.patientName !== undefined) {
+      baseUpdates.patient_name = cleanUpdates.patientName;
+      baseUpdates.primeiro_nome = cleanUpdates.patientName.split(' ')[0];
     }
-    if (updates.patientPhone !== undefined) baseUpdates.mobile_phone = updates.patientPhone;
-    if (updates.clinicId !== undefined) baseUpdates.clinic_id = updates.clinicId;
-    if (updates.treatmentDescription !== undefined)
-      baseUpdates.ultimo_procedimento = updates.treatmentDescription || null;
-    if (updates.pointsBonus !== undefined) baseUpdates.points_bonus = updates.pointsBonus;
-    if (updates.stage !== undefined) baseUpdates.stage = updates.stage;
-    if (updates.priority !== undefined) baseUpdates.priority = updates.priority;
-    if (updates.notes !== undefined) baseUpdates.notes = updates.notes;
-    if (updates.lastContactDate !== undefined) baseUpdates.last_contact_date = updates.lastContactDate;
-    if (updates.mensagemWhatsapp !== undefined) baseUpdates.mensagem_whatsapp = updates.mensagemWhatsapp;
-    if (updates.dentistName !== undefined) baseUpdates.dentist_name = updates.dentistName;
-    if (updates.estimatedValue !== undefined) baseUpdates.estimated_value = updates.estimatedValue;
+    if (cleanUpdates.patientPhone !== undefined) baseUpdates.mobile_phone = cleanUpdates.patientPhone;
+    if (cleanUpdates.clinicId !== undefined) baseUpdates.clinic_id = cleanUpdates.clinicId;
+    if (cleanUpdates.treatmentDescription !== undefined)
+      baseUpdates.ultimo_procedimento = cleanUpdates.treatmentDescription || null;
+    if (cleanUpdates.lastVisitDate !== undefined) {
+      baseUpdates.data_ultimo_agendamento = cleanUpdates.lastVisitDate || null;
+    }
+    if (cleanUpdates.diasDesdeUltimo !== undefined) {
+      baseUpdates.dias_desde_ultimo = cleanUpdates.diasDesdeUltimo;
+    }
+    if (cleanUpdates.pointsBonus !== undefined) baseUpdates.points_bonus = cleanUpdates.pointsBonus;
+    if (cleanUpdates.stage !== undefined) baseUpdates.stage = cleanUpdates.stage;
+    if (cleanUpdates.priority !== undefined) baseUpdates.priority = cleanUpdates.priority;
+    if (cleanUpdates.notes !== undefined) baseUpdates.notes = cleanUpdates.notes;
+    if (cleanUpdates.lastContactDate !== undefined) baseUpdates.last_contact_date = cleanUpdates.lastContactDate;
+    if (cleanUpdates.mensagemWhatsapp !== undefined) baseUpdates.mensagem_whatsapp = cleanUpdates.mensagemWhatsapp;
+    if (cleanUpdates.dentistName !== undefined) baseUpdates.dentist_name = cleanUpdates.dentistName;
+    if (cleanUpdates.estimatedValue !== undefined) baseUpdates.estimated_value = cleanUpdates.estimatedValue;
 
     const fullUpdates: Record<string, any> = { ...baseUpdates };
-    if (updates.pipelineId !== undefined) fullUpdates.pipeline_id = updates.pipelineId;
-    if (updates.type !== undefined) fullUpdates.type = updates.type;
-    if (updates.labels !== undefined) fullUpdates.labels = updates.labels;
-    if (updates.notesHistory !== undefined) fullUpdates.notes_history = updates.notesHistory;
-    if (updates.customFields !== undefined) fullUpdates.custom_fields = updates.customFields;
-    if (updates.source !== undefined) fullUpdates.source = updates.source;
-    if (updates.contactAttempts !== undefined) fullUpdates.contact_attempts = updates.contactAttempts;
-    if (updates.nextContactDate !== undefined) fullUpdates.next_contact_date = updates.nextContactDate || null;
-    if (updates.lostReason !== undefined) fullUpdates.lost_reason = updates.lostReason || null;
-    if (updates.assignedUser !== undefined) fullUpdates.assigned_user = updates.assignedUser || null;
-    if (updates.scheduledAppointmentId !== undefined)
-      fullUpdates.scheduled_appointment_id = updates.scheduledAppointmentId;
-    if (updates.scheduledDate !== undefined) fullUpdates.scheduled_date = updates.scheduledDate;
-    if (updates.scheduledTime !== undefined) fullUpdates.scheduled_time = updates.scheduledTime;
+    if (cleanUpdates.pipelineId !== undefined) fullUpdates.pipeline_id = cleanUpdates.pipelineId;
+    if (cleanUpdates.type !== undefined) fullUpdates.type = cleanUpdates.type;
+    if (cleanUpdates.labels !== undefined) fullUpdates.labels = cleanUpdates.labels;
+    if (cleanUpdates.notesHistory !== undefined) fullUpdates.notes_history = cleanUpdates.notesHistory;
+    if (
+      cleanUpdates.customFields !== undefined ||
+      cleanUpdates.estimateDate !== undefined ||
+      cleanUpdates.lastVisitProcedure !== undefined ||
+      cleanUpdates.lastVisitSyncedAt !== undefined
+    ) {
+      fullUpdates.custom_fields = mergeSystemCustomFields(updated.customFields, {
+        estimateDate: updated.estimateDate,
+        lastVisitProcedure: updated.lastVisitProcedure,
+        lastVisitSyncedAt: updated.lastVisitSyncedAt,
+      });
+    }
+    if (cleanUpdates.source !== undefined) fullUpdates.source = cleanUpdates.source;
+    if (cleanUpdates.contactAttempts !== undefined) fullUpdates.contact_attempts = cleanUpdates.contactAttempts;
+    if (cleanUpdates.nextContactDate !== undefined) fullUpdates.next_contact_date = cleanUpdates.nextContactDate || null;
+    if (cleanUpdates.lostReason !== undefined) fullUpdates.lost_reason = cleanUpdates.lostReason || null;
+    if (cleanUpdates.assignedUser !== undefined) fullUpdates.assigned_user = cleanUpdates.assignedUser || null;
+    if (cleanUpdates.scheduledAppointmentId !== undefined)
+      fullUpdates.scheduled_appointment_id = cleanUpdates.scheduledAppointmentId;
+    if (cleanUpdates.scheduledDate !== undefined) fullUpdates.scheduled_date = cleanUpdates.scheduledDate;
+    if (cleanUpdates.scheduledTime !== undefined) fullUpdates.scheduled_time = cleanUpdates.scheduledTime;
 
     const applyUpdate = (payload: Record<string, any>) => {
       if (id.startsWith('opp-row-')) {
@@ -921,8 +982,8 @@ export class CRMService {
       }
       if (updated.patientId) {
         let query = supabase.from('crm_leads_recall').update(payload).eq('patient_id', updated.patientId);
-        if (updated.lastVisitDate) {
-          query = query.eq('data_ultimo_agendamento', updated.lastVisitDate);
+        if (previousOpp.lastVisitDate) {
+          query = query.eq('data_ultimo_agendamento', previousOpp.lastVisitDate);
         }
         return query;
       }
@@ -1506,5 +1567,143 @@ export class CRMService {
       totalSLAAlert: slaAlerts,
       totalPipelineValue: pipelineValue,
     };
+  }
+
+  /**
+   * Sincroniza em lote a última vinda real à clínica (atendimento efetivo no Clinicorp)
+   * preservando a Data do Orçamento separada em __sys_estimate_date.
+   */
+  static async syncLastVisitsFromClinicorp(options?: {
+    months?: number;
+    clinicId?: number | 'all';
+    pipelineId?: string | 'all';
+    force?: boolean;
+  }): Promise<{
+    success: boolean;
+    totalLeadsChecked: number;
+    matchedVisits: number;
+    updatedInDb: number;
+    returnedAfterBudget: number;
+    opportunities: CRMLeadOpportunity[];
+    error?: string;
+  }> {
+    try {
+      const res = await fetch('/api/crm/sync-last-visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          months: options?.months ?? 12,
+          clinicId: options?.clinicId ?? 'all',
+          pipelineId: options?.pipelineId ?? 'all',
+          force: options?.force ?? true,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return {
+          success: false,
+          totalLeadsChecked: 0,
+          matchedVisits: 0,
+          updatedInDb: 0,
+          returnedAfterBudget: 0,
+          opportunities: this.getOpportunities(),
+          error: data?.error || `Falha na sincronização (HTTP ${res.status})`,
+        };
+      }
+
+      // Recarrega do Supabase para refletir as datas já gravadas em todos os funis
+      const refreshed = await this.fetchFromSupabase();
+      return {
+        success: true,
+        totalLeadsChecked: Number(data.totalLeadsChecked || 0),
+        matchedVisits: Number(data.matchedVisits || 0),
+        updatedInDb: Number(data.updatedInDb || 0),
+        returnedAfterBudget: Number(data.returnedAfterBudget || 0),
+        opportunities: refreshed,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        totalLeadsChecked: 0,
+        matchedVisits: 0,
+        updatedInDb: 0,
+        returnedAfterBudget: 0,
+        opportunities: this.getOpportunities(),
+        error: err?.message || 'Erro de conexão ao consultar o Clinicorp.',
+      };
+    }
+  }
+
+  /**
+   * Consulta sob demanda a última vinda real de um paciente específico no Clinicorp
+   * e atualiza o lead localmente + Supabase.
+   */
+  static async fetchPatientLastVisitFromClinicorp(
+    opp: CRMLeadOpportunity,
+    force = false
+  ): Promise<{
+    success: boolean;
+    found: boolean;
+    lastVisitDate?: string;
+    diasDesdeUltimo?: number;
+    procedure?: string;
+    updated?: CRMLeadOpportunity | null;
+    error?: string;
+  }> {
+    try {
+      const qs = new URLSearchParams();
+      if (opp.patientId && /^\d+$/.test(String(opp.patientId))) {
+        qs.set('patientId', String(opp.patientId));
+      }
+      if (opp.patientName) {
+        qs.set('patientName', opp.patientName);
+      }
+      if (opp.clinicId) {
+        qs.set('clinicId', String(opp.clinicId));
+      }
+      qs.set('months', '12');
+      if (force) qs.set('force', '1');
+
+      const res = await fetch(`/api/clinicorp/patient-last-visit?${qs.toString()}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return {
+          success: false,
+          found: false,
+          error: data?.error || 'Não foi possível consultar a última vinda no Clinicorp.',
+        };
+      }
+      if (!data.found || !data.lastVisitDate) {
+        return { success: true, found: false };
+      }
+
+      // Garante preservação da data do orçamento antes de atualizar lastVisitDate
+      const preservedEstimateDate =
+        opp.estimateDate ||
+        (opp.pipelineId === 'budgets' && !opp.lastVisitSyncedAt ? opp.lastVisitDate : undefined);
+
+      const updated = this.updateOpportunity(opp.id, {
+        estimateDate: preservedEstimateDate,
+        lastVisitDate: data.lastVisitDate,
+        diasDesdeUltimo: data.diasDesdeUltimo,
+        lastVisitProcedure: data.procedure || opp.lastVisitProcedure,
+        lastVisitSyncedAt: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        found: true,
+        lastVisitDate: data.lastVisitDate,
+        diasDesdeUltimo: data.diasDesdeUltimo,
+        procedure: data.procedure,
+        updated,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        found: false,
+        error: err?.message || 'Erro de rede ao consultar Clinicorp.',
+      };
+    }
   }
 }

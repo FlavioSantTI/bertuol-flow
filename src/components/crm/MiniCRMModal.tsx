@@ -49,6 +49,7 @@ import {
   Calendar,
   History,
   Cake,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   CRM_DATE_FIELD_OPTIONS,
@@ -57,6 +58,7 @@ import {
   CRMDatePreset,
   getCRMDateFieldLabel,
   matchesCRMDateFilter,
+  normalizeOpportunityDateYMD,
   resolveCRMDateRange,
 } from '../../utils/crmDateFilter';
 
@@ -110,6 +112,9 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<
+    'default' | 'estimate_desc' | 'estimate_asc' | 'last_visit_desc' | 'last_visit_oldest'
+  >('default');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   // Sub-modals & Drawer
@@ -148,6 +153,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
   // Sync / feedback state
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingLastVisits, setIsSyncingLastVisits] = useState(false);
   const [syncToast, setSyncToast] = useState<string | null>(null);
   const estimateSyncInFlightRef = useRef(false);
 
@@ -296,6 +302,35 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
       showToast(
         `Supabase atualizado (${supaOpps.length} leads). Aviso Clinicorp: ${estRes.error || 'indisponível'}.`
       );
+    }
+  };
+
+  const handleSyncLastVisits = async () => {
+    if (isSyncingLastVisits) return;
+    setIsSyncingLastVisits(true);
+    try {
+      const res = await CRMService.syncLastVisitsFromClinicorp({
+        months: 12,
+        clinicId: selectedClinicId,
+        pipelineId: 'all',
+        force: true,
+      });
+      if (res.success) {
+        setOpportunities(res.opportunities);
+        const returnedText =
+          res.returnedAfterBudget > 0
+            ? ` (${res.returnedAfterBudget} voltaram após o orçamento)`
+            : '';
+        showToast(
+          `Última vinda atualizada: ${res.updatedInDb} lead(s) de ${res.matchedVisits} presenças encontradas no Clinicorp${returnedText}.`
+        );
+      } else {
+        showToast(
+          `Não foi possível consultar presenças no Clinicorp: ${res.error || 'tente novamente'}.`
+        );
+      }
+    } finally {
+      setIsSyncingLastVisits(false);
     }
   };
 
@@ -596,6 +631,26 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
     return matchesClinic && matchesType && matchesLabel && matchesFollowUp && matchesQuery;
   });
+
+  const sortedFilteredOpps =
+    sortOrder === 'default'
+      ? filteredOpps
+      : [...filteredOpps].sort((a, b) => {
+          const isEstimateSort = sortOrder === 'estimate_desc' || sortOrder === 'estimate_asc';
+          const aYMD = normalizeOpportunityDateYMD(
+            isEstimateSort ? a.estimateDate : a.lastVisitDate
+          );
+          const bYMD = normalizeOpportunityDateYMD(
+            isEstimateSort ? b.estimateDate : b.lastVisitDate
+          );
+          if (!aYMD && !bYMD) return 0;
+          if (!aYMD) return 1;
+          if (!bYMD) return -1;
+          if (sortOrder === 'estimate_desc' || sortOrder === 'last_visit_desc') {
+            return bYMD.localeCompare(aYMD);
+          }
+          return aYMD.localeCompare(bYMD);
+        });
 
   const stats: CRMSummaryStats = CRMService.getStats(
     dateFilteredOpportunities,
@@ -1190,24 +1245,68 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 )}
               </div>
 
-              {resolvedDateRange.isActive && (
-                <div className="flex items-center gap-2 text-[11px] text-slate-600 shrink-0">
-                  <span className="font-medium text-slate-500 tabular-nums">
-                    {getCRMDateFieldLabel(dateField)} ·{' '}
-                    <strong className="text-slate-800">{resolvedDateRange.summaryLabel}</strong> ·{' '}
-                    <strong className="text-[#147A80]">{filteredOpps.length}</strong>{' '}
-                    {filteredOpps.length === 1 ? 'lead' : 'leads'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleClearDateFilter}
-                    className="h-7 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
-                  >
-                    <X className="w-3 h-3" />
-                    <span>Limpar data</span>
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-[11px] text-slate-600 shrink-0 flex-wrap">
+                {resolvedDateRange.isActive && (
+                  <>
+                    <span className="font-medium text-slate-500 tabular-nums">
+                      {getCRMDateFieldLabel(dateField)} ·{' '}
+                      <strong className="text-slate-800">{resolvedDateRange.summaryLabel}</strong> ·{' '}
+                      <strong className="text-[#147A80]">{sortedFilteredOpps.length}</strong>{' '}
+                      {sortedFilteredOpps.length === 1 ? 'lead' : 'leads'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleClearDateFilter}
+                      className="h-7 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>Limpar data</span>
+                    </button>
+                  </>
+                )}
+
+                {activeView === 'pipeline' && (
+                  <>
+                    <div className="inline-flex items-center gap-1">
+                      <ArrowUpDown className="w-3 h-3 text-slate-400 shrink-0" />
+                      <select
+                        value={sortOrder}
+                        onChange={(e) =>
+                          setSortOrder(
+                            e.target.value as
+                              | 'default'
+                              | 'estimate_desc'
+                              | 'estimate_asc'
+                              | 'last_visit_desc'
+                              | 'last_visit_oldest'
+                          )
+                        }
+                        aria-label="Ordenar leads"
+                        className="h-7 bg-white border border-slate-200 rounded-md px-2 text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+                      >
+                        <option value="default">Ordenar: Padrão</option>
+                        <option value="estimate_desc">Orçamento mais recente</option>
+                        <option value="estimate_asc">Orçamento mais antigo</option>
+                        <option value="last_visit_desc">Última vinda recente</option>
+                        <option value="last_visit_oldest">Mais tempo sem vir</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSyncLastVisits}
+                      disabled={isSyncingLastVisits}
+                      title="Consultar data real da última presença na clínica no Clinicorp (últimos 12 meses)"
+                      className="h-7 px-2.5 rounded-md border border-slate-200 bg-white hover:border-[#147A80]/50 hover:text-[#147A80] text-slate-600 text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap disabled:opacity-60"
+                    >
+                      <RefreshCw
+                        className={`w-3 h-3 ${isSyncingLastVisits ? 'animate-spin text-[#147A80]' : ''}`}
+                      />
+                      <span>{isSyncingLastVisits ? 'Buscando...' : 'Última Vinda'}</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1318,7 +1417,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   }}
                 >
                   {pipelineStages.map((stg) => {
-                    const stageOpps = filteredOpps.filter((o) => o.stage === stg.id);
+                    const stageOpps = sortedFilteredOpps.filter((o) => o.stage === stg.id);
                     const stageSum = stageOpps.reduce((acc, cur) => acc + (cur.estimatedValue || 0), 0);
                     const isDropTarget = dragOverStageId === stg.id;
 
@@ -1454,7 +1553,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       </div>
                     </div>
                   ) : (
-                    filteredOpps.map((opp) => (
+                    sortedFilteredOpps.map((opp) => (
                       <CRMLeadCard
                         key={opp.id}
                         opportunity={opp}

@@ -10,6 +10,13 @@ import {
 import { Clinic, Dentist } from '../../types/database';
 import { CRMService } from '../../services/crmService';
 import {
+  computeDaysSinceYMD,
+  formatYMDToBR,
+  hasReturnedAfterEstimate,
+  normalizeYMDString,
+  stripSystemCustomFields,
+} from '../../utils/crmSystemFields';
+import {
   X,
   MessageSquare,
   CalendarPlus,
@@ -22,6 +29,7 @@ import {
   FileText,
   SlidersHorizontal,
   Check,
+  RefreshCw,
 } from 'lucide-react';
 
 interface CRMLeadDrawerProps {
@@ -104,6 +112,11 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
   const [estimatedValue, setEstimatedValue] = useState('');
   const [pointsBonus, setPointsBonus] = useState('');
   const [nextContactDate, setNextContactDate] = useState('');
+  const [estimateDate, setEstimateDate] = useState('');
+  const [lastVisitDate, setLastVisitDate] = useState('');
+  const [lastVisitProcedure, setLastVisitProcedure] = useState('');
+  const [isCheckingLastVisit, setIsCheckingLastVisit] = useState(false);
+  const [lastVisitFeedback, setLastVisitFeedback] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<CRMCustomField[]>([]);
   const [savedFeedback, setSavedFeedback] = useState(false);
 
@@ -132,7 +145,12 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
     );
     setPointsBonus(String(opportunity.pointsBonus ?? 50));
     setNextContactDate(opportunity.nextContactDate || '');
-    setCustomFields(Array.isArray(opportunity.customFields) ? opportunity.customFields : []);
+    setEstimateDate(normalizeYMDString(opportunity.estimateDate) || '');
+    setLastVisitDate(normalizeYMDString(opportunity.lastVisitDate) || '');
+    setLastVisitProcedure(opportunity.lastVisitProcedure || '');
+    setLastVisitFeedback(null);
+    setIsCheckingLastVisit(false);
+    setCustomFields(stripSystemCustomFields(opportunity.customFields));
     setNewFieldLabel('');
     setNewFieldValue('');
     setNoteText('');
@@ -148,6 +166,9 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
     if (e) e.preventDefault();
     if (!patientName.trim()) return;
 
+    const cleanLastVisit = lastVisitDate.trim() || undefined;
+    const cleanEstDate = estimateDate.trim() || undefined;
+
     onSaveOpportunity(opportunity.id, {
       patientName: patientName.trim(),
       primeiroNome: patientName.trim().split(' ')[0],
@@ -160,11 +181,50 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
       estimatedValue: estimatedValue ? parseFloat(estimatedValue) : 0,
       pointsBonus: pointsBonus ? parseInt(pointsBonus, 10) : 0,
       nextContactDate: nextContactDate || undefined,
-      customFields: customFields.filter((cf) => cf.label.trim() && cf.value.trim()),
+      estimateDate: cleanEstDate,
+      lastVisitDate: cleanLastVisit,
+      diasDesdeUltimo: cleanLastVisit ? computeDaysSinceYMD(cleanLastVisit) : opportunity.diasDesdeUltimo,
+      lastVisitProcedure: lastVisitProcedure.trim() || undefined,
+      customFields: stripSystemCustomFields(customFields).filter(
+        (cf) => cf.label.trim() && cf.value.trim()
+      ),
     });
 
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
+  };
+
+  const handleRefreshLastVisitFromClinicorp = async () => {
+    if (!opportunity || isCheckingLastVisit) return;
+    setIsCheckingLastVisit(true);
+    setLastVisitFeedback(null);
+    const res = await CRMService.fetchPatientLastVisitFromClinicorp(opportunity, false);
+    setIsCheckingLastVisit(false);
+    if (!res.success) {
+      setLastVisitFeedback(res.error || 'Erro ao consultar Clinicorp.');
+      return;
+    }
+    if (!res.found || !res.lastVisitDate) {
+      setLastVisitFeedback('Nenhuma vinda atendida encontrada nos últimos 12 meses.');
+      return;
+    }
+    setLastVisitDate(res.lastVisitDate);
+    if (res.procedure) setLastVisitProcedure(res.procedure);
+    onSaveOpportunity(opportunity.id, {
+      estimateDate:
+        estimateDate.trim() ||
+        opportunity.estimateDate ||
+        (opportunity.pipelineId === 'budgets' && !opportunity.lastVisitSyncedAt
+          ? opportunity.lastVisitDate
+          : undefined),
+      lastVisitDate: res.lastVisitDate,
+      diasDesdeUltimo: res.diasDesdeUltimo,
+      lastVisitProcedure: res.procedure || opportunity.lastVisitProcedure,
+      lastVisitSyncedAt: new Date().toISOString(),
+    });
+    setLastVisitFeedback(
+      `Atualizado: ${formatYMDToBR(res.lastVisitDate)}${res.procedure ? ` · ${res.procedure}` : ''}`
+    );
   };
 
   const handleAddCustomField = (presetLabel?: string) => {
@@ -497,6 +557,68 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
                     </select>
                   </div>
                 </div>
+
+                {/* Separated Dates: Estimate Date & Verified Last Visit (Clinicorp) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Data do Orçamento
+                    </label>
+                    <input
+                      type="date"
+                      value={estimateDate}
+                      onChange={(e) => setEstimateDate(e.target.value)}
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-mono tabular-nums text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <label className="text-[11px] font-semibold text-slate-600">
+                        Última Vinda à Clínica
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleRefreshLastVisitFromClinicorp}
+                        disabled={isCheckingLastVisit}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#147A80] hover:underline disabled:opacity-50 cursor-pointer"
+                        title="Buscar último comparecimento atendido no Clinicorp (12 meses)"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isCheckingLastVisit ? 'animate-spin' : ''}`} />
+                        <span>{isCheckingLastVisit ? 'Consultando...' : 'Clinicorp'}</span>
+                      </button>
+                    </div>
+                    <input
+                      type="date"
+                      value={lastVisitDate}
+                      onChange={(e) => setLastVisitDate(e.target.value)}
+                      className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-xs font-mono tabular-nums text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    />
+                  </div>
+                </div>
+
+                {(lastVisitDate || lastVisitFeedback) && (
+                  <p className="text-[11px] text-slate-500 tabular-nums leading-snug">
+                    {lastVisitFeedback ? (
+                      <span className="text-[#147A80] font-medium">{lastVisitFeedback}</span>
+                    ) : (
+                      <>
+                        {computeDaysSinceYMD(lastVisitDate) != null && (
+                          <span>Última vinda há {computeDaysSinceYMD(lastVisitDate)} dias</span>
+                        )}
+                        {lastVisitProcedure && <span> · {lastVisitProcedure}</span>}
+                        {hasReturnedAfterEstimate({
+                          estimateDate: estimateDate || opportunity.estimateDate,
+                          lastVisitDate,
+                        }) && (
+                          <span className="text-[#147A80] font-semibold">
+                            {' '}· Voltou após o orçamento
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </p>
+                )}
               </div>
 
               {/* Clinicorp Estimate Active Procedures (Filtered: no Deleted / NotApproved) */}

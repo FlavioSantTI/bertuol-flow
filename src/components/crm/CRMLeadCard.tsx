@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { CRMLabel, CRMLeadOpportunity, CRMPipelineStage } from '../../types/crm';
 import { CRMService } from '../../services/crmService';
 import { extractBirthdayVoucherInfo } from '../../utils/crmBirthdayVoucher';
+import {
+  formatYMDToBR,
+  hasReturnedAfterEstimate,
+  normalizeYMDString,
+} from '../../utils/crmSystemFields';
 import { Clinic } from '../../types/database';
 import {
   Phone,
@@ -200,23 +205,71 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
                 <span>{opportunity.dentistName}</span>
               </>
             )}
-            {opportunity.lastVisitDate && opportunity.type === 'recall_6m' && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="tabular-nums">
-                  Última: {opportunity.lastVisitDate}
-                  {opportunity.diasDesdeUltimo ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
-                </span>
-              </>
-            )}
             {opportunity.estimateDate && (
               <>
                 <span aria-hidden="true">·</span>
-                <span className="tabular-nums">
-                  Orç. {opportunity.estimateDate.split('-').reverse().slice(0, 2).join('/')}
+                <span className="tabular-nums" title={`Data do orçamento: ${formatYMDToBR(opportunity.estimateDate)}`}>
+                  Orç. {formatYMDToBR(opportunity.estimateDate)}
                 </span>
               </>
             )}
+            {(() => {
+              const visitYMD = normalizeYMDString(opportunity.lastVisitDate);
+              if (!visitYMD) return null;
+              const estYMD = normalizeYMDString(opportunity.estimateDate);
+              const returnedAfter = hasReturnedAfterEstimate(opportunity);
+              const visitBR = formatYMDToBR(visitYMD);
+              const procSuffix = opportunity.lastVisitProcedure
+                ? ` — ${opportunity.lastVisitProcedure}`
+                : '';
+
+              if (returnedAfter) {
+                return (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span
+                      className="tabular-nums font-medium text-[#147A80]"
+                      title={`Compareceu à clínica após o orçamento em ${visitBR}${procSuffix}`}
+                    >
+                      Voltou {visitBR}
+                    </span>
+                  </>
+                );
+              }
+
+              const shouldShowVisit =
+                opportunity.type === 'recall_6m' ||
+                Boolean(opportunity.lastVisitSyncedAt) ||
+                (!estYMD && Boolean(visitYMD));
+
+              if (!shouldShowVisit) return null;
+              if (estYMD && estYMD === visitYMD) {
+                return opportunity.diasDesdeUltimo != null ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span
+                      className="tabular-nums text-slate-400"
+                      title={`Última vinda foi no dia do orçamento (${visitBR})${procSuffix}`}
+                    >
+                      Sem retorno ({opportunity.diasDesdeUltimo}d)
+                    </span>
+                  </>
+                ) : null;
+              }
+
+              return (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span
+                    className="tabular-nums"
+                    title={`Última vinda real à clínica: ${visitBR}${procSuffix}`}
+                  >
+                    Últ. vinda {visitBR}
+                    {opportunity.diasDesdeUltimo != null ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
+                  </span>
+                </>
+              );
+            })()}
             {opportunity.estimateProcedures && opportunity.estimateProcedures.length > 0 && (
               <>
                 <span aria-hidden="true">·</span>
@@ -448,19 +501,67 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             <span> · {opportunity.dentistName}</span>
           )}
           {opportunity.estimateDate && (
-            <span className="tabular-nums">
-              {' '}· Orç. {opportunity.estimateDate.split('-').reverse().slice(0, 2).join('/')}
+            <span className="tabular-nums" title={`Data do orçamento: ${formatYMDToBR(opportunity.estimateDate)}`}>
+              {' '}· Orç. {formatYMDToBR(opportunity.estimateDate)}
             </span>
           )}
+          {(() => {
+            const visitYMD = normalizeYMDString(opportunity.lastVisitDate);
+            if (!visitYMD) return null;
+            const estYMD = normalizeYMDString(opportunity.estimateDate);
+            const returnedAfter = hasReturnedAfterEstimate(opportunity);
+            const visitBR = formatYMDToBR(visitYMD);
+            const procSuffix = opportunity.lastVisitProcedure
+              ? ` — ${opportunity.lastVisitProcedure}`
+              : '';
+
+            if (returnedAfter) {
+              return (
+                <span
+                  className="tabular-nums font-medium text-[#147A80]"
+                  title={`Compareceu à clínica após o orçamento em ${visitBR}${procSuffix}`}
+                >
+                  {' '}· Voltou {visitBR}
+                </span>
+              );
+            }
+
+            if (opportunity.type === 'recall_6m') {
+              return (
+                <span className="tabular-nums" title={`Última vinda: ${visitBR}${procSuffix}`}>
+                  {' '}· Vinda {visitBR}
+                  {opportunity.diasDesdeUltimo != null ? ` (${opportunity.diasDesdeUltimo}d)` : ''}
+                </span>
+              );
+            }
+
+            if (opportunity.lastVisitSyncedAt && estYMD && estYMD === visitYMD) {
+              return opportunity.diasDesdeUltimo != null ? (
+                <span
+                  className="tabular-nums text-slate-400"
+                  title={`Última vinda foi no dia do orçamento (${visitBR})${procSuffix}`}
+                >
+                  {' '}· {opportunity.diasDesdeUltimo}d sem retorno
+                </span>
+              ) : null;
+            }
+
+            if (opportunity.lastVisitSyncedAt) {
+              return (
+                <span className="tabular-nums" title={`Última vinda real: ${visitBR}${procSuffix}`}>
+                  {' '}· Vinda {visitBR}
+                </span>
+              );
+            }
+
+            return null;
+          })()}
           {opportunity.estimateProcedures && opportunity.estimateProcedures.length > 0 && (
             <span className="tabular-nums font-medium text-slate-700">
               {' '}· {opportunity.estimateProcedures.length}{' '}
               {opportunity.estimateProcedures.length === 1 ? 'item' : 'itens'}
             </span>
           )}
-          {opportunity.diasDesdeUltimo && opportunity.type === 'recall_6m' ? (
-            <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d</span>
-          ) : null}
         </p>
 
         {/* Birthday Voucher Code & 7-Day Countdown */}

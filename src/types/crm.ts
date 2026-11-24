@@ -75,7 +75,9 @@ export interface CRMLeadOpportunity {
   stage: CRMStage;
   priority: CRMPriority;
   labels: string[]; // IDs ou nomes de rótulos aplicados ao card
-  lastVisitDate?: string; // data_ultimo_agendamento
+  lastVisitDate?: string; // data_ultimo_agendamento (Última vinda real à clínica, YYYY-MM-DD)
+  lastVisitProcedure?: string; // Procedimento realizado na última vinda (Clinicorp)
+  lastVisitSyncedAt?: string; // Timestamp ISO da última verificação no Clinicorp
   dentistName?: string;
   treatmentDescription?: string; // ultimo_procedimento ou tratamento de interesse
   diasDesdeUltimo?: number; // dias_desde_ultimo

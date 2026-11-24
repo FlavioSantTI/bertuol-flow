@@ -4004,7 +4004,15 @@ app.post('/api/clinicorp/estimates-backfill-chunk', async (req: Request, res: Re
                 createdAt: nowIso,
               },
             ],
-            custom_fields: [],
+            custom_fields: rec.estimateDate
+              ? [
+                  {
+                    id: '__sys_estimate_date',
+                    label: 'Data do Orçamento',
+                    value: String(rec.estimateDate).split('T')[0],
+                  },
+                ]
+              : [],
             assigned_user: null,
             contact_attempts: 0,
             next_contact_date: null,
@@ -4087,6 +4095,462 @@ app.post('/api/clinicorp/estimates-backfill-chunk', async (req: Request, res: Re
     });
   } finally {
     estimatesBackfillChunkInFlight = false;
+  }
+});
+
+// =========================================================================
+// CLINICORP VERIFIED LAST VISIT (ÚLTIMA VINDA REAL À CLÍNICA)
+// =========================================================================
+interface ClinicorpLastVisitRecord {
+  date: string; // YYYY-MM-DD
+  procedure: string;
+  clinicId: number;
+  statusId?: string;
+}
+
+interface ClinicorpLastVisitIndex {
+  fetchedAt: number;
+  months: number;
+  clinicScope: string;
+  byPatientId: Map<string, ClinicorpLastVisitRecord>;
+  byNormalizedName: Map<string, ClinicorpLastVisitRecord>;
+  totalAppointmentsScanned: number;
+  attendedAppointmentsCount: number;
+}
+
+let clinicorpLastVisitCache: ClinicorpLastVisitIndex | null = null;
+const CLINICORP_LAST_VISIT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+function isClinicorpAttendedAppointment(a: any, todayYMD: string): boolean {
+  if (!a || !a.Patient_PersonId) return false;
+  if (a.ItemType && String(a.ItemType).toUpperCase() !== 'APPOINTMENT') return false;
+  if (a.Deleted === 'X' || a.Deleted === true || a.Canceled === 'X' || a.Canceled === true) return false;
+  if (a.Missing === 'X' || a.Missing === true) return false;
+
+  const dt = String(a.date || a.Date || '').slice(0, 10);
+  if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt) || dt > todayYMD) return false;
+
+  const statusColor = String(a.StatusColor || '').trim().toLowerCase();
+  const statusId = String(a.StatusId ?? '').trim();
+
+  // Presença real validada na conta Clinicorp Bertuol:
+  // SessionStart / SessionEnd preenchidos ou status Atendido (#66bb6a / 5455218436734976) / Em Atendimento (4528503678042112)
+  return Boolean(
+    a.SessionEnd ||
+      a.SessionStart ||
+      statusColor === '#66bb6a' ||
+      statusId === '5455218436734976' ||
+      statusId === '4528503678042112'
+  );
+}
+
+async function buildClinicorpLastVisitIndex(options: {
+  months?: number;
+  clinicId?: number | 'all';
+  force?: boolean;
+}): Promise<ClinicorpLastVisitIndex> {
+  const months = Math.min(24, Math.max(3, Number(options.months) || 12));
+  const clinicScope = options.clinicId && options.clinicId !== 'all' ? String(options.clinicId) : 'all';
+
+  if (
+    !options.force &&
+    clinicorpLastVisitCache &&
+    clinicorpLastVisitCache.months >= months &&
+    (clinicorpLastVisitCache.clinicScope === 'all' || clinicorpLastVisitCache.clinicScope === clinicScope) &&
+    Date.now() - clinicorpLastVisitCache.fetchedAt < CLINICORP_LAST_VISIT_CACHE_TTL_MS
+  ) {
+    return clinicorpLastVisitCache;
+  }
+
+  const todayYMD = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+
+  const candidateClinicIds =
+    clinicScope === 'all' ? [1, 2] : [Number(clinicScope) || 1];
+  const seenKeys = new Set<string>();
+  const contexts: Array<{ clinicId: number; baseUrl: string; authHeader: string; user: string }> = [];
+
+  for (const cid of candidateClinicIds) {
+    const ctx = resolveClinicorpContext(cid);
+    if (!ctx.configured) continue;
+    const dedupeKey = `${ctx.baseUrl}::${ctx.user}`;
+    if (seenKeys.has(dedupeKey)) continue;
+    seenKeys.add(dedupeKey);
+    contexts.push({
+      clinicId: cid,
+      baseUrl: ctx.baseUrl,
+      authHeader: ctx.authHeader,
+      user: ctx.user,
+    });
+  }
+
+  if (contexts.length === 0) {
+    throw new Error('CLINICORP_NOT_CONFIGURED');
+  }
+
+  // Divide range into 180-day chunks and fetch in parallel
+  const totalDays = months * 30;
+  const chunkDays = 180;
+  const nowMs = Date.now();
+  const toYMD = (ms: number) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date(ms));
+
+  const windows: Array<{ from: string; to: string }> = [];
+  let cursorEndMs = nowMs;
+  let remaining = totalDays;
+  while (remaining > 0) {
+    const span = Math.min(chunkDays, remaining);
+    const startMs = cursorEndMs - span * 86400000;
+    windows.push({ from: toYMD(startMs), to: toYMD(cursorEndMs) });
+    cursorEndMs = startMs - 86400000;
+    remaining -= span;
+  }
+
+  const byPatientId = new Map<string, ClinicorpLastVisitRecord>();
+  const byNormalizedName = new Map<string, ClinicorpLastVisitRecord>();
+  let totalAppointmentsScanned = 0;
+  let attendedAppointmentsCount = 0;
+
+  for (const ctx of contexts) {
+    const chunkResults = await Promise.all(
+      windows.map(async (w) => {
+        try {
+          const url = `${ctx.baseUrl}/appointment/list?from=${encodeURIComponent(w.from)}&to=${encodeURIComponent(w.to)}`;
+          const res = await fetch(url, {
+            method: 'GET',
+            headers: { Authorization: ctx.authHeader, Accept: 'application/json' },
+          });
+          if (!res.ok) return [];
+          const json = await res.json().catch(() => []);
+          return Array.isArray(json) ? json : [];
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    for (const list of chunkResults) {
+      totalAppointmentsScanned += list.length;
+      for (const a of list) {
+        if (!isClinicorpAttendedAppointment(a, todayYMD)) continue;
+        attendedAppointmentsCount += 1;
+
+        const dt = String(a.date || a.Date || '').slice(0, 10);
+        const proc = String(a.Procedures || a.CategoryDescription || '').trim().slice(0, 120);
+        const pid = String(a.Patient_PersonId);
+        const rec: ClinicorpLastVisitRecord = {
+          date: dt,
+          procedure: proc,
+          clinicId: ctx.clinicId,
+          statusId: a.StatusId != null ? String(a.StatusId) : undefined,
+        };
+
+        const prevPid = byPatientId.get(pid);
+        if (!prevPid || dt > prevPid.date) {
+          byPatientId.set(pid, rec);
+        }
+
+        const pName = String(a.PatientName || a.Name || '').trim();
+        if (pName) {
+          const normName = normalizePatientNameLike(pName);
+          if (normName.length >= 4) {
+            const prevName = byNormalizedName.get(normName);
+            if (!prevName || dt > prevName.date) {
+              byNormalizedName.set(normName, rec);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const index: ClinicorpLastVisitIndex = {
+    fetchedAt: Date.now(),
+    months,
+    clinicScope,
+    byPatientId,
+    byNormalizedName,
+    totalAppointmentsScanned,
+    attendedAppointmentsCount,
+  };
+  clinicorpLastVisitCache = index;
+  return index;
+}
+
+function upsertSystemCustomFieldsServer(
+  rawFields: any,
+  updates: {
+    estimateDate?: string;
+    lastVisitProcedure?: string;
+    lastVisitSyncedAt?: string;
+  }
+): Array<{ id: string; label: string; value: string }> {
+  const arr: Array<{ id: string; label: string; value: string }> = Array.isArray(rawFields)
+    ? rawFields.filter((f: any) => f && typeof f === 'object' && f.id)
+    : [];
+  const byId = new Map<string, { id: string; label: string; value: string }>();
+  for (const item of arr) {
+    byId.set(String(item.id), {
+      id: String(item.id),
+      label: String(item.label || ''),
+      value: String(item.value || ''),
+    });
+  }
+
+  if (updates.estimateDate && /^\d{4}-\d{2}-\d{2}$/.test(updates.estimateDate)) {
+    byId.set('__sys_estimate_date', {
+      id: '__sys_estimate_date',
+      label: 'Data do Orçamento',
+      value: updates.estimateDate,
+    });
+  }
+  if (updates.lastVisitProcedure) {
+    byId.set('__sys_last_visit_proc', {
+      id: '__sys_last_visit_proc',
+      label: 'Procedimento Última Vinda',
+      value: updates.lastVisitProcedure.slice(0, 140),
+    });
+  }
+  if (updates.lastVisitSyncedAt) {
+    byId.set('__sys_last_visit_synced', {
+      id: '__sys_last_visit_synced',
+      label: 'Última Vinda Sincronizada',
+      value: updates.lastVisitSyncedAt,
+    });
+  }
+
+  return Array.from(byId.values());
+}
+
+// Endpoint: Single-patient verified last visit lookup (uses 5-min cached Clinicorp attendance index)
+app.get('/api/clinicorp/patient-last-visit', async (req: Request, res: Response) => {
+  try {
+    const patientId = String(req.query.patientId || '').trim();
+    const patientName = String(req.query.patientName || '').trim();
+    const clinicIdParam = req.query.clinicId ? Number(req.query.clinicId) : undefined;
+    const months = Math.min(24, Math.max(3, Number(req.query.months) || 12));
+    const force = req.query.force === '1' || req.query.force === 'true';
+
+    if (!patientId && !patientName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Informe patientId ou patientName para consultar a última vinda.',
+      });
+    }
+
+    const index = await buildClinicorpLastVisitIndex({
+      months,
+      clinicId: clinicIdParam || 'all',
+      force,
+    });
+
+    let match: ClinicorpLastVisitRecord | undefined;
+    if (patientId && /^\d+$/.test(patientId)) {
+      match = index.byPatientId.get(patientId);
+    }
+    if (!match && patientName) {
+      match = index.byNormalizedName.get(normalizePatientNameLike(patientName));
+    }
+
+    if (!match) {
+      return res.json({
+        success: true,
+        found: false,
+        monthsScanned: index.months,
+      });
+    }
+
+    const diasDesdeUltimo = Math.max(
+      0,
+      Math.floor((Date.now() - new Date(`${match.date}T12:00:00`).getTime()) / 86400000)
+    );
+
+    return res.json({
+      success: true,
+      found: true,
+      lastVisitDate: match.date,
+      diasDesdeUltimo,
+      procedure: match.procedure || undefined,
+      clinicId: match.clinicId,
+      monthsScanned: index.months,
+    });
+  } catch (err: any) {
+    if (err?.message === 'CLINICORP_NOT_CONFIGURED') {
+      return res.status(400).json({
+        success: false,
+        code: 'CLINICORP_NOT_CONFIGURED',
+        error: 'Credenciais do Clinicorp não configuradas no servidor.',
+      });
+    }
+    console.error('[Clinicorp Last Visit] Erro na consulta individual:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao consultar última vinda no Clinicorp.',
+    });
+  }
+});
+
+// Endpoint: Batch sync real Clinicorp last visits across CRM funnels (preserves __sys_estimate_date safely)
+app.post('/api/crm/sync-last-visits', async (req: Request, res: Response) => {
+  const startedAt = Date.now();
+  try {
+    const months = Math.min(24, Math.max(3, Number(req.body?.months) || 12));
+    const clinicScope: number | 'all' =
+      req.body?.clinicId && req.body.clinicId !== 'all' ? Number(req.body.clinicId) : 'all';
+    const pipelineFilter =
+      req.body?.pipelineId && req.body.pipelineId !== 'all' ? String(req.body.pipelineId).trim() : 'all';
+    const force = req.body?.force !== false;
+    const dryRun = Boolean(req.body?.dryRun);
+
+    const index = await buildClinicorpLastVisitIndex({
+      months,
+      clinicId: clinicScope,
+      force,
+    });
+
+    if (!SUPABASE_KEY) {
+      return res.status(400).json({
+        success: false,
+        error: 'Supabase não configurado no servidor.',
+      });
+    }
+
+    let query = supabase
+      .from('crm_leads_recall')
+      .select('id, patient_id, patient_name, clinic_id, pipeline_id, source, data_ultimo_agendamento, custom_fields')
+      .limit(2000);
+
+    if (clinicScope !== 'all') {
+      query = query.eq('clinic_id', clinicScope);
+    }
+    if (pipelineFilter !== 'all') {
+      query = query.eq('pipeline_id', pipelineFilter);
+    }
+
+    const { data: leads, error: leadsErr } = await query;
+    if (leadsErr) {
+      return res.status(500).json({
+        success: false,
+        error: `Falha ao ler leads do CRM: ${leadsErr.message}`,
+      });
+    }
+
+    const rows = Array.isArray(leads) ? leads : [];
+    const nowIso = new Date().toISOString();
+    let matchedVisits = 0;
+    let updatedInDb = 0;
+    let returnedAfterBudget = 0;
+    let failedUpdates = 0;
+    const visitsByPatientId: Record<
+      string,
+      {
+        lastVisitDate: string;
+        diasDesdeUltimo: number;
+        procedure?: string;
+        estimateDate?: string;
+      }
+    > = {};
+
+    for (const row of rows as any[]) {
+      const pidStr = row.patient_id != null ? String(row.patient_id).trim() : '';
+      const pName = String(row.patient_name || '').trim();
+      let visit = pidStr && /^\d+$/.test(pidStr) ? index.byPatientId.get(pidStr) : undefined;
+      if (!visit && pName) {
+        visit = index.byNormalizedName.get(normalizePatientNameLike(pName));
+      }
+      if (!visit) continue;
+
+      matchedVisits += 1;
+      const existingFields = Array.isArray(row.custom_fields) ? row.custom_fields : [];
+      const existingSysEst = existingFields.find((f: any) => f?.id === '__sys_estimate_date')?.value;
+      const existingSynced = existingFields.find((f: any) => f?.id === '__sys_last_visit_synced')?.value;
+
+      // Preserve the original budget date BEFORE overwriting data_ultimo_agendamento with real visit date!
+      const isBudgetRow =
+        row.pipeline_id === 'budgets' ||
+        /Clinicorp Orçamento #/i.test(String(row.source || ''));
+      const currentColDate = row.data_ultimo_agendamento
+        ? String(row.data_ultimo_agendamento).split('T')[0]
+        : '';
+
+      const preservedEstimateDate =
+        existingSysEst && /^\d{4}-\d{2}-\d{2}$/.test(String(existingSysEst))
+          ? String(existingSysEst)
+          : isBudgetRow && !existingSynced && /^\d{4}-\d{2}-\d{2}$/.test(currentColDate)
+          ? currentColDate
+          : undefined;
+
+      if (preservedEstimateDate && visit.date > preservedEstimateDate) {
+        returnedAfterBudget += 1;
+      }
+
+      const diasDesdeUltimo = Math.max(
+        0,
+        Math.floor((Date.now() - new Date(`${visit.date}T12:00:00`).getTime()) / 86400000)
+      );
+
+      if (pidStr) {
+        visitsByPatientId[pidStr] = {
+          lastVisitDate: visit.date,
+          diasDesdeUltimo,
+          procedure: visit.procedure || undefined,
+          estimateDate: preservedEstimateDate,
+        };
+      }
+
+      if (dryRun) continue;
+
+      const nextCustomFields = upsertSystemCustomFieldsServer(existingFields, {
+        estimateDate: preservedEstimateDate,
+        lastVisitProcedure: visit.procedure || undefined,
+        lastVisitSyncedAt: nowIso,
+      });
+
+      const updatePayload: Record<string, any> = {
+        data_ultimo_agendamento: visit.date,
+        dias_desde_ultimo: diasDesdeUltimo,
+        custom_fields: nextCustomFields,
+        updated_at: nowIso,
+      };
+
+      const { error: updErr } = await supabase
+        .from('crm_leads_recall')
+        .update(updatePayload)
+        .eq('id', row.id);
+
+      if (!updErr) {
+        updatedInDb += 1;
+      } else {
+        failedUpdates += 1;
+      }
+    }
+
+    return res.json({
+      success: true,
+      dryRun,
+      monthsScanned: index.months,
+      totalLeadsChecked: rows.length,
+      matchedVisits,
+      updatedInDb,
+      returnedAfterBudget,
+      failedUpdates,
+      totalAppointmentsScanned: index.totalAppointmentsScanned,
+      attendedAppointmentsCount: index.attendedAppointmentsCount,
+      elapsedMs: Date.now() - startedAt,
+      visitsByPatientId,
+    });
+  } catch (err: any) {
+    if (err?.message === 'CLINICORP_NOT_CONFIGURED') {
+      return res.status(400).json({
+        success: false,
+        code: 'CLINICORP_NOT_CONFIGURED',
+        error: 'Credenciais do Clinicorp não configuradas no servidor.',
+      });
+    }
+    console.error('[CRM Sync Last Visits] Erro:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao sincronizar última vinda à clínica via Clinicorp.',
+    });
   }
 });
 

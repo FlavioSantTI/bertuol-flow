@@ -27,7 +27,7 @@ export const CRM_DATE_FIELD_OPTIONS: Array<{ value: CRMDateField; label: string 
   { value: 'createdAt', label: 'Data de Entrada' },
   { value: 'nextContactDate', label: 'Próximo Follow-up' },
   { value: 'estimateDate', label: 'Data do Orçamento' },
-  { value: 'lastVisitDate', label: 'Última Consulta' },
+  { value: 'lastVisitDate', label: 'Última Vinda à Clínica' },
   { value: 'scheduledDate', label: 'Data do Agendamento' },
 ];
 

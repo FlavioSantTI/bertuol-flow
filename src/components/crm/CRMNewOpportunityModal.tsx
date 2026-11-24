@@ -150,6 +150,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
   const [estimatedValue, setEstimatedValue] = useState<string>('');
   const [pointsBonus, setPointsBonus] = useState<string>('50');
   const [nextContactDate, setNextContactDate] = useState<string>('');
+  const [estimateDate, setEstimateDate] = useState<string>('');
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState<CRMLabel['color']>('teal');
@@ -194,6 +195,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
       setTreatmentDescription('');
       setEstimatedValue('');
       setNextContactDate('');
+      setEstimateDate('');
       setSelectedLabels([]);
       setNewLabelName('');
       setNewLabelColor('teal');
@@ -537,6 +539,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
       estimatedValue: estimatedValue ? parseFloat(estimatedValue) : 0,
       pointsBonus: pointsBonus ? parseInt(pointsBonus, 10) : 50,
       nextContactDate: nextContactDate || undefined,
+      estimateDate: estimateDate || undefined,
       assignedUser: currentUserName,
       notes: notes.trim(),
       source: source.trim() || 'Atendimento Livre',
@@ -1081,6 +1084,34 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
             </div>
           </div>
 
+          {pipelineId === 'budgets' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Data do Orçamento
+                </label>
+                <input
+                  type="date"
+                  value={estimateDate}
+                  onChange={(e) => setEstimateDate(e.target.value)}
+                  className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono tabular-nums rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Valor est. (R$)
+                </label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  value={estimatedValue}
+                  onChange={(e) => setEstimatedValue(e.target.value)}
+                  className="w-full h-10 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 font-mono tabular-nums focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Quick Channel Chips */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -1326,19 +1357,21 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Valor est. (R$)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={estimatedValue}
-                    onChange={(e) => setEstimatedValue(e.target.value)}
-                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 font-mono tabular-nums"
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {pipelineId !== 'budgets' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                      Valor est. (R$)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={estimatedValue}
+                      onChange={(e) => setEstimatedValue(e.target.value)}
+                      className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-xl px-3 font-mono tabular-nums"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">
@@ -1353,6 +1386,20 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                   />
                 </div>
 
+                {pipelineId !== 'budgets' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" /> Data do Orçamento
+                    </label>
+                    <input
+                      type="date"
+                      value={estimateDate}
+                      onChange={(e) => setEstimateDate(e.target.value)}
+                      className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono tabular-nums rounded-xl px-3"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-slate-400" /> Follow-up
@@ -1361,7 +1408,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                     type="date"
                     value={nextContactDate}
                     onChange={(e) => setNextContactDate(e.target.value)}
-                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono rounded-xl px-3"
+                    className="w-full h-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono tabular-nums rounded-xl px-3"
                   />
                 </div>
               </div>
