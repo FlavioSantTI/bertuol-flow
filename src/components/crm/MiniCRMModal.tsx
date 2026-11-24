@@ -27,6 +27,7 @@ import {
 import { CRMLostReasonModal } from './CRMLostReasonModal';
 import { CRMDashboardView } from './CRMDashboardView';
 import { CRMEstimatesBackfillModal } from './CRMEstimatesBackfillModal';
+import { CRMBirthdayAutomationModal } from './CRMBirthdayAutomationModal';
 import {
   X,
   RefreshCw,
@@ -47,6 +48,7 @@ import {
   Tag,
   Calendar,
   History,
+  Cake,
 } from 'lucide-react';
 import {
   CRM_DATE_FIELD_OPTIONS,
@@ -122,6 +124,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [isPipelineManagerOpen, setIsPipelineManagerOpen] = useState(false);
   const [isLabelsManagerOpen, setIsLabelsManagerOpen] = useState(false);
   const [isEstimatesBackfillOpen, setIsEstimatesBackfillOpen] = useState(false);
+  const [isBirthdayAutomationOpen, setIsBirthdayAutomationOpen] = useState(false);
   const [notesLabelsOppId, setNotesLabelsOppId] = useState<string | null>(null);
 
   // Quick 1-line free capture bar
@@ -509,6 +512,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         ? 'treatment_pending'
         : activePipeline.id === 'recall_6m'
         ? 'recall_6m'
+        : activePipeline.id === 'birthdays'
+        ? 'birthday'
         : 'whatsapp_lead';
 
     const created = CRMService.addOpportunity({
@@ -1030,6 +1035,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 <option value="recall_6m">Recall 6+ Meses</option>
                 <option value="whatsapp_lead">Lead WhatsApp</option>
                 <option value="treatment_pending">Orçamento Aberto</option>
+                <option value="birthday">Aniversariante (Voucher)</option>
                 <option value="indication">Indicação</option>
                 <option value="other">Outra Oportunidade</option>
               </select>
@@ -1045,6 +1051,18 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 >
                   <History className="w-3.5 h-3.5 text-[#147A80]" />
                   <span>Importar Histórico (1 Ano)</span>
+                </button>
+              )}
+
+              {activePipeline?.id === 'birthdays' && canRunEstimatesBackfill && (
+                <button
+                  type="button"
+                  onClick={() => setIsBirthdayAutomationOpen(true)}
+                  className="h-9 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border bg-white hover:bg-teal-50 text-[#0f5c61] border-teal-200 transition-colors cursor-pointer whitespace-nowrap"
+                  title="Configurar horário diário, simular hoje ou disparar vouchers BRT-ANIV"
+                >
+                  <Cake className="w-3.5 h-3.5 text-[#147A80]" />
+                  <span>Automação Diária</span>
                 </button>
               )}
 
@@ -1385,6 +1403,8 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                           ? `Nenhuma oportunidade encontrada para ${getCRMDateFieldLabel(dateField)} (${resolvedDateRange.summaryLabel}).`
                           : activePipeline.id === 'budgets'
                           ? 'Nenhum orçamento OPEN encontrado na janela dos últimos 3 dias (D-3 até hoje) para este filtro.'
+                          : activePipeline.id === 'birthdays'
+                          ? 'Nenhum aniversariante registrado neste filtro. A rotina diária gera automaticamente o voucher BRT-ANIV (7 dias) no dia exato do aniversário.'
                           : 'Nenhuma oportunidade encontrada neste filtro.'}
                       </p>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -1420,6 +1440,16 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                               </button>
                             )}
                           </>
+                        )}
+                        {activePipeline.id === 'birthdays' && canRunEstimatesBackfill && (
+                          <button
+                            type="button"
+                            onClick={() => setIsBirthdayAutomationOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs cursor-pointer transition-colors"
+                          >
+                            <Cake className="w-3.5 h-3.5" />
+                            <span>Configurar / Rodar Aniversariantes de Hoje</span>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -1483,6 +1513,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                     >
                       <option value="recall">Recall Preventivo</option>
                       <option value="budget">Orçamento e Fechamento</option>
+                      <option value="birthday">Aniversariantes (Voucher)</option>
                       <option value="welcome">Boas-Vindas Lead WhatsApp</option>
                       <option value="points">Clube Sorriso Pontos</option>
                       <option value="post_op">Pós-Operatório</option>
@@ -1749,6 +1780,20 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             showToast(
               `Carga histórica concluída: ${addedCount} orçamento(s) OPEN adicionado(s) ao CRM.`
             );
+          });
+        }}
+      />
+
+      <CRMBirthdayAutomationModal
+        isOpen={isBirthdayAutomationOpen}
+        onClose={() => setIsBirthdayAutomationOpen(false)}
+        clinics={clinics}
+        userContext={userContext}
+        defaultClinicId={selectedClinicId}
+        onAfterRun={(summaryMsg) => {
+          CRMService.fetchFromSupabase().then((fresh) => {
+            setOpportunities(fresh);
+            showToast(summaryMsg);
           });
         }}
       />

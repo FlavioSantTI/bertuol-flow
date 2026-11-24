@@ -171,6 +171,8 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
         setType('treatment_pending');
       } else if (targetPipeline?.id === 'recall_6m') {
         setType('recall_6m');
+      } else if (targetPipeline?.id === 'birthdays') {
+        setType('birthday');
       } else {
         setType('whatsapp_lead');
       }
@@ -1285,6 +1287,7 @@ export const CRMNewOpportunityModal: React.FC<CRMNewOpportunityModalProps> = ({
                   >
                     <option value="whatsapp_lead">Lead WhatsApp</option>
                     <option value="treatment_pending">Orçamento Pendente</option>
+                    <option value="birthday">Aniversariante</option>
                     <option value="indication">Indicação</option>
                     <option value="recall_6m">Recall 6+ Meses</option>
                     <option value="other">Outro</option>

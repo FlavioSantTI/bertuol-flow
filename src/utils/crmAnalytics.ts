@@ -179,6 +179,7 @@ const TYPE_FALLBACK_SOURCE: Record<CRMType, string> = {
   treatment_pending: 'Orçamento Clinicorp',
   whatsapp_lead: 'WhatsApp',
   indication: 'Indicação',
+  birthday: 'Aniversariantes (Voucher)',
   other: 'Outros',
 };
 
@@ -188,6 +189,9 @@ export function normalizeCRMSourceLabel(opp: CRMLeadOpportunity): string {
     return TYPE_FALLBACK_SOURCE[opp.type] || 'Não informado';
   }
   const lower = raw.toLowerCase();
+  if (lower.includes('aniversariante') || lower.includes('brt-aniv') || opp.type === 'birthday') {
+    return 'Aniversariantes (Voucher)';
+  }
   if (lower.includes('clinicorp') || lower.includes('orçamento') || lower.includes('orcamento')) {
     return 'Orçamento Clinicorp';
   }

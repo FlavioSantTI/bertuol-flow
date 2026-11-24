@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.5.9
+# 🦷 Bertuol Odontologia Avançada — Versão 1.6.0
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.5.9-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.6.0-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -27,11 +27,26 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.5.9
+## 🌟 Visão Geral da Jornada & Versão 1.6.0
 
-O **Bertuol Flow** chega à **Versão 1.5.9** entregando o **Dashboard Gerencial de Relatórios do CRM** (com funil de conversão, financeiro de orçamentos, motivos de perda, SLA, comparativos e exportação CSV/PDF A4) e a **Carga Histórica de até 1 Ano de Orçamentos em Aberto (`OPEN`) do Clinicorp** tanto via **Modal no CRM** quanto via **Script CLI**, gravando diretamente no Supabase sem duplicidade e gerando backup em **CSV e JSON**.
+O **Bertuol Flow** chega à **Versão 1.6.0** entregando o **Pipeline de Aniversariantes no CRM** com **Automação Diária de Vouchers Exclusivos (`BRT-ANIV-XXXX`, validade de 7 dias)**, operando em **motor duplo** (**agendador diário interno no servidor** + **webhook protegido para n8n**), disparo automático via **WhatsApp** com intervalo cadenciado, criação automática de card no CRM (Supabase) com follow-up D+4 e **baixa automática na recepção** convertendo o card para **Voucher Resgatado**.
 
-### 🆕 Novidades da v1.5.9 — Relatórios Gerenciais do CRM & Carga Histórica de Orçamentos (1 Ano)
+### 🎂 Novidades da v1.6.0 — Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`)
+
+- **🎉 Funil de Sistema "Aniversariantes" (`birthdays`) no CRM**:
+  - Novo funil dedicado com 5 etapas: **Aniversariante do Dia** → **Voucher Enviado** → **Cortesia Agendada** → **Voucher Resgatado** → **Expirado / Sem Retorno**.
+  - Totalmente integrado aos filtros do CRM, KPIs e relatórios (`Aniversariantes (Voucher)`), captura rápida inline e cadastro manual de oportunidades.
+- **🎟️ Voucher Único `BRT-ANIV-XXXX` (Validade de 7 Dias) & Baixa Automática**:
+  - Geração automática de código exclusivo por aniversariante com expiração em 7 dias (configurável de 1 a 30 dias), exibido nos cards (Kanban e Lista) com botão de cópia rápida e contagem regressiva semântica de vencimento.
+  - Template dedicado de WhatsApp com interpolação automática de `{nome}`, `{clinica}`, `{voucher}` e `{validade}` no envio automático e no modal de contato rápido (`CRMQuickContactModal`).
+  - Persistência durável dos vouchers e integração direta com a baixa da recepção (`POST /api/reception/voucher/claim`), movendo automaticamente o card correspondente no Supabase para **Voucher Resgatado** com registro de auditoria.
+- **⏰ Motor Diário Duplo (Agendador Interno + Webhook n8n) & Idempotência Anual**:
+  - **Agendador diário no servidor**: executa automaticamente no horário configurado (padrão `08:30` em `America/Sao_Paulo`), consultando aniversariantes exatos do dia (`DD/MM`) no Clinicorp, enriquecendo telefones via `public.patients`, enviando WhatsApp (WAHA / Evolution GO com cadência anti-bloqueio), disparando notificação In-App/Push no Portal do Paciente e criando o card com follow-up para D+4.
+  - **Webhook protegido para n8n (`POST /api/crm/birthdays/run-daily`)**: autenticado via `Authorization: Bearer <BIRTHDAY_CRON_SECRET>` com comparação segura em tempo constante e trava de deduplicação anual (nunca duplica envio para o mesmo paciente no mesmo ano, mesmo com servidor + n8n ativos).
+- **⚙️ Modal de Automação Diária no CRM (`CRMBirthdayAutomationModal`)**:
+  - Acessível diretamente no funil **Aniversariantes** (para perfis administrativos/gerência), com 3 abas: **Configuração e Disparo** (horário, unidade, validade, prévia ao vivo da mensagem, **Simulação Dry-Run** e disparo imediato), **Execuções** (histórico tabular) e **Webhook n8n** (URL, headers e JSON prontos para cópia em 1 clique).
+
+### 📊 Recursos da v1.5.9 — Relatórios Gerenciais do CRM & Carga Histórica de Orçamentos (1 Ano)
 
 - **📊 Dashboard de Relatórios do CRM (`CRMDashboardView` & `src/utils/crmAnalytics.ts`)**:
   - Nova aba **Relatórios** dentro do CRM com alternância instantânea entre **Todos os Funis** e o **funil atual**, sincronizada com os filtros de **data** e **unidade**.
@@ -167,18 +182,18 @@ O **Bertuol Flow** chega à **Versão 1.5.9** entregando o **Dashboard Gerencial
 │   │   ├── faq.html                    # Central de Ajuda Interativa da Equipe
 │   │   └── sw-push.js                  # Service Worker para Web Push VAPID & PWA
 │   ├── src/
-│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMDashboardView, CRMEstimatesBackfillModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
-│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.5.9)
+│   │   ├── components/       # Modais e UI (ClientAccountsTab, UserManagementModal, Header, InternalMessagingModal, crm/MiniCRMModal, CRMDashboardView, CRMBirthdayAutomationModal, CRMEstimatesBackfillModal, CRMLabelsManagerModal, CRMLeadDrawer, etc.)
+│   │   ├── config/           # Rótulos centralizados de versão (version.ts -> v1.6.0)
 │   │   ├── contexts/         # Contexto de Tenant e Filtro de Clínicas (TenantContext)
 │   │   ├── patient/          # PWA do Paciente e Clube Sorriso Bertuol
 │   │   ├── routes/           # Rotas e Guards (RootLayout com Central de Tutoriais, ClinicLayout, ProtectedRoute)
 │   │   ├── services/         # DataService, SupabaseService, CRMService, WebAuthn, Messaging
 │   │   ├── types/            # Tipagem TypeScript (database.ts, crm.ts, Clinic, UserRole, UserPermissions)
-│   │   └── utils/            # Scripts SQL, Analytics do CRM (crmAnalytics.ts), Backfill de Orçamentos (crmEstimatesBackfill.ts), Filtro de Datas (crmDateFilter.ts)
+│   │   └── utils/            # Scripts SQL, Analytics do CRM (crmAnalytics.ts), Automação de Aniversariantes (crmBirthdayVoucher.ts), Backfill de Orçamentos (crmEstimatesBackfill.ts), Filtro de Datas (crmDateFilter.ts)
 ├── scripts/
 │   └── backfill-clinicorp-estimates.ts # CLI de carga histórica (1 ano) de orçamentos OPEN do Clinicorp + CSV/JSON
 ├── server (Node.js Express + TSX Proxy Server)
-│   └── server.ts             # APIs REST & SSE (/api/clinics, /api/login, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
+│   └── server.ts             # APIs REST, Agendador Diário & SSE (/api/clinics, /api/login, /api/crm/birthdays/*, /api/presentation/events, /api/clinicorp/*, Gemini Proxy)
 ```
 
 ---
@@ -249,13 +264,14 @@ PORT=3000
 GEMINI_API_KEY=sua_chave_gemini_aqui
 SUPABASE_URL=https://sswbkfrpxboxmjvunhzt.supabase.co
 SUPABASE_ANON_KEY=sua_chave_anon_supabase
+BIRTHDAY_CRON_SECRET=sua_chave_secreta_para_webhook_n8n
 ```
 
 ### 4. Executar em Modo de Desenvolvimento
 ```bash
 npm run dev
 ```
-O servidor de desenvolvimento iniciará em `http://localhost:3000`.
+O servidor de desenvolvimento iniciará em `http://localhost:3000` com o agendador diário de aniversariantes ativo.
 
 ### 5. Carga Histórica de Orçamentos em Aberto via CLI (Opcional)
 ```bash
@@ -266,11 +282,18 @@ npm run crm:backfill-estimates -- --days=365 --dry-run
 npm run crm:backfill-estimates -- --days=365
 ```
 
+### 6. Automação Diária de Aniversariantes via n8n (Opcional / Redundância)
+Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paulo`) seguido de um nó **HTTP Request**:
+- **Método**: `POST`
+- **URL**: `https://bertuolflow.app-bertuol.tech/api/crm/birthdays/run-daily`
+- **Header**: `Authorization: Bearer <BIRTHDAY_CRON_SECRET>`
+- **Body JSON**: `{"dryRun": false, "clinicScope": "all"}`
+
 ---
 
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.5.9`
+- **Versão**: `v1.6.0`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

@@ -102,6 +102,23 @@ export const DEFAULT_CRM_PIPELINES: CRMPipeline[] = [
       { id: 'lost', title: 'Recusado', semanticType: 'lost', color: 'slate' },
     ],
   },
+  {
+    id: 'birthdays',
+    name: 'Aniversariantes',
+    description:
+      'Pacientes que fazem aniversário no dia recebem automaticamente o voucher único BRT-ANIV (validade de 7 dias) via WhatsApp e entram neste funil para agendamento e baixa na recepção.',
+    defaultPointsBonus: 100,
+    sortOrder: 3,
+    isSystem: true,
+    isActive: true,
+    stages: [
+      { id: 'new', title: 'Aniversariante do Dia', semanticType: 'new', color: 'blue' },
+      { id: 'contacted', title: 'Voucher Enviado', semanticType: 'contacted', color: 'amber' },
+      { id: 'scheduled', title: 'Cortesia Agendada', semanticType: 'scheduled', color: 'indigo' },
+      { id: 'converted', title: 'Voucher Resgatado', semanticType: 'converted', color: 'emerald' },
+      { id: 'lost', title: 'Expirado / Sem Retorno', semanticType: 'lost', color: 'slate' },
+    ],
+  },
 ];
 
 export const DEFAULT_CRM_LABELS: CRMLabel[] = [
@@ -155,6 +172,14 @@ export const DEFAULT_CRM_TEMPLATES: CRMMessageTemplate[] = [
       'Olá {nome}, como você está se sentindo após seu atendimento na Clínica Bertuol com {doutor}? Caso tenha qualquer dúvida ou necessite de suporte, estamos 100% à disposição por este canal!',
     variables: ['nome', 'doutor'],
   },
+  {
+    id: 'tpl-birthday-voucher',
+    title: 'Aniversariante — Voucher BRT-ANIV (7 dias)',
+    category: 'birthday',
+    content:
+      'Parabéns, {nome}! Feliz aniversário! A equipe da {clinica} preparou um presente especial para você: Cortesia de Aniversário (Profilaxia + Diagnóstico Sky Câmera). Apresente seu voucher exclusivo {voucher} válido até {validade} (7 dias). Responda esta mensagem para reservarmos seu horário!',
+    variables: ['nome', 'clinica', 'voucher', 'validade'],
+  },
 ];
 
 export const INITIAL_REAL_RECALL_LEADS: CRMLeadOpportunity[] = [];
@@ -184,6 +209,7 @@ export class CRMService {
   }
 
   static inferPipelineId(type?: CRMLeadOpportunity['type']): string {
+    if (type === 'birthday') return 'birthdays';
     if (type === 'treatment_pending') return 'budgets';
     if (type === 'whatsapp_lead' || type === 'indication' || type === 'other') return 'campaigns';
     return 'recall_6m';
@@ -238,6 +264,16 @@ export class CRMService {
   // PIPELINES CRUD (Supabase + Local Fallback)
   // ==========================================
 
+  static ensureSystemPipelines(list: CRMPipeline[]): { merged: CRMPipeline[]; missingDefaults: CRMPipeline[] } {
+    const existingIds = new Set(list.map((p) => p.id));
+    const requiredIds = new Set(['recall_6m', 'birthdays']);
+    const missingDefaults = DEFAULT_CRM_PIPELINES.filter(
+      (def) => requiredIds.has(def.id) && !existingIds.has(def.id)
+    );
+    const merged = [...list, ...missingDefaults].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return { merged, missingDefaults };
+  }
+
   static getPipelines(): CRMPipeline[] {
     try {
       const raw = localStorage.getItem(CRM_PIPELINES_STORAGE_KEY);
@@ -247,7 +283,11 @@ export class CRMService {
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        const { merged, missingDefaults } = this.ensureSystemPipelines(parsed);
+        if (missingDefaults.length > 0) {
+          this.savePipelinesLocal(merged);
+        }
+        return merged;
       }
       return DEFAULT_CRM_PIPELINES;
     } catch {
@@ -280,13 +320,29 @@ export class CRMService {
           defaultPointsBonus: row.default_points_bonus != null ? Number(row.default_points_bonus) : 50,
           stages: Array.isArray(row.stages) && row.stages.length > 0 ? row.stages : DEFAULT_CRM_PIPELINES[0].stages,
           sortOrder: row.sort_order != null ? Number(row.sort_order) : idx,
-          isSystem: Boolean(row.is_system) || row.id === 'recall_6m',
+          isSystem: Boolean(row.is_system) || row.id === 'recall_6m' || row.id === 'birthdays',
           isActive: row.is_active !== false,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         }));
-        this.savePipelinesLocal(mapped);
-        return mapped;
+
+        const { merged, missingDefaults } = this.ensureSystemPipelines(mapped);
+        if (missingDefaults.length > 0) {
+          const toSeed = missingDefaults.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description || null,
+            default_points_bonus: p.defaultPointsBonus ?? 100,
+            stages: p.stages,
+            sort_order: p.sortOrder,
+            is_system: Boolean(p.isSystem),
+            is_active: true,
+          }));
+          supabase.from('crm_pipelines').upsert(toSeed, { onConflict: 'id' }).then(() => {});
+        }
+
+        this.savePipelinesLocal(merged);
+        return merged;
       }
 
       // Seed defaults if table exists but is empty
@@ -364,10 +420,10 @@ export class CRMService {
     const current = this.getPipelines();
     const target = current.find((p) => p.id === pipelineId);
     if (!target) return { pipelines: current };
-    if (target.isSystem || target.id === 'recall_6m') {
+    if (target.isSystem || target.id === 'recall_6m' || target.id === 'birthdays') {
       return {
         pipelines: current,
-        error: 'O funil Recall Preventivo (6+m) é vinculado ao n8n e não pode ser excluído (mas você pode editar suas etapas).',
+        error: `O funil "${target.name}" é vinculado à automação diária e não pode ser excluído (mas você pode editar suas etapas).`,
       };
     }
 
@@ -490,9 +546,18 @@ export class CRMService {
     const localCached = cachedById?.get(cycleKey);
 
     const rawStage = String(row.stage || localCached?.stage || 'new').trim();
-    const validTypes = new Set(['recall_6m', 'treatment_pending', 'whatsapp_lead', 'indication', 'other']);
-    const rawType = String(row.opportunity_type || row.type || localCached?.type || 'recall_6m').toLowerCase();
-    const type = (validTypes.has(rawType) ? rawType : 'recall_6m') as CRMLeadOpportunity['type'];
+    const validTypes = new Set(['recall_6m', 'treatment_pending', 'whatsapp_lead', 'indication', 'birthday', 'other']);
+    const rawSourceCheck = String(row.source || localCached?.source || '').toLowerCase();
+    const isBirthdayRow =
+      String(row.pipeline_id || '') === 'birthdays' ||
+      rawSourceCheck.includes('aniversariante') ||
+      rawSourceCheck.includes('brt-aniv');
+    const rawType = String(
+      row.opportunity_type || row.type || localCached?.type || (isBirthdayRow ? 'birthday' : 'recall_6m')
+    ).toLowerCase();
+    const type = (
+      validTypes.has(rawType) ? rawType : isBirthdayRow ? 'birthday' : 'recall_6m'
+    ) as CRMLeadOpportunity['type'];
 
     const pipelineId =
       (row.pipeline_id ? String(row.pipeline_id) : undefined) ||
@@ -999,13 +1064,22 @@ export class CRMService {
 
   static replaceTemplateVariables(
     content: string,
-    vars: { nome: string; doutor?: string; clinica?: string; pontos?: number }
+    vars: {
+      nome: string;
+      doutor?: string;
+      clinica?: string;
+      pontos?: number;
+      voucher?: string;
+      validade?: string;
+    }
   ): string {
     return content
       .replace(/\{nome\}/gi, vars.nome || 'Paciente')
       .replace(/\{doutor\}/gi, vars.doutor || 'Corpo Clínico Bertuol')
       .replace(/\{clinica\}/gi, vars.clinica || 'Clínica Bertuol Odontologia')
-      .replace(/\{pontos\}/gi, String(vars.pontos || 50));
+      .replace(/\{pontos\}/gi, String(vars.pontos || 50))
+      .replace(/\{voucher\}/gi, vars.voucher || 'BRT-ANIV')
+      .replace(/\{validade\}/gi, vars.validade || '7 dias');
   }
 
   static syncAutomaticRecalls(patients: Patient[], appointments: Appointment[], clinics: Clinic[]): number {

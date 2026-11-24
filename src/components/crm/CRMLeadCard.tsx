@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CRMLabel, CRMLeadOpportunity, CRMPipelineStage } from '../../types/crm';
 import { CRMService } from '../../services/crmService';
+import { extractBirthdayVoucherInfo } from '../../utils/crmBirthdayVoucher';
 import { Clinic } from '../../types/database';
 import {
   Phone,
@@ -14,6 +15,7 @@ import {
   Calendar,
   GripVertical,
   Tag,
+  Gift,
 } from 'lucide-react';
 
 interface CRMLeadCardProps {
@@ -70,6 +72,7 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
   viewMode = 'kanban',
 }) => {
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [copiedVoucher, setCopiedVoucher] = useState(false);
 
   const clinic = clinics.find((c) => c.id === opportunity.clinicId);
   const formattedPhone = CRMService.formatPhoneDisplay(opportunity.patientPhone);
@@ -77,7 +80,12 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
     .map((id) => allLabels.find((l) => l.id === id))
     .filter((l): l is CRMLabel => Boolean(l));
 
-  const customFields = (opportunity.customFields || []).filter((cf) => cf.value && cf.value.trim());
+  const birthdayVoucher = extractBirthdayVoucherInfo(opportunity);
+  const customFields = (opportunity.customFields || []).filter((cf) => {
+    if (!cf.value || !cf.value.trim()) return false;
+    if (birthdayVoucher && (/voucher/i.test(cf.label) || /validade/i.test(cf.label))) return false;
+    return true;
+  });
   const hasSLAWarning = slaDaysStale >= 2;
 
   const handleCopyPhone = (e: React.MouseEvent) => {
@@ -86,6 +94,46 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 1600);
   };
+
+  const handleCopyVoucher = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!birthdayVoucher?.code) return;
+    navigator.clipboard.writeText(birthdayVoucher.code);
+    setCopiedVoucher(true);
+    setTimeout(() => setCopiedVoucher(false), 1600);
+  };
+
+  const birthdayCountdownText = (() => {
+    if (!birthdayVoucher) return null;
+    if (birthdayVoucher.state === 'redeemed') {
+      return { text: 'Resgatado', className: 'text-[#16A34A] font-semibold' };
+    }
+    if (birthdayVoucher.state === 'expired') {
+      return {
+        text: `Expirado${birthdayVoucher.expiresLabelBR ? ` · ${birthdayVoucher.expiresLabelBR}` : ''}`,
+        className: 'text-[#DC2626] font-semibold',
+      };
+    }
+    if (birthdayVoucher.state === 'today') {
+      return {
+        text: `Vence hoje${birthdayVoucher.expiresLabelBR ? ` · ${birthdayVoucher.expiresLabelBR}` : ''}`,
+        className: 'text-[#D97706] font-semibold',
+      };
+    }
+    if (birthdayVoucher.daysRemaining != null) {
+      const label = `Vence em ${birthdayVoucher.daysRemaining} ${
+        birthdayVoucher.daysRemaining === 1 ? 'dia' : 'dias'
+      }${birthdayVoucher.expiresLabelBR ? ` · ${birthdayVoucher.expiresLabelBR}` : ''}`;
+      return {
+        text: label,
+        className:
+          birthdayVoucher.state === 'expiring_soon'
+            ? 'text-[#D97706] font-semibold'
+            : 'text-[#147A80] font-semibold',
+      };
+    }
+    return null;
+  })();
 
   if (viewMode === 'list') {
     return (
@@ -176,6 +224,33 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
                   {opportunity.estimateProcedures.length}{' '}
                   {opportunity.estimateProcedures.length === 1 ? 'procedimento' : 'procedimentos'}
                 </span>
+              </>
+            )}
+            {birthdayVoucher && (
+              <>
+                <span aria-hidden="true">·</span>
+                <button
+                  type="button"
+                  onClick={handleCopyVoucher}
+                  title="Copiar código do voucher de aniversário"
+                  className="inline-flex items-center gap-1 font-mono tabular-nums font-semibold text-[#147A80] hover:underline cursor-pointer"
+                >
+                  <Gift className="w-3 h-3 shrink-0" />
+                  <span>{birthdayVoucher.code}</span>
+                  {copiedVoucher ? (
+                    <Check className="w-3 h-3 text-[#16A34A]" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-slate-400" />
+                  )}
+                </button>
+                {birthdayCountdownText && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className={`tabular-nums ${birthdayCountdownText.className}`}>
+                      {birthdayCountdownText.text}
+                    </span>
+                  </>
+                )}
               </>
             )}
             {opportunity.scheduledDate && (
@@ -387,6 +462,31 @@ export const CRMLeadCard: React.FC<CRMLeadCardProps> = ({
             <span className="tabular-nums"> · {opportunity.diasDesdeUltimo}d</span>
           ) : null}
         </p>
+
+        {/* Birthday Voucher Code & 7-Day Countdown */}
+        {birthdayVoucher && (
+          <div className="flex items-center justify-between gap-2 text-[11px] pt-0.5 tabular-nums">
+            <button
+              type="button"
+              onClick={handleCopyVoucher}
+              title="Copiar código do voucher de aniversário"
+              className="inline-flex items-center gap-1 font-mono font-semibold text-[#147A80] hover:underline cursor-pointer truncate"
+            >
+              <Gift className="w-3 h-3 shrink-0" />
+              <span>{birthdayVoucher.code}</span>
+              {copiedVoucher ? (
+                <Check className="w-3 h-3 text-[#16A34A] shrink-0" />
+              ) : (
+                <Copy className="w-3 h-3 text-slate-300 group-hover:text-slate-400 shrink-0" />
+              )}
+            </button>
+            {birthdayCountdownText && (
+              <span className={`shrink-0 ${birthdayCountdownText.className}`}>
+                {birthdayCountdownText.text}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Treatment / Free Description */}
         {opportunity.treatmentDescription && (

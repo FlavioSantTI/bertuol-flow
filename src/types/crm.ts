@@ -2,7 +2,13 @@ export type CRMStageSemantic = 'new' | 'contacted' | 'scheduled' | 'converted' |
 
 export type CRMStage = CRMStageSemantic | string;
 
-export type CRMType = 'recall_6m' | 'treatment_pending' | 'whatsapp_lead' | 'indication' | 'other';
+export type CRMType =
+  | 'recall_6m'
+  | 'treatment_pending'
+  | 'whatsapp_lead'
+  | 'indication'
+  | 'birthday'
+  | 'other';
 
 export type CRMPriority = 'high' | 'medium' | 'low';
 
@@ -99,7 +105,7 @@ export interface CRMLeadOpportunity {
 export interface CRMMessageTemplate {
   id: string;
   title: string;
-  category: 'recall' | 'budget' | 'welcome' | 'points' | 'post_op';
+  category: 'recall' | 'budget' | 'welcome' | 'points' | 'post_op' | 'birthday';
   content: string;
   variables: string[]; // e.g., ['nome', 'doutor', 'clinica', 'pontos']
 }

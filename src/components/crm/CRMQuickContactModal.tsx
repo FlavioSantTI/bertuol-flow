@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CRMLeadOpportunity, CRMMessageTemplate, CRMPipeline } from '../../types/crm';
 import { CRMService } from '../../services/crmService';
+import { extractBirthdayVoucherInfo, formatBirthdayYMDToBR } from '../../utils/crmBirthdayVoucher';
 import { Clinic } from '../../types/database';
 import { X, Send, MessageSquare, Copy, Check, ExternalLink, Calendar } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
 
     if (templates.length > 0) {
       let defaultTpl = templates.find((t) => {
+        if (opportunity.type === 'birthday' && t.category === 'birthday') return true;
         if (opportunity.type === 'recall_6m' && t.category === 'recall') return true;
         if (opportunity.type === 'treatment_pending' && t.category === 'budget') return true;
         if (opportunity.type === 'whatsapp_lead' && t.category === 'welcome') return true;
@@ -73,11 +75,14 @@ export const CRMQuickContactModal: React.FC<CRMQuickContactModalProps> = ({
 
   const fillMessageFromTemplate = (tpl: CRMMessageTemplate, opp: CRMLeadOpportunity) => {
     const displayName = opp.primeiroNome || opp.patientName;
+    const vInfo = extractBirthdayVoucherInfo(opp);
     const text = CRMService.replaceTemplateVariables(tpl.content, {
       nome: displayName,
       doutor: opp.dentistName || 'Corpo Clínico Bertuol',
       clinica: clinic?.shortName ? `Clínica Bertuol (${clinic.shortName})` : 'Clínica Bertuol Odontologia',
       pontos: opp.pointsBonus || 50,
+      voucher: vInfo?.code || 'BRT-ANIV',
+      validade: formatBirthdayYMDToBR(vInfo?.expiresAt) || '7 dias',
     });
     setCustomMessage(text);
   };

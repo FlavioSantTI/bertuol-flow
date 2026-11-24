@@ -4142,6 +4142,166 @@ async function getWhatsAppSessions(baseUrl: string, globalKey: string) {
   }
 }
 
+// Reusable server-side WhatsApp dispatcher (WAHA API + Evolution GO fallback)
+async function sendWhatsAppTextDirect(params: {
+  recipientPhone: string;
+  message: string;
+  instanceName?: string;
+}): Promise<{
+  success: boolean;
+  mode: string;
+  session?: string;
+  instance?: string;
+  data?: any;
+  error?: string;
+  details?: any;
+  status: number;
+  fallbackUrl?: string;
+}> {
+  const cleanPhone = formatPhoneForDatabase(params.recipientPhone);
+  const whatsappUrl = (
+    process.env.WAHA_API_URL ||
+    process.env.EVOLUTION_API_URL ||
+    'https://go.app-bertuol.tech'
+  ).replace(/\/+$/, '');
+  const globalKey = WHATSAPP_GLOBAL_API_KEY;
+  const targetSessionName =
+    params.instanceName ||
+    process.env.WAHA_SESSION ||
+    process.env.EVOLUTION_INSTANCE_NAME ||
+    'Atendimento';
+
+  const formattedChatId = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
+
+  // 1. Tentar Envio via WAHA API (/api/sendText)
+  try {
+    const wahaAuthHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Api-Key': globalKey,
+      'apikey': globalKey,
+      'Authorization': `Bearer ${globalKey}`,
+    };
+
+    if (process.env.WAHA_DASHBOARD_USERNAME && process.env.WAHA_DASHBOARD_PASSWORD) {
+      const basicAuth = Buffer.from(
+        `${process.env.WAHA_DASHBOARD_USERNAME}:${process.env.WAHA_DASHBOARD_PASSWORD}`
+      ).toString('base64');
+      wahaAuthHeaders['Authorization'] = `Basic ${basicAuth}`;
+    }
+
+    const wahaPayloads = [
+      {
+        session: targetSessionName,
+        chatId: formattedChatId,
+        text: params.message,
+      },
+      {
+        session: targetSessionName,
+        phone: cleanPhone,
+        message: params.message,
+        text: params.message,
+      },
+    ];
+
+    for (const payload of wahaPayloads) {
+      const wahaRes = await fetch(`${whatsappUrl}/api/sendText`, {
+        method: 'POST',
+        headers: wahaAuthHeaders,
+        body: JSON.stringify(payload),
+      });
+
+      if (wahaRes.ok) {
+        const data = await wahaRes.json().catch(() => ({}));
+        return {
+          success: true,
+          mode: 'waha',
+          session: targetSessionName,
+          data,
+          status: 200,
+        };
+      }
+    }
+  } catch (wahaErr: any) {
+    console.warn('[WAHA API] Falha na tentativa WAHA, tentando Evolution GO...', wahaErr.message);
+  }
+
+  // 2. Fallback: Dispatch via Evolution GO
+  const instances = await getWhatsAppSessions(whatsappUrl, globalKey);
+  const matchedInstance =
+    instances.find(
+      (inst: any) =>
+        inst.name === targetSessionName ||
+        inst.id === targetSessionName ||
+        (inst.name && inst.name.toLowerCase().includes(targetSessionName.toLowerCase()))
+    ) ||
+    instances.find((inst: any) => inst.connected) ||
+    instances[0];
+
+  const instanceToken =
+    matchedInstance?.token ||
+    process.env.EVOLUTION_INSTANCE_TOKEN ||
+    '22a95d2c-082a-4df2-80aa-0b36982b8ced';
+
+  const candidateAuthHeaders: Record<string, string>[] = [
+    { 'apikey': globalKey, 'X-Api-Key': globalKey },
+    { 'apikey': instanceToken, 'token': instanceToken },
+    { 'apikey': globalKey, 'token': instanceToken },
+  ];
+
+  let lastError: any = null;
+  let lastStatus = 500;
+
+  for (const authHeader of candidateAuthHeaders) {
+    try {
+      const response = await fetch(`${whatsappUrl}/send/text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          number: cleanPhone,
+          text: params.message,
+          delay: 1200,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        return {
+          success: true,
+          mode: 'evolution_go',
+          instance: matchedInstance?.name || targetSessionName,
+          data,
+          status: 200,
+        };
+      }
+
+      lastStatus = response.status;
+      lastError = data;
+    } catch (err: any) {
+      lastError = err;
+    }
+  }
+
+  return {
+    success: false,
+    mode: 'whatsapp_gateway',
+    status: lastStatus,
+    error:
+      lastError?.message ||
+      lastError?.error ||
+      `Erro ${lastStatus} ao comunicar com a API do WhatsApp (${whatsappUrl})`,
+    details: lastError,
+    fallbackUrl: `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(
+      params.message
+    )}`,
+  };
+}
+
 // Endpoint: Send WhatsApp message via WAHA API or Evolution GO
 app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
   try {
@@ -4154,135 +4314,27 @@ app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
       });
     }
 
-    const cleanPhone = formatPhoneForDatabase(recipientPhone);
-    const whatsappUrl = (
-      process.env.WAHA_API_URL ||
-      process.env.EVOLUTION_API_URL ||
-      'https://go.app-bertuol.tech'
-    ).replace(/\/+$/, '');
-    const globalKey = WHATSAPP_GLOBAL_API_KEY;
-    const targetSessionName =
-      instanceName ||
-      process.env.WAHA_SESSION ||
-      process.env.EVOLUTION_INSTANCE_NAME ||
-      'Atendimento';
-
-    const formattedChatId = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
-
-    // 1. Tentar Envio via WAHA API (/api/sendText)
-    try {
-      const wahaAuthHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Api-Key': globalKey,
-        'apikey': globalKey,
-        'Authorization': `Bearer ${globalKey}`,
-      };
-
-      if (process.env.WAHA_DASHBOARD_USERNAME && process.env.WAHA_DASHBOARD_PASSWORD) {
-        const basicAuth = Buffer.from(
-          `${process.env.WAHA_DASHBOARD_USERNAME}:${process.env.WAHA_DASHBOARD_PASSWORD}`
-        ).toString('base64');
-        wahaAuthHeaders['Authorization'] = `Basic ${basicAuth}`;
-      }
-
-      const wahaPayloads = [
-        {
-          session: targetSessionName,
-          chatId: formattedChatId,
-          text: message,
-        },
-        {
-          session: targetSessionName,
-          phone: cleanPhone,
-          message: message,
-          text: message,
-        },
-      ];
-
-      for (const payload of wahaPayloads) {
-        const wahaRes = await fetch(`${whatsappUrl}/api/sendText`, {
-          method: 'POST',
-          headers: wahaAuthHeaders,
-          body: JSON.stringify(payload),
-        });
-
-        if (wahaRes.ok) {
-          const data = await wahaRes.json().catch(() => ({}));
-          return res.json({
-            success: true,
-            mode: 'waha',
-            session: targetSessionName,
-            data,
-            message: 'Mensagem enviada com sucesso via WAHA API!',
-          });
-        }
-      }
-    } catch (wahaErr: any) {
-      console.warn('[WAHA API] Falha na tentativa WAHA, tentando Evolution GO...', wahaErr.message);
+    const result = await sendWhatsAppTextDirect({ recipientPhone, message, instanceName });
+    if (result.success) {
+      return res.json({
+        success: true,
+        mode: result.mode,
+        session: result.session,
+        instance: result.instance,
+        data: result.data,
+        message:
+          result.mode === 'waha'
+            ? 'Mensagem enviada com sucesso via WAHA API!'
+            : 'Mensagem enviada com sucesso via Gateway WhatsApp!',
+      });
     }
 
-    // 2. Fallback: Dispatch via Evolution GO
-    const instances = await getWhatsAppSessions(whatsappUrl, globalKey);
-    const matchedInstance = instances.find(
-      (inst: any) =>
-        inst.name === targetSessionName ||
-        inst.id === targetSessionName ||
-        (inst.name && inst.name.toLowerCase().includes(targetSessionName.toLowerCase()))
-    ) || instances.find((inst: any) => inst.connected) || instances[0];
-
-    const instanceToken = matchedInstance?.token || process.env.EVOLUTION_INSTANCE_TOKEN || '22a95d2c-082a-4df2-80aa-0b36982b8ced';
-
-    const candidateAuthHeaders: Record<string, string>[] = [
-      { 'apikey': globalKey, 'X-Api-Key': globalKey },
-      { 'apikey': instanceToken, 'token': instanceToken },
-      { 'apikey': globalKey, 'token': instanceToken },
-    ];
-
-    let lastError: any = null;
-    let lastStatus = 500;
-
-    for (const authHeader of candidateAuthHeaders) {
-      try {
-        const response = await fetch(`${whatsappUrl}/send/text`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            ...authHeader,
-          },
-          body: JSON.stringify({
-            number: cleanPhone,
-            text: message,
-            delay: 1200,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (response.ok) {
-          return res.json({
-            success: true,
-            mode: 'evolution_go',
-            instance: matchedInstance?.name || targetSessionName,
-            data,
-            message: 'Mensagem enviada com sucesso via Gateway WhatsApp!',
-          });
-        }
-
-        lastStatus = response.status;
-        lastError = data;
-      } catch (err: any) {
-        lastError = err;
-      }
-    }
-
-    return res.status(lastStatus).json({
+    return res.status(result.status || 500).json({
       success: false,
-      mode: 'whatsapp_gateway',
-      error: lastError?.message || lastError?.error || `Erro ${lastStatus} ao comunicar com a API do WhatsApp (${whatsappUrl})`,
-      details: lastError,
-      fallbackUrl: `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`,
+      mode: result.mode,
+      error: result.error,
+      details: result.details,
+      fallbackUrl: result.fallbackUrl,
     });
   } catch (error: any) {
     console.error('Erro no endpoint de WhatsApp:', error);
@@ -4423,6 +4475,36 @@ interface InMemTier {
 const memoryCheckins: InMemCheckin[] = [];
 const memoryPoints: Record<string, { points: number; patientName?: string; history: any[] }> = {};
 const memoryVouchers: InMemVoucher[] = [];
+
+const BIRTHDAY_VOUCHERS_STORE_FILE = path.join(__dirname, 'birthday_vouchers_store.json');
+function loadPersistedBirthdayVouchers(): void {
+  try {
+    if (!fs.existsSync(BIRTHDAY_VOUCHERS_STORE_FILE)) return;
+    const raw = JSON.parse(fs.readFileSync(BIRTHDAY_VOUCHERS_STORE_FILE, 'utf-8'));
+    if (Array.isArray(raw)) {
+      for (const v of raw) {
+        if (v?.secretCode && !memoryVouchers.some((m) => m.secretCode.toUpperCase() === String(v.secretCode).toUpperCase())) {
+          memoryVouchers.push(v);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn('[Birthday Vouchers] Erro ao carregar vouchers persistidos:', err?.message);
+  }
+}
+
+function savePersistedBirthdayVouchers(): void {
+  try {
+    const birthdayOnly = memoryVouchers
+      .filter((v) => String(v.secretCode || '').toUpperCase().startsWith('BRT-ANIV-'))
+      .slice(0, 1000);
+    fs.writeFileSync(BIRTHDAY_VOUCHERS_STORE_FILE, JSON.stringify(birthdayOnly, null, 2), 'utf-8');
+  } catch (err: any) {
+    console.warn('[Birthday Vouchers] Erro ao persistir vouchers:', err?.message);
+  }
+}
+
+loadPersistedBirthdayVouchers();
 
 const memoryTiers: InMemTier[] = [
   {
@@ -5398,7 +5480,47 @@ app.post('/api/reception/voucher/claim', async (req: Request, res: Response) => 
     voucher.status = 'claimed';
     voucher.claimedAt = new Date().toISOString();
     voucher.claimedBy = claimedBy || 'Recepção Bertuol';
-    voucher.clinicId = clinicId ? Number(clinicId) : 1;
+    voucher.clinicId = clinicId ? Number(clinicId) : voucher.clinicId || 1;
+
+    if (cleanCode.startsWith('BRT-ANIV-')) {
+      savePersistedBirthdayVouchers();
+
+      // Move card correspondente no CRM (funil Aniversariantes) para 'converted' (Voucher Resgatado)
+      try {
+        const { data: matchedLeads } = await supabase
+          .from('crm_leads_recall')
+          .select('id, notes_history')
+          .ilike('source', `%${cleanCode}%`)
+          .limit(5);
+
+        if (Array.isArray(matchedLeads) && matchedLeads.length > 0) {
+          const claimedAtIso = voucher.claimedAt;
+          for (const lead of matchedLeads as any[]) {
+            const existingNotes = Array.isArray(lead.notes_history) ? lead.notes_history : [];
+            const updatedNotes = [
+              ...existingNotes,
+              {
+                id: `note-voucher-${Date.now()}`,
+                text: `Voucher ${cleanCode} resgatado na recepção por ${voucher.claimedBy}.`,
+                author: voucher.claimedBy || 'Recepção Bertuol',
+                createdAt: claimedAtIso,
+              },
+            ];
+            await supabase
+              .from('crm_leads_recall')
+              .update({
+                stage: 'converted',
+                notes: `Voucher ${cleanCode} resgatado na recepção.`,
+                notes_history: updatedNotes,
+                updated_at: claimedAtIso,
+              })
+              .eq('id', lead.id);
+          }
+        }
+      } catch (crmSyncErr: any) {
+        console.warn('[Birthday Voucher Claim] Erro ao sincronizar card no CRM:', crmSyncErr?.message);
+      }
+    }
 
     return res.json({
       success: true,
@@ -5418,6 +5540,957 @@ app.get('/api/reception/vouchers', async (req: Request, res: Response) => {
     return res.status(500).json({ error: error?.message });
   }
 });
+
+// ============================================================
+// PIPELINE DE ANIVERSARIANTES & AUTOMAÇÃO DIÁRIA (BRT-ANIV · 7 DIAS)
+// ============================================================
+
+interface BirthdayAutomationConfigServer {
+  enabled: boolean;
+  scheduledTime: string; // HH:MM (America/Sao_Paulo)
+  clinicScope: number | 'all';
+  validityDays: number;
+  benefitTitle: string;
+  messageTemplate: string;
+  sendWhatsApp: boolean;
+  sendAppNotification: boolean;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+interface BirthdayRunLogServer {
+  id: string;
+  runAt: string;
+  dateBR: string;
+  trigger: 'scheduler' | 'n8n' | 'manual';
+  dryRun: boolean;
+  clinicScope: number | 'all';
+  totalFound: number;
+  whatsappSent: number;
+  cardsCreated: number;
+  skippedAlreadySent: number;
+  noPhone: number;
+  whatsappFailed: number;
+  warnings: string[];
+}
+
+interface BirthdayAutomationStore {
+  config: BirthdayAutomationConfigServer;
+  lastScheduledRunDate: string | null;
+  history: BirthdayRunLogServer[];
+}
+
+const BIRTHDAY_AUTOMATION_STORE_FILE = path.join(__dirname, 'birthday_automation_store.json');
+
+const DEFAULT_BIRTHDAY_AUTOMATION_CONFIG: BirthdayAutomationConfigServer = {
+  enabled: true,
+  scheduledTime: '08:30',
+  clinicScope: 'all',
+  validityDays: 7,
+  benefitTitle: 'Cortesia de Aniversário: Profilaxia + Diagnóstico Sky Câmera',
+  messageTemplate:
+    'Parabéns, {nome}! Feliz aniversário! A equipe da {clinica} preparou um presente especial para você: Cortesia de Aniversário (Profilaxia + Diagnóstico Sky Câmera). Apresente seu voucher exclusivo *{voucher}* válido até *{validade}* (7 dias). Responda esta mensagem para reservarmos seu horário!',
+  sendWhatsApp: true,
+  sendAppNotification: true,
+  updatedAt: new Date().toISOString(),
+};
+
+function readBirthdayAutomationStore(): BirthdayAutomationStore {
+  try {
+    if (fs.existsSync(BIRTHDAY_AUTOMATION_STORE_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(BIRTHDAY_AUTOMATION_STORE_FILE, 'utf-8'));
+      return {
+        config: {
+          ...DEFAULT_BIRTHDAY_AUTOMATION_CONFIG,
+          ...(parsed?.config || {}),
+        },
+        lastScheduledRunDate: parsed?.lastScheduledRunDate || null,
+        history: Array.isArray(parsed?.history) ? parsed.history.slice(0, 40) : [],
+      };
+    }
+  } catch (err: any) {
+    console.warn('[Birthday Automation] Erro ao ler configuração persistida:', err?.message);
+  }
+  return {
+    config: { ...DEFAULT_BIRTHDAY_AUTOMATION_CONFIG },
+    lastScheduledRunDate: null,
+    history: [],
+  };
+}
+
+function saveBirthdayAutomationStore(store: BirthdayAutomationStore): void {
+  try {
+    const payload: BirthdayAutomationStore = {
+      config: store.config,
+      lastScheduledRunDate: store.lastScheduledRunDate,
+      history: (store.history || []).slice(0, 40),
+    };
+    fs.writeFileSync(BIRTHDAY_AUTOMATION_STORE_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+  } catch (err: any) {
+    console.warn('[Birthday Automation] Erro ao salvar configuração persistida:', err?.message);
+  }
+}
+
+let birthdayAutomationStore: BirthdayAutomationStore = readBirthdayAutomationStore();
+let birthdayDailyRunInProgress = false;
+let birthdaySchedulerStarted = false;
+
+const ALLOWED_BIRTHDAY_ADMIN_ROLES = new Set([
+  'admin_root',
+  'admin',
+  'admin_clinica',
+  'admin_tecnico',
+  'gerente_atendimento',
+]);
+
+function isBirthdayAdminRequest(req: Request): boolean {
+  const rawRole = String(req.headers['x-user-role'] || req.body?.userRole || '')
+    .trim()
+    .toLowerCase();
+  return ALLOWED_BIRTHDAY_ADMIN_ROLES.has(rawRole);
+}
+
+function isBirthdayCronSecretValid(req: Request): boolean {
+  const configured = String(process.env.BIRTHDAY_CRON_SECRET || '').trim();
+  if (!configured) return false;
+  const authHeader = String(req.headers.authorization || '').trim();
+  const bearerToken = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice(7).trim()
+    : '';
+  const candidate = bearerToken || String(req.headers['x-cron-secret'] || '').trim();
+  if (!candidate) return false;
+  const a = Buffer.from(configured, 'utf-8');
+  const b = Buffer.from(candidate, 'utf-8');
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+function getSaoPauloClockParts(date: Date = new Date()): {
+  ymd: string;
+  year: string;
+  month: string;
+  day: string;
+  hhmm: string;
+} {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(date);
+    const year = parts.find((p) => p.type === 'year')?.value || String(date.getFullYear());
+    const month = parts.find((p) => p.type === 'month')?.value || String(date.getMonth() + 1).padStart(2, '0');
+    const day = parts.find((p) => p.type === 'day')?.value || String(date.getDate()).padStart(2, '0');
+    let hour = parts.find((p) => p.type === 'hour')?.value || '00';
+    if (hour === '24') hour = '00';
+    const minute = parts.find((p) => p.type === 'minute')?.value || '00';
+    return {
+      ymd: `${year}-${month}-${day}`,
+      year,
+      month,
+      day,
+      hhmm: `${hour}:${minute}`,
+    };
+  } catch {
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return {
+      ymd: `${year}-${month}-${day}`,
+      year,
+      month,
+      day,
+      hhmm: `${hour}:${minute}`,
+    };
+  }
+}
+
+function addDaysYMDServer(ymd: string, deltaDays: number): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const utc = new Date(Date.UTC(y, (m || 1) - 1, d || 1, 12, 0, 0));
+  utc.setUTCDate(utc.getUTCDate() + deltaDays);
+  const yy = utc.getUTCFullYear();
+  const mm = String(utc.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(utc.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+function formatYMDToBRServer(ymd: string): string {
+  const [y, m, d] = String(ymd || '').split('-');
+  if (!y || !m || !d) return ymd;
+  return `${d}/${m}/${y}`;
+}
+
+function extractMonthDayFromBirthDate(raw?: unknown): { month: string; day: string } | null {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return { month: isoMatch[2], day: isoMatch[3] };
+  const brMatch = s.match(/^(\d{2})\/(\d{2})(?:\/\d{2,4})?$/);
+  if (brMatch) return { month: brMatch[2], day: brMatch[1] };
+  return null;
+}
+
+function generateUniqueBirthdayVoucherCode(existingCodes: Set<string>): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const bytes = crypto.randomBytes(4);
+    let suffix = '';
+    for (let i = 0; i < 4; i++) {
+      suffix += alphabet[bytes[i] % alphabet.length];
+    }
+    const code = `BRT-ANIV-${suffix}`;
+    if (!existingCodes.has(code)) {
+      existingCodes.add(code);
+      return code;
+    }
+  }
+  const fallback = `BRT-ANIV-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+  existingCodes.add(fallback);
+  return fallback;
+}
+
+function renderBirthdayMessageServer(
+  template: string,
+  vars: { nome: string; clinica: string; voucher: string; validade: string }
+): string {
+  return String(template || DEFAULT_BIRTHDAY_AUTOMATION_CONFIG.messageTemplate)
+    .replace(/\{nome\}/gi, vars.nome)
+    .replace(/\{clinica\}/gi, vars.clinica)
+    .replace(/\{voucher\}/gi, vars.voucher)
+    .replace(/\{validade\}/gi, vars.validade);
+}
+
+interface NormalizedBirthdayCandidate {
+  patientId: number;
+  patientName: string;
+  patientPhone: string;
+  clinicId: number;
+  clinicName: string;
+  birthDate?: string;
+}
+
+async function fetchTodaysBirthdayCandidates(
+  clinicScope: number | 'all',
+  todayParts: { ymd: string; month: string; day: string },
+  warnings: string[]
+): Promise<NormalizedBirthdayCandidate[]> {
+  const baseUrl = getClinicorpBaseUrl();
+  const phoneLookup = await getBackfillPatientPhoneCache();
+  const candidatesByKey = new Map<string, NormalizedBirthdayCandidate>();
+
+  const activeClinics = MULTI_TENANT_CLINICS.filter((c: any) => c.active);
+  const targetClinics =
+    typeof clinicScope === 'number'
+      ? activeClinics.filter((c: any) => Number(c.id) === clinicScope)
+      : activeClinics;
+
+  // Build unique Clinicorp credentials to query
+  const credentialSources: Array<{
+    user: string;
+    key: string;
+    fallbackClinicId: number;
+    fallbackClinicName: string;
+  }> = [];
+  const seenUsers = new Set<string>();
+
+  const envUser = String(process.env.CLINICORP_USER || '').trim();
+  const envKey = String(process.env.CLINICORP_KEY || '').trim();
+
+  for (const clinic of targetClinics as any[]) {
+    const cUser = String(clinic.clinicorp_user || envUser || '').trim();
+    const cKey = String(clinic.clinicorp_key || envKey || '').trim();
+    if (!cUser || !cKey || cKey.includes('palmas-live')) continue;
+    if (seenUsers.has(cUser.toLowerCase())) continue;
+    seenUsers.add(cUser.toLowerCase());
+    credentialSources.push({
+      user: cUser,
+      key: cKey,
+      fallbackClinicId: Number(clinic.id),
+      fallbackClinicName: clinic.shortName || clinic.name || `Unidade ${clinic.id}`,
+    });
+  }
+
+  if (credentialSources.length === 0 && envUser && envKey) {
+    const fallbackClinic = targetClinics[0] || activeClinics[0];
+    credentialSources.push({
+      user: envUser,
+      key: envKey,
+      fallbackClinicId: Number(fallbackClinic?.id || 1),
+      fallbackClinicName: fallbackClinic?.shortName || 'Palmas (Matriz)',
+    });
+  }
+
+  // 1. Fetch from Clinicorp /patient/birthdays
+  for (const cred of credentialSources) {
+    try {
+      const authHeader = 'Basic ' + Buffer.from(`${cred.user}:${cred.key}`).toString('base64');
+      const res = await fetch(
+        `${baseUrl}/patient/birthdays?subscriber_id=${encodeURIComponent(cred.user)}`,
+        {
+          method: 'GET',
+          headers: { Authorization: authHeader, Accept: 'application/json' },
+        }
+      );
+
+      if (!res.ok) {
+        warnings.push(`Clinicorp aniversariantes (${cred.user}): HTTP ${res.status}`);
+        continue;
+      }
+
+      const rawList = await res.json().catch(() => []);
+      const list = Array.isArray(rawList)
+        ? rawList
+        : Array.isArray(rawList?.list)
+        ? rawList.list
+        : Array.isArray(rawList?.data)
+        ? rawList.data
+        : [];
+
+      for (const item of list as any[]) {
+        const rawBirth =
+          item.BirthDate || item.birth_date || item.DataNascimento || item.Birthday || item.birthday;
+        const md = extractMonthDayFromBirthDate(rawBirth);
+        // Strictly exact-day match when birthDate is provided by Clinicorp
+        if (md && (md.month !== todayParts.month || md.day !== todayParts.day)) {
+          continue;
+        }
+
+        const rawName = String(item.Name || item.PatientName || item.name || '').trim();
+        if (!rawName) continue;
+        const patientName = rawName.replace(/\s*\(\d+\)\s*$/, '').trim() || rawName;
+        const patientId = Number(item.id || item.PatientId || item.patient_id || 0);
+
+        const businessId = Number(item.BusinessId || item.business_id || 0);
+        const matchedClinic = MULTI_TENANT_CLINICS.find(
+          (c: any) => Number(c.clinicorp_business_id) === businessId
+        );
+        const clinicId = matchedClinic ? Number(matchedClinic.id) : cred.fallbackClinicId;
+        const clinicName = matchedClinic?.shortName || matchedClinic?.name || cred.fallbackClinicName;
+
+        if (typeof clinicScope === 'number' && clinicId !== clinicScope) continue;
+
+        let rawPhone = String(
+          item.MobilePhone || item.CellPhone || item.Phone || item.mobile_phone || ''
+        ).replace(/\D/g, '');
+        if (!rawPhone || rawPhone.length < 10) {
+          const fromExt = patientId > 0 ? phoneLookup.byExternalId.get(String(patientId)) : undefined;
+          const fromName = phoneLookup.byName.get(normalizeBackfillNameKey(patientName));
+          rawPhone = String(fromExt || fromName || '').replace(/\D/g, '');
+        }
+
+        const dedupeKey =
+          patientId > 0
+            ? `pid:${patientId}`
+            : `name:${normalizeBackfillNameKey(patientName)}:${rawPhone.slice(-8)}`;
+
+        if (!candidatesByKey.has(dedupeKey)) {
+          candidatesByKey.set(dedupeKey, {
+            patientId,
+            patientName,
+            patientPhone: rawPhone,
+            clinicId,
+            clinicName,
+            birthDate: rawBirth ? String(rawBirth).split('T')[0] : todayParts.ymd,
+          });
+        }
+      }
+    } catch (err: any) {
+      warnings.push(`Falha ao consultar Clinicorp (${cred.user}): ${err?.message || 'erro de rede'}`);
+    }
+  }
+
+  // 2. Secondary check in Supabase public.patients (if birth_date column exists)
+  try {
+    const pageSize = 1000;
+    let offset = 0;
+    while (offset < 12000) {
+      const { data: rows, error } = await supabase
+        .from('patients')
+        .select('id, external_id, name, mobile_phone, birth_date, tenant_id')
+        .not('birth_date', 'is', null)
+        .range(offset, offset + pageSize - 1);
+
+      if (error || !rows || rows.length === 0) break;
+
+      for (const p of rows as any[]) {
+        const md = extractMonthDayFromBirthDate(p.birth_date);
+        if (!md || md.month !== todayParts.month || md.day !== todayParts.day) continue;
+
+        const patientName = String(p.name || '').trim();
+        if (!patientName) continue;
+        const externalNum = Number(p.external_id || 0);
+        const rawPhone = String(p.mobile_phone || '').replace(/\D/g, '');
+        const tenantStr = String(p.tenant_id || '').toLowerCase();
+        const clinicId = tenantStr.includes('5d30567b') ? 2 : 1;
+        if (typeof clinicScope === 'number' && clinicId !== clinicScope) continue;
+        const matchedClinic = MULTI_TENANT_CLINICS.find((c: any) => Number(c.id) === clinicId);
+        const clinicName = matchedClinic?.shortName || `Unidade ${clinicId}`;
+
+        const dedupeKey =
+          externalNum > 0
+            ? `pid:${externalNum}`
+            : `name:${normalizeBackfillNameKey(patientName)}:${rawPhone.slice(-8)}`;
+
+        if (!candidatesByKey.has(dedupeKey)) {
+          candidatesByKey.set(dedupeKey, {
+            patientId: externalNum,
+            patientName,
+            patientPhone: rawPhone,
+            clinicId,
+            clinicName,
+            birthDate: String(p.birth_date).split('T')[0],
+          });
+        }
+      }
+
+      if (rows.length < pageSize) break;
+      offset += pageSize;
+    }
+  } catch {
+    // Optional enrichment: silently ignore if birth_date column does not exist
+  }
+
+  return Array.from(candidatesByKey.values()).sort((a, b) =>
+    a.patientName.localeCompare(b.patientName, 'pt-BR')
+  );
+}
+
+async function executeDailyBirthdayPipeline(options: {
+  dryRun: boolean;
+  clinicScope?: number | 'all';
+  trigger: 'scheduler' | 'n8n' | 'manual';
+}) {
+  if (birthdayDailyRunInProgress) {
+    return {
+      status: 409,
+      payload: {
+        success: false,
+        error: 'Já existe uma rotina de aniversariantes em execução. Aguarde alguns segundos.',
+      },
+    };
+  }
+
+  birthdayDailyRunInProgress = true;
+  const warnings: string[] = [];
+  const today = getSaoPauloClockParts();
+  const cfg = birthdayAutomationStore.config;
+  const effectiveClinicScope: number | 'all' =
+    options.clinicScope === 'all'
+      ? 'all'
+      : typeof options.clinicScope === 'number' && Number.isFinite(options.clinicScope)
+      ? options.clinicScope
+      : cfg.clinicScope;
+
+  try {
+    const candidates = await fetchTodaysBirthdayCandidates(effectiveClinicScope, today, warnings);
+
+    // Load existing birthday CRM leads for current year to guarantee 100% annual idempotency
+    const existingPatientIds = new Set<number>();
+    const existingNameKeys = new Set<string>();
+    const existingVoucherCodes = new Set<string>(
+      memoryVouchers.map((v) => String(v.secretCode || '').toUpperCase())
+    );
+
+    try {
+      const { data: existingRows, error: exErr } = await supabase
+        .from('crm_leads_recall')
+        .select('id, patient_id, patient_name, mobile_phone, pipeline_id, source')
+        .or(`pipeline_id.eq.birthdays,source.ilike.%Aniversariante ${today.year}%`)
+        .limit(3000);
+
+      if (exErr) {
+        warnings.push(`Leitura de deduplicação Supabase: ${exErr.message}`);
+      } else if (Array.isArray(existingRows)) {
+        for (const row of existingRows as any[]) {
+          const src = String(row.source || '');
+          const vMatch = src.match(/(BRT-ANIV-[A-Z0-9-]+)/i);
+          if (vMatch) existingVoucherCodes.add(vMatch[1].toUpperCase());
+
+          // Only mark as already sent if it belongs to the current year
+          const isCurrentYear =
+            src.includes(`Aniversariante ${today.year}`) ||
+            src.includes(today.ymd);
+          if (!isCurrentYear) continue;
+
+          const pid = Number(row.patient_id || 0);
+          if (pid > 0) existingPatientIds.add(pid);
+          const nKey = normalizeBackfillNameKey(row.patient_name);
+          if (nKey) existingNameKeys.add(nKey);
+        }
+      }
+    } catch (err: any) {
+      warnings.push(`Verificação de duplicidade CRM: ${err?.message || 'falha'}`);
+    }
+
+    const validityDays = Math.max(1, Math.min(30, Number(cfg.validityDays || 7)));
+    const expiresAtYMD = addDaysYMDServer(today.ymd, validityDays);
+    const expiresAtBR = formatYMDToBRServer(expiresAtYMD);
+    const followUpDays = Math.min(4, Math.max(1, validityDays - 2));
+    const followUpYMD = addDaysYMDServer(today.ymd, followUpDays);
+
+    const records: any[] = [];
+    let whatsappSent = 0;
+    let cardsCreated = 0;
+    let skippedAlreadySent = 0;
+    let noPhone = 0;
+    let whatsappFailed = 0;
+    let consecutiveSends = 0;
+
+    for (const cand of candidates) {
+      const nameKey = normalizeBackfillNameKey(cand.patientName);
+      const alreadySent =
+        (cand.patientId > 0 && existingPatientIds.has(cand.patientId)) ||
+        (nameKey !== '' && existingNameKeys.has(nameKey));
+
+      if (alreadySent) {
+        skippedAlreadySent += 1;
+        records.push({
+          patientId: cand.patientId,
+          patientName: cand.patientName,
+          patientPhone: cand.patientPhone,
+          clinicId: cand.clinicId,
+          clinicName: cand.clinicName,
+          birthDate: cand.birthDate,
+          voucherCode: 'JÁ EMITIDO',
+          expiresAt: expiresAtYMD,
+          status: 'JA_ENVIADO_ANO',
+        });
+        continue;
+      }
+
+      const voucherCode = generateUniqueBirthdayVoucherCode(existingVoucherCodes);
+      const cleanPhone = String(cand.patientPhone || '').replace(/\D/g, '');
+      const hasValidPhone = cleanPhone.length >= 10;
+
+      if (options.dryRun) {
+        if (!hasValidPhone) noPhone += 1;
+        records.push({
+          patientId: cand.patientId,
+          patientName: cand.patientName,
+          patientPhone: cleanPhone,
+          clinicId: cand.clinicId,
+          clinicName: cand.clinicName,
+          birthDate: cand.birthDate,
+          voucherCode,
+          expiresAt: expiresAtYMD,
+          status: hasValidPhone ? 'SIMULADO_NOVO' : 'SIMULADO_SEM_TELEFONE',
+        });
+        continue;
+      }
+
+      // Mark seen immediately to prevent duplicate handling within same batch
+      if (cand.patientId > 0) existingPatientIds.add(cand.patientId);
+      if (nameKey) existingNameKeys.add(nameKey);
+
+      const firstName = cand.patientName.split(' ')[0] || cand.patientName;
+      const clinicLabel = `Clínica Bertuol (${cand.clinicName})`;
+      const message = renderBirthdayMessageServer(cfg.messageTemplate, {
+        nome: firstName,
+        clinica: clinicLabel,
+        voucher: voucherCode,
+        validade: expiresAtBR,
+      });
+
+      // 1. Register durable voucher BRT-ANIV-XXXX (7 days) for Reception Redemption
+      const nowIso = new Date().toISOString();
+      const newVoucher: InMemVoucher = {
+        id: `vch-aniv-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
+        rewardId: 'reward-birthday-courtesy',
+        rewardTitle: cfg.benefitTitle || DEFAULT_BIRTHDAY_AUTOMATION_CONFIG.benefitTitle,
+        patientPhone: cleanPhone,
+        patientName: cand.patientName,
+        pointsSpent: 0,
+        secretCode: voucherCode,
+        status: 'pending',
+        expiresAt: `${expiresAtYMD}T23:59:59-03:00`,
+        clinicId: cand.clinicId,
+        createdAt: nowIso,
+      };
+      memoryVouchers.unshift(newVoucher);
+      savePersistedBirthdayVouchers();
+
+      // 2. Dispatch WhatsApp via WAHA / Evolution GO (with safe anti-ban pacing)
+      let waDelivered = false;
+      let waMode: string | undefined;
+      let waError: string | undefined;
+
+      if (hasValidPhone && cfg.sendWhatsApp) {
+        if (consecutiveSends > 0) {
+          const jitterMs = 2500 + Math.floor(Math.random() * 2000);
+          await new Promise((resolve) => setTimeout(resolve, jitterMs));
+        }
+        consecutiveSends += 1;
+
+        const waRes = await sendWhatsAppTextDirect({
+          recipientPhone: cleanPhone,
+          message,
+        });
+        if (waRes.success) {
+          waDelivered = true;
+          waMode = waRes.mode;
+          whatsappSent += 1;
+        } else {
+          whatsappFailed += 1;
+          waError = waRes.error || 'Falha no gateway WhatsApp';
+          warnings.push(`WhatsApp (${cand.patientName}): ${waError}`);
+        }
+      } else if (!hasValidPhone) {
+        noPhone += 1;
+      }
+
+      // 3. Optional App Notification + Web Push
+      if (cfg.sendAppNotification && hasValidPhone) {
+        try {
+          addInAppNotification({
+            phone: cleanPhone,
+            patientName: cand.patientName,
+            title: `Parabéns, ${firstName}! Seu voucher ${voucherCode} chegou`,
+            body: `${cfg.benefitTitle}. Válido até ${expiresAtBR} (${validityDays} dias).`,
+            type: 'birthday',
+            data: { validUntil: expiresAtBR, voucherCode },
+            read: false,
+          });
+          await sendPushToPhone(cleanPhone, {
+            title: `Parabéns, ${firstName}! Presente de Aniversário`,
+            body: `Voucher ${voucherCode} válido até ${expiresAtBR}. Agende no App!`,
+            icon: '/pwa-192x192.png',
+            badge: '/icon.svg',
+            tag: `birthday-voucher-${today.year}`,
+            data: { url: '/paciente?aba=vouchers&niver=true' },
+          });
+        } catch {
+          // Non-fatal
+        }
+      }
+
+      // 4. Create CRM Card in Supabase (pipeline: 'birthdays')
+      const stageId = waDelivered ? 'contacted' : 'new';
+      const deliveryLabel = waDelivered
+        ? `Enviado (${waMode || 'WhatsApp'})`
+        : hasValidPhone
+        ? `Erro no disparo (${waError || 'pendente'})`
+        : 'Sem telefone válido';
+
+      const sourceLabel = `Aniversariante ${today.year} · ${voucherCode}`;
+      const noteText = waDelivered
+        ? `Voucher ${voucherCode} (válido até ${expiresAtBR}) enviado automaticamente via WhatsApp.`
+        : hasValidPhone
+        ? `Voucher ${voucherCode} (válido até ${expiresAtBR}) gerado. Envio automático falhou (${waError || 'gateway'}) — enviar manualmente.`
+        : `Voucher ${voucherCode} (válido até ${expiresAtBR}) gerado. Paciente sem celular válido cadastrado.`;
+
+      const customFields = [
+        { id: 'cf-voucher', label: 'Código do Voucher', value: voucherCode },
+        { id: 'cf-validade', label: 'Validade do Voucher', value: expiresAtYMD },
+        { id: 'cf-wa-status', label: 'Disparo WhatsApp', value: deliveryLabel },
+        { id: 'cf-niver', label: 'Aniversário', value: formatYMDToBRServer(today.ymd) },
+      ];
+
+      const baseRow = {
+        patient_id: cand.patientId || Math.floor(Date.now() % 1000000000),
+        patient_name: cand.patientName,
+        primeiro_nome: firstName,
+        mobile_phone: cleanPhone,
+        data_ultimo_agendamento: today.ymd,
+        ultimo_procedimento: `${cfg.benefitTitle} (${voucherCode})`,
+        dias_desde_ultimo: 0,
+        tipo_mensagem: 'A',
+        mensagem_whatsapp: message,
+        stage: stageId,
+        priority: 'high',
+        clinic_id: cand.clinicId || 1,
+        dentist_name: 'Corpo Clínico Bertuol',
+        estimated_value: 280,
+        points_bonus: 100,
+        notes: noteText,
+        last_contact_date: waDelivered ? nowIso : null,
+        updated_at: nowIso,
+      };
+
+      const fullRow = {
+        ...baseRow,
+        pipeline_id: 'birthdays',
+        opportunity_type: 'birthday',
+        source: sourceLabel,
+        labels: [],
+        notes_history: [
+          {
+            id: `note-bday-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            text: noteText,
+            author:
+              options.trigger === 'n8n'
+                ? 'Automação n8n'
+                : options.trigger === 'scheduler'
+                ? 'Agendador Diário'
+                : 'Disparo Manual CRM',
+            createdAt: nowIso,
+          },
+        ],
+        custom_fields: customFields,
+        contact_attempts: waDelivered ? 1 : 0,
+        next_contact_date: followUpYMD,
+      };
+
+      let inserted = false;
+      const { error: fullErr } = await supabase.from('crm_leads_recall').insert(fullRow);
+      if (!fullErr) {
+        inserted = true;
+      } else {
+        const { error: baseErr } = await supabase.from('crm_leads_recall').insert(baseRow);
+        if (!baseErr) {
+          inserted = true;
+        } else {
+          warnings.push(`CRM insert (${cand.patientName}): ${baseErr.message}`);
+        }
+      }
+
+      if (inserted) cardsCreated += 1;
+
+      records.push({
+        patientId: cand.patientId,
+        patientName: cand.patientName,
+        patientPhone: cleanPhone,
+        clinicId: cand.clinicId,
+        clinicName: cand.clinicName,
+        birthDate: cand.birthDate,
+        voucherCode,
+        expiresAt: expiresAtYMD,
+        status: waDelivered
+          ? 'ENVIADO_WHATSAPP'
+          : hasValidPhone
+          ? 'ERRO_WHATSAPP_CARD_CRIADO'
+          : 'CARD_SEM_TELEFONE',
+        whatsappMode: waMode,
+        errorMessage: waError,
+      });
+    }
+
+    const logEntry: BirthdayRunLogServer = {
+      id: `bday-run-${Date.now()}`,
+      runAt: new Date().toISOString(),
+      dateBR: today.ymd,
+      trigger: options.trigger,
+      dryRun: options.dryRun,
+      clinicScope: effectiveClinicScope,
+      totalFound: candidates.length,
+      whatsappSent,
+      cardsCreated,
+      skippedAlreadySent,
+      noPhone,
+      whatsappFailed,
+      warnings: warnings.slice(0, 15),
+    };
+
+    birthdayAutomationStore.history = [logEntry, ...birthdayAutomationStore.history].slice(0, 40);
+    if (!options.dryRun && (options.trigger === 'scheduler' || options.trigger === 'n8n')) {
+      birthdayAutomationStore.lastScheduledRunDate = today.ymd;
+    }
+    saveBirthdayAutomationStore(birthdayAutomationStore);
+
+    return {
+      status: 200,
+      payload: {
+        success: true,
+        alreadyProcessed:
+          !options.dryRun && candidates.length > 0 && skippedAlreadySent === candidates.length,
+        dateBR: today.ymd,
+        trigger: options.trigger,
+        dryRun: options.dryRun,
+        counts: {
+          totalFound: candidates.length,
+          whatsappSent,
+          cardsCreated,
+          skippedAlreadySent,
+          noPhone,
+          whatsappFailed,
+        },
+        records,
+        warnings,
+      },
+    };
+  } catch (err: any) {
+    return {
+      status: 500,
+      payload: {
+        success: false,
+        error: err?.message || 'Erro inesperado ao executar rotina de aniversariantes.',
+      },
+    };
+  } finally {
+    birthdayDailyRunInProgress = false;
+  }
+}
+
+// Endpoint: Ler configuração e histórico da automação diária de aniversariantes
+app.get('/api/crm/birthdays/config', (req: Request, res: Response) => {
+  if (!isBirthdayAdminRequest(req)) {
+    return res.status(403).json({
+      success: false,
+      error: 'Apenas administradores ou gerência podem acessar a automação de aniversariantes.',
+    });
+  }
+  const clock = getSaoPauloClockParts();
+  return res.json({
+    success: true,
+    config: birthdayAutomationStore.config,
+    lastScheduledRunDate: birthdayAutomationStore.lastScheduledRunDate,
+    schedulerRunning: birthdaySchedulerStarted,
+    cronSecretConfigured: Boolean(String(process.env.BIRTHDAY_CRON_SECRET || '').trim()),
+    webhookPath: '/api/crm/birthdays/run-daily',
+    history: birthdayAutomationStore.history,
+    todayBR: clock.ymd,
+    nowTimeBR: clock.hhmm,
+  });
+});
+
+// Endpoint: Atualizar configuração da automação diária de aniversariantes
+app.put('/api/crm/birthdays/config', (req: Request, res: Response) => {
+  if (!isBirthdayAdminRequest(req)) {
+    return res.status(403).json({
+      success: false,
+      error: 'Apenas administradores ou gerência podem editar a automação de aniversariantes.',
+    });
+  }
+
+  const body = req.body || {};
+  const scheduledTime = String(body.scheduledTime || birthdayAutomationStore.config.scheduledTime).trim();
+  if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(scheduledTime)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Horário inválido. Use o formato HH:MM (ex.: 08:30).',
+    });
+  }
+
+  const validityDays = Number(body.validityDays ?? birthdayAutomationStore.config.validityDays);
+  if (!Number.isFinite(validityDays) || validityDays < 1 || validityDays > 30) {
+    return res.status(400).json({
+      success: false,
+      error: 'A validade do voucher deve estar entre 1 e 30 dias.',
+    });
+  }
+
+  const messageTemplate = String(
+    body.messageTemplate ?? birthdayAutomationStore.config.messageTemplate
+  ).trim();
+  if (messageTemplate.length < 15 || messageTemplate.length > 2000) {
+    return res.status(400).json({
+      success: false,
+      error: 'A mensagem deve ter entre 15 e 2000 caracteres.',
+    });
+  }
+
+  const benefitTitle =
+    String(body.benefitTitle ?? birthdayAutomationStore.config.benefitTitle)
+      .trim()
+      .slice(0, 200) || DEFAULT_BIRTHDAY_AUTOMATION_CONFIG.benefitTitle;
+
+  const rawScope = body.clinicScope;
+  const clinicScope: number | 'all' =
+    rawScope === 'all' || rawScope == null
+      ? 'all'
+      : Number.isFinite(Number(rawScope))
+      ? Number(rawScope)
+      : 'all';
+
+  birthdayAutomationStore.config = {
+    enabled: Boolean(body.enabled ?? birthdayAutomationStore.config.enabled),
+    scheduledTime,
+    clinicScope,
+    validityDays: Math.floor(validityDays),
+    benefitTitle,
+    messageTemplate,
+    sendWhatsApp: Boolean(body.sendWhatsApp ?? birthdayAutomationStore.config.sendWhatsApp),
+    sendAppNotification: Boolean(
+      body.sendAppNotification ?? birthdayAutomationStore.config.sendAppNotification
+    ),
+    updatedAt: new Date().toISOString(),
+    updatedBy: String(req.headers['x-user-email'] || body.updatedBy || 'Admin'),
+  };
+
+  saveBirthdayAutomationStore(birthdayAutomationStore);
+
+  const clock = getSaoPauloClockParts();
+  return res.json({
+    success: true,
+    config: birthdayAutomationStore.config,
+    lastScheduledRunDate: birthdayAutomationStore.lastScheduledRunDate,
+    schedulerRunning: birthdaySchedulerStarted,
+    cronSecretConfigured: Boolean(String(process.env.BIRTHDAY_CRON_SECRET || '').trim()),
+    webhookPath: '/api/crm/birthdays/run-daily',
+    history: birthdayAutomationStore.history,
+    todayBR: clock.ymd,
+    nowTimeBR: clock.hhmm,
+  });
+});
+
+// Endpoint: Executar rotina diária (Webhook n8n via Bearer BIRTHDAY_CRON_SECRET ou manual via Admin RBAC)
+app.post('/api/crm/birthdays/run-daily', async (req: Request, res: Response) => {
+  const validCron = isBirthdayCronSecretValid(req);
+  const validAdmin = isBirthdayAdminRequest(req);
+
+  if (!validCron && !validAdmin) {
+    return res.status(403).json({
+      success: false,
+      error:
+        'Acesso negado. Use o cabeçalho Authorization: Bearer <BIRTHDAY_CRON_SECRET> (n8n) ou perfil administrativo autenticado.',
+    });
+  }
+
+  const dryRun = Boolean(req.body?.dryRun);
+  const rawScope = req.body?.clinicId ?? req.body?.clinicScope;
+  const clinicScope: number | 'all' | undefined =
+    rawScope === 'all'
+      ? 'all'
+      : rawScope != null && Number.isFinite(Number(rawScope))
+      ? Number(rawScope)
+      : undefined;
+
+  const trigger: 'n8n' | 'manual' = validCron && !validAdmin ? 'n8n' : req.body?.trigger === 'n8n' && validCron ? 'n8n' : 'manual';
+
+  const result = await executeDailyBirthdayPipeline({
+    dryRun,
+    clinicScope,
+    trigger,
+  });
+
+  return res.status(result.status).json(result.payload);
+});
+
+function startBirthdayDailyScheduler() {
+  if (birthdaySchedulerStarted) return;
+  birthdaySchedulerStarted = true;
+
+  const tick = async () => {
+    try {
+      const cfg = birthdayAutomationStore.config;
+      if (!cfg.enabled || birthdayDailyRunInProgress) return;
+      const clock = getSaoPauloClockParts();
+      if (birthdayAutomationStore.lastScheduledRunDate === clock.ymd) return;
+      if (clock.hhmm < cfg.scheduledTime) return;
+
+      console.log(
+        `[Birthday Scheduler] Disparando rotina diária de aniversariantes (${clock.ymd} ${clock.hhmm} BRT)...`
+      );
+      await executeDailyBirthdayPipeline({
+        dryRun: false,
+        clinicScope: cfg.clinicScope,
+        trigger: 'scheduler',
+      });
+    } catch (err: any) {
+      console.warn('[Birthday Scheduler] Erro no tick diário:', err?.message);
+    }
+  };
+
+  // Check every 60 seconds (low overhead, exact BRT HH:MM trigger)
+  setInterval(tick, 60 * 1000);
+}
 
 // ============================================================
 // CRUD DE REGRAS DE PONTUAÇÃO (RF05)
@@ -8646,4 +9719,5 @@ if (isProd) {
 // Start listening
 app.listen(PORT, HOST, () => {
   console.log(`Servidor Bertuol Odontologia escutando em http://${HOST}:${PORT} (${isProd ? 'produção' : 'desenvolvimento'})`);
+  startBirthdayDailyScheduler();
 });
