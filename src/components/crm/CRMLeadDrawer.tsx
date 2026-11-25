@@ -281,7 +281,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-xl h-full shadow-2xl border-l border-slate-200 flex flex-col animate-in slide-in-from-right duration-200"
+        className="bg-white w-full sm:max-w-xl h-full shadow-2xl border-l border-slate-200 flex flex-col animate-in slide-in-from-right duration-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}

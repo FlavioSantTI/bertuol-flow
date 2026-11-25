@@ -1228,9 +1228,9 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
               {viewMode === 'kanban' ? (
                 <div
-                  className="grid gap-3.5 items-start pb-2 overflow-x-auto flex-1"
+                  className="grid gap-3.5 items-start pb-4 overflow-x-auto flex-1 touch-pan-x"
                   style={{
-                    gridTemplateColumns: `repeat(${Math.max(pipelineStages.length, 1)}, minmax(250px, 1fr))`,
+                    gridTemplateColumns: `repeat(${Math.max(pipelineStages.length, 1)}, minmax(260px, 1fr))`,
                   }}
                 >
                   {pipelineStages.map((stg) => {
