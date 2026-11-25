@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estúdio de Roteiros HeyGen & Mapa Técnico • Bertuol Flow v1.4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #070E17;
+      --bg-surface: #0E1A29;
+      --bg-elevated: #15253A;
+      --border-subtle: rgba(56, 189, 248, 0.16);
+      --teal: #1FB5BD;
+      --teal-dark: #147A80;
+      --gold: #FFCC29;
+      --emerald: #10B981;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(7, 14, 23, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .badge-version {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(255, 204, 41, 0.12);
+      border: 1px solid rgba(255, 204, 41, 0.35);
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--teal);
+      background: rgba(31, 181, 189, 0.16);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      border-color: #5EEAD4;
+      color: #FFFFFF;
+    }
+
+    .btn-gold {
+      background: rgba(255, 204, 41, 0.15);
+      border-color: rgba(255, 204, 41, 0.45);
+      color: var(--gold);
+    }
+
+    .btn-gold:hover {
+      background: rgba(255, 204, 41, 0.28);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    /* Tabs */
+    .tabs-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      background: var(--bg-surface);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: var(--text-secondary);
+      padding: 14px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tab-btn:hover {
+      border-color: rgba(31, 181, 189, 0.45);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(20, 122, 128, 0.35) 0%, rgba(14, 26, 41, 0.95) 100%);
+      border-color: var(--teal);
+      color: #FFFFFF;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .tab-label {
+      font-size: 13.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tab-desc {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    /* Video Banner */
+    .video-hero {
+      background: linear-gradient(135deg, #0E2235 0%, #091522 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .video-hero h2 {
+      font-size: 19px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 4px;
+    }
+
+    .video-hero p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 720px;
+    }
+
+    /* Scene Grid */
+    .scenes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .scene-card {
+      background: var(--bg-surface);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scene-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .scene-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .scene-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(31, 181, 189, 0.18);
+      color: #5EEAD4;
+      border: 1px solid rgba(31, 181, 189, 0.4);
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+
+    .scene-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .scene-duration {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gold);
+      background: rgba(255, 204, 41, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .scene-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .meta-box {
+      background: rgba(7, 14, 23, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .meta-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #38BDF8;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .meta-text {
+      font-size: 12.5px;
+      color: #E2E8F0;
+    }
+
+    .voiceover-box {
+      background: rgba(20, 122, 128, 0.12);
+      border: 1px solid rgba(45, 212, 191, 0.32);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .voiceover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .voiceover-text {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #FFFFFF;
+      line-height: 1.6;
+    }
+
+    .veo-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px dashed rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .veo-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #94A3B8;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    /* Table for Technical Mapping */
+    .table-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12.5px;
+    }
+
+    th {
+      background: #0B1522;
+      color: #38BDF8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      color: #E2E8F0;
+      vertical-align: top;
+    }
+
+    tr:hover td {
+      background: rgba(31, 181, 189, 0.05);
+    }
+
+    .code-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #5EEAD4;
+      background: rgba(31, 181, 189, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      background: #10B981;
+      color: #052E16;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
+      transform: translateY(120%);
+      opacity: 0;
+      transition: all 0.25s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <span class="badge-version">CENTRAL HEYGEN v1.4</span>
+      <div>
+        <div class="header-title">Roteiros Técnicos HeyGen (3 Vídeos de 2 Min) & Mapa Real do Código</div>
+        <div class="header-sub">100% baseado nas rotas, componentes e integrações reais do Bertuol Flow</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/?app=paciente" target="_blank" class="btn">📱 Abrir Portal do Paciente</a>
+      <a href="/" target="_blank" class="btn">🩺 Abrir Painel da Clínica</a>
+      <a href="/slideshow-hyperframes.html" class="btn btn-gold">🎬 Estúdio 3D 60m</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="selectTab('v1', this)">
+        <div class="tab-label">
+          <span>1. Vídeo Paciente & Clube</span>
+          <span>2 min • 6 Cenas</span>
+        </div>
+        <span class="tab-desc">Confirmação 1 toque, Totem QR, Vouchers e Chat</span>
+      </button>
+
+      <button class="tab-btn" onclick="selectTab('v2', this)">
+        <div class="tab-label">
+          <span>2. Vídeo Dentista</span>
+          <span>2 min • 6 Cenas</span>
+        </div>
+        <span class="tab-desc">Agenda Clinicorp, Alerta Sonoro, Resumo IA e Face ID</span>
+      </button>
+
+      <button class="tab-btn" onclick="selectTab('v3', this)">
+        <div class="tab-label">
+          <span>3. Vídeo Atendente / Recepção</span>
+          <span>2 min • 6 Cenas</span>
+        </div>
+        <span class="tab-desc">6.285+ Clientes, Totem QR, Baixa de Vouchers e CRM</span>
+      </button>
+
+      <button class="tab-btn" onclick="selectTab('map', this)">
+        <div class="tab-label">
+          <span>🗺️ Mapeamento Técnico Real</span>
+          <span>16 Módulos</span>
+        </div>
+        <span class="tab-desc">Auditoria completa de rotas, arquivos e impacto</span>
+      </button>
+    </div>
+
+    <div id="content-area"></div>
+  </main>
+
+  <div class="toast" id="toast">✅ Copiado para a área de transferência!</div>
+
+  <script>
+    const SCRIPTS = {
+      v1: {
+        title: "Vídeo 1: Jornada do Paciente & Clube Sorriso (2 Minutos • ~292 palavras)",
+        subtitle: "Rota principal para gravação de tela: /?app=paciente (Portal Mobile PWA + Clube Sorriso)",
+        openUrl: "/?app=paciente",
+        openLabel: "📱 Abrir Portal do Paciente para Gravar",
+        scenes: [
+          {
+            num: "Cena 1",
+            duration: "~15s (0:00 - 0:15)",
+            title: "Abertura Institucional: O Sorriso na Palma da Mão",
+            capture: "Sem captura de tela. Usar fundo institucional Turquesa (#147A80) e Dourado (#FFCC29) com logotipo Bertuol Odontologia.",
+            framing: "Avatar em Tela Cheia (Full Screen), centralizado, expressão acolhedora.",
+            voiceover: "Bem-vindo à nova experiência da Bertuol Odontologia, em Palmas e em Paraíso. Criamos o Bertuol Flow e o Clube Sorriso para que você cuide da sua saúde bucal sem filas, sem ligações demoradas e ganhando recompensas reais a cada consulta.",
+            veo: "Cinematic slow-motion tracking shot inside a sunlit luxury dental clinic reception in Brazil, warm wooden accents and turquoise glass details, a smiling patient holding a modern smartphone, shallow depth of field, 4k photorealistic."
+          },
+          {
+            num: "Cena 2",
+            duration: "~20s (0:15 - 0:35)",
+            title: "Acesso Rápido & Confirmação de Consulta em 1 Toque",
+            capture: "Abrir /?app=paciente (PatientApp.tsx). Mostrar o cabeçalho com Alice Póvoa, o nível do Clube Sorriso e o card 'Próxima Consulta', clicando no botão dourado 'Confirmar Presença (+10 pts)'. (LGPD: usar perfil demonstrativo ou borrar CPF/telefone).",
+            framing: "Bolha Circular no Canto Inferior Direito (deixa livre o card principal da consulta no centro).",
+            voiceover: "Ao abrir o Portal do Paciente pelo celular, sem precisar instalar nada pesado, você já visualiza o dia, o horário e o nome do seu dentista. Com um único toque no botão Confirmar Presença, sua vaga está garantida e você ganha dez pontos na hora.",
+            veo: "Close-up over-the-shoulder shot of a woman tapping a glowing gold confirmation button on her smartphone screen while having morning coffee, soft natural lighting, warm premium aesthetic, 4k."
+          },
+          {
+            num: "Cena 3",
+            duration: "~20s (0:35 - 0:55)",
+            title: "Chegada na Clínica & Scanner do Totem QR Code",
+            capture: "Ainda em /?app=paciente, clicar em 'Fazer Check-in QR Code' para abrir o modal da câmera (CheckinScanner.tsx / CheckinTutorialOverlay.tsx) e simular a leitura do QR Code do Totem (+30 pts).",
+            framing: "Bolha Circular no Canto Inferior Esquerdo (para não cobrir o botão central do scanner).",
+            voiceover: "Quando você chega à clínica em Palmas ou Paraíso, esqueça a fila no balcão. Basta tocar em Fazer Check-in QR Code e apontar a câmera para o Totem da recepção. O sistema avisa seu dentista imediatamente que você chegou e credita mais trinta pontos de pontualidade.",
+            veo: "Medium shot of a patient in a modern dental clinic reception scanning a sleek acrylic QR code stand on the counter with a smartphone, subtle turquoise light reflection, smooth gimbal movement, 4k."
+          },
+          {
+            num: "Cena 4",
+            duration: "~25s (0:55 - 1:20)",
+            title: "Clube Sorriso: Catálogo de Recompensas & Resgate de Voucher",
+            capture: "Rolar até 'Catálogo de Recompensas' (RewardsCatalog.tsx), clicar em 'Resgatar' em um prêmio e abrir a gaveta 'Meus Vouchers' (VouchersDrawer.tsx) exibindo o código gerado (BRT-XXXX).",
+            framing: "Bolha Circular no Canto Superior Direito (não cobre os cards de prêmios nem a gaveta inferior de vouchers).",
+            voiceover: "No Clube Sorriso Bertuol, cada atitude positiva faz você avançar dos níveis Bronze e Prata até Ouro e Diamante. Na vitrine de Recompensas, você escolhe kits de higiene, profilaxia ou descontos exclusivos e toca em Resgatar. Na mesma hora, o aplicativo gera o seu código em Meus Vouchers para você apresentar na recepção.",
+            veo: "Macro cinematic shot of a premium dental care gift kit with turquoise and gold packaging being handed over a clean reception counter by a welcoming receptionist, warm bokeh background, 4k."
+          },
+          {
+            num: "Cena 5",
+            duration: "~25s (1:20 - 1:45)",
+            title: "Presente de Aniversário & Chat Direto com a Clínica",
+            capture: "Mostrar o modal 'Presente de Aniversário' (BirthdayGiftModal.tsx) e, em seguida, tocar no botão 'Falar com a Clínica' para abrir o PatientMessagingDrawer.tsx, enviando texto ou áudio para a recepção.",
+            framing: "Bolha Circular no Canto Inferior Esquerdo (a gaveta de mensagens abre na lateral direita).",
+            voiceover: "Além disso, no mês do seu aniversário, o aplicativo libera um Presente Especial para você agendar seu cuidado preventivo. E se surgir qualquer dúvida antes ou depois da consulta, basta abrir o botão Falar com a Clínica para enviar mensagens, fotos ou áudios direto para a nossa equipe.",
+            veo: "Cinematic shot of a happy patient smiling at their smartphone while walking through a bright modern corridor, soft sunlight streaming through glass windows, 4k."
+          },
+          {
+            num: "Cena 6",
+            duration: "~15s (1:45 - 2:00)",
+            title: "Encerramento: Convite ao Paciente",
+            capture: "Avatar em tela cheia com card final mostrando bertuolflow.app-bertuol.tech.",
+            framing: "Avatar em Tela Cheia (Full Screen).",
+            voiceover: "Mais praticidade para a sua rotina e mais motivos para sorrir todos os dias. Peça seu acesso na recepção, entre no Clube Sorriso Bertuol e viva essa nova experiência na sua próxima consulta!",
+            veo: "Elegant slow-motion portrait of a confident patient flashing a radiant healthy smile inside a high-end dental studio, soft turquoise and warm gold ambient lighting, 4k."
+          }
+        ]
+      },
+      v2: {
+        title: "Vídeo 2: Jornada do Dentista & Corpo Clínico (2 Minutos • ~290 palavras)",
+        subtitle: "Rota principal para gravação de tela: / (Simulando ou logado no Perfil: 🩺 Dentista)",
+        openUrl: "/",
+        openLabel: "🩺 Abrir Painel Clínico para Gravar",
+        scenes: [
+          {
+            num: "Cena 1",
+            duration: "~15s (0:00 - 0:15)",
+            title: "Abertura: Foco 100% na Excelência Clínica",
+            capture: "Avatar em tela cheia com fundo clínico escuro/turquesa da Bertuol Odontologia.",
+            framing: "Avatar em Tela Cheia (Full Screen).",
+            voiceover: "Olá, doutores da Bertuol Odontologia. O Bertuol Flow foi desenhado para eliminar ruídos na sua rotina de consultório. Quando você acessa com o seu perfil de Dentista, o sistema entrega uma tela limpa, focada cem por cento nos seus pacientes do dia.",
+            veo: "Cinematic medium shot of a dentist in modern clinical attire reviewing a tablet inside a high-tech dental operatory room, soft cyan ambient lighting, shallow depth of field, 4k."
+          },
+          {
+            num: "Cena 2",
+            duration: "~20s (0:15 - 0:35)",
+            title: "Agenda Pessoal Sincronizada com o Clinicorp & Unidade Travada",
+            capture: "Abrir / no perfil '🩺 Dentista'. Mostrar o cabeçalho com '🔒 Palmas - TO', a barra de datas (DateNavigator.tsx), os filtros de especialidade (Avaliação, Ortodontia, Implante) e os cards de consulta. (LGPD: aplicar leve blur em sobrenomes/telefones reais).",
+            framing: "Bolha Circular no Canto Inferior Direito (mantém o cabeçalho e a lista central visíveis).",
+            voiceover: "Logo no topo, sua unidade de atendimento já vem vinculada automaticamente e sua agenda é sincronizada em tempo real com o Clinicorp. Você navega pelas datas com um toque, filtra seus atendimentos por especialidade e acompanha o progresso do seu turno sem distrações administrativas.",
+            veo: "Close-up of a dentist's hands smoothly scrolling through a clean digital schedule on a smartphone between appointments, sterile modern clinic background, 4k."
+          },
+          {
+            num: "Cena 3",
+            duration: "~20s (0:35 - 0:55)",
+            title: "Alerta Sonoro Instantâneo de Chegada do Paciente (RF04)",
+            capture: "Na tela principal /, destacar o banner verde superior de chegada ('Bertuol Bot • Check-in na Recepção: O paciente realizou check-in e aguarda atendimento') que toca o chime sonoro.",
+            framing: "Bolha Circular no Canto Inferior Esquerdo (deixa o banner verde superior em evidência).",
+            voiceover: "Assim que o seu paciente chega à clínica e valida o QR Code no Totem da recepção, você não depende de recados no corredor. O Bertuol Flow emite um sinal sonoro suave e exibe este alerta verde no topo da sua tela, avisando na hora quem já está aguardando.",
+            veo: "Subtle cinematic shot inside a quiet dental treatment room as a smartphone on the medical tray lights up with an emerald green arrival notification, 4k photorealistic."
+          },
+          {
+            num: "Cena 4",
+            duration: "~25s (0:55 - 1:20)",
+            title: "Prontuário Rápido & Resumo Executivo com Inteligência Artificial",
+            capture: "Clicar em um card de consulta para abrir o AppointmentDetailModal.tsx. Destacar o 'Resumo Executivo com IA', o botão 'Gerar Resumo IA' e o modal 'Resumo do Dia' (DailyBriefingModal.tsx). (LGPD: borrar notas clínicas particulares).",
+            framing: "Bolha Circular no Canto Inferior Direito (fora da janela central do modal).",
+            voiceover: "Antes de chamar o paciente para a cadeira, basta tocar no agendamento para ler o Resumo Executivo com Inteligência Artificial. Em poucos segundos, a IA organiza o histórico clínico, o procedimento previsto e os pontos de atenção da última sessão. E se quiser uma visão geral do turno, o botão Resumo do Dia sintetiza toda a sua manhã.",
+            veo: "Close-up shot of a confident dentist reading an AI clinical summary on a glowing glass interface before welcoming a patient into the dental chair, warm and cyan lighting, 4k."
+          },
+          {
+            num: "Cena 5",
+            duration: "~25s (1:20 - 1:45)",
+            title: "Consulta do Clube Sorriso & Mensageria Interna Silenciosa",
+            capture: "No cabeçalho do perfil Dentista, clicar no botão âmbar 'Clube Sorriso' (VoucherRedemptionModal.tsx em modo consulta) e, depois, clicar em 'Mensagens' (InternalMessagingModal.tsx) mostrando o envio de texto ou áudio para a recepção.",
+            framing: "Bolha Circular no Canto Inferior Esquerdo.",
+            voiceover: "No cabeçalho, você também conta com o botão Clube Sorriso para consultar os pontos e vouchers do seu paciente e incentivar o engajamento dele no tratamento. E para falar com o balcão sem sair da sala e sem usar seu WhatsApp pessoal, basta abrir Mensagens e enviar um texto ou áudio direto para a recepção.",
+            veo: "Two-shot transition showing a dentist in the operatory recording a quick voice note on a phone and a receptionist at the front desk smiling as she receives it on her screen, 4k."
+          },
+          {
+            num: "Cena 6",
+            duration: "~15s (1:45 - 2:00)",
+            title: "Encerramento: Acesso com Face ID / Biometria",
+            capture: "Mostrar rapidamente o modal 'Biometria / Passkeys' (WebAuthnModal.tsx) e encerrar com o Avatar em tela cheia.",
+            framing: "Avatar em Tela Cheia (Full Screen).",
+            voiceover: "Ative sua Biometria ou Face ID no menu superior para entrar com um olhar a cada plantão. Bertuol Flow: mais agilidade clínica para você focar no que faz de melhor — transformar sorrisos.",
+            veo: "Hero shot of a smiling dental specialist in a bright, state-of-the-art Bertuol Odontologia clinic, arms crossed with warmth and authority, 4k."
+          }
+        ]
+      },
+      v3: {
+        title: "Vídeo 3: Jornada da Atendente / Recepção (2 Minutos • ~295 palavras)",
+        subtitle: "Rota principal para gravação de tela: / (Simulando Perfil: 🛎️ Recepção ou 👔 Gerente Multiclínica)",
+        openUrl: "/",
+        openLabel: "🛎️ Abrir Painel da Recepção para Gravar",
+        scenes: [
+          {
+            num: "Cena 1",
+            duration: "~15s (0:00 - 0:15)",
+            title: "Abertura: O Coração Operacional da Clínica",
+            capture: "Avatar em tela cheia sobre o fundo institucional da Bertuol Odontologia.",
+            framing: "Avatar em Tela Cheia (Full Screen).",
+            voiceover: "Olá, equipe de atendimento e recepção da Bertuol Odontologia! Vocês são o coração da experiência do nosso cliente. Com o Bertuol Flow, reunimos em uma única tela tudo o que vocês precisam para atender Palmas e Paraíso com velocidade e zero retrabalho.",
+            veo: "Cinematic wide shot of an elegant dental clinic front desk with friendly receptionists working on modern monitors, warm lighting and turquoise brand accents, 4k."
+          },
+          {
+            num: "Cena 2",
+            duration: "~20s (0:15 - 0:35)",
+            title: "Central de Credenciais: Busca Instantânea em 6.285+ Clientes",
+            capture: "Clicar em 'Equipes & Acessos' no cabeçalho (UserManagementModal.tsx) e abrir a aba 'Acessos de Clientes (Clube Sorriso)' (ClientAccountsTab.tsx). Mostrar os 6.285+ pacientes, digitar um nome na busca no topo, filtrar de A a Z e clicar no botão verde do WhatsApp. (LGPD: borrar telefone/CPF na tabela).",
+            framing: "Bolha Circular no Canto Inferior Esquerdo (deixa livre a busca no topo e os botões de ação à direita).",
+            voiceover: "Para liberar o acesso de um paciente ao aplicativo, clique em Equipes e Acessos e abra Acessos de Clientes. Nossa base com mais de seis mil e duzentos pacientes de Palmas e Paraíso já está carregada. Basta digitar o nome do cliente no topo, gerar a credencial e enviar tudo pronto para o WhatsApp dele em um clique.",
+            veo: "Close-up of a receptionist typing a patient's name on a sleek desktop interface with instant search results appearing smoothly, warm office lighting, 4k."
+          },
+          {
+            num: "Cena 3",
+            duration: "~20s (0:35 - 0:55)",
+            title: "Totem QR Code de Balcão & Baixa de Vouchers em 1 Clique",
+            capture: "No cabeçalho, clicar em 'Totem QR' (TotemQRCodeModal.tsx) mostrando o QR Code de Palmas e Paraíso (/totem-imprimir). Depois, clicar em 'Clube Sorriso' (VoucherRedemptionModal.tsx), conferir um código BRT-XXXX e clicar em 'Dar Baixa'.",
+            framing: "Bolha Circular no Canto Inferior Direito.",
+            voiceover: "No balcão, o botão Totem QR gera a placa oficial da sua unidade para o paciente fazer check-in sozinho pelo celular. E quando o cliente quiser retirar um prêmio resgatado, basta abrir Clube Sorriso, conferir o código do voucher e clicar em Dar Baixa, garantindo controle total de cada entrega.",
+            veo: "Medium shot of a receptionist validating a digital voucher on her screen and smiling at a patient across a modern reception desk, 4k."
+          },
+          {
+            num: "Cena 4",
+            duration: "~25s (0:55 - 1:20)",
+            title: "Gestão do Clube Sorriso & Mensageria com os Consultórios",
+            capture: "Clicar em 'Gestão Clube' (AdminGamificationModal.tsx) mostrando o crédito manual de pontos e catálogo de prêmios; em seguida, clicar em 'Mensagens' (InternalMessagingModal.tsx) mostrando a caixa de entrada unificada (pacientes + dentistas).",
+            framing: "Bolha Circular no Canto Inferior Esquerdo.",
+            voiceover: "Em Gestão Clube, você também pode creditar pontos extras de indicação ou avaliação no Google e atualizar o estoque de recompensas. Já no botão Mensagens, toda a comunicação da clínica fica centralizada: você responde dúvidas enviadas pelos pacientes pelo aplicativo e troca áudios ou fotos com os dentistas sem precisar sair da recepção.",
+            veo: "Cinematic over-the-shoulder shot of a reception coordinator managing unified clinic messages with a headset, calm and organized workflow, 4k."
+          },
+          {
+            num: "Cena 5",
+            duration: "~25s (1:20 - 1:45)",
+            title: "Mini-CRM Odonto & Reativação de Pacientes (Recall 6+ Meses)",
+            capture: "Clicar no botão 'CRM' no cabeçalho (MiniCRMModal.tsx / RecallPanel.tsx). Mostrar os pacientes ausentes há 6+ meses, o filtro Palmas/Paraíso, o funil Kanban e clicar em 'Chamar no WhatsApp'. (LGPD: borrar telefones reais).",
+            framing: "Bolha Circular no Canto Inferior Direito.",
+            voiceover: "E para manter as agendas sempre cheias, o botão CRM identifica automaticamente todos os pacientes que não retornam há mais de seis meses. Você filtra por unidade ou dentista, acompanha o funil de reativação e dispara o convite de retorno preventivo direto no WhatsApp com a mensagem já formatada.",
+            veo: "Dynamic close-up of a commercial dental coordinator moving a patient card across a digital CRM board and sending a follow-up invitation, bright modern clinic office, 4k."
+          },
+          {
+            num: "Cena 6",
+            duration: "~15s (1:45 - 2:00)",
+            title: "Encerramento: Operação Integrada Palmas & Paraíso",
+            capture: "Avatar em tela cheia com o logotipo Bertuol Flow v1.4.",
+            framing: "Avatar em Tela Cheia (Full Screen).",
+            voiceover: "Da chegada sem filas ao retorno preventivo, o Bertuol Flow coloca superpoderes nas mãos da nossa recepção. Bom trabalho a todos e vamos juntos entregar a melhor experiência odontológica do Tocantins!",
+            veo: "Inspiring group shot of a welcoming dental reception and clinical team smiling together in a bright, modern Bertuol Odontologia lobby, 4k."
+          }
+        ]
+      }
+    };
+
+    const TECH_MODULES = [
+      ["1. Portal do Paciente (PWA Mobile)", "/?app=paciente | src/patient/PatientApp.tsx", "Login por CPF/Telefone, visualização do próximo agendamento e confirmação em 1 toque (POST /api/patient/confirm-appointment).", "Paciente confirma presença sem ligar para a clínica e ganha +10 pts automáticos."],
+      ["2. Scanner de Check-in QR Code", "/?app=paciente | CheckinScanner.tsx", "Leitura pela câmera do celular (html5-qrcode) do QR Code do Totem da recepção (POST /api/patient/checkin-totem).", "Elimina fila no balcão, credita +30 pts de pontualidade e dispara alerta para o dentista."],
+      ["3. Clube Sorriso (Catálogo & Vouchers)", "/?app=paciente | RewardsCatalog.tsx & VouchersDrawer.tsx", "Consulta de nível (Bronze a Diamante), extrato de pontos e resgate de prêmios gerando código BRT-XXXX.", "Fidelização gamificada com vouchers reais validáveis na recepção."],
+      ["4. Presente de Aniversário & Avisos", "/?app=paciente | BirthdayGiftModal.tsx", "Agendamento de benefício anual de aniversário (POST /api/patient/schedule-birthday-gift) e central de notificações.", "Aumenta a retenção anual e o retorno preventivo do paciente."],
+      ["5. Falar com a Clínica (Chat Paciente)", "/?app=paciente | PatientMessagingDrawer.tsx", "Envio de mensagens de texto, áudio gravado no navegador e fotos/anexos direto para a recepção.", "Canal oficial centralizado na clínica, separado do WhatsApp pessoal."],
+      ["6. Painel Clínico & Agenda Clinicorp", "/ | src/App.tsx & DateNavigator.tsx", "Navegação diária por data, filtro por categoria clínica e sincronização com a API do Clinicorp (/api/clinicorp/appointments).", "Dentista visualiza exclusivamente a própria agenda na unidade vinculada (🔒 Palmas ou 🔒 Paraíso)."],
+      ["7. Alerta Sonoro de Chegada (RF04)", "/ | src/App.tsx (/api/reception/checkins/recent)", "Polling em tempo real que exibe banner verde e toca chime musical (Web Audio API Ré5 → Lá5) no check-in.", "Dentista sabe no mesmo segundo que o paciente chegou na recepção."],
+      ["8. Prontuário & Resumo Executivo IA", "/ | AppointmentDetailModal.tsx (/api/generate-summary)", "Geração e edição de resumo clínico via IA (Google Gemini) com persistência no Supabase.", "Dentista lê em 5 segundos o contexto clínico antes de chamar o paciente à cadeira."],
+      ["9. Resumo Matinal (Daily Briefing IA)", "/ | DailyBriefingModal.tsx", "Síntese executiva da agenda completa do dia, destacando procedimentos e prioridades.", "Planejamento rápido do turno clínico logo no início da manhã."],
+      ["10. Biometria / Passkeys (Face ID)", "/ | WebAuthnModal.tsx (/api/auth/webauthn/*)", "Cadastro e autenticação biométrica FIDO2/WebAuthn vinculada ao aparelho do profissional.", "Login em 1 segundo no celular sem digitar senha a cada plantão."],
+      ["11. Totem QR Code de Balcão (RF03)", "/ | TotemQRCodeModal.tsx & /totem-imprimir", "Exibição na tela ou impressão A4 da arte oficial com QR Code dinâmico por unidade (Palmas / Paraíso).", "Permite autoatendimento de check-in no balcão da recepção."],
+      ["12. Central de Credenciais (6.285+ Clientes)", "/ | UserManagementModal.tsx & ClientAccountsTab.tsx", "Carregamento paginado em lotes dos 6.285+ pacientes do Supabase (public.patients), busca instantânea no topo (.ilike), filtro A–Z e disparo via WhatsApp.", "Recepção localiza qualquer cliente de Palmas ou Paraíso em 2s e envia o acesso no WhatsApp."],
+      ["13. Validação e Baixa de Vouchers", "/ | VoucherRedemptionModal.tsx (/api/reception/voucher/claim)", "Consulta e baixa de códigos BRT-XXXX no balcão; modo leitura disponível para dentistas.", "Impede uso duplicado de prêmios e audita quem entregou o brinde."],
+      ["14. Gestão de Regras e Prêmios do Clube", "/ | AdminGamificationModal.tsx (/api/gamification/*)", "CRUD de regras de pontuação, recompensas, níveis e crédito manual de pontos para clientes.", "Recepção e gerência atualizam campanhas e estoque de brindes em tempo real."],
+      ["15. Mensageria Interna (Texto, Áudio e Fotos)", "/ | InternalMessagingModal.tsx & AudioMessagePlayer.tsx", "Chat interno multi-unidade com gravação de áudio, fotos, atribuição de atendente e contador de não lidas.", "Comunicação silenciosa entre consultório e recepção sem WhatsApp pessoal."],
+      ["16. Mini-CRM Odonto & Recall 6+ Meses", "/ | MiniCRMModal.tsx & RecallPanel.tsx", "Identificação automática de pacientes sem retorno há 6+ meses, funil Kanban e disparo de convite no WhatsApp.", "Recupera pacientes inativos de Palmas e Paraíso e preenche horários vagos."]
+    ];
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    function copyText(text, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('✅ ' + label + ' copiado!');
+      });
+    }
+
+    function buildFullHeyGenPrompt(videoKey) {
+      const v = SCRIPTS[videoKey];
+      let out = `Crie um vídeo de treinamento e apresentação elegante de 2 minutos (6 cenas) em Português do Brasil (pt-BR) para o sistema "Bertuol Flow" da "Bertuol Odontologia" (${v.title}).\n\n`;
+      out += `DIRETRIZES VISUAIS:\n- Cores da marca: Turquesa (#147A80), Ciano (#1FB5BD) e Dourado (#FFCC29).\n- Velocidade da voz: 0.95x, tom caloroso, confiante e natural.\n\n`;
+      v.scenes.forEach(s => {
+        out += `[${s.num} - ${s.duration} - ${s.title}]\n`;
+        out += `Enquadramento Avatar: ${s.framing}\n`;
+        out += `Fundo / Tela: ${s.capture}\n`;
+        out += `Narração (Fala Exata): "${s.voiceover}"\n\n`;
+      });
+      return out;
+    }
+
+    function renderVideoTab(videoKey) {
+      const v = SCRIPTS[videoKey];
+      const container = document.getElementById('content-area');
+
+      let html = `
+        <div class="video-hero">
+          <div>
+            <h2>${v.title}</h2>
+            <p>${v.subtitle}</p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="${v.openUrl}" target="_blank" class="btn">${v.openLabel}</a>
+            <button class="btn btn-primary" onclick="copyFullPrompt('${videoKey}')">
+              📋 Copiar Prompt Completo das 6 Cenas (HeyGen)
+            </button>
+          </div>
+        </div>
+        <div class="scenes-list">
+      `;
+
+      v.scenes.forEach((s, idx) => {
+        html += `
+          <div class="scene-card">
+            <div class="scene-header">
+              <div class="scene-title-group">
+                <span class="scene-num">${s.num}</span>
+                <span class="scene-name">${s.title}</span>
+              </div>
+              <span class="scene-duration">${s.duration}</span>
+            </div>
+
+            <div class="scene-meta-grid">
+              <div class="meta-box">
+                <span class="meta-label">🖥️ 1. Tela Exata a Capturar & LGPD</span>
+                <div class="meta-text">${s.capture}</div>
+              </div>
+              <div class="meta-box">
+                <span class="meta-label">👤 2. Enquadramento Ideal no HeyGen</span>
+                <div class="meta-text">${s.framing}</div>
+              </div>
+            </div>
+
+            <div class="voiceover-box">
+              <div class="voiceover-header">
+                <span class="meta-label" style="margin:0; color:#5EEAD4;">🎙️ 3. Texto da Narração (Fala para colar na Cena do HeyGen)</span>
+                <button class="btn" onclick="copySceneVoice('${videoKey}', ${idx})">📋 Copiar Fala da ${s.num}</button>
+              </div>
+              <div class="voiceover-text">"${s.voiceover}"</div>
+            </div>
+
+            <div class="veo-box">
+              <div class="veo-text">
+                <strong style="color:#38BDF8;">🎬 4. Prompt B-Roll (Google Flow / Veo):</strong> ${s.veo}
+              </div>
+              <button class="btn" onclick="copySceneVeo('${videoKey}', ${idx})">🎥 Copiar Prompt Veo</button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function renderMapTab() {
+      const container = document.getElementById('content-area');
+      let html = `
+        <div class="video-hero">
+          <div>
+            <h2>SAÍDA 1: Mapeamento Técnico Real das Funcionalidades (16 Módulos)</h2>
+            <p>Auditoria direta do código-fonte (src/App.tsx, src/patient/*, src/components/* e server.ts). Nenhum recurso fictício incluído.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>1. Nome do Módulo / Tela (UI)</th>
+                <th>2. Rota / Arquivo Principal</th>
+                <th>3. Ação Real Executada pelo Usuário</th>
+                <th>4. Impacto Operacional</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      TECH_MODULES.forEach(row => {
+        html += `
+          <tr>
+            <td style="font-weight:800; color:#FFFFFF;">${row[0]}</td>
+            <td><span class="code-tag">${row[1]}</span></td>
+            <td>${row[2]}</td>
+            <td style="color:#A7F3D0;">${row[3]}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    window.copyFullPrompt = function(videoKey) {
+      copyText(buildFullHeyGenPrompt(videoKey), 'Prompt Completo (' + SCRIPTS[videoKey].title.split(':')[0] + ')');
+    };
+
+    window.copySceneVoice = function(videoKey, idx) {
+      const s = SCRIPTS[videoKey].scenes[idx];
+      copyText(s.voiceover, 'Fala da ' + s.num);
+    };
+
+    window.copySceneVeo = function(videoKey, idx) {
+      const s = SCRIPTS[videoKey].scenes[idx];
+      copyText(s.veo, 'Prompt Veo da ' + s.num);
+    };
+
+    window.selectTab = function(key, btnEl) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      if (key === 'map') {
+        renderMapTab();
+      } else {
+        renderVideoTab(key);
+      }
+    };
+
+    // Initial render
+    renderVideoTab('v1');
+  </script>
+</body>
+</html>

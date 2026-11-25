@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estúdio 3D • Apresentação Oficial 60 Min • Bertuol Flow v1.4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --primary: #147A80;
+      --primary-dark: #0E585D;
+      --primary-light: #1FB5BD;
+      --gold: #FFCC29;
+      --gold-dark: #D97706;
+      --dark: #061012;
+      --card-bg: #0C1B1E;
+      --border: rgba(255, 255, 255, 0.13);
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    header.top-nav {
+      background: #0A171A;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.45);
+    }
+
+    .brand-title h1 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #FFF;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* Deck Mode Switcher */
+    .mode-switcher {
+      display: flex;
+      align-items: center;
+      background: #061012;
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      background: var(--primary);
+      color: #FFF;
+      box-shadow: 0 2px 10px rgba(20, 122, 128, 0.35);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: #112428;
+      border: 1px solid var(--border);
+      color: #FFF;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      background: #173136;
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold) 0%, #FFA800 100%);
+      color: #0E585D;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 16px rgba(255, 204, 41, 0.3);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 204, 41, 0.4);
+    }
+
+    /* Main Grid */
+    main.studio-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 490px;
+      max-width: 1720px;
+      margin: 0 auto;
+      width: 100%;
+      height: calc(100vh - 67px);
+    }
+
+    @media (max-width: 1100px) {
+      main.studio-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    /* Left Stage: 3D WebGL + Hyperframes Viewport */
+    .stage-container {
+      background: radial-gradient(circle at 50% 25%, #103539 0%, #07171A 60%, #040C0E 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Three.js WebGL Mount */
+    #threeStageMount {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #threeStageMount:active {
+      cursor: grabbing;
+    }
+
+    /* Kinetic Headline Over Stage (Solid surface — no backdrop-filter over WebGL) */
+    .stage-kinetic-header {
+      text-align: center;
+      z-index: 20;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .kinetic-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0D2428;
+      border: 1px solid rgba(255, 204, 41, 0.4);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      padding: 4px 14px;
+      border-radius: 100px;
+      margin-bottom: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    .kinetic-main-title {
+      font-size: 25px;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+    }
+
+    .kinetic-main-title span {
+      background: linear-gradient(135deg, var(--gold) 0%, #FFA800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .kinetic-desc {
+      font-size: 13px;
+      color: #CBD5E1;
+      margin-top: 4px;
+      font-weight: 500;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    /* 3D Phone Mockup Canvas */
+    .mockup-wrapper {
+      position: relative;
+      z-index: 20;
+      width: 340px;
+      height: 610px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1400px;
+      pointer-events: auto;
+    }
+
+    .phone-body {
+      width: 100%;
+      height: 100%;
+      background: #0d1317;
+      border-radius: 44px;
+      padding: 10px;
+      box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.78),
+        0 10px 30px rgba(20, 122, 128, 0.28),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.22),
+        inset 0 0 0 5px #1e252b;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .phone-island {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 96px;
+      height: 22px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+
+    .island-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #111a24;
+      border: 1px solid #1c2c3d;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 34px;
+      background: #F8FAFC;
+      color: #0F172A;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen-header-bar {
+      background: linear-gradient(135deg, #147A80 0%, #0E585D 100%);
+      color: white;
+      padding: 36px 16px 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(14, 88, 93, 0.25);
+    }
+
+    .patient-greet h2 {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .patient-greet p {
+      font-size: 11px;
+      color: #E2E8F0;
+      opacity: 0.9;
+    }
+
+    .points-pill {
+      background: rgba(255, 204, 41, 0.2);
+      border: 1px solid #FFCC29;
+      color: #FFCC29;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: transform 0.3s, background-color 0.3s, color 0.3s;
+    }
+
+    .points-pill.flash {
+      transform: scale(1.12);
+      background: #FFCC29;
+      color: #0E585D;
+    }
+
+    .screen-body {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #F1F5F9;
+      position: relative;
+    }
+
+    /* Card Styles inside Phone */
+    .appt-card {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+      border: 1px solid #E2E8F0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .appt-card.highlight {
+      border: 2px solid var(--primary-light);
+      box-shadow: 0 10px 22px rgba(20, 122, 128, 0.16);
+    }
+
+    .appt-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 100px;
+      align-self: flex-start;
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .appt-status.confirmed {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .appt-status.checkedin {
+      background: #E0E7FF;
+      color: #3730A3;
+    }
+
+    .appt-dr {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+
+    .appt-time {
+      font-size: 11.5px;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-action-app {
+      background: #147A80;
+      color: white;
+      border: none;
+      border-radius: 11px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .btn-action-app.gold {
+      background: linear-gradient(135deg, #FFCC29 0%, #F59E0B 100%);
+      color: #0E585D;
+      font-weight: 800;
+    }
+
+    .club-preview-card {
+      background: linear-gradient(135deg, #0E585D 0%, #147A80 100%);
+      border-radius: 16px;
+      padding: 14px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 18px rgba(14, 88, 93, 0.22);
+    }
+
+    .reward-item-row {
+      background: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #E2E8F0;
+    }
+
+    .reward-info h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .reward-info p {
+      font-size: 10.5px;
+      color: #64748B;
+    }
+
+    .voucher-card-active {
+      background: #ECFDF5;
+      border: 2px dashed #10B981;
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .voucher-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #065F46;
+      background: #D1FAE5;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .qr-mock {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Touch Pointer Cursor */
+    .touch-cursor {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 204, 41, 0.4);
+      border: 2px solid #FFCC29;
+      pointer-events: none;
+      z-index: 50;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      box-shadow: 0 0 20px #FFCC29;
+      transition: opacity 0.2s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .touch-cursor.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .touch-cursor.tap {
+      transform: translate(-50%, -50%) scale(0.75);
+      background: rgba(255, 204, 41, 0.85);
+    }
+
+    /* Floating Callout Badge (Solid surface over WebGL) */
+    .floating-stage-callout {
+      position: absolute;
+      right: 20px;
+      bottom: 92px;
+      background: #0D3B40;
+      border: 2px solid var(--gold);
+      padding: 12px 18px;
+      border-radius: 18px;
+      color: white;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 30;
+      transform: translateY(20px) scale(0.9);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+      max-width: 280px;
+      pointer-events: none;
+    }
+
+    .floating-stage-callout.show {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .callout-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #0E585D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .callout-text h5 {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: white;
+    }
+
+    .callout-text p {
+      font-size: 11.5px;
+      color: #E2E8F0;
+    }
+
+    /* Unified Bottom Stage Control Dock (Collapsible) */
+    .stage-timeline {
+      width: 100%;
+      max-width: 760px;
+      z-index: 25;
+      background: rgba(10, 23, 26, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .stage-timeline.collapsed {
+      transform: translateY(calc(100% - 28px));
+    }
+
+    .dock-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .timeline-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .timeline-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-light), var(--gold));
+      width: 12.5%;
+      transition: width 0.4s ease;
+    }
+
+    .btn-collapse-dock {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-collapse-dock:hover {
+      color: #FFF;
+    }
+
+    .timeline-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-btns {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: #132A2E;
+      border: 1px solid var(--border);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: #1B3B40;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .slide-step-indicator {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .slide-step-indicator span {
+      color: var(--gold);
+    }
+
+    /* 3D Camera & Actor Toggles */
+    .controls-3d-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-3d-chip {
+      background: #112428;
+      border: 1px solid var(--border);
+      color: #CBD5E1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-3d-chip.active {
+      background: rgba(255, 204, 41, 0.16);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Right Sidebar */
+    .storyboard-sidebar {
+      background: var(--card-bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 30;
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-header h3 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .badge-status {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10B981;
+      color: #34D399;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .slides-accordion {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .slide-card-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+      position: relative;
+    }
+
+    .slide-card-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .slide-card-item.active {
+      background: rgba(20, 122, 128, 0.2);
+      border: 2px solid var(--primary-light);
+      box-shadow: 0 4px 18px rgba(20, 122, 128, 0.22);
+    }
+
+    .slide-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .slide-num {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .slide-duration {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #38BDF8;
+      font-weight: 700;
+    }
+
+    .slide-item-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #FFF;
+      margin-bottom: 4px;
+    }
+
+    .slide-item-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .active-script-detail {
+      background: #071214;
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 255px;
+      overflow-y: auto;
+    }
+
+    .detail-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-voiceover {
+      font-size: 12.5px;
+      color: #E2E8F0;
+      line-height: 1.45;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 204, 41, 0.25);
+    }
+
+    .detail-sfx {
+      font-size: 11.5px;
+      color: #A0AEC0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-pill {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      color: #FFF;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ==========================================================================
+       DUAL-SCREEN MODES: PROJECTOR (SÓ TELÃO) & PRESENTER (SÓ TRILHA)
+       ========================================================================== */
+    .view-mode-switcher {
+      display: flex;
+      align-items: center;
+      background: #040B0D;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .view-mode-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .view-mode-btn.active {
+      background: linear-gradient(135deg, #0E7490 0%, #1FB5BD 100%);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px rgba(31, 181, 189, 0.35);
+    }
+
+    .sync-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* 1. MODO TELÃO / PROJETOR (?mode=projector) — 100% IMAGEM LIMPA */
+    body.view-mode-projector header.top-nav {
+      display: none !important;
+    }
+
+    body.view-mode-projector main.studio-layout {
+      grid-template-columns: 1fr !important;
+      max-width: 100vw !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    body.view-mode-projector aside.storyboard-sidebar {
+      display: none !important;
+    }
+
+    body.view-mode-projector .stage-timeline {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    body.view-mode-projector .stage-container:hover .stage-timeline {
+      opacity: 1;
+    }
+
+    .projector-floating-bar {
+      display: none;
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      z-index: 250;
+      background: rgba(6, 16, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 6px 10px;
+      border-radius: 10px;
+      gap: 8px;
+      align-items: center;
+      opacity: 0.2;
+      transition: opacity 0.25s ease;
+    }
+
+    .projector-floating-bar:hover {
+      opacity: 1;
+    }
+
+    body.view-mode-projector .projector-floating-bar {
+      display: flex;
+    }
+
+    /* Live App Overlay on Projector when triggered from Presenter Trail */
+    .projector-live-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #061012;
+      flex-direction: column;
+    }
+
+    .projector-live-overlay.active {
+      display: flex;
+    }
+
+    .projector-live-bar {
+      background: #0A171A;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #FFF;
+    }
+
+    /* 2. MODO TRILHA / APRESENTADOR (?mode=presenter) — PAINEL EXCLUSIVO DE COMANDO */
+    .presenter-command-bar {
+      display: none;
+      background: #081518;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      gap: 14px;
+      flex-direction: column;
+    }
+
+    body.view-mode-presenter .stage-container {
+      display: none !important;
+    }
+
+    body.view-mode-presenter main.studio-layout {
+      grid-template-columns: 1fr !important;
+      max-width: 1180px !important;
+      height: calc(100vh - 67px) !important;
+    }
+
+    body.view-mode-presenter aside.storyboard-sidebar {
+      border-left: none !important;
+      display: grid !important;
+      grid-template-columns: 1.15fr 1fr;
+      grid-template-rows: auto 1fr;
+      height: calc(100vh - 67px);
+      overflow: hidden;
+    }
+
+    body.view-mode-presenter .presenter-command-bar {
+      display: flex !important;
+      grid-column: 1 / -1;
+    }
+
+    body.view-mode-presenter .sidebar-header {
+      display: none !important;
+    }
+
+    body.view-mode-presenter .active-script-detail {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+      max-height: none !important;
+      height: 100%;
+      border-top: none !important;
+      border-right: 1px solid var(--border);
+      padding: 24px !important;
+      justify-content: space-between;
+    }
+
+    body.view-mode-presenter .detail-voiceover {
+      font-size: 21px !important;
+      line-height: 1.55 !important;
+      padding: 20px !important;
+      color: #FFFFFF !important;
+      background: rgba(20, 122, 128, 0.16) !important;
+      border: 2px solid var(--gold) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    body.view-mode-presenter .slides-accordion {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      height: 100%;
+      padding: 18px !important;
+    }
+
+    @media (max-width: 900px) {
+      body.view-mode-presenter aside.storyboard-sidebar {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto 1fr !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      body.view-mode-presenter .active-script-detail {
+        grid-column: 1 / -1;
+        grid-row: 2 / 3;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+      }
+      body.view-mode-presenter .slides-accordion {
+        grid-column: 1 / -1;
+        grid-row: 3 / 4;
+      }
+      body.view-mode-presenter .detail-voiceover {
+        font-size: 17px !important;
+      }
+    }
+
+    .presenter-top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .presenter-big-btns {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-presenter-nav {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #FFFFFF;
+      border: 1px solid #5EEAD4;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(20, 122, 128, 0.35);
+    }
+
+    .btn-presenter-nav:hover {
+      filter: brightness(1.1);
+    }
+
+    .timer-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #040B0D;
+      border: 1px solid rgba(255, 204, 41, 0.4);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .timer-digits {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Mini-Bar visible only in Projector Mode (?mode=projector) -->
+  <div class="projector-floating-bar">
+    <span class="sync-indicator"><span class="sync-dot"></span> TELÃO SINCRONIZADO</span>
+    <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setViewLayoutMode('studio')">
+      🎛️ Mostrar Trilha Lateral
+    </button>
+    <a href="/slideshow-hyperframes.html?mode=presenter" target="_blank" class="btn-secondary" style="padding:5px 10px; font-size:11px;">
+      🪟 Abrir Trilha em Outra Janela
+    </a>
+  </div>
+
+  <!-- Live System Overlay on Projector when triggered remotely from Presenter Trail -->
+  <div class="projector-live-overlay" id="projectorLiveOverlay">
+    <div class="projector-live-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="sync-indicator"><span class="sync-dot"></span> DEMONSTRAÇÃO AO VIVO NO TELÃO</span>
+        <span id="projectorLiveTitle" style="font-weight:700; color:#E2E8F0;">Bertuol Flow v1.4</span>
+      </div>
+      <button class="btn-gold" style="padding:5px 12px; font-size:11px;" onclick="window.setLiveOverlayUrl(null)">
+        ✕ Voltar para os Slides 3D
+      </button>
+    </div>
+    <iframe id="projectorLiveIframe" src="about:blank" style="width:100%; flex:1; border:0; background:#FFF;"></iframe>
+  </div>
+
+  <!-- Top Bar -->
+  <header class="top-nav">
+    <div class="brand-group">
+      <div class="logo-badge">B</div>
+      <div class="brand-title">
+        <h1>Estúdio 3D • Apresentação Bertuol Flow v1.4</h1>
+        <p>Separação Telão (Projetor) + Trilha (Apresentador) em Tempo Real</p>
+      </div>
+    </div>
+
+    <!-- Seletor de Separação de Telas (Form Imagem vs Form Trilha) -->
+    <div class="view-mode-switcher">
+      <button class="view-mode-btn active" id="btnViewStudio" onclick="window.setViewLayoutMode('studio')" title="Mostrar Palco 3D + Trilha juntos na mesma tela">
+        🎛️ Completo
+      </button>
+      <button class="view-mode-btn" id="btnViewProjector" onclick="window.setViewLayoutMode('projector')" title="Deixar APENAS a Imagem/Palco 3D em tela cheia para o Projetor/TV">
+        🖥️ Só Telão (Imagem)
+      </button>
+      <button class="view-mode-btn" id="btnViewPresenter" onclick="window.setViewLayoutMode('presenter')" title="Deixar APENAS a Trilha + Teleprompter Gigante para o Apresentador">
+        🎙️ Só Trilha (Controle)
+      </button>
+      <a href="/slideshow-hyperframes.html?mode=presenter" target="_blank" class="view-mode-btn" style="color:#FFCC29;" title="Abrir a Trilha do Apresentador em uma janela separada para colocar no segundo monitor">
+        🪟 Destacar Trilha ↗
+      </a>
+    </div>
+
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="btnModeStaff" onclick="window.switchDeckMode('staff')">
+        👥 Equipe (60m)
+      </button>
+      <button class="mode-btn" id="btnModePatient" onclick="window.switchDeckMode('patient')">
+        📱 Paciente
+      </button>
+    </div>
+
+    <div class="nav-actions">
+      <span class="sync-indicator" title="Sincronizado em tempo real com outras janelas e dispositivos">
+        <span class="sync-dot"></span> Sync Ativo
+      </span>
+      <button class="btn-gold" id="btnAutoplay" onclick="window.toggleAutoplay()">
+        ▶️ Auto
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main class="studio-layout">
+
+    <!-- Left Stage: 3D WebGL Canvas + Interactive Phone Rig -->
+    <section class="stage-container" id="stageContainer">
+      <!-- Dedicated Three.js WebGL Mount -->
+      <div id="threeStageMount"></div>
+
+      <!-- Kinetic Title -->
+      <div class="stage-kinetic-header">
+        <div class="kinetic-badge" id="kineticBadge">Bloco 1 • 00 a 15 Min</div>
+        <h2 class="kinetic-main-title" id="kineticTitle">Ecossistema <span>Bertuol Flow v1.4</span></h2>
+        <p class="kinetic-desc" id="kineticDesc">Conexão em tempo real entre Clinicorp, Operação Clínica e Clube Sorriso PWA.</p>
+      </div>
+
+      <!-- 3D Phone Mockup Stage -->
+      <div class="mockup-wrapper">
+        <div class="phone-body" id="phoneBody">
+          <div class="phone-island">
+            <div class="island-dot"></div>
+            <div class="island-dot" style="background: #080d14;"></div>
+          </div>
+
+          <!-- Smartphone Screen Content -->
+          <div class="phone-screen" id="phoneScreen">
+
+            <!-- App Screen Header -->
+            <div class="screen-header-bar">
+              <div class="patient-greet">
+                <h2 id="patientNameText">Bertuol Flow v1.4</h2>
+                <p id="patientClinicText">Palmas & Paraíso • Multi-Tenant</p>
+              </div>
+              <div class="points-pill" id="patientPointsPill">
+                ⚡ <span id="pointsValueText">v1.4.0</span>
+              </div>
+            </div>
+
+            <!-- App Screen Dynamic Body -->
+            <div class="screen-body" id="screenBody">
+              <!-- Content rendered dynamically per slide -->
+            </div>
+
+            <!-- Virtual Touch Pointer -->
+            <div class="touch-cursor" id="touchCursor"></div>
+
+          </div>
+        </div>
+
+        <!-- Floating Callout Badge -->
+        <div class="floating-stage-callout" id="stageCallout">
+          <div class="callout-icon" id="calloutIcon">👑</div>
+          <div class="callout-text">
+            <h5 id="calloutTitle">Produção v1.4</h5>
+            <p id="calloutSub">6.285+ Clientes Sincronizados</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Unified Bottom Control Dock -->
+      <div class="stage-timeline" id="stageTimelineDock">
+        <div class="dock-header-row">
+          <div class="timeline-progress-bar">
+            <div class="timeline-fill" id="timelineFill"></div>
+          </div>
+          <button class="btn-collapse-dock" id="btnToggleDock" onclick="window.toggleStageDock()">
+            ▾ Ocultar Controles (Tecla H)
+          </button>
+        </div>
+
+        <div class="timeline-controls">
+          <div class="timeline-btns">
+            <button class="btn-icon" onclick="window.prevSlide()" title="Slide Anterior (Seta Esquerda)">◀</button>
+            <button class="btn-icon" onclick="window.playCurrentAnimation()" title="Repetir Coreografia 3D">🔄</button>
+            <button class="btn-icon" onclick="window.nextSlide()" title="Próximo Slide (Seta Direita)">▶</button>
+          </div>
+
+          <div class="slide-step-indicator" id="slideStepIndicator">
+            Slide <span id="currentSlideNum">1</span> de <span id="totalSlidesNum">8</span>
+          </div>
+
+          <div class="controls-3d-group">
+            <button class="btn-3d-chip active" id="btnCamAuto" onclick="window.setCameraMode('auto')" title="Coreografia 3D sincronizada com o slide + paralaxe do mouse">
+              🌐 3D Sincronizado
+            </button>
+            <button class="btn-3d-chip" id="btnCamOrbit" onclick="window.setCameraMode('orbit')" title="Arraste com o mouse no palco para girar em 360 graus">
+              🖱️ Giro Livre 3D
+            </button>
+            <button class="btn-3d-chip" onclick="window.triggerSpin360()" title="Dar um giro 360 graus nos elementos 3D e celular">
+              ✨ Giro 360°
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Sidebar: Interactive Storyboard & Presenter Script -->
+    <aside class="storyboard-sidebar">
+      <!-- Dedicated Command Bar shown when in Presenter Trail Mode (?mode=presenter) -->
+      <div class="presenter-command-bar">
+        <div class="presenter-top-controls">
+          <div class="presenter-big-btns">
+            <button class="btn-presenter-nav" onclick="window.prevSlide()">
+              ◀ Slide Anterior
+            </button>
+            <button class="btn-presenter-nav" onclick="window.nextSlide()">
+              Próximo Slide ▶
+            </button>
+            <button class="btn-secondary" onclick="window.triggerRemoteSpin360()">
+              ✨ Girar 3D no Telão
+            </button>
+          </div>
+
+          <div class="timer-box">
+            <span style="font-size:11px; color:#94A3B8;">⏱️ CRONÔMETRO 60M:</span>
+            <span class="timer-digits" id="presenterTimerText">00:00</span>
+            <button class="btn-secondary" style="padding:4px 9px; font-size:11px;" id="btnTimerToggle" onclick="window.togglePresenterTimer()">
+              ▶ Iniciar
+            </button>
+            <button class="btn-secondary" style="padding:4px 9px; font-size:11px;" onclick="window.resetPresenterTimer()">
+              ↺
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:12px; color:#5EEAD4; font-weight:700;">
+            🖥️ <span id="presenterCurrentSlideBanner">Slide 1 no Telão</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11px; color:#94A3B8; font-weight:700;">Projetar no Telão:</span>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl(null)">
+              🎬 Palco 3D (Slides)
+            </button>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/')">
+              🩺 Painel Clínica Ao Vivo
+            </button>
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/?app=paciente')">
+              📱 Portal Paciente Ao Vivo
+            </button>
+            <a href="/slideshow-hyperframes.html?mode=projector" target="_blank" class="btn-gold" style="padding:5px 10px; font-size:11px;">
+              🖥️ Abrir Janela do Telão ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-header">
+        <h3 id="sidebarHeaderTitle">Roteiro de 60 Minutos (Plenária + Perfis)</h3>
+        <span class="badge-status" id="sidebarBadgeStatus">Palco 3D Ativo</span>
+      </div>
+
+      <!-- Slides List -->
+      <div class="slides-accordion" id="slidesAccordion">
+        <!-- Rendered by JavaScript -->
+      </div>
+
+      <!-- Active Script Detail (Speaker Notes & Formatting Tips) -->
+      <div class="active-script-detail" id="activeScriptDetail">
+        <div class="detail-row">
+          <span class="detail-label" id="detailLabelPrimary">🎙️ Teleprompter • Fala do Apresentador (Sincronizada com o Telão)</span>
+          <div class="detail-voiceover" id="scriptVoiceover"></div>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">💡 Coreografia 3D & Demonstração Ao Vivo</span>
+          <div class="detail-sfx" id="scriptSfx"></div>
+        </div>
+        <div class="detail-row" id="nextSlidePreviewRow" style="margin-top:4px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.12);">
+          <span class="detail-label" style="color:#38BDF8;">⏭️ Próxima Etapa na Trilha:</span>
+          <div id="nextSlidePreviewText" style="font-size:12px; color:#94A3B8; font-weight:600;"></div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <script>
+    // ============================================================================
+    // DEFINIÇÃO DOS SLIDES COM COREOGRAFIA 3D (MODO EQUIPE 60M & MODO PACIENTE)
+    // ============================================================================
+    window.STAFF_SLIDES = [
+      {
+        id: 1,
+        title: "Abertura & Ecossistema Bertuol Flow v1.4",
+        titleHtml: "Ecossistema <span>Bertuol Flow v1.4</span>",
+        desc: "Bloco 1 (Plenária Geral) • Rede Neural 3D conectando Clinicorp, Operação Clínica e Clube Sorriso.",
+        badge: "Bloco 1 • Minutos 00 a 08 (Plenária)",
+        duration: "00:00 - 08:00 (8 min)",
+        headerTitle: "Bertuol Flow v1.4",
+        headerSub: "Palmas & Paraíso • Produção",
+        points: "6.285+ Pac.",
+        callout: {
+          icon: "🚀",
+          title: "Ecossistema 360° em 3D",
+          sub: "Clinicorp + Operação + Paciente",
+          show: true
+        },
+        voiceover: "Bem-vindos ao lançamento oficial do Bertuol Flow v1.4! Veja no palco 3D como conectamos as 3 pontas em tempo real: o Clinicorp ERP, a operação clínica e os 6.285+ pacientes do Clube Sorriso.",
+        sfx: "3D: Rede Neural 3 Pontas + Escudo e Dente",
+        motion: "Pose Frontal Imponente • Feixes de Dados",
+        touchTarget: { x: 170, y: 190 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: -6, rotZ: 0, scale: 1.0 },
+          cameraPos: { x: 0, y: 0.4, z: 9.2 },
+          showTooth: true,
+          toothPos: { x: -4.1, y: 0.5, z: 0.8, scale: 1.05 },
+          showShield: true,
+          shieldPos: { x: 4.1, y: 0.5, z: 0.8, scale: 1.05 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.2
+        },
+        renderScreen: () => `
+          <div class="club-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:800; color:#FFCC29;">ECOSSISTEMA INTEGRADO v1.4</span>
+              <span style="font-size:10px; background:rgba(255,255,255,0.18); padding:2px 8px; border-radius:99px;">Tempo Real</span>
+            </div>
+            <div style="font-size:16px; font-weight:900;">3 Pontas Conectadas</div>
+            <div style="font-size:11px; opacity:0.92; line-height:1.45;">
+              1. <b>Clinicorp ERP</b>: Agendamentos e profissionais<br/>
+              2. <b>Bertuol Flow</b>: Recepção, Dentistas e CRM<br/>
+              3. <b>Clube Sorriso PWA</b>: App no celular do paciente
+            </div>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">🔒 Isolamento Multi-Unidade (LGPD)</div>
+            <div class="appt-dr">Palmas - TO & Paraíso - TO</div>
+            <p style="font-size:11.5px; color:#475569; line-height:1.4;">
+              Cada colaborador enxerga uma interface limpa, travada automaticamente na sua unidade vinculada e apenas com as ferramentas do seu cargo.
+            </p>
+            <a href="/" target="_blank" class="btn-action-app gold">
+              👑 Demonstrar Barra Root Ao Vivo
+            </a>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "Segurança, Login Institucional & Face ID",
+        titleHtml: "Acesso Rápido com <span>Biometria & Face ID</span>",
+        desc: "Bloco 1 (Plenária Geral) • Troca de senha no 1º acesso e autenticação biométrica em 1 segundo.",
+        badge: "Bloco 1 • Minutos 08 a 15 (Plenária)",
+        duration: "08:00 - 15:00 (7 min)",
+        headerTitle: "Segurança & Acesso",
+        headerSub: "WebAuthn • Passkeys • LGPD",
+        points: "1 Toque",
+        callout: {
+          icon: "🔐",
+          title: "Biometria Ativa",
+          sub: "Login sem digitar senha",
+          show: true
+        },
+        voiceover: "No primeiro acesso com a senha inicial Bertuol@2026, o sistema pede para criar sua senha pessoal. Em seguida, ative a Biometria ou Face ID no menu para entrar em 1 segundo todos os dias.",
+        sfx: "3D: Feixes Ciano de Segurança LGPD",
+        motion: "Tilt Lateral Esquerdo (-14°) + Escudo Protetor",
+        touchTarget: { x: 170, y: 260 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: 14, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: -1.1, y: 0.6, z: 8.8 },
+          showTooth: false,
+          toothPos: { x: -6.0, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.7, z: 1.4, scale: 1.25 },
+          neuralColor: 0x38BDF8,
+          beamColor: 0x10B981,
+          pulseSpeed: 1.6
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status checkedin">🔑 Passo a Passo do Colaborador</div>
+            <div class="appt-dr">1º Acesso & Biometria Facial</div>
+            <div style="font-size:11.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+              <div>✅ <b>Passo 1:</b> Login com e-mail + senha inicial</div>
+              <div>✅ <b>Passo 2:</b> Definir senha pessoal segura</div>
+              <div>✅ <b>Passo 3:</b> Ativar Face ID / Digital do aparelho</div>
+            </div>
+          </div>
+
+          <div class="appt-card" style="background:#FFFBEB; border-color:#FDE68A;">
+            <div class="appt-status">📱 Visão do Paciente (Clube Sorriso)</div>
+            <div class="appt-dr">O que o cliente vê no celular?</div>
+            <p style="font-size:11px; color:#78350F;">
+              Carteira de pontos, roleta premiada, missões de higiene e check-in sem fila.
+            </p>
+            <a href="/?app=paciente" target="_blank" class="btn-action-app">
+              📲 Abrir Portal do Paciente (?app=paciente)
+            </a>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "Trilha Recepção: Totem QR & Check-in",
+        titleHtml: "Recepção: <span>Totem QR & Check-in</span>",
+        desc: "Bloco 2 (Recepção) • Cápsulas de vidro 3D flutuantes destacam +30 pontos do Clube Sorriso no balcão.",
+        badge: "Bloco 2 • Minutos 15 a 20 (Recepção)",
+        duration: "15:00 - 20:00 (5 min)",
+        headerTitle: "Perfil: 🛎️ Recepção",
+        headerSub: "🔒 Unidade Vinculada (Palmas/Paraíso)",
+        points: "+30 pts",
+        callout: {
+          icon: "🛎️",
+          title: "Alerta Instantâneo!",
+          sub: "Toque sonoro na tela do Dentista",
+          show: true
+        },
+        voiceover: "Mudando na Barra Root para o perfil Recepção: veja como a unidade já fica travada com cadeado. Quando o paciente chega e escaneia o Totem QR de Balcão, os pontos são creditados na hora e o dentista recebe um aviso sonoro imediato.",
+        sfx: "3D: Cápsulas de Vidro Douradas em Destaque",
+        motion: "Perspectiva de Balcão (-12°) + Cápsulas Flutuantes",
+        touchTarget: { x: 170, y: 210 },
+        scene3D: {
+          phonePose: { rotX: 7, rotY: -13, rotZ: 1, scale: 1.02 },
+          cameraPos: { x: 1.2, y: 0.3, z: 8.6 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: -3.8, y: 0.5, z: 1.6, scale: 1.4 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.0
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">📍 Totem QR Code de Balcão</div>
+            <div class="appt-dr">Zero Fila na Recepção</div>
+            <p style="font-size:11.5px; color:#475569;">
+              O paciente aponta a câmera para o acrílico na recepção → confirma chegada → ganha <b>+30 pontos</b> de pontualidade.
+            </p>
+            <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:8px 10px; border-radius:10px; font-size:11px; color:#1E40AF; font-weight:700;">
+              🔔 O consultório recebe o alerta visual + som suave imediatamente!
+            </div>
+          </div>
+
+          <div class="reward-item-row">
+            <div class="reward-info">
+              <h4>Baixa de Vouchers no Balcão</h4>
+              <p>Valide o código do prêmio resgatado pelo cliente</p>
+            </div>
+            <span style="font-size:11px; font-weight:800; color:#147A80;">1 Clique</span>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "Central de Credenciais (6.285+ Clientes)",
+        titleHtml: "Busca Instantânea em <span>6.285+ Clientes</span>",
+        desc: "Bloco 2 (Recepção) • Constelação de dados 3D converge enquanto a busca acha qualquer cliente por nome.",
+        badge: "Bloco 2 • Minutos 20 a 30 (Recepção)",
+        duration: "20:00 - 30:00 (10 min)",
+        headerTitle: "Central de Credenciais",
+        headerSub: "6.285+ Pacientes • Busca por Nome",
+        points: "Busca A-Z",
+        callout: {
+          icon: "⚡",
+          title: "Busca no Topo!",
+          sub: "Sem rolar a tela • Envio WhatsApp",
+          show: true
+        },
+        voiceover: "Antes, achar um paciente na base grande dava trabalho. Agora, na Central de Credenciais reorganizada, a busca por nome fica no topo! Digite o nome, filtre de A a Z e envie o acesso pronto direto no WhatsApp do cliente.",
+        sfx: "3D: Constelação de 6.285+ Nós Convergindo",
+        motion: "Zoom Focado no Topo + Feixes Esmeralda",
+        touchTarget: { x: 170, y: 165 },
+        scene3D: {
+          phonePose: { rotX: -5, rotY: 5, rotZ: 0, scale: 1.05 },
+          cameraPos: { x: 0, y: 0.8, z: 8.2 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 4.1, y: -0.3, z: 0.9, scale: 1.0 },
+          neuralColor: 0x10B981,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 2.4
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight" style="gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="appt-status confirmed">🔎 Barra de Comando Compacta</span>
+              <span style="font-size:10px; font-weight:800; color:#0F766E;">6.285+ Clientes</span>
+            </div>
+            <div style="background:#F8FAFC; border:2px solid #147A80; border-radius:10px; padding:8px 10px; font-size:12px; font-weight:700; color:#0F172A;">
+              🔍 Buscar paciente por NOME (ex: Maria Silva)...
+            </div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:2px;">
+              <span style="background:#0F172A; color:#FFF; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Todos</span>
+              <span style="background:#D1FAE5; color:#065F46; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Ativos</span>
+              <span style="background:#FEF3C7; color:#92400E; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Pendentes</span>
+              <span style="background:#E2E8F0; color:#334155; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:6px;">Filtro A–Z</span>
+            </div>
+          </div>
+
+          <div class="appt-card">
+            <div class="appt-dr">Envio de Credencial via WhatsApp</div>
+            <p style="font-size:11px; color:#64748B;">
+              Gere ou resete a senha temporária do paciente e envie a mensagem formatada com link direto para o Clube Sorriso.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "Trilha Dentista: Agenda Pessoal & Alertas",
+        titleHtml: "Dentista: <span>Visão Clínica & Alertas</span>",
+        desc: "Bloco 3 (Corpo Clínico) • Cápsulas de vidro 3D ciano orbitam o celular destacando o foco 100% clínico.",
+        badge: "Bloco 3 • Minutos 30 a 37 (Dentistas)",
+        duration: "30:00 - 37:00 (7 min)",
+        headerTitle: "Perfil: 🩺 Dentista",
+        headerSub: "Agenda Pessoal • Foco Clínico",
+        points: "Clinicorp Sync",
+        callout: {
+          icon: "🩺",
+          title: "Foco 100% Clínico",
+          sub: "Agenda pessoal + Alerta de chegada",
+          show: true
+        },
+        voiceover: "Agora simulando o perfil Dentista: percebam como o cabeçalho fica 100% focado na clínica! O doutor vê apenas sua própria agenda sincronizada com o Clinicorp e recebe o alerta no topo assim que o paciente chega.",
+        sfx: "3D: Cápsulas de Vidro Clínicas + Anéis de Diagnóstico",
+        motion: "Inclinação Clínica (12°) + Órbita de Vidro 3D",
+        touchTarget: { x: 170, y: 200 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: 13, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: -0.9, y: 0.3, z: 8.6 },
+          showTooth: true,
+          toothPos: { x: -3.7, y: 0.4, z: 1.7, scale: 1.45 },
+          showShield: false,
+          shieldPos: { x: 6.5, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0x38BDF8,
+          pulseSpeed: 1.3
+        },
+        renderScreen: () => `
+          <div style="background:#ECFDF5; border:2px solid #10B981; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">🔔</span>
+            <div>
+              <div style="font-size:11.5px; font-weight:800; color:#065F46;">Paciente chegou na recepção!</div>
+              <div style="font-size:10.5px; color:#047857;">Check-in confirmado via Totem • Sala pronta</div>
+            </div>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status">Hoje • 14:30 • Ortodontia</div>
+            <div class="appt-dr">Paciente agendado no Clinicorp</div>
+            <div class="appt-time">📍 Unidade Vinculada • Sincronização Automática</div>
+            <p style="font-size:11px; color:#475569;">
+              Filtre sua agenda do dia por categoria (Avaliação, Implante, Ortodontia, Urgência) com 1 toque.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "Resumo Clínico IA, Vouchers & Chat Interno",
+        titleHtml: "Resumo com <span>Inteligência Artificial</span>",
+        desc: "Bloco 3 (Corpo Clínico) • Cápsulas de vidro 3D + Sinapses IA antes de chamar o paciente.",
+        badge: "Bloco 3 • Minutos 37 a 45 (Dentistas)",
+        duration: "37:00 - 45:00 (8 min)",
+        headerTitle: "Prontuário & IA",
+        headerSub: "Resumo Executivo • Clube Sorriso",
+        points: "IA Ativa",
+        callout: {
+          icon: "✨",
+          title: "Sinapse Clínica IA",
+          sub: "Histórico + Clube Sorriso no cabeçalho",
+          show: true
+        },
+        voiceover: "Ao tocar no card do paciente, o dentista lê o Resumo Executivo gerado por IA com o histórico clínico. E na v1.4, o dentista também consulta os vouchers e pontos do Clube Sorriso do seu paciente direto no cabeçalho!",
+        sfx: "3D: Cápsulas de Vidro + Feixes IA",
+        motion: "Paralaxe Dupla + Anéis Orbitais Rápidos",
+        touchTarget: { x: 170, y: 240 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: -10, rotZ: 1.2, scale: 1.03 },
+          cameraPos: { x: 0.4, y: 0.5, z: 8.7 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.6, z: 1.3, scale: 1.25 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.4, z: 1.3, scale: 1.15 },
+          neuralColor: 0x818CF8,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.2
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status checkedin">✨ Resumo Executivo com IA</div>
+            <div class="appt-dr">Preparação antes de chamar o paciente</div>
+            <p style="font-size:11px; color:#334155; background:#F8FAFC; padding:8px; border-radius:8px; border:1px solid #E2E8F0;">
+              "Paciente em manutenção ortodôntica mensal. Sensibilidade relatada no quadrante inferior direito na última sessão."
+            </p>
+          </div>
+
+          <div class="reward-item-row" style="border-color:#F59E0B; background:#FFFBEB;">
+            <div class="reward-info">
+              <h4>🎁 Atalho Clube Sorriso & Vouchers</h4>
+              <p>Acesso de leitura liberado no topo para o Dentista</p>
+            </div>
+            <span style="font-size:10.5px; font-weight:800; color:#B45309;">NOVO v1.4</span>
+          </div>
+
+          <div class="reward-item-row">
+            <div class="reward-info">
+              <h4>💬 Mensageria Interna (Texto e Áudio)</h4>
+              <p>Fale com a recepção sem usar WhatsApp pessoal</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 7,
+        title: "Trilha Gerência Multiclínica & CRM Recall",
+        titleHtml: "Gerência: <span>Multi-Unidade & CRM 6m+</span>",
+        desc: "Bloco 4 (Gestão) • Ponte 3D conectando Palmas e Paraíso + reativação comercial no WhatsApp.",
+        badge: "Bloco 4 • Minutos 45 a 52 (Gerência)",
+        duration: "45:00 - 52:00 (7 min)",
+        headerTitle: "Perfil: 👔 Gerência",
+        headerSub: "Palmas + Paraíso • CRM Comercial",
+        points: "Multi-Clínica",
+        callout: {
+          icon: "🎯",
+          title: "Ponte Palmas ↔ Paraíso",
+          sub: "Reativação automática via WhatsApp",
+          show: true
+        },
+        voiceover: "Para a Gerência Multiclínica, o seletor de unidades fica totalmente liberado entre Palmas, Paraíso e Visão Global. No botão CRM, identificamos todos os pacientes que não retornam há mais de 6 meses para disparo imediato de retorno.",
+        sfx: "3D: Rede Neural Multi-Clínica Dourada",
+        motion: "Visão Panorâmica Executiva (rotX: 10°)",
+        touchTarget: { x: 170, y: 185 },
+        scene3D: {
+          phonePose: { rotX: 9, rotY: 8, rotZ: 0, scale: 1.01 },
+          cameraPos: { x: 0, y: 1.1, z: 9.4 },
+          showTooth: true,
+          toothPos: { x: -4.3, y: -0.2, z: 0.6, scale: 1.0 },
+          showShield: true,
+          shieldPos: { x: 4.3, y: -0.2, z: 0.6, scale: 1.2 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x38BDF8,
+          pulseSpeed: 1.8
+        },
+        renderScreen: () => `
+          <div class="club-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:800; color:#FFCC29;">VISÃO GLOBAL MULTICLÍNICA</span>
+              <span style="font-size:10px; font-weight:800;">Palmas + Paraíso</span>
+            </div>
+            <div style="font-size:15px; font-weight:900;">Controle Consolidado de Agendas</div>
+            <p style="font-size:11px; opacity:0.9;">
+              Alterne entre todas as unidades e todos os dentistas sem expor ferramentas técnicas de código ou banco.
+            </p>
+          </div>
+
+          <div class="appt-card highlight">
+            <div class="appt-status">🎯 CRM • Recall Preventivo (6+ Meses)</div>
+            <div class="appt-dr">Pipeline de Reativação no WhatsApp</div>
+            <p style="font-size:11px; color:#475569;">
+              Filtre pacientes inativos por unidade, acompanhe o funil comercial e envie convites de profilaxia e check-up em 1 clique.
+            </p>
+          </div>
+        `
+      },
+      {
+        id: 8,
+        title: "Mão na Massa: Instalação PWA & Dúvidas",
+        titleHtml: "Prática Ao Vivo: <span>Instale no Celular</span>",
+        desc: "Bloco 4 (Encerramento) • Giro triunfal 3D com Cápsulas de Vidro Flutuantes e Rede Neural Completa.",
+        badge: "Bloco 4 • Minutos 52 a 60 (Prática & Q&A)",
+        duration: "52:00 - 60:00 (8 min)",
+        headerTitle: "Onboarding Ao Vivo",
+        headerSub: "PWA • Face ID • Central de Ajuda",
+        points: "100% Equipe",
+        callout: {
+          icon: "🏆",
+          title: "Todos Conectados!",
+          sub: "Ícone instalado na tela inicial",
+          show: true
+        },
+        voiceover: "Agora é mão na massa! Peguem seus celulares, acessem o link oficial, façam login trocando a senha inicial, adicionem o Bertuol Flow à Tela de Início e ativem o Face ID. Qualquer dúvida futura está a 1 clique na Central de Ajuda FAQ!",
+        sfx: "3D: Celebração Completa + Giro 360°",
+        motion: "Todos os Elementos 3D em Órbita Sincronizada",
+        touchTarget: { x: 170, y: 260 },
+        scene3D: {
+          phonePose: { rotX: 3, rotY: 0, rotZ: 0, scale: 1.04 },
+          cameraPos: { x: 0, y: 0.2, z: 8.5 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.5, z: 1.5, scale: 1.3 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.5, z: 1.5, scale: 1.3 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x10B981,
+          pulseSpeed: 2.5
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status confirmed">📲 Checklist Final (5 Minutos)</div>
+            <div class="appt-dr">Faça agora no seu celular:</div>
+            <div style="font-size:11.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+              <div>1️⃣ Acessar <b>bertuolflow.app-bertuol.tech</b></div>
+              <div>2️⃣ Trocar senha inicial <b>Bertuol@2026</b></div>
+              <div>3️⃣ Instalar na <b>Tela de Início (PWA)</b></div>
+              <div>4️⃣ Ativar <b>Biometria / Face ID</b> no menu</div>
+            </div>
+          </div>
+
+          <a href="/faq.html" target="_blank" class="btn-action-app gold">
+            ❓ Abrir Central de Ajuda (FAQ Interativo)
+          </a>
+        `
+      }
+    ];
+
+    window.PATIENT_SLIDES = [
+      {
+        id: 1,
+        title: "Confirme sua consulta em 1 toque",
+        titleHtml: "Confirme sua consulta em <span>1 toque</span>",
+        desc: "O paciente recebe o aviso no WhatsApp e acessa o PWA instantaneamente sem baixar nada.",
+        badge: "Slide 1 • Lembrete & Acesso Rápido",
+        duration: "00:00 - 00:04 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "40 pts",
+        callout: {
+          icon: "📅",
+          title: "Consulta Hoje às 18:00",
+          sub: "Dra. Ariane Bertuol • Palmas",
+          show: true
+        },
+        voiceover: "Olá Alice! Seu dia de cuidar do sorriso chegou. Sem filas nem telefonemas: com um simples toque, você confirma sua presença e já começa a acumular vantagens.",
+        sfx: "3D: Cápsulas de Vidro + Rede de Lembrete",
+        motion: "Tilt Suave 3D + Anéis Turquesa",
+        touchTarget: { x: 165, y: 250 },
+        scene3D: {
+          phonePose: { rotX: 5, rotY: -10, rotZ: 0, scale: 1.0 },
+          cameraPos: { x: -0.5, y: 0.3, z: 8.8 },
+          showTooth: true,
+          toothPos: { x: -3.8, y: 0.4, z: 1.4, scale: 1.3 },
+          showShield: false,
+          shieldPos: { x: 6, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x1FB5BD,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.4
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight">
+            <div class="appt-status">Hoje • 18:00</div>
+            <div class="appt-dr">Dra. Ariane Bertuol</div>
+            <div class="appt-time">📍 Matriz Palmas • Ortodontia & Alinhadores</div>
+            <div style="font-size: 11px; color: #64748B;">Procedimento: Consulta Odontológica & Retorno</div>
+            <button class="btn-action-app gold">
+              ✅ Confirmar Presença (+10 pts)
+            </button>
+          </div>
+
+          <div class="club-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700;">Clube Sorriso Bertuol</span>
+              <span style="font-size:11px; color:#FFCC29; font-weight:800;">Nível Bronze</span>
+            </div>
+            <div style="font-size:20px; font-weight:900;">40 Pontos Acumulados</div>
+            <div style="font-size:11px; opacity:0.85;">Faltam apenas 60 pontos para o seu primeiro resgate!</div>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "Confirmação & Recompensa Imediata",
+        titleHtml: "Confirmação & <span>Recompensa Imediata</span>",
+        desc: "A presença é registrada no sistema e o paciente ganha +10 pontos na hora.",
+        badge: "Slide 2 • Gamificação na Confirmação",
+        duration: "00:04 - 00:08 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "50 pts",
+        callout: {
+          icon: "⭐",
+          title: "Presença Confirmada!",
+          sub: "+10 Pontos creditados na sua conta",
+          show: true
+        },
+        voiceover: "Ao confirmar, sua vaga é garantida e o sistema credita 10 pontos instantaneamente no seu Clube Sorriso. É a clínica valorizando a sua pontualidade.",
+        sfx: "3D: Cápsulas de Vidro Clube Sorriso Ativadas",
+        motion: "Giro Dourado + Feixes de Pontuação",
+        touchTarget: { x: 165, y: 230 },
+        scene3D: {
+          phonePose: { rotX: 4, rotY: 11, rotZ: -1, scale: 1.02 },
+          cameraPos: { x: 0.7, y: 0.4, z: 8.6 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: 3.8, y: 0.5, z: 1.5, scale: 1.35 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x10B981,
+          pulseSpeed: 2.0
+        },
+        renderScreen: () => `
+          <div class="appt-card" style="border: 2px solid #10B981; background: #F0FDF4;">
+            <div class="appt-status confirmed">✅ Presença Garantida</div>
+            <div class="appt-dr">Dra. Ariane Bertuol • 18:00</div>
+            <div class="appt-time">Consultório avisado com antecedência</div>
+            <div style="background: #DCFCE7; color: #166534; font-size: 11px; padding: 6px 10px; border-radius: 8px; font-weight: 700; text-align: center;">
+              🎉 +10 Pontos adicionados com sucesso!
+            </div>
+          </div>
+
+          <div class="club-preview-card" style="background: linear-gradient(135deg, #147A80 0%, #1FB5BD 100%);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700;">Saldo Atualizado</span>
+              <span style="font-size:11px; color:#FFCC29; font-weight:800;">50 pts</span>
+            </div>
+            <div style="font-size:20px; font-weight:900;">Você subiu para 50 Pontos!</div>
+            <div style="font-size:11px; opacity:0.9;">Próximo passo: faça seu check-in ao chegar para ganhar +20 pts.</div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "Chegou na clínica? Check-in Silencioso",
+        titleHtml: "Chegou na clínica? <span>Check-in Silencioso</span>",
+        desc: "Basta aproximar o celular no Totem ou tocar no botão para avisar a recepção e o dentista.",
+        badge: "Slide 3 • Check-in sem Fila",
+        duration: "00:08 - 00:13 (5s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "70 pts",
+        callout: {
+          icon: "⚡",
+          title: "Check-in Realizado!",
+          sub: "Dra. Ariane sabe que você chegou",
+          show: true
+        },
+        voiceover: "Chegando à clínica Bertuol em Palmas ou Paraíso, esqueça filas na recepção. Com um toque no app ou aproximando o QR Code no totem, seu dentista já recebe o alerta na sala clínica.",
+        sfx: "3D: Ponte Recepção → Consultório",
+        motion: "Cápsulas 3D em Sincronia Orbital",
+        touchTarget: { x: 165, y: 220 },
+        scene3D: {
+          phonePose: { rotX: 7, rotY: -12, rotZ: 1, scale: 1.02 },
+          cameraPos: { x: 0, y: 0.5, z: 8.7 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.4, z: 1.2, scale: 1.2 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.4, z: 1.2, scale: 1.2 },
+          neuralColor: 0x38BDF8,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.8
+        },
+        renderScreen: () => `
+          <div class="appt-card highlight" style="background: #F8FAFC;">
+            <div class="appt-status checkedin">📍 Totem de Entrada Ativo</div>
+            <div class="appt-dr">Unidade Matriz Palmas • JK</div>
+            <p style="font-size: 11px; color: #64748B;">Aproxime do leitor óptico do Totem ou toque abaixo:</p>
+            <button class="btn-action-app" style="background: #0E585D;">
+              📱 Confirmar Chegada no Totem (+20 pts)
+            </button>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 14px; border: 1px solid #E2E8F0; display:flex; align-items:center; gap:12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: #E0F2FE; color: #0369A1; display:flex; align-items:center; justify-content:center; font-size:20px;">
+              🛡️
+            </div>
+            <div>
+              <h5 style="font-size: 12px; font-weight: 800; color: #0F172A;">Recepção Inteligente</h5>
+              <p style="font-size: 11px; color: #64748B;">Seu status mudou para 'Na Recepção' no painel da clínica.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "Explore o Catálogo de Prêmios",
+        titleHtml: "Explore o <span>Catálogo de Prêmios</span>",
+        desc: "O paciente acessa o Clube Sorriso e escolhe entre profilaxia, kits e descontos.",
+        badge: "Slide 4 • Catálogo & Recompensas",
+        duration: "00:13 - 00:17 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "120 pts",
+        callout: {
+          icon: "🎁",
+          title: "Catálogo Liberado!",
+          sub: "Você possui pontos suficientes para resgate",
+          show: true
+        },
+        voiceover: "Seu saldo cresceu! Na aba Recompensas, você escolhe entre profilaxia gratuita com Sky Câmera, kits especiais de higiene e descontos exclusivos.",
+        sfx: "3D: Escudo de Ouro + Satélites de Prêmios",
+        motion: "Destaque no Prêmio Profilaxia + Sky Câmera",
+        touchTarget: { x: 165, y: 160 },
+        scene3D: {
+          phonePose: { rotX: -4, rotY: 12, rotZ: 0, scale: 1.03 },
+          cameraPos: { x: 0.8, y: 0.3, z: 8.5 },
+          showTooth: false,
+          toothPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          showShield: true,
+          shieldPos: { x: -3.7, y: 0.5, z: 1.6, scale: 1.45 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.1
+        },
+        renderScreen: () => `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size: 13px; font-weight: 800; color: #0F172A;">Prêmios Disponíveis</span>
+            <span style="font-size: 11px; color: #0E585D; font-weight: 700;">Saldo: 120 pts</span>
+          </div>
+
+          <div class="reward-item-row" style="border: 2px solid #FFCC29; background: #FFFBEB;">
+            <div class="reward-info">
+              <h4>Profilaxia & Sky Câmera</h4>
+              <p>Limpeza profunda e diagnóstico digital</p>
+              <span style="font-size: 10px; font-weight: 800; color: #D97706;">100 PONTOS</span>
+            </div>
+            <button class="btn-action-app gold" style="width: auto; padding: 6px 12px; font-size: 11px;">
+              Resgatar
+            </button>
+          </div>
+
+          <div class="reward-item-row">
+            <div class="reward-info">
+              <h4>Kit Higiene Oral Premium</h4>
+              <p>Escova ultra macia + fio dental Bertuol</p>
+              <span style="font-size: 10px; font-weight: 800; color: #64748B;">60 PONTOS</span>
+            </div>
+            <button class="btn-action-app" style="width: auto; padding: 6px 12px; font-size: 11px; background: #E2E8F0; color: #475569;">
+              Ver
+            </button>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "Resgate em 1 Toque & Geração de Voucher",
+        titleHtml: "Resgate em 1 Toque & <span>Voucher na Tela</span>",
+        desc: "O sistema debita os pontos e gera um Voucher com QR Code pronto para uso.",
+        badge: "Slide 5 • Voucher Digital Instantâneo",
+        duration: "00:17 - 00:22 (5s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "20 pts",
+        callout: {
+          icon: "🎟️",
+          title: "Voucher Gerado!",
+          sub: "Válido por 30 dias na Matriz ou Paraíso",
+          show: true
+        },
+        voiceover: "Com um único toque, seu voucher é gerado na hora com QR Code seguro. Não precisa imprimir papel nem mandar e-mail: fica salvo no seu próprio app.",
+        sfx: "3D: Dente Cristalino + Feixes Esmeralda",
+        motion: "Zoom no Voucher QR Code",
+        touchTarget: { x: 165, y: 310 },
+        scene3D: {
+          phonePose: { rotX: 6, rotY: -8, rotZ: 0, scale: 1.04 },
+          cameraPos: { x: -0.6, y: 0.4, z: 8.4 },
+          showTooth: true,
+          toothPos: { x: 3.8, y: 0.5, z: 1.5, scale: 1.35 },
+          showShield: false,
+          shieldPos: { x: -6, y: 0, z: -2, scale: 0.01 },
+          neuralColor: 0x10B981,
+          beamColor: 0xFFCC29,
+          pulseSpeed: 1.9
+        },
+        renderScreen: () => `
+          <div class="voucher-card-active">
+            <span style="font-size: 11px; font-weight: 800; color: #065F46; text-transform: uppercase;">
+              Voucher Ativo • Clube Bertuol
+            </span>
+            <div class="voucher-code">PROFI-SKY-8426</div>
+            <div class="qr-mock">
+              <svg width="84" height="84" viewBox="0 0 24 24" fill="#0E585D">
+                <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h-4v2h2v2h-2v2h4v-2h2v-4h-2zm-4-2h2v2h-2v-2zm4 0h2v2h-2v-2zm-2 6h2v2h-2v-2zM6 6h2v2H6V6zm12 0h2v2h-2V6zM6 18h2v2H6v-2z"/>
+              </svg>
+            </div>
+            <p style="font-size: 11px; color: #047857; font-weight: 600;">Profilaxia & Diagnóstico Sky Câmera</p>
+            <p style="font-size: 10px; color: #64748B;">Apresente este código na recepção no seu atendimento.</p>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "Experiência Completa, Sem Atritos",
+        titleHtml: "Experiência Completa, <span>Sem Atritos</span>",
+        desc: "Pontualidade, fidelização e saúde bucal integradas em uma única jornada moderna.",
+        badge: "Slide 6 • Encerramento & Retenção",
+        duration: "00:22 - 00:26 (4s)",
+        headerTitle: "Alice Póvoa",
+        headerSub: "Matriz Palmas • 104 Sul",
+        points: "Nível Ouro",
+        callout: {
+          icon: "🏆",
+          title: "Parabéns, Paciente Ouro!",
+          sub: "Próxima consulta com benefícios premium",
+          show: true
+        },
+        voiceover: "Assim é a Bertuol Odontologia: o cuidado de uma equipe de excelência com a conveniência da melhor tecnologia na palma da sua mão.",
+        sfx: "3D: Dente Cristalino + Escudo Ouro VIP",
+        motion: "Celebração 3D Completa",
+        touchTarget: { x: 165, y: 200 },
+        scene3D: {
+          phonePose: { rotX: 3, rotY: 0, rotZ: 0, scale: 1.03 },
+          cameraPos: { x: 0, y: 0.3, z: 8.6 },
+          showTooth: true,
+          toothPos: { x: -3.9, y: 0.5, z: 1.4, scale: 1.3 },
+          showShield: true,
+          shieldPos: { x: 3.9, y: 0.5, z: 1.4, scale: 1.3 },
+          neuralColor: 0xFFCC29,
+          beamColor: 0x1FB5BD,
+          pulseSpeed: 2.3
+        },
+        renderScreen: () => `
+          <div style="background: linear-gradient(135deg, #147A80 0%, #0A4346 100%); border-radius: 18px; padding: 20px; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #FFCC29; color: #0E585D; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;">
+              👑
+            </div>
+            <h3 style="font-size: 15px; font-weight: 800;">Você é Paciente VIP Bertuol</h3>
+            <p style="font-size: 11px; opacity: 0.9; line-height: 1.4;">
+              Check-in automático, lembretes pontuais e pontos que viram saúde e estética para o seu sorriso.
+            </p>
+            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 100px; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #FFCC29;">
+              📲 bertuolflow.app-bertuol.tech/?app=paciente
+            </div>
+          </div>
+        `
+      }
+    ];
+
+    // ============================================================================
+    // CONTROLE DE INTERFACE DOS SLIDES
+    // ============================================================================
+    window.activeDeckMode = 'staff';
+    window.currentSlideIndex = 0;
+    window.autoplayInterval = null;
+    window.isAutoplayRunning = false;
+    window.targetScene3DState = window.STAFF_SLIDES[0].scene3D;
+
+    // ============================================================================
+    // SINCRONIZAÇÃO EM TEMPO REAL ENTRE TELÃO (?mode=projector) E TRILHA (?mode=presenter)
+    // ============================================================================
+    window.instanceSenderId = 'tab_' + Math.random().toString(36).slice(2, 10);
+    window.isApplyingRemoteSync = false;
+    window.presentationChannel = typeof BroadcastChannel !== 'undefined'
+      ? new BroadcastChannel('bertuol_presentation_sync')
+      : null;
+
+    window.broadcastPresentationState = function(extra = {}) {
+      if (window.isApplyingRemoteSync) return;
+      const payload = {
+        deckMode: window.activeDeckMode,
+        slideIndex: window.currentSlideIndex,
+        senderId: window.instanceSenderId,
+        updatedAt: Date.now(),
+        ...extra,
+      };
+
+      // 1. Instant same-browser sync (< 1ms)
+      if (window.presentationChannel) {
+        try {
+          window.presentationChannel.postMessage(payload);
+        } catch (e) {}
+      }
+
+      // 2. Server-authoritative sync across devices (e.g., Smartphone Presenter -> Projector PC)
+      fetch('/api/presentation/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    };
+
+    window.applyIncomingSyncState = function(state) {
+      if (!state || state.senderId === window.instanceSenderId) return;
+      window.isApplyingRemoteSync = true;
+      try {
+        if (state.deckMode && state.deckMode !== window.activeDeckMode) {
+          window.switchDeckMode(state.deckMode, true);
+        }
+        if (typeof state.slideIndex === 'number' && state.slideIndex !== window.currentSlideIndex) {
+          window.renderSlide(state.slideIndex, true);
+        }
+        if (state.spinTrigger && state.spinTrigger !== window.lastSpinTrigger) {
+          window.lastSpinTrigger = state.spinTrigger;
+          if (window.triggerSpin360) window.triggerSpin360();
+        }
+        if (state.liveOverlayUrl !== undefined) {
+          window.applyLiveOverlayDom(state.liveOverlayUrl);
+        }
+      } finally {
+        window.isApplyingRemoteSync = false;
+      }
+    };
+
+    if (window.presentationChannel) {
+      window.presentationChannel.onmessage = (ev) => {
+        window.applyIncomingSyncState(ev.data);
+      };
+    }
+
+    // Connect to Server-Sent Events (SSE) for cross-device real-time sync
+    try {
+      const evtSource = new EventSource('/api/presentation/events');
+      evtSource.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data);
+          window.applyIncomingSyncState(data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+
+    window.applyLiveOverlayDom = function(url) {
+      const overlay = document.getElementById('projectorLiveOverlay');
+      const iframe = document.getElementById('projectorLiveIframe');
+      const title = document.getElementById('projectorLiveTitle');
+      if (!overlay || !iframe) return;
+      if (url) {
+        if (iframe.getAttribute('src') !== url) {
+          iframe.setAttribute('src', url);
+        }
+        title.innerText = url.includes('paciente')
+          ? 'Portal do Paciente & Clube Sorriso (/?app=paciente)'
+          : 'Painel da Clínica • Bertuol Flow v1.4 (/)';
+        overlay.classList.add('active');
+      } else {
+        overlay.classList.remove('active');
+        iframe.setAttribute('src', 'about:blank');
+      }
+    };
+
+    window.setLiveOverlayUrl = function(url) {
+      window.applyLiveOverlayDom(url);
+      window.broadcastPresentationState({ liveOverlayUrl: url });
+    };
+
+    window.triggerRemoteSpin360 = function() {
+      if (window.triggerSpin360) window.triggerSpin360();
+      const stamp = Date.now();
+      window.lastSpinTrigger = stamp;
+      window.broadcastPresentationState({ spinTrigger: stamp });
+    };
+
+    // View Layout Mode ('studio' | 'projector' | 'presenter')
+    window.setViewLayoutMode = function(viewMode) {
+      document.body.classList.remove('view-mode-projector', 'view-mode-presenter');
+      if (viewMode === 'projector') {
+        document.body.classList.add('view-mode-projector');
+      } else if (viewMode === 'presenter') {
+        document.body.classList.add('view-mode-presenter');
+      }
+
+      document.getElementById('btnViewStudio')?.classList.toggle('active', viewMode === 'studio');
+      document.getElementById('btnViewProjector')?.classList.toggle('active', viewMode === 'projector');
+      document.getElementById('btnViewPresenter')?.classList.toggle('active', viewMode === 'presenter');
+
+      // Update URL parameter cleanly without reload
+      try {
+        const url = new URL(window.location.href);
+        if (viewMode === 'studio') {
+          url.searchParams.delete('mode');
+        } else {
+          url.searchParams.set('mode', viewMode);
+        }
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      } catch (e) {}
+
+      // Trigger resize so Three.js canvas adjusts immediately when switching to Projector Mode
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 60);
+    };
+
+    // 60-Minute Presenter Stopwatch
+    window.presenterTimerSeconds = 0;
+    window.presenterTimerInterval = null;
+
+    window.formatTimerMMSS = function(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    };
+
+    window.togglePresenterTimer = function() {
+      const btn = document.getElementById('btnTimerToggle');
+      if (window.presenterTimerInterval) {
+        clearInterval(window.presenterTimerInterval);
+        window.presenterTimerInterval = null;
+        if (btn) btn.innerText = '▶ Retomar';
+      } else {
+        if (btn) btn.innerText = '⏸ Pausar';
+        window.presenterTimerInterval = setInterval(() => {
+          window.presenterTimerSeconds++;
+          const el = document.getElementById('presenterTimerText');
+          if (el) el.innerText = window.formatTimerMMSS(window.presenterTimerSeconds);
+        }, 1000);
+      }
+    };
+
+    window.resetPresenterTimer = function() {
+      if (window.presenterTimerInterval) {
+        clearInterval(window.presenterTimerInterval);
+        window.presenterTimerInterval = null;
+      }
+      window.presenterTimerSeconds = 0;
+      const el = document.getElementById('presenterTimerText');
+      if (el) el.innerText = '00:00';
+      const btn = document.getElementById('btnTimerToggle');
+      if (btn) btn.innerText = '▶ Iniciar';
+    };
+
+    window.getActiveSlides = function() {
+      return window.activeDeckMode === 'staff' ? window.STAFF_SLIDES : window.PATIENT_SLIDES;
+    };
+
+    window.switchDeckMode = function(mode, skipBroadcast = false) {
+      window.activeDeckMode = mode;
+      window.currentSlideIndex = 0;
+      document.getElementById('btnModeStaff').classList.toggle('active', mode === 'staff');
+      document.getElementById('btnModePatient').classList.toggle('active', mode === 'patient');
+
+      document.getElementById('sidebarHeaderTitle').innerText =
+        mode === 'staff'
+          ? 'Roteiro de 60 Minutos (Plenária + Perfis)'
+          : 'Jornada do Paciente (Clube Sorriso)';
+      document.getElementById('sidebarBadgeStatus').innerText =
+        mode === 'staff' ? '60 Min • 3D' : '6 Cenas • 3D';
+
+      window.renderSlide(0, skipBroadcast);
+    };
+
+    window.renderSlide = function(index, skipBroadcast = false) {
+      const slides = window.getActiveSlides();
+      if (index < 0 || index >= slides.length) return;
+      window.currentSlideIndex = index;
+      const slide = slides[index];
+
+      // Update 3D Target State
+      if (slide.scene3D) {
+        window.targetScene3DState = slide.scene3D;
+        if (window.onSlide3DTargetChange) {
+          window.onSlide3DTargetChange(slide.scene3D);
+        }
+      }
+
+      // Update Headings
+      document.getElementById('kineticBadge').innerText = slide.badge;
+      document.getElementById('kineticTitle').innerHTML = slide.titleHtml;
+      document.getElementById('kineticDesc').innerText = slide.desc;
+      document.getElementById('currentSlideNum').innerText = slide.id;
+      document.getElementById('totalSlidesNum').innerText = slides.length;
+
+      const presenterBanner = document.getElementById('presenterCurrentSlideBanner');
+      if (presenterBanner) {
+        presenterBanner.innerText = `No Telão Agora: Etapa 0${slide.id}/${slides.length} — ${slide.title} (${slide.duration})`;
+      }
+
+      // Update App Bar
+      document.getElementById('patientNameText').innerText = slide.headerTitle || 'Bertuol Flow v1.4';
+      document.getElementById('patientClinicText').innerText = slide.headerSub || 'Palmas & Paraíso';
+      document.getElementById('pointsValueText').innerText = slide.points;
+      const pointsPill = document.getElementById('patientPointsPill');
+      pointsPill.classList.add('flash');
+      setTimeout(() => pointsPill.classList.remove('flash'), 500);
+
+      // Render Screen Content
+      const screenBody = document.getElementById('screenBody');
+      screenBody.innerHTML = slide.renderScreen();
+
+      // Update Floating Callout
+      const callout = document.getElementById('stageCallout');
+      if (slide.callout && slide.callout.show) {
+        document.getElementById('calloutIcon').innerText = slide.callout.icon;
+        document.getElementById('calloutTitle').innerText = slide.callout.title;
+        document.getElementById('calloutSub').innerText = slide.callout.sub;
+        callout.classList.add('show');
+      } else {
+        callout.classList.remove('show');
+      }
+
+      // Update Timeline Progress
+      const fillPercent = ((index + 1) / slides.length) * 100;
+      document.getElementById('timelineFill').style.width = fillPercent + '%';
+
+      // Update Storyboard Accordion
+      window.renderAccordion();
+
+      // Update Script Details
+      document.getElementById('scriptVoiceover').innerText = `"${slide.voiceover}"`;
+      document.getElementById('scriptSfx').innerHTML = `
+        <span class="tag-pill">🌐 ${slide.sfx}</span>
+        <span class="tag-pill">🎬 ${slide.motion}</span>
+        <span class="tag-pill">⏱️ ${slide.duration}</span>
+      `;
+
+      // Update Next Slide Preview for Presenter Mode
+      const nextSlide = slides[(index + 1) % slides.length];
+      const nextEl = document.getElementById('nextSlidePreviewText');
+      if (nextEl && nextSlide) {
+        nextEl.innerText = `Etapa 0${nextSlide.id}: ${nextSlide.title} (${nextSlide.duration})`;
+      }
+
+      // Trigger automatic motion touch
+      setTimeout(() => {
+        window.triggerSimulatedTap(slide.touchTarget.x, slide.touchTarget.y);
+      }, 380);
+
+      if (!skipBroadcast) {
+        window.broadcastPresentationState();
+      }
+    };
+
+    window.renderAccordion = function() {
+      const slides = window.getActiveSlides();
+      const container = document.getElementById('slidesAccordion');
+      container.innerHTML = slides.map((slide, i) => `
+        <div class="slide-card-item ${i === window.currentSlideIndex ? 'active' : ''}" onclick="window.goToSlide(${i})">
+          <div class="slide-card-top">
+            <span class="slide-num">ETAPA 0${slide.id}</span>
+            <span class="slide-duration">${slide.duration}</span>
+          </div>
+          <h4 class="slide-item-title">${slide.title}</h4>
+          <p class="slide-item-desc">${slide.desc}</p>
+        </div>
+      `).join('');
+    };
+
+    window.goToSlide = function(index) {
+      window.renderSlide(index);
+    };
+
+    window.nextSlide = function() {
+      const slides = window.getActiveSlides();
+      if (window.currentSlideIndex < slides.length - 1) {
+        window.renderSlide(window.currentSlideIndex + 1);
+      } else {
+        window.renderSlide(0);
+      }
+    };
+
+    window.prevSlide = function() {
+      const slides = window.getActiveSlides();
+      if (window.currentSlideIndex > 0) {
+        window.renderSlide(window.currentSlideIndex - 1);
+      } else {
+        window.renderSlide(slides.length - 1);
+      }
+    };
+
+    window.playCurrentAnimation = function() {
+      window.renderSlide(window.currentSlideIndex);
+      window.triggerRemoteSpin360();
+    };
+
+    window.triggerSimulatedTap = function(x = 165, y = 240) {
+      const cursor = document.getElementById('touchCursor');
+      cursor.style.left = x + 'px';
+      cursor.style.top = y + 'px';
+      cursor.classList.add('active');
+
+      setTimeout(() => {
+        cursor.classList.add('tap');
+      }, 220);
+
+      setTimeout(() => {
+        cursor.classList.remove('tap');
+        cursor.classList.remove('active');
+      }, 650);
+    };
+
+    window.toggleAutoplay = function() {
+      const btn = document.getElementById('btnAutoplay');
+      if (window.isAutoplayRunning) {
+        clearInterval(window.autoplayInterval);
+        window.isAutoplayRunning = false;
+        btn.innerText = '▶️ Auto';
+        btn.style.background = 'linear-gradient(135deg, var(--gold) 0%, #FFA800 100%)';
+        btn.style.color = '#0E585D';
+      } else {
+        window.isAutoplayRunning = true;
+        btn.innerText = '⏸️ Pausar';
+        btn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+        btn.style.color = '#FFF';
+
+        window.autoplayInterval = setInterval(() => {
+          window.nextSlide();
+        }, 6500);
+      }
+    };
+
+    window.toggleStageDock = function() {
+      const dock = document.getElementById('stageTimelineDock');
+      const btn = document.getElementById('btnToggleDock');
+      const isCollapsed = dock.classList.toggle('collapsed');
+      btn.innerText = isCollapsed ? '▴ Mostrar Controles (Tecla H)' : '▾ Ocultar Controles (Tecla H)';
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        window.nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        window.prevSlide();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        window.toggleAutoplay();
+      } else if (e.key === 'h' || e.key === 'H') {
+        window.toggleStageDock();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const initialMode = params.get('mode');
+      if (initialMode === 'projector' || initialMode === 'presenter') {
+        window.setViewLayoutMode(initialMode);
+      }
+      window.renderSlide(0, true);
+    });
+  </script>
+
+  <!-- ============================================================================
+       MOTOR 3D THREE.JS (CÁPSULAS DE VIDRO FLUTUANTES 3D + REDE NEURAL DE DADOS)
+       ============================================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const mount = document.getElementById('threeStageMount');
+    const stageContainer = document.getElementById('stageContainer');
+    const phoneBody = document.getElementById('phoneBody');
+
+    // 1. Software WebGL Guard
+    const isSoftwareGl = (() => {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      if (!gl) return true;
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
+      const gpu = String(gl.getParameter(param));
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+    })();
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x051215, 0.055);
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      mount.clientWidth / Math.max(mount.clientHeight, 1),
+      0.1,
+      100
+    );
+    camera.position.set(0, 0.4, 9.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: !isSoftwareGl,
+      alpha: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    mount.appendChild(renderer.domElement);
+
+    // 2. Studio Environment Reflection (RoomEnvironment)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmremGenerator.dispose();
+
+    // 3. Balanced 3-Point Studio Lighting Rig
+    const hemiLight = new THREE.HemisphereLight(0x1FB5BD, 0x051012, 0.85);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xFFFBEB, 2.0);
+    keyLight.position.set(6, 8, 7);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.PointLight(0x1FB5BD, 3.2, 22, 1.8);
+    rimLight.position.set(-5, 3, -3);
+    scene.add(rimLight);
+
+    const goldAccentLight = new THREE.PointLight(0xFFCC29, 2.5, 20, 1.8);
+    goldAccentLight.position.set(5, -2, 4);
+    scene.add(goldAccentLight);
+
+    // ============================================================================
+    // OPÇÃO 1: CÁPSULAS DE VIDRO FLUTUANTES 3D (GLASSMORPHIC MICRO-PILLS)
+    // 4 pequenas placas espaciais de vidro fosco e borda iluminada (estilo Vision Pro)
+    // ============================================================================
+    function createRoundedRectShape(width, height, radius) {
+      const shape = new THREE.Shape();
+      const x = -width / 2;
+      const y = -height / 2;
+      shape.moveTo(x, y + radius);
+      shape.lineTo(x, y + height - radius);
+      shape.quadraticCurveTo(x, y + height, x + radius, y + height);
+      shape.lineTo(x + width - radius, y + height);
+      shape.quadraticCurveTo(x + width, y + height, x + width, y + height - radius);
+      shape.lineTo(x + width, y + radius);
+      shape.quadraticCurveTo(x + width, y, x + width - radius, y);
+      shape.lineTo(x + radius, y);
+      shape.quadraticCurveTo(x, y, x, y + radius);
+      return shape;
+    }
+
+    const frostedGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xE2F1F5,
+      metalness: 0.05,
+      roughness: 0.16,
+      transmission: isSoftwareGl ? 0 : 0.9,
+      transparent: true,
+      opacity: isSoftwareGl ? 0.65 : 1.0,
+      ior: 1.48,
+      thickness: 0.55,
+      attenuationColor: new THREE.Color(0x147A80),
+      attenuationDistance: 2.5,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08,
+    });
+
+    const rimMetalMat = new THREE.MeshPhysicalMaterial({
+      color: 0x94A3B8,
+      metalness: 0.92,
+      roughness: 0.2,
+      clearcoat: 0.8,
+    });
+
+    function createGlassMicroCapsule(w, h, accentHex) {
+      const group = new THREE.Group();
+      const r = Math.min(w, h) * 0.42;
+      const shape = createRoundedRectShape(w, h, r);
+
+      // Part 1: Frosted Optical Glass Slab
+      const slabGeo = new THREE.ExtrudeGeometry(shape, {
+        depth: 0.055,
+        bevelEnabled: true,
+        bevelSegments: 4,
+        steps: 1,
+        bevelSize: 0.022,
+        bevelThickness: 0.022,
+      });
+      slabGeo.center();
+      const slabMesh = new THREE.Mesh(slabGeo, frostedGlassMat);
+      group.add(slabMesh);
+
+      // Part 2: Specular Hairline Border Frame
+      const borderPts = shape.getPoints(36);
+      const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPts);
+      const borderMat = new THREE.LineBasicMaterial({
+        color: accentHex,
+        transparent: true,
+        opacity: 0.65,
+      });
+      const borderLoop = new THREE.LineLoop(borderGeo, borderMat);
+      borderLoop.position.z = 0.042;
+      group.add(borderLoop);
+
+      // Part 3: Subtle Inner Glowing Status Dot + Micro Bar (Spatial UI Widget)
+      const accentMat = new THREE.MeshStandardMaterial({
+        color: accentHex,
+        emissive: accentHex,
+        emissiveIntensity: 1.1,
+        roughness: 0.25,
+        metalness: 0.5,
+      });
+
+      const dotMesh = new THREE.Mesh(new THREE.SphereGeometry(0.052, 16, 16), accentMat);
+      dotMesh.position.set(-w * 0.31, 0.02, 0.042);
+      group.add(dotMesh);
+
+      const barShape = createRoundedRectShape(w * 0.46, 0.048, 0.024);
+      const barGeo = new THREE.ExtrudeGeometry(barShape, { depth: 0.015, bevelEnabled: false });
+      barGeo.center();
+      const barMesh = new THREE.Mesh(barGeo, accentMat);
+      barMesh.position.set(w * 0.06, 0.05, 0.042);
+      group.add(barMesh);
+
+      const subBarShape = createRoundedRectShape(w * 0.30, 0.032, 0.016);
+      const subBarGeo = new THREE.ExtrudeGeometry(subBarShape, { depth: 0.01, bevelEnabled: false });
+      subBarGeo.center();
+      const subBarMesh = new THREE.Mesh(subBarGeo, rimMetalMat);
+      subBarMesh.position.set(-w * 0.02, -0.055, 0.042);
+      group.add(subBarMesh);
+
+      group.userData = { accentMat, borderMat };
+      return group;
+    }
+
+    // Create 4 Discreet Spatial Glass Micro-Capsules around the Smartphone
+    const capsuleConfigs = [
+      { w: 1.15, h: 0.42, basePos: [-3.35, 1.35, 0.85], baseRot: [0.08, 0.28, -0.04], color: 0x1FB5BD, phase: 0.0 },
+      { w: 0.98, h: 0.38, basePos: [3.35, 1.15, 0.70], baseRot: [0.06, -0.28, 0.05], color: 0xFFCC29, phase: 1.6 },
+      { w: 1.05, h: 0.40, basePos: [-3.20, -1.05, 0.65], baseRot: [-0.08, 0.25, 0.03], color: 0x38BDF8, phase: 3.1 },
+      { w: 0.92, h: 0.36, basePos: [3.25, -1.15, 0.90], baseRot: [-0.06, -0.25, -0.04], color: 0x10B981, phase: 4.7 },
+    ];
+
+    const glassCapsules = capsuleConfigs.map((cfg) => {
+      const cap = createGlassMicroCapsule(cfg.w, cfg.h, cfg.color);
+      cap.position.set(cfg.basePos[0], cfg.basePos[1], cfg.basePos[2]);
+      cap.rotation.set(cfg.baseRot[0], cfg.baseRot[1], cfg.baseRot[2]);
+      scene.add(cap);
+      return {
+        mesh: cap,
+        cfg,
+        curPos: { x: cfg.basePos[0], y: cfg.basePos[1], z: cfg.basePos[2] },
+        curRot: { x: cfg.baseRot[0], y: cfg.baseRot[1], z: cfg.baseRot[2] },
+      };
+    });
+
+    // ============================================================================
+    // REDE NEURAL 3D & CONSTELAÇÃO DE DADOS SUAVE AO FUNDO
+    // ============================================================================
+    const neuralGroup = new THREE.Group();
+    const NODE_COUNT = 95;
+    const nodePositions = [];
+    const _dummy = new THREE.Object3D();
+
+    const nodeMat = new THREE.MeshStandardMaterial({
+      color: 0x1FB5BD,
+      emissive: 0x147A80,
+      emissiveIntensity: 0.85,
+      roughness: 0.3,
+      metalness: 0.6,
+    });
+
+    const nodesInstanced = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(0.05, 10, 10),
+      nodeMat,
+      NODE_COUNT
+    );
+
+    for (let i = 0; i < NODE_COUNT; i++) {
+      const px = (Math.random() - 0.5) * 17;
+      const py = (Math.random() - 0.5) * 9.5;
+      const pz = -1.8 - Math.random() * 6.0;
+      nodePositions.push(new THREE.Vector3(px, py, pz));
+
+      const scale = 0.6 + Math.random() * 0.8;
+      _dummy.position.set(px, py, pz);
+      _dummy.scale.set(scale, scale, scale);
+      _dummy.updateMatrix();
+      nodesInstanced.setMatrixAt(i, _dummy.matrix);
+    }
+    nodesInstanced.instanceMatrix.needsUpdate = true;
+    nodesInstanced.computeBoundingSphere();
+    neuralGroup.add(nodesInstanced);
+
+    const lineVertices = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      for (let j = i + 1; j < NODE_COUNT; j++) {
+        if (nodePositions[i].distanceTo(nodePositions[j]) < 2.9) {
+          lineVertices.push(
+            nodePositions[i].x, nodePositions[i].y, nodePositions[i].z,
+            nodePositions[j].x, nodePositions[j].y, nodePositions[j].z
+          );
+        }
+      }
+    }
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineVertices, 3));
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0xFFCC29,
+      transparent: true,
+      opacity: 0.18,
+    });
+    const neuralLines = new THREE.LineSegments(lineGeo, lineMat);
+    neuralGroup.add(neuralLines);
+    scene.add(neuralGroup);
+
+    // ============================================================================
+    // CONTROLES DE CÂMERA, DAMPING E INTERAÇÃO COM MOUSE
+    // ============================================================================
+    let cameraMode = 'auto'; // 'auto' | 'orbit'
+    let pointerX = 0;
+    let pointerY = 0;
+    let isDragging = false;
+    let dragPrevX = 0;
+    let dragPrevY = 0;
+    let orbitYaw = 0;
+    let orbitPitch = 0;
+    let spinBonusAngle = 0;
+
+    const currentPhone = { rotX: 4, rotY: -6, rotZ: 0, scale: 1.0 };
+    const targetNeuralColor = new THREE.Color(0x1FB5BD);
+    const targetBeamColor = new THREE.Color(0xFFCC29);
+
+    window.setCameraMode = function(mode) {
+      cameraMode = mode;
+      document.getElementById('btnCamAuto').classList.toggle('active', mode === 'auto');
+      document.getElementById('btnCamOrbit').classList.toggle('active', mode === 'orbit');
+      if (mode === 'auto') {
+        orbitYaw = 0;
+        orbitPitch = 0;
+      }
+    };
+
+    window.triggerSpin360 = function() {
+      spinBonusAngle += Math.PI * 2;
+    };
+
+    window.onSlide3DTargetChange = function(newTarget) {
+      targetNeuralColor.setHex(newTarget.neuralColor || 0x1FB5BD);
+      targetBeamColor.setHex(newTarget.beamColor || 0xFFCC29);
+    };
+
+    stageContainer.addEventListener('pointermove', (e) => {
+      const rect = stageContainer.getBoundingClientRect();
+      pointerX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+
+      if (isDragging && cameraMode === 'orbit') {
+        const dx = e.clientX - dragPrevX;
+        const dy = e.clientY - dragPrevY;
+        orbitYaw += dx * 0.008;
+        orbitPitch = THREE.MathUtils.clamp(orbitPitch + dy * 0.006, -0.6, 0.6);
+        dragPrevX = e.clientX;
+        dragPrevY = e.clientY;
+      }
+    });
+
+    stageContainer.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      dragPrevX = e.clientX;
+      dragPrevY = e.clientY;
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    window.addEventListener('resize', () => {
+      const w = mount.clientWidth;
+      const h = Math.max(mount.clientHeight, 1);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    const clock = new THREE.Clock();
+    let frameId = 0;
+
+    function afterDraw(cb) {
+      const gl = renderer.getContext();
+      if (!gl || !gl.fenceSync) {
+        frameId = window.setTimeout(cb, 80);
+        return;
+      }
+      const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      gl.flush();
+      const poll = () => {
+        const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
+        if (state === gl.UNSIGNALED) {
+          frameId = window.setTimeout(poll, 5);
+        } else {
+          gl.deleteSync(sync);
+          frameId = window.setTimeout(cb, 80);
+        }
+      };
+      frameId = window.setTimeout(poll, 5);
+    }
+
+    function tick() {
+      const dt = Math.min(clock.getDelta(), 0.1);
+      const elapsed = clock.getElapsedTime();
+      const target = window.targetScene3DState || window.STAFF_SLIDES[0].scene3D;
+      const slideIdx = window.currentSlideIndex || 0;
+
+      spinBonusAngle = THREE.MathUtils.damp(spinBonusAngle, 0, 3.5, dt);
+
+      // 1. Smoothly Interpolate CSS 3D Phone Pose + Mouse Parallax
+      const mouseTiltY = pointerX * (cameraMode === 'orbit' ? 18 : 7);
+      const mouseTiltX = -pointerY * (cameraMode === 'orbit' ? 12 : 5);
+
+      currentPhone.rotX = THREE.MathUtils.damp(currentPhone.rotX, target.phonePose.rotX + mouseTiltX, 4.5, dt);
+      currentPhone.rotY = THREE.MathUtils.damp(
+        currentPhone.rotY,
+        target.phonePose.rotY + mouseTiltY + THREE.MathUtils.radToDeg(spinBonusAngle * 0.5),
+        4.5,
+        dt
+      );
+      currentPhone.rotZ = THREE.MathUtils.damp(currentPhone.rotZ, target.phonePose.rotZ, 4.5, dt);
+      currentPhone.scale = THREE.MathUtils.damp(currentPhone.scale, target.phonePose.scale, 4.5, dt);
+
+      phoneBody.style.transform = `rotateX(${currentPhone.rotX.toFixed(2)}deg) rotateY(${currentPhone.rotY.toFixed(2)}deg) rotateZ(${currentPhone.rotZ.toFixed(2)}deg) scale(${currentPhone.scale.toFixed(3)})`;
+
+      // 2. Smoothly Animate the 4 Floating Glass Micro-Capsules around the Phone
+      glassCapsules.forEach((cap, i) => {
+        const signX = i % 2 === 0 ? -1 : 1;
+        const slideOffsetY = ((slideIdx + i) % 3 - 1) * 0.28;
+        const slideOffsetZ = ((slideIdx + i) % 2) * 0.35;
+
+        const targetX = cap.cfg.basePos[0] + signX * Math.sin(slideIdx * 0.9 + i) * 0.25 + pointerX * 0.28;
+        const targetY = cap.cfg.basePos[1] + slideOffsetY + Math.sin(elapsed * 1.3 + cap.cfg.phase) * 0.14 + pointerY * 0.2;
+        const targetZ = cap.cfg.basePos[2] + slideOffsetZ;
+
+        cap.curPos.x = THREE.MathUtils.damp(cap.curPos.x, targetX, 3.8, dt);
+        cap.curPos.y = THREE.MathUtils.damp(cap.curPos.y, targetY, 3.8, dt);
+        cap.curPos.z = THREE.MathUtils.damp(cap.curPos.z, targetZ, 3.8, dt);
+
+        cap.mesh.position.set(cap.curPos.x, cap.curPos.y, cap.curPos.z);
+
+        const targetRotY = cap.cfg.baseRot[1] + pointerX * 0.22 + spinBonusAngle * 0.5 + Math.sin(elapsed * 0.8 + cap.cfg.phase) * 0.08;
+        const targetRotX = cap.cfg.baseRot[0] - pointerY * 0.16 + Math.cos(elapsed * 0.9 + cap.cfg.phase) * 0.06;
+
+        cap.curRot.x = THREE.MathUtils.damp(cap.curRot.x, targetRotX, 4.2, dt);
+        cap.curRot.y = THREE.MathUtils.damp(cap.curRot.y, targetRotY, 4.2, dt);
+        cap.mesh.rotation.set(cap.curRot.x, cap.curRot.y, cap.cfg.baseRot[2]);
+
+        // Tint primary capsules gently toward current slide theme color
+        if (i === 0 || i === 3) {
+          cap.mesh.userData.accentMat.color.lerp(targetNeuralColor, dt * 2.5);
+          cap.mesh.userData.accentMat.emissive.lerp(targetNeuralColor, dt * 2.5);
+          cap.mesh.userData.borderMat.color.lerp(targetNeuralColor, dt * 2.5);
+        } else {
+          cap.mesh.userData.accentMat.color.lerp(targetBeamColor, dt * 2.5);
+          cap.mesh.userData.accentMat.emissive.lerp(targetBeamColor, dt * 2.5);
+          cap.mesh.userData.borderMat.color.lerp(targetBeamColor, dt * 2.5);
+        }
+      });
+
+      // 3. Neural Network Cloud Motion & Color Transitions
+      nodeMat.color.lerp(targetNeuralColor, dt * 3.0);
+      lineMat.color.lerp(targetBeamColor, dt * 3.0);
+      neuralGroup.rotation.y = THREE.MathUtils.damp(
+        neuralGroup.rotation.y,
+        pointerX * 0.22 + orbitYaw + Math.sin(elapsed * 0.22) * 0.1,
+        3.0,
+        dt
+      );
+      neuralGroup.rotation.x = THREE.MathUtils.damp(
+        neuralGroup.rotation.x,
+        -pointerY * 0.14 + orbitPitch,
+        3.0,
+        dt
+      );
+
+      // 4. Camera Position Damping
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, target.cameraPos.x * 0.45 + pointerX * 0.4, 3.5, dt);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, target.cameraPos.y * 0.45 + pointerY * 0.25, 3.5, dt);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, 9.0, 3.5, dt);
+      camera.lookAt(0, 0.05, 0);
+
+      renderer.render(scene, camera);
+
+      if (isSoftwareGl) afterDraw(tick);
+      else frameId = requestAnimationFrame(tick);
+    }
+
+    tick();
+  </script>
+</body>
+</html>

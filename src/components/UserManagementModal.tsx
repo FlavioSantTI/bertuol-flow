@@ -1,0 +1,2754 @@
+import React, { useState, useMemo } from 'react';
+import {
+  X,
+  UserPlus,
+  Users,
+  Search,
+  Building2,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Edit2,
+  Trash2,
+  Share2,
+  Check,
+  Stethoscope,
+  Crown,
+  Key,
+  Lock,
+  Smartphone,
+  MessageSquare,
+  Sparkles,
+  Phone,
+  FileSpreadsheet,
+  ToggleLeft,
+  ToggleRight,
+  Filter,
+  UserCheck,
+  Building,
+  KeyRound,
+  Send,
+  Copy,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Clock,
+} from 'lucide-react';
+import {
+  AppUserContext,
+  Clinic,
+  Dentist,
+  SystemUser,
+  UserPermissions,
+  UserRole,
+  CustomRoleDefinition,
+} from '../types/database';
+import { ClientAccountsTab } from './ClientAccountsTab';
+import { fetchPatients, SupabasePatient } from '../services/supabaseService';
+import {
+  dataService,
+  getDefaultPermissionsForRole,
+  generateSecureTemporaryPassword,
+  formatInviteWhatsAppUrl,
+  formatInviteTextMessage,
+  formatInviteUrl,
+  formatPhoneDisplay,
+  sanitizePhoneForStorage,
+} from '../services/dataService';
+
+// Helper to apply dynamic Brazilian phone mask: (DD) 99999-9999 or (DD) 3333-4444
+function applyPhoneMask(value: string | null | undefined): string {
+  if (!value) return '';
+  let digits = String(value).replace(/\D/g, '');
+
+  // If user pasted/loaded with country code 55 (e.g. 5563981487023 or 556332154000)
+  if (digits.startsWith('55') && digits.length > 10) {
+    digits = digits.slice(2);
+  }
+
+  // Limit to 11 digits (DDD + 9 digits)
+  digits = digits.slice(0, 11);
+
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    // Landline: (63) 3215-4000
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  // Mobile: (63) 98148-7023
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
+export interface PermissionItem {
+  key: keyof UserPermissions;
+  label: string;
+  description: string;
+}
+
+export interface PermissionCategory {
+  id: string;
+  title: string;
+  badge: string;
+  permissions: PermissionItem[];
+}
+
+export const PERMISSION_CATEGORIES: PermissionCategory[] = [
+  {
+    id: 'agenda',
+    title: 'Agenda & Atendimento Clínico',
+    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    permissions: [
+      { key: 'canViewAgenda', label: 'Visualizar Agenda do Dia / Semanal', description: 'Acessar a grade de horários de consultas' },
+      { key: 'canViewAllDentistsAgenda', label: 'Ver Agenda de Todos os Dentistas', description: 'Se desmarcado, limita a apenas a própria agenda (Dentistas)' },
+      { key: 'canCheckIn', label: 'Realizar Check-in / Troca de Status', description: 'Alterar status de atendimento na fila da recepção' },
+      { key: 'canEditAppointments', label: 'Agendar, Reagendar & Cancelar', description: 'Criar ou modificar consultas no sistema' },
+      { key: 'canGenerateAISummary', label: 'Gerar Resumos Clínicos com IA (Gemini)', description: 'Análise clínica inteligente e resumos de prontuário com IA' },
+    ],
+  },
+  {
+    id: 'crm',
+    title: 'CRM, Vendas & Funil de Oportunidades',
+    badge: 'bg-amber-100 text-amber-800 border-amber-200',
+    permissions: [
+      { key: 'canAccessCRM', label: 'Acesso ao CRM de Oportunidades', description: 'Acessar o pipeline visual de vendas e orçamentos' },
+      { key: 'canManageCRMLeads', label: 'Gerenciar Leads & Mover Estágios', description: 'Criar, editar e mover oportunidades no CRM' },
+      { key: 'canExportCRM', label: 'Exportar Relatórios do CRM', description: 'Exportar relatórios de conversão em Excel/CSV' },
+    ],
+  },
+  {
+    id: 'financeiro',
+    title: 'Financeiro & Faturamento',
+    badge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    permissions: [
+      { key: 'canViewFinancialDashboard', label: 'Dashboard Financeiro & Métricas', description: 'Visualizar faturamento, ticket médio e gráficos DRE' },
+      { key: 'canExportFinancialReports', label: 'Exportar Relatórios Financeiros', description: 'Exportar relatórios contábeis e de faturamento' },
+    ],
+  },
+  {
+    id: 'mensageria',
+    title: 'Mensageria & Notificações',
+    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+    permissions: [
+      { key: 'canReceiveWhatsApp', label: 'Receber Alertas via WhatsApp / WAHA', description: 'Receber notificações e alertas no WhatsApp' },
+      { key: 'canReceivePush', label: 'Push Notifications no Celular', description: 'Alertas push em tempo real no navegador ou PWA' },
+      { key: 'canSendInternalMessages', label: 'Chat Interno & Mensageria de Equipe', description: 'Enviar recados internos para colegas de trabalho' },
+      { key: 'canManageWhatsAppTemplates', label: 'Gerenciar Automações WhatsApp', description: 'Configurar réguas de mensagens automáticas de confirmação' },
+    ],
+  },
+  {
+    id: 'clube_sorriso',
+    title: 'Clube Sorriso & Gamificação',
+    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+    permissions: [
+      { key: 'canViewClubeSorriso', label: 'Leitura do Clube Sorriso & Extrato', description: 'Consultar histórico de pontos e extrato dos pacientes' },
+      { key: 'canManageGamification', label: 'Gerenciar Prêmios & Baixa em Vouchers', description: 'Dar baixa em prêmios no balcão e alterar catálogo' },
+    ],
+  },
+  {
+    id: 'seguranca_lgpd',
+    title: 'Segurança, Totem & LGPD',
+    badge: 'bg-rose-100 text-rose-800 border-rose-200',
+    permissions: [
+      { key: 'canViewPatientPhone', label: 'Visualizar Telefones (LGPD)', description: 'Exibir número de telefone e dados sensíveis de pacientes' },
+      { key: 'canEditPatients', label: 'Cadastrar & Editar Prontuários', description: 'Adicionar e alterar fichas de cadastro de pacientes' },
+      { key: 'canAccessTotemConfig', label: 'Acesso ao Totem de Autoatendimento', description: 'Configurar modo recepção e QR Code no balcão' },
+      { key: 'canManageWebAuthn', label: 'Gerenciar Biometria Facial / WebAuthn', description: 'Cadastrar credenciais biométricas de usuários' },
+    ],
+  },
+  {
+    id: 'administracao',
+    title: 'Administração & TI',
+    badge: 'bg-slate-100 text-slate-800 border-slate-200',
+    permissions: [
+      { key: 'canAccessConfig', label: 'Configurações Técnicas & Webhooks', description: 'Configurações de integração Clinicorp/WAHA/Supabase' },
+      { key: 'canManageUsers', label: 'Gerenciar Usuários & Perfis (RBAC)', description: 'Cadastrar membros da equipe e configurar papéis de acesso' },
+      { key: 'canManageClinics', label: 'Gerenciar Unidades & Clínicas', description: 'Criar e alterar cadastro de unidades matriz e filiais' },
+      { key: 'canExportData', label: 'Exportar Relatórios & Dados', description: 'Exportar relatórios gerais e backups de dados' },
+      { key: 'canManageClientAccounts', label: 'Gerenciar Contas de Clientes/Pacientes', description: 'Ativar acessos, resetar senhas e gerenciar contas' },
+    ],
+  },
+];
+
+const PERMISSION_LABELS: Record<string, string> = {
+  canViewAgenda: 'Visualizar Agenda do Dia',
+  canViewAllDentistsAgenda: 'Ver Agenda de Todos os Dentistas',
+  canCheckIn: 'Realizar Check-in / Troca de Status',
+  canEditAppointments: 'Agendar / Reagendar / Cancelar',
+  canGenerateAISummary: 'Gerar Resumos Clínicos com IA',
+  canAccessCRM: 'Acesso ao CRM de Oportunidades',
+  canManageCRMLeads: 'Gerenciar Leads & Pipeline CRM',
+  canExportCRM: 'Exportar Relatórios do CRM',
+  canViewFinancialDashboard: 'Dashboard Financeiro & Faturamento',
+  canExportFinancialReports: 'Exportar Relatórios Financeiros',
+  canReceiveWhatsApp: 'Receber Alertas via WhatsApp',
+  canReceivePush: 'Push Notifications no Celular',
+  canSendInternalMessages: 'Chat Interno & Mensageria',
+  canManageWhatsAppTemplates: 'Gerenciar Automações WhatsApp',
+  canViewClubeSorriso: 'Leitura do Clube Sorriso & Vouchers',
+  canManageGamification: 'Gerenciar Gamificação & Vouchers',
+  canViewPatientPhone: 'Visualizar Telefones (LGPD)',
+  canEditPatients: 'Cadastrar & Editar Prontuários',
+  canAccessTotemConfig: 'Acesso ao Totem de Autoatendimento',
+  canManageWebAuthn: 'Gerenciar Biometria / WebAuthn',
+  canAccessConfig: 'Configurações Técnicas & Webhooks',
+  canManageUsers: 'Gerenciar Usuários & Perfis (RBAC)',
+  canManageClinics: 'Gerenciar Unidades & Clínicas',
+  canExportData: 'Exportar Relatórios & Dados',
+  canManageClientAccounts: 'Gerenciar Contas de Clientes/Pacientes',
+};
+
+interface UserManagementModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentUserContext: AppUserContext;
+  onSimulateUser: (user: SystemUser) => void;
+  clinics: Clinic[];
+  dentists: Dentist[];
+}
+
+export const UserManagementModal: React.FC<UserManagementModalProps> = ({
+  isOpen,
+  onClose,
+  currentUserContext,
+  onSimulateUser,
+  clinics,
+  dentists,
+}) => {
+  // Local state for users loaded from dataService
+  const [users, setUsers] = useState<SystemUser[]>(() =>
+    dataService.getSystemUsers(currentUserContext)
+  );
+
+  const [patients, setPatients] = useState<SupabasePatient[]>([]);
+
+  const loadPatients = async () => {
+    const data = await fetchPatients();
+    setPatients(data);
+  };
+
+  React.useEffect(() => {
+    loadPatients();
+  }, []);
+
+  const effectiveActorPerms = useMemo(
+    () => ({
+      ...getDefaultPermissionsForRole(currentUserContext.role),
+      ...currentUserContext.permissions,
+    }),
+    [currentUserContext.role, currentUserContext.permissions]
+  );
+
+  const canManageInternalUsers =
+    currentUserContext.role === 'admin_root' ||
+    currentUserContext.role === 'admin' ||
+    currentUserContext.role === 'admin_clinica' ||
+    Boolean(effectiveActorPerms.canManageUsers);
+
+  const canManageClientAccounts =
+    currentUserContext.role === 'admin_root' ||
+    currentUserContext.role === 'admin' ||
+    currentUserContext.role === 'admin_clinica' ||
+    Boolean(effectiveActorPerms.canManageClientAccounts);
+
+  // Main Tabs: 'users', 'roles' (RBAC CRUD), or 'clients' (Client Accounts)
+  const [activeMainTab, setActiveMainTab] = useState<'users' | 'roles' | 'clients'>(() =>
+    canManageInternalUsers ? 'users' : 'clients'
+  );
+
+  React.useEffect(() => {
+    if (!canManageInternalUsers && canManageClientAccounts && activeMainTab !== 'clients') {
+      setActiveMainTab('clients');
+    }
+  }, [canManageInternalUsers, canManageClientAccounts, activeMainTab]);
+
+  const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(() => dataService.getCustomRoles());
+
+  // Role CRUD Modal State
+  const [isRoleFormOpen, setIsRoleFormOpen] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [roleFormData, setRoleFormData] = useState<CustomRoleDefinition>({
+    id: '',
+    name: '',
+    description: '',
+    badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
+    defaultPermissions: getDefaultPermissionsForRole('dentist'),
+  });
+  const [roleFormError, setRoleFormError] = useState<string | null>(null);
+
+  const refreshCustomRoles = () => {
+    setCustomRoles(dataService.getCustomRoles());
+  };
+
+  const handleSaveRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRoleFormError(null);
+
+    const systemRoleIds = ['dentist', 'receptionist', 'admin_clinica', 'admin_root', 'gerente_atendimento'];
+    if (editingRoleId && systemRoleIds.includes(editingRoleId)) {
+      const res = dataService.saveSystemRoleOverride(editingRoleId, roleFormData.defaultPermissions, currentUserContext);
+      if (res.error) {
+        setRoleFormError(res.error);
+        return;
+      }
+      refreshCustomRoles();
+      setIsRoleFormOpen(false);
+      return;
+    }
+
+    const res = dataService.saveCustomRole(roleFormData, currentUserContext);
+    if (res.error) {
+      setRoleFormError(res.error);
+      return;
+    }
+    refreshCustomRoles();
+    setIsRoleFormOpen(false);
+  };
+
+  const handleDeleteRole = (roleId: string) => {
+    if (!confirm('Deseja realmente excluir este perfil customizado?')) return;
+    const res = dataService.deleteCustomRole(roleId, currentUserContext);
+    if (res.error) {
+      alert(res.error);
+    } else {
+      refreshCustomRoles();
+    }
+  };
+
+  // Filters state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClinicFilter, setSelectedClinicFilter] = useState<number | 'all'>('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  // Modal form state (Create / Edit)
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+
+  // Form inputs
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    role: UserRole;
+    clinicId: number;
+    allowedClinicIds: number[];
+    dentist_id?: number;
+    permissions: UserPermissions;
+    active: boolean;
+    initialPassword?: string;
+    mustChangePassword: boolean;
+  }>({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'dentist',
+    clinicId: clinics[0]?.id || 1,
+    allowedClinicIds: [clinics[0]?.id || 1],
+    permissions: getDefaultPermissionsForRole('dentist'),
+    active: true,
+    initialPassword: 'Bertuol@2026',
+    mustChangePassword: true,
+  });
+
+  const [formError, setFormError] = useState<string | null>(null);
+  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // State for password visibility in form
+  const [showFormPassword, setShowFormPassword] = useState(false);
+
+  // Invite modal state (WhatsApp / Magic Link / Credentials)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedUserForInvite, setSelectedUserForInvite] = useState<SystemUser | null>(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [sendingViaEvolution, setSendingViaEvolution] = useState(false);
+  const [evolutionStatusMessage, setEvolutionStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
+  // Send WhatsApp message via Evolution GO
+  const handleSendViaEvolutionGo = async () => {
+    if (!selectedUserForInvite) return;
+    setSendingViaEvolution(true);
+    setEvolutionStatusMessage(null);
+
+    const message = formatInviteTextMessage(selectedUserForInvite);
+    try {
+      const response = await fetch('/api/whatsapp/send-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientPhone: selectedUserForInvite.phone,
+          message,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.mode === 'evolution_go') {
+        setEvolutionStatusMessage({ type: 'success', text: 'Mensagem enviada com sucesso via Evolution GO!' });
+        dataService.markInviteSent(selectedUserForInvite.id);
+        refreshUsers();
+      } else if (data.fallbackUrl) {
+        setEvolutionStatusMessage({
+          type: 'info',
+          text: data.message || 'Evolution GO não configurado no servidor. Abrindo WhatsApp Web...',
+        });
+        window.open(data.fallbackUrl, '_blank');
+        dataService.markInviteSent(selectedUserForInvite.id);
+        refreshUsers();
+      } else {
+        setEvolutionStatusMessage({ type: 'error', text: `${data.error || 'Erro ao enviar via Evolution GO'}` });
+      }
+    } catch (err: any) {
+      setEvolutionStatusMessage({ type: 'error', text: `Falha na conexão com Evolution GO: ${err?.message}` });
+    } finally {
+      setSendingViaEvolution(false);
+    }
+  };
+
+  // Reset password modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<SystemUser | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetMustChange, setResetMustChange] = useState(true);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
+
+  // Pre-cadastro / Import from base state
+  const [isPreCadastroModalOpen, setIsPreCadastroModalOpen] = useState(false);
+  const [batchSuccessMessage, setBatchSuccessMessage] = useState<string | null>(null);
+
+  const isAdminRoot =
+    currentUserContext.role === 'admin_root' || currentUserContext.role === 'admin';
+  const isAdminClinica = currentUserContext.role === 'admin_clinica';
+
+  // Allowed clinics for current actor
+  const actorClinicId = currentUserContext.clinicId || 1;
+  const actorAllowedClinics = useMemo(() => {
+    if (isAdminRoot) return clinics;
+    return clinics.filter(
+      (c) =>
+        c.id === actorClinicId ||
+        (currentUserContext.allowedClinicIds && currentUserContext.allowedClinicIds.includes(c.id))
+    );
+  }, [isAdminRoot, clinics, actorClinicId, currentUserContext.allowedClinicIds]);
+
+  // Reload users
+  const refreshUsers = () => {
+    const list = dataService.getSystemUsers(currentUserContext);
+    setUsers(list);
+  };
+
+  // Open Invite Modal
+  const handleOpenInviteModal = (user: SystemUser) => {
+    setSelectedUserForInvite(user);
+    setInviteCopied(false);
+    setIsInviteModalOpen(true);
+    dataService.markInviteSent(user.id);
+    refreshUsers();
+  };
+
+  // Open Reset Password Modal
+  const handleOpenResetModal = (user: SystemUser) => {
+    setSelectedUserForReset(user);
+    setResetNewPassword(generateSecureTemporaryPassword());
+    setResetMustChange(true);
+    setResetSuccessMessage(null);
+    setIsResetModalOpen(true);
+  };
+
+  // Execute Password Reset
+  const handleExecuteResetPassword = (sendWhatsApp: boolean = false) => {
+    if (!selectedUserForReset) return;
+    const res = dataService.resetUserPassword(selectedUserForReset.id, resetNewPassword, currentUserContext);
+    if (!res.success) {
+      alert(res.error || 'Erro ao redefinir senha.');
+      return;
+    }
+    refreshUsers();
+    setResetSuccessMessage(`Senha redefinida para "${resetNewPassword}" com sucesso!`);
+
+    if (sendWhatsApp) {
+      const waUrl = formatInviteWhatsAppUrl(selectedUserForReset, resetNewPassword);
+      window.open(waUrl, '_blank');
+      setIsResetModalOpen(false);
+    } else {
+      setTimeout(() => {
+        setIsResetModalOpen(false);
+      }, 1500);
+    }
+  };
+
+  // Base Dentists status mapping (Registered vs Pending Pre-cadastro)
+  const baseDentistsStatus = useMemo(() => {
+    return dentists.map((d) => {
+      const existingUser = users.find(
+        (u) =>
+          u.dentist_id === d.id ||
+          (d.Email && u.email.toLowerCase() === d.Email.toLowerCase()) ||
+          u.name.toLowerCase().includes(d.Name.toLowerCase().replace('dr. ', '').replace('dra. ', '').trim())
+      );
+      return {
+        dentist: d,
+        isRegistered: !!existingUser,
+        user: existingUser,
+      };
+    });
+  }, [dentists, users]);
+
+  const pendingDentists = useMemo(() => {
+    return baseDentistsStatus.filter((b) => !b.isRegistered);
+  }, [baseDentistsStatus]);
+
+  // Handler to auto-fill form from selected dentist
+  const handleSelectDentistForPreCadastro = (dentistId: number) => {
+    const dentist = dentists.find((d) => d.id === dentistId);
+    if (!dentist) return;
+
+    const mainClinicId = dentist.affiliatedClinicIds?.[0] || 1;
+    const allowed =
+      dentist.affiliatedClinicIds && dentist.affiliatedClinicIds.length > 0
+        ? dentist.affiliatedClinicIds
+        : [mainClinicId];
+
+    const cleanEmail =
+      dentist.Email ||
+      `${dentist.Name.toLowerCase()
+        .replace(/dr\.|dra\.|dr\(a\)\./gi, '')
+        .trim()
+        .replace(/[^a-z0-9]/g, '.')}@bertuolodontologia.com.br`;
+
+    setFormData((prev) => ({
+      ...prev,
+      name: dentist.Name,
+      email: cleanEmail,
+      phone: applyPhoneMask(dentist.MobilePhone || ''),
+      role: 'dentist',
+      clinicId: mainClinicId,
+      allowedClinicIds: allowed,
+      dentist_id: dentist.id,
+      permissions: getDefaultPermissionsForRole('dentist'),
+    }));
+  };
+
+  // Handler to pre-register a single dentist with 1 click
+  const handlePreCadastrarDentist = (dentist: Dentist) => {
+    const mainClinicId = dentist.affiliatedClinicIds?.[0] || 1;
+    const allowedClinics =
+      dentist.affiliatedClinicIds && dentist.affiliatedClinicIds.length > 0
+        ? dentist.affiliatedClinicIds
+        : [mainClinicId];
+
+    const cleanEmail =
+      dentist.Email ||
+      `${dentist.Name.toLowerCase()
+        .replace(/dr\.|dra\.|dr\(a\)\./gi, '')
+        .trim()
+        .replace(/[^a-z0-9]/g, '.')}@bertuolodontologia.com.br`;
+
+    const newUserData = {
+      name: dentist.Name,
+      email: cleanEmail,
+      phone: sanitizePhoneForStorage(dentist.MobilePhone || ''),
+      role: 'dentist' as UserRole,
+      clinicId: mainClinicId,
+      allowedClinicIds: allowedClinics,
+      dentist_id: dentist.id,
+      permissions: getDefaultPermissionsForRole('dentist'),
+      active: true,
+    };
+
+    const res = dataService.createSystemUser(newUserData, currentUserContext);
+    if (res.error) {
+      alert(res.error);
+    } else {
+      refreshUsers();
+      setBatchSuccessMessage(`Dentista ${dentist.Name} pré-cadastrado com sucesso!`);
+      setTimeout(() => setBatchSuccessMessage(null), 3500);
+    }
+  };
+
+  // Handler to pre-register ALL pending dentists with 1 click
+  const handleBatchPreCadastrarAll = () => {
+    let count = 0;
+    pendingDentists.forEach(({ dentist }) => {
+      const mainClinicId = dentist.affiliatedClinicIds?.[0] || 1;
+      const allowedClinics =
+        dentist.affiliatedClinicIds && dentist.affiliatedClinicIds.length > 0
+          ? dentist.affiliatedClinicIds
+          : [mainClinicId];
+
+      const cleanEmail =
+        dentist.Email ||
+        `${dentist.Name.toLowerCase()
+          .replace(/dr\.|dra\.|dr\(a\)\./gi, '')
+          .trim()
+          .replace(/[^a-z0-9]/g, '.')}@bertuolodontologia.com.br`;
+
+      const newUserData = {
+        name: dentist.Name,
+        email: cleanEmail,
+        phone: sanitizePhoneForStorage(dentist.MobilePhone || ''),
+        role: 'dentist' as UserRole,
+        clinicId: mainClinicId,
+        allowedClinicIds: allowedClinics,
+        dentist_id: dentist.id,
+        permissions: getDefaultPermissionsForRole('dentist'),
+        active: true,
+      };
+
+      const res = dataService.createSystemUser(newUserData, currentUserContext);
+      if (res.user) count++;
+    });
+
+    refreshUsers();
+    setBatchSuccessMessage(`${count} dentistas da base foram pré-cadastrados com sucesso!`);
+    setTimeout(() => setBatchSuccessMessage(null), 4500);
+  };
+
+  // Filtered users list
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      // Search text
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = u.name.toLowerCase().includes(q);
+        const matchEmail = u.email.toLowerCase().includes(q);
+        const matchPhone = (u.phone || '').toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchPhone) return false;
+      }
+
+      // Clinic Filter
+      if (selectedClinicFilter !== 'all') {
+        const matchClinic =
+          u.clinicId === selectedClinicFilter || u.allowedClinicIds.includes(selectedClinicFilter);
+        if (!matchClinic) return false;
+      }
+
+      // Role Filter
+      if (selectedRoleFilter !== 'all') {
+        if (u.role !== selectedRoleFilter) return false;
+      }
+
+      // Status Filter
+      if (selectedStatusFilter === 'active' && !u.active) return false;
+      if (selectedStatusFilter === 'inactive' && u.active) return false;
+
+      return true;
+    });
+  }, [users, searchQuery, selectedClinicFilter, selectedRoleFilter, selectedStatusFilter]);
+
+  // Stats calculation
+  const stats = useMemo(() => {
+    const total = users.length;
+    const dentistsCount = users.filter((u) => u.role === 'dentist').length;
+    const receptionCount = users.filter((u) => u.role === 'receptionist').length;
+    const adminsCount = users.filter(
+      (u) => u.role === 'admin_root' || u.role === 'admin' || u.role === 'admin_clinica'
+    ).length;
+    return { total, dentistsCount, receptionCount, adminsCount };
+  }, [users]);
+
+  // Open Create Form
+  const handleOpenCreateForm = () => {
+    const defaultClinic = actorAllowedClinics[0]?.id || 1;
+    setEditingUserId(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'dentist',
+      clinicId: defaultClinic,
+      allowedClinicIds: [defaultClinic],
+      dentist_id: dentists[0]?.id,
+      permissions: getDefaultPermissionsForRole('dentist'),
+      active: true,
+      initialPassword: 'Bertuol@2026',
+      mustChangePassword: true,
+    });
+    setFormError(null);
+    setIsFormOpen(true);
+  };
+
+  // Open Edit Form
+  const handleOpenEditForm = (user: SystemUser) => {
+    setEditingUserId(user.id);
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: applyPhoneMask(user.phone || ''),
+      role: user.role,
+      clinicId: user.clinicId,
+      allowedClinicIds: user.allowedClinicIds || [user.clinicId],
+      dentist_id: user.dentist_id,
+      permissions: { ...user.permissions },
+      active: user.active,
+      initialPassword: user.initialPassword || user.password || '',
+      mustChangePassword: user.mustChangePassword ?? false,
+    });
+    setFormError(null);
+    setIsFormOpen(true);
+  };
+
+  // Handle Form Role Change (auto-update default permissions)
+  const handleRoleChange = (newRole: UserRole) => {
+    setFormData((prev) => ({
+      ...prev,
+      role: newRole,
+      permissions: getDefaultPermissionsForRole(newRole),
+      dentist_id: newRole === 'dentist' ? dentists[0]?.id : undefined,
+    }));
+  };
+
+  // Handle Toggle Permission Checkbox
+  const handleTogglePermission = (key: keyof UserPermissions) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [key]: !prev.permissions[key],
+      },
+    }));
+  };
+
+  // Handle Allowed Clinic Checkbox
+  const handleToggleAllowedClinic = (clinicId: number) => {
+    setFormData((prev) => {
+      const exists = prev.allowedClinicIds.includes(clinicId);
+      let updated: number[];
+      if (exists) {
+        // Do not remove if it is the main clinicId or the only one
+        if (clinicId === prev.clinicId && prev.allowedClinicIds.length === 1) {
+          return prev;
+        }
+        updated = prev.allowedClinicIds.filter((id) => id !== clinicId);
+        if (updated.length === 0) updated = [prev.clinicId];
+      } else {
+        updated = [...prev.allowedClinicIds, clinicId];
+      }
+      return { ...prev, allowedClinicIds: updated };
+    });
+  };
+
+  // Submit Form (Save User)
+  const handleSaveUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!formData.name.trim()) {
+      setFormError('Informe o nome completo do usuário.');
+      return;
+    }
+    if (!formData.email.trim() || !formData.email.includes('@')) {
+      setFormError('Informe um e-mail válido.');
+      return;
+    }
+
+    if (editingUserId) {
+      // UPDATE
+      const res = dataService.updateSystemUser(editingUserId, formData, currentUserContext);
+      if (res.error) {
+        setFormError(res.error);
+        return;
+      }
+    } else {
+      // CREATE
+      const res = dataService.createSystemUser(formData, currentUserContext);
+      if (res.error) {
+        setFormError(res.error);
+        return;
+      }
+    }
+
+    refreshUsers();
+    setIsFormOpen(false);
+  };
+
+  // Toggle user active status
+  const handleToggleStatus = (userId: string) => {
+    dataService.toggleUserStatus(userId, currentUserContext);
+    refreshUsers();
+  };
+
+  // Delete user
+  const handleDeleteUser = (userId: string) => {
+    const res = dataService.deleteSystemUser(userId, currentUserContext);
+    if (!res.success) {
+      alert(res.error || 'Não foi possível excluir este usuário.');
+    } else {
+      refreshUsers();
+    }
+    setDeleteConfirmId(null);
+  };
+
+  // Copy Magic Link for fast login simulation
+  const handleCopyLink = (user: SystemUser) => {
+    const magicLink = formatInviteUrl(user);
+    try {
+      navigator.clipboard.writeText(magicLink);
+      setCopiedUserId(user.id);
+      setTimeout(() => setCopiedUserId(null), 2500);
+    } catch {
+      setCopiedUserId(user.id);
+      setTimeout(() => setCopiedUserId(null), 2500);
+    }
+  };
+
+  // Helpers for Badges
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case 'admin_root':
+      case 'admin':
+        return {
+          label: 'Admin Root',
+          bg: 'bg-purple-50 text-purple-800 border-purple-200',
+          desc: 'Acesso Global Total',
+        };
+      case 'admin_clinica':
+        return {
+          label: 'Admin Clínica',
+          bg: 'bg-amber-50 text-amber-800 border-amber-200',
+          desc: 'Gestão da Clínica & Unidades',
+        };
+      case 'gerente_atendimento':
+        return {
+          label: 'Gerente Atendimento',
+          bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+          desc: 'Gestor de Agendas e Check-ins',
+        };
+      case 'receptionist':
+        return {
+          label: 'Recepção',
+          bg: 'bg-blue-50 text-blue-800 border-blue-200',
+          desc: 'Atendimento e Check-in Local',
+        };
+      case 'dentist':
+      default:
+        return {
+          label: 'Dentista',
+          bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          desc: 'Agenda Individual & Alertas',
+        };
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+      <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[92vh]">
+        {/* Header */}
+        <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">
+                Gestão de Usuários & Perfis
+              </h2>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                {isAdminRoot
+                  ? 'Visão Corporativa Root — visualização e gestão de usuários de todas as clínicas e unidades'
+                  : `Visão Admin Clínica — gestão restrita às unidades vinculadas (${actorAllowedClinics.map((c) => c.shortName).join(', ')})`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer shrink-0 ml-2"
+            title="Fechar janela"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 bg-slate-50">
+          {/* Main Navigation Tabs: Users vs Roles CRUD vs Clients (Top Position) */}
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {canManageInternalUsers && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMainTab('users')}
+                    className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 ${
+                      activeMainTab === 'users'
+                        ? 'bg-[#147A80] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Usuários Internos</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMainTab('roles')}
+                    className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 ${
+                      activeMainTab === 'roles'
+                        ? 'bg-[#147A80] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Perfis & Cargos (RBAC)</span>
+                  </button>
+                </>
+              )}
+              {canManageClientAccounts && (
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('clients')}
+                  className={`h-9 px-3.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 tabular-nums ${
+                    activeMainTab === 'clients'
+                      ? 'bg-[#147A80] text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Clientes & Pacientes ({patients.length.toLocaleString('pt-BR')})</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {activeMainTab !== 'clients' && (
+            <>
+              {/* Top Scope Notification (Only for Internal Users / RBAC tabs) */}
+              <div className="p-3 rounded-xl border border-slate-200 bg-white flex items-start gap-3">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-[#147A80]" />
+                <div className="text-xs text-slate-600">
+                  <span className="font-semibold text-slate-900 block mb-0.5">
+                    {isAdminRoot
+                      ? 'Regra Corporativa Root Ativa (Hierarquia Máxima):'
+                      : 'Regra de Franquia / Unidade Ativa (Segregação LGPD):'}
+                  </span>
+                  {isAdminRoot ? (
+                    <span>
+                      Como <strong className="text-slate-900">Admin Root</strong>, você enxerga e gerencia usuários de{' '}
+                      <strong className="text-slate-900">todas as clínicas</strong> (Palmas, Paraíso, Araguaína e novas unidades),
+                      com permissão para conceder qualquer perfil e escopo.
+                    </span>
+                  ) : (
+                    <span>
+                      Como <strong className="text-slate-900">Admin de Clínica</strong>, você possui autorização estrita para
+                      gerenciar profissionais e recepção da sua clínica e unidades derivadas. Os dados e
+                      usuários de outras franquias são preservados em sigilo total.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Metrics Bar (Only for Internal Users / RBAC tabs) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-500 font-semibold block">Total Visível</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">{stats.total}</span>
+                  <span className="text-[10px] text-slate-400 block">usuários no escopo</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                    <Stethoscope className="w-3.5 h-3.5" /> Dentistas
+                  </span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
+                    {stats.dentistsCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">corpo clínico</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" /> Recepção
+                  </span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
+                    {stats.receptionCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">atendimento local</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-[#147A80] font-semibold flex items-center gap-1">
+                    <Crown className="w-3.5 h-3.5" /> Gestão / Admins
+                  </span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">
+                    {stats.adminsCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">gestores ativos</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeMainTab === 'clients' ? (
+            <ClientAccountsTab 
+              patients={patients} 
+              refreshPatients={loadPatients}
+              currentUserContext={currentUserContext}
+            />
+          ) : activeMainTab === 'roles' ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Perfis de Acesso Personalizados (RBAC)</h3>
+                  <p className="text-xs text-slate-500">
+                    Crie novos papéis, defina descrições e ajuste quais funcionalidades cada perfil pode acessar.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoleFormData({
+                      id: `role_${Date.now()}`,
+                      name: '',
+                      description: '',
+                      badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
+                      defaultPermissions: getDefaultPermissionsForRole('dentist'),
+                    });
+                    setEditingRoleId(null);
+                    setRoleFormError(null);
+                    setIsRoleFormOpen(true);
+                  }}
+                  className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Novo Perfil Customizado</span>
+                </button>
+              </div>
+
+              {/* Roles List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Built-in standard roles (now fully editable!) */}
+                {[
+                  {
+                    id: 'dentist',
+                    name: 'Dentista',
+                    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                    desc: 'Acesso exclusivo à própria agenda e resumos com IA.',
+                  },
+                  {
+                    id: 'receptionist',
+                    name: 'Recepção',
+                    badge: 'bg-blue-50 text-blue-800 border-blue-200',
+                    desc: 'Acesso à recepção, check-in e leitura do Clube Sorriso.',
+                  },
+                  {
+                    id: 'admin_clinica',
+                    name: 'Admin Clínica',
+                    badge: 'bg-amber-50 text-amber-800 border-amber-200',
+                    desc: 'Gestão de profissionais, usuários e relatórios da clínica.',
+                  },
+                  {
+                    id: 'admin_root',
+                    name: 'Admin Root',
+                    badge: 'bg-purple-50 text-purple-800 border-purple-200',
+                    desc: 'Acesso global irrestrito a todas as unidades e configurações.',
+                  },
+                  {
+                    id: 'gerente_atendimento',
+                    name: 'Gerente Atendimento',
+                    badge: 'bg-orange-50 text-orange-800 border-orange-200',
+                    desc: 'Gestão de múltiplas agendas sem configurações técnicas.',
+                  },
+                ].map((sysRole) => {
+                  const currentPerms = getDefaultPermissionsForRole(sysRole.id);
+                  return (
+                    <div
+                      key={sysRole.id}
+                      className="p-4 bg-white rounded-xl border border-slate-200 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${sysRole.badge}`}
+                        >
+                          {sysRole.name} (Sistema)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFormData({
+                              id: sysRole.id,
+                              name: sysRole.name,
+                              description: sysRole.desc,
+                              badgeBg: sysRole.badge,
+                              defaultPermissions: currentPerms,
+                            });
+                            setEditingRoleId(sysRole.id);
+                            setRoleFormError(null);
+                            setIsRoleFormOpen(true);
+                          }}
+                          className="h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 text-slate-700 hover:text-[#147A80] cursor-pointer text-xs flex items-center gap-1.5 font-semibold transition-colors"
+                          title="Editar Permissões deste Perfil do Sistema"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-600">{sysRole.desc}</p>
+                      <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <span className="font-semibold text-slate-700 block mb-1.5">Permissões Ativas:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(currentPerms).map(([k, v]) =>
+                            v ? (
+                              <span
+                                key={k}
+                                className="px-1.5 py-0.5 bg-teal-50 text-[#147A80] border border-teal-200/70 rounded font-medium text-[10px]"
+                              >
+                                {PERMISSION_LABELS[k] || k}
+                              </span>
+                            ) : null
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Custom roles created by admin */}
+                {customRoles.map((cr) => (
+                  <div key={cr.id} className="p-4 bg-white rounded-xl border border-slate-200 space-y-3 relative group">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${cr.badgeBg}`}>
+                        {cr.name}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFormData(cr);
+                            setEditingRoleId(cr.id);
+                            setRoleFormError(null);
+                            setIsRoleFormOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer text-xs transition-colors"
+                          title="Editar Perfil"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        {isAdminRoot && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRole(cr.id)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer text-xs transition-colors"
+                            title="Excluir Perfil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600">{cr.description || 'Sem descrição.'}</p>
+                    <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <span className="font-semibold text-slate-700 block mb-1.5 tabular-nums">
+                        Permissões Ativas ({Object.values(cr.defaultPermissions).filter(Boolean).length}):
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(cr.defaultPermissions).map(([k, v]) => v ? (
+                          <span key={k} className="px-1.5 py-0.5 bg-teal-50 text-[#147A80] border border-teal-200/70 rounded font-medium text-[10px]">
+                            {PERMISSION_LABELS[k] || k}
+                          </span>
+                        ) : null)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Matriz Comparativa de Permissões por Perfil (Tabela RBAC) */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-4 mt-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3 gap-2 flex-wrap">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#147A80]" />
+                      Matriz Comparativa de Permissões por Perfil (RBAC)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Visão geral da matriz de privilégios. Verifique o escopo de cada perfil para evitar acessos indevidos.
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-500 tabular-nums">
+                    21 funcionalidades mapeadas
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                        <th className="p-3 min-w-[220px]">Funcionalidade do Sistema</th>
+                        <th className="p-3 text-center min-w-[90px] bg-teal-50/60 text-[#147A80]">Root</th>
+                        <th className="p-3 text-center min-w-[100px]">Admin Clínica</th>
+                        <th className="p-3 text-center min-w-[110px]">Gerente Atend.</th>
+                        <th className="p-3 text-center min-w-[90px]">Recepção</th>
+                        <th className="p-3 text-center min-w-[90px]">Dentista</th>
+                        {customRoles.map((cr) => (
+                          <th key={cr.id} className="p-3 text-center min-w-[100px] bg-teal-50/40 text-[#147A80]">
+                            {cr.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {PERMISSION_CATEGORIES.map((cat) => (
+                        <React.Fragment key={cat.id}>
+                          <tr className="bg-slate-50 font-semibold text-slate-900 border-t border-slate-200">
+                            <td colSpan={6 + customRoles.length} className="p-2.5 pl-3 text-xs bg-slate-100/80 text-slate-800">
+                              {cat.title}
+                            </td>
+                          </tr>
+                          {cat.permissions.map((perm) => {
+                            const rootPerm = getDefaultPermissionsForRole('admin_root')[perm.key];
+                            const clinicaPerm = getDefaultPermissionsForRole('admin_clinica')[perm.key];
+                            const gerentePerm = getDefaultPermissionsForRole('gerente_atendimento')[perm.key];
+                            const recepPerm = getDefaultPermissionsForRole('receptionist')[perm.key];
+                            const dentPerm = getDefaultPermissionsForRole('dentist')[perm.key];
+
+                            return (
+                              <tr key={perm.key} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="p-3 font-medium text-slate-900">
+                                  <span className="font-semibold block">{perm.label}</span>
+                                  <span className="text-[11px] text-slate-500 block">{perm.description}</span>
+                                </td>
+                                <td className="p-3 text-center bg-teal-50/20 font-bold text-emerald-600">
+                                  {rootPerm ? '✓' : '—'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${clinicaPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {clinicaPerm ? '✓' : '—'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${gerentePerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {gerentePerm ? '✓' : '—'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${recepPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {recepPerm ? '✓' : '—'}
+                                </td>
+                                <td className={`p-3 text-center font-bold ${dentPerm ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                  {dentPerm ? '✓' : '—'}
+                                </td>
+                                {customRoles.map((cr) => {
+                                  const cPerm = Boolean((cr.defaultPermissions as any)[perm.key]);
+                                  return (
+                                    <td key={cr.id} className={`p-3 text-center font-bold bg-teal-50/15 ${cPerm ? 'text-[#147A80]' : 'text-slate-300'}`}>
+                                      {cPerm ? '✓' : '—'}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Role Form Modal */}
+              {isRoleFormOpen && (
+                <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-900">
+                          {editingRoleId ? 'Editar Perfil Customizado' : 'Novo Perfil de Acesso (RBAC)'}
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsRoleFormOpen(false)}
+                        className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveRole} className="p-5 overflow-y-auto space-y-4 text-xs">
+                      {roleFormError && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold">
+                          {roleFormError}
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="font-semibold text-slate-700 block mb-1">Nome do Perfil / Cargo *</label>
+                        <input
+                          type="text"
+                          required
+                          value={roleFormData.name || ''}
+                          onChange={(e) => {
+                            const name = e.target.value;
+                            setRoleFormData((prev) => ({
+                              ...prev,
+                              name,
+                              id: editingRoleId ? prev.id : name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                            }));
+                          }}
+                          placeholder="Ex: Financeiro Sênior, Coordenador..."
+                          className="w-full h-10 px-3 rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-semibold text-slate-700 block mb-1">Descrição Breve</label>
+                        <textarea
+                          rows={2}
+                          value={roleFormData.description || ''}
+                          onChange={(e) => setRoleFormData((prev) => ({ ...prev, description: e.target.value }))}
+                          placeholder="Explique o escopo de atuação deste perfil..."
+                          className="w-full p-2.5 rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="font-semibold text-slate-700 block text-xs tabular-nums">
+                            Permissões Padrão ({Object.values(roleFormData.defaultPermissions).filter(Boolean).length} / {PERMISSION_CATEGORIES.reduce((acc, cat) => acc + cat.permissions.length, 0)} ativas)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allTrue: any = {};
+                                PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allTrue[p.key] = true)));
+                                setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allTrue } }));
+                              }}
+                              className="text-[11px] font-semibold text-[#147A80] hover:underline cursor-pointer"
+                            >
+                              Marcar Todas
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allFalse: any = {};
+                                PERMISSION_CATEGORIES.forEach((c) => c.permissions.forEach((p) => (allFalse[p.key] = false)));
+                                setRoleFormData((prev) => ({ ...prev, defaultPermissions: { ...prev.defaultPermissions, ...allFalse } }));
+                              }}
+                              className="text-[11px] font-semibold text-slate-500 hover:underline cursor-pointer"
+                            >
+                              Limpar Todas
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+                          {PERMISSION_CATEGORIES.map((cat) => (
+                            <div key={cat.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                <span className="font-bold text-slate-900 text-xs">{cat.title}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = { ...roleFormData.defaultPermissions };
+                                      cat.permissions.forEach((p) => ((updated as any)[p.key] = true));
+                                      setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
+                                    }}
+                                    className="text-[10px] font-semibold text-[#147A80] bg-teal-50 px-2 py-0.5 rounded border border-teal-200 hover:bg-teal-100 cursor-pointer"
+                                  >
+                                    Marcar Categoria
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = { ...roleFormData.defaultPermissions };
+                                      cat.permissions.forEach((p) => ((updated as any)[p.key] = false));
+                                      setRoleFormData((prev) => ({ ...prev, defaultPermissions: updated }));
+                                    }}
+                                    className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-200 cursor-pointer"
+                                  >
+                                    Limpar
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {cat.permissions.map((perm) => (
+                                  <label
+                                    key={perm.key}
+                                    className={`p-2 rounded-xl border flex items-start justify-between cursor-pointer transition-colors ${
+                                      (roleFormData.defaultPermissions as any)[perm.key]
+                                        ? 'bg-teal-50/70 border-teal-200'
+                                        : 'bg-white border-slate-200 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <div className="pr-2 space-y-0.5">
+                                      <span className="font-semibold text-slate-900 text-xs block">{perm.label}</span>
+                                      <span className="text-[10px] text-slate-500 block leading-tight">{perm.description}</span>
+                                    </div>
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean((roleFormData.defaultPermissions as any)[perm.key])}
+                                      onChange={() =>
+                                        setRoleFormData((prev) => ({
+                                          ...prev,
+                                          defaultPermissions: {
+                                            ...prev.defaultPermissions,
+                                            [perm.key]: !(prev.defaultPermissions as any)[perm.key],
+                                          },
+                                        }))
+                                      }
+                                      className="rounded text-[#147A80] focus:ring-[#147A80] mt-0.5 shrink-0"
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => setIsRoleFormOpen(false)}
+                          className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold cursor-pointer shadow-xs transition-colors"
+                        >
+                          Salvar Perfil
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Action Row: Filters + Create Button */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+            {/* Search Box */}
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por nome, e-mail ou telefone..."
+                className="w-full h-9 bg-white border border-slate-200 rounded-xl pl-9 pr-8 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Dropdowns */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Clinic Filter */}
+              <div className="relative">
+                <select
+                  value={selectedClinicFilter}
+                  onChange={(e) =>
+                    setSelectedClinicFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                  }
+                  className="appearance-none h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-7 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+                >
+                  <option value="all">
+                    {isAdminRoot ? 'Todas as Clínicas' : 'Minhas Unidades'}
+                  </option>
+                  {actorAllowedClinics.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.shortName}
+                    </option>
+                  ))}
+                </select>
+                <Filter className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Role Filter */}
+              <div className="relative">
+                <select
+                  value={selectedRoleFilter}
+                  onChange={(e) => setSelectedRoleFilter(e.target.value as UserRole | 'all')}
+                  className="appearance-none h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-7 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+                >
+                  <option value="all">Todos os Perfis</option>
+                  <option value="dentist">Dentistas</option>
+                  <option value="receptionist">Recepção</option>
+                  <option value="admin_clinica">Admin Clínica</option>
+                  {isAdminRoot && <option value="admin_root">Admin Root</option>}
+                  <option value="gerente_atendimento">Gerente Atendimento</option>
+                </select>
+                <Filter className="w-3 h-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Batch Import / Pre-Cadastro Button */}
+              <button
+                onClick={() => setIsPreCadastroModalOpen(true)}
+                title="Puxar dentistas da base da Clinicorp / Supabase e pré-cadastrar no sistema"
+                className="h-9 px-3.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 tabular-nums"
+              >
+                <Sparkles className="w-4 h-4 text-[#147A80]" />
+                <span>Puxar da Base ({pendingDentists.length} pendentes)</span>
+              </button>
+
+              {/* Create User Button */}
+              <button
+                onClick={handleOpenCreateForm}
+                className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Novo Usuário</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Batch Success Notification */}
+          {batchSuccessMessage && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center justify-between text-xs font-semibold">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                {batchSuccessMessage}
+              </span>
+              <button
+                onClick={() => setBatchSuccessMessage(null)}
+                className="text-emerald-700 hover:text-emerald-900 p-1 rounded cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Users List Table / Cards */}
+          <div className="space-y-3">
+            {filteredUsers.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <h4 className="text-sm font-bold text-slate-700">Nenhum usuário encontrado</h4>
+                <p className="text-xs text-slate-500 mt-1">
+                  Tente alterar os termos da busca ou os filtros aplicados.
+                </p>
+              </div>
+            ) : (
+              filteredUsers.map((user) => {
+                const roleBadge = getRoleBadge(user.role);
+                const mainClinic = clinics.find((c) => c.id === user.clinicId);
+                const allowedClinicNames = (user.allowedClinicIds || [user.clinicId])
+                  .map((id) => clinics.find((c) => c.id === id)?.shortName)
+                  .filter(Boolean);
+
+                const isRootUser = user.id === 'usr_favuca_root';
+
+                return (
+                  <div
+                    key={user.id}
+                    className={`p-4 bg-white rounded-xl border transition-colors ${
+                      !user.active
+                        ? 'border-slate-200 bg-slate-50/70 opacity-75'
+                        : 'border-slate-200 hover:border-[#147A80]/40'
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                      {/* Left: User Identity & Info */}
+                      <div className="flex items-start sm:items-center gap-3 min-w-0">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
+                          style={{
+                            backgroundColor:
+                              user.role === 'admin_root'
+                                ? '#7E22CE'
+                                : user.role === 'admin_clinica'
+                                ? '#D97706'
+                                : user.role === 'dentist'
+                                ? '#147A80'
+                                : '#2563EB',
+                          }}
+                        >
+                          {user.name.charAt(0)}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-bold text-slate-900 truncate">{user.name}</h4>
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${roleBadge.bg}`}
+                            >
+                              {roleBadge.label}
+                            </span>
+                            {user.active ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ativo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                Inativo
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap tabular-nums">
+                            <span className="truncate">{user.email}</span>
+                            {user.phone && <span>• {formatPhoneDisplay(user.phone)}</span>}
+                            <span>
+                              • Matriz:{' '}
+                              <strong className="text-slate-700 font-semibold">
+                                {mainClinic?.shortName || 'Palmas'}
+                              </strong>
+                            </span>
+                          </div>
+
+                          {/* Allowed Units Pills & Password Status */}
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <span className="text-[10px] text-slate-400 font-semibold mr-0.5">
+                              Unidades:
+                            </span>
+                            {allowedClinicNames.map((name, i) => (
+                              <span
+                                key={i}
+                                className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                              >
+                                {name}
+                              </span>
+                            ))}
+
+                            {/* Password Status Badge */}
+                            {user.mustChangePassword ? (
+                              <span
+                                title="Usuário ainda utiliza senha provisória e deverá cadastrar uma nova no primeiro acesso"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200"
+                              >
+                                <KeyRound className="w-3 h-3 text-amber-600" /> Troca de Senha Pendente
+                              </span>
+                            ) : (
+                              <span
+                                title="Usuário já cadastrou sua senha definitiva"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
+                              >
+                                <Lock className="w-3 h-3 text-slate-400" /> Senha Cadastrada
+                              </span>
+                            )}
+
+                            {user.inviteSentAt && (
+                              <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                                • <Send className="w-2.5 h-2.5" /> Convite enviado
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Permissions Badges & Action Buttons */}
+                      <div className="flex items-center gap-2 flex-wrap lg:justify-end shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                        {/* Granular Permissions Quick Badges */}
+                        <div
+                          className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 mr-1"
+                          title="Permissões ativas deste usuário"
+                        >
+                          <span
+                            title={
+                              user.permissions?.canViewAgenda
+                                ? 'Visualizar Agenda: Permitido'
+                                : 'Visualizar Agenda: Negado'
+                            }
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              user.permissions?.canViewAgenda
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-slate-200 text-slate-400'
+                            }`}
+                          >
+                            Agenda
+                          </span>
+                          <span
+                            title={
+                              user.permissions?.canCheckIn
+                                ? 'Check-in: Permitido'
+                                : 'Check-in: Negado'
+                            }
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              user.permissions?.canCheckIn
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-slate-200 text-slate-400'
+                            }`}
+                          >
+                            Check-in
+                          </span>
+                          <span
+                            title={
+                              user.permissions?.canReceiveWhatsApp
+                                ? 'Alertas WhatsApp: Ativo'
+                                : 'Alertas WhatsApp: Inativo'
+                            }
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              user.permissions?.canReceiveWhatsApp
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-slate-200 text-slate-400'
+                            }`}
+                          >
+                            Zap
+                          </span>
+                          <span
+                            title={
+                              user.permissions?.canReceivePush
+                                ? 'Push Celular: Ativo'
+                                : 'Push Celular: Inativo'
+                            }
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              user.permissions?.canReceivePush
+                                ? 'bg-teal-100 text-[#147A80]'
+                                : 'bg-slate-200 text-slate-400'
+                            }`}
+                          >
+                            Push
+                          </span>
+                          {user.permissions?.canViewClubeSorriso && (
+                            <span
+                              title="Leitura de Pacientes do Clube Sorriso e Vouchers: Permitido"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-100 text-[#147A80]"
+                            >
+                              Clube
+                            </span>
+                          )}
+                          {user.permissions?.canAccessConfig && (
+                            <span
+                              title="Configurações Técnicas e Webhooks: Permitido"
+                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800"
+                            >
+                              Config
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Send WhatsApp Access Link Button */}
+                        <button
+                          onClick={() => handleOpenInviteModal(user)}
+                          title="Enviar link de acesso e credenciais via WhatsApp ou E-mail"
+                          className="h-8 px-2.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[#147A80] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Enviar Acesso</span>
+                        </button>
+
+                        {/* Reset Password Button */}
+                        <button
+                          onClick={() => handleOpenResetModal(user)}
+                          title="Redefinir senha e gerar nova senha provisória"
+                          className="w-8 h-8 rounded-lg bg-white hover:bg-teal-50 border border-slate-200 text-slate-600 hover:text-[#147A80] transition-colors cursor-pointer flex items-center justify-center"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
+
+                        {/* Simulate User Button */}
+                        <button
+                          onClick={() => {
+                            onSimulateUser(user);
+                            onClose();
+                          }}
+                          title="Simular visualização exata deste usuário no aplicativo"
+                          className="h-8 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <UserCheck className="w-3.5 h-3.5 text-[#147A80]" />
+                          <span>Simular</span>
+                        </button>
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => handleOpenEditForm(user)}
+                          title="Editar dados e permissões do usuário"
+                          className="w-8 h-8 rounded-lg bg-white hover:bg-teal-50 border border-slate-200 text-slate-600 hover:text-[#147A80] transition-colors cursor-pointer flex items-center justify-center"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+
+                        {/* Delete Button (Protected for root) */}
+                        {!isRootUser && (
+                          <div className="relative">
+                            {deleteConfirmId === user.id ? (
+                              <div className="flex items-center gap-1 bg-rose-50 p-1 rounded-lg border border-rose-200">
+                                <span className="text-[10px] text-rose-700 font-semibold px-1">
+                                  Excluir?
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-semibold cursor-pointer"
+                                >
+                                  Sim
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmId(null)}
+                                  className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold cursor-pointer"
+                                >
+                                  Não
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDeleteConfirmId(user.id)}
+                                title="Excluir usuário do sistema"
+                                className="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer flex items-center justify-center"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-[#147A80]" />
+            <span>Permissões validadas em tempo real com controle RBAC por unidade</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Fechar Painel
+          </button>
+        </div>
+      </div>
+
+      {/* CREATE / EDIT USER MODAL FORM */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[90vh]">
+            {/* Form Header */}
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                  {editingUserId ? 'Editar Usuário e Permissões' : 'Cadastrar Novo Usuário'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsFormOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form Content */}
+            <form onSubmit={handleSaveUser} className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              {/* Auto-fill from Base Dentists (Only on create) */}
+              {!editingUserId && (
+                <div className="p-3.5 bg-teal-50/70 border border-teal-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#147A80]" />
+                      Puxar Dados de um Dentista da Base (Auto-preenchimento)
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#147A80] bg-white border border-teal-200 px-2 py-0.5 rounded-md">
+                      1 Clique
+                    </span>
+                  </div>
+
+                  <select
+                    onChange={(e) => {
+                      const dId = Number(e.target.value);
+                      if (!dId) return;
+                      handleSelectDentistForPreCadastro(dId);
+                    }}
+                    defaultValue=""
+                    className="w-full h-9 bg-white border border-teal-200 rounded-xl px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+                  >
+                    <option value="">Selecione um dentista para importar dados da base...</option>
+                    {dentists.map((d) => {
+                      const isAlready = users.some((u) => u.dentist_id === d.id);
+                      return (
+                        <option key={d.id} value={d.id}>
+                          {isAlready ? '(Já cadastrado) ' : ''}{d.Name} — {d.specialty || d.CRO}
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  <p className="text-[11px] text-slate-600 leading-snug">
+                    Importa automaticamente o nome oficial, e-mail institucional, celular/WhatsApp, unidades de atendimento e vínculo com o Clinicorp.
+                  </p>
+                </div>
+              )}
+
+              {/* Section 1: Basic Info */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
+                  1. Dados Básicos
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Nome Completo *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ex: Dra. Mariana Alencar"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">E-mail de Acesso *</label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="exemplo@bertuolodontologia.com.br"
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Telefone / WhatsApp (para Notificações)
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: applyPhoneMask(e.target.value) })
+                      }
+                      placeholder="(63) 98148-7023"
+                      maxLength={15}
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80] font-mono text-xs tabular-nums"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Status da Conta</label>
+                    <div className="flex items-center gap-3 pt-1.5">
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="user_status"
+                          checked={formData.active}
+                          onChange={() => setFormData({ ...formData, active: true })}
+                          className="text-[#147A80] focus:ring-[#147A80]"
+                        />
+                        <span className="font-semibold text-emerald-700">Ativo</span>
+                      </label>
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="user_status"
+                          checked={!formData.active}
+                          onChange={() => setFormData({ ...formData, active: false })}
+                          className="text-[#147A80] focus:ring-[#147A80]"
+                        />
+                        <span className="font-semibold text-slate-500">Inativo</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Initial / Temporary Password */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-700 font-semibold">
+                        {editingUserId ? 'Senha do Usuário' : 'Senha Inicial Provisória *'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            initialPassword: generateSecureTemporaryPassword(),
+                          }))
+                        }
+                        className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <RefreshCw className="w-3 h-3" /> Gerar Aleatória
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showFormPassword ? 'text' : 'password'}
+                        value={formData.initialPassword || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, initialPassword: e.target.value })
+                        }
+                        placeholder="Ex: Bertuol@2026"
+                        className="w-full h-9 bg-white border border-slate-200 rounded-xl pl-3 pr-10 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowFormPassword(!showFormPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showFormPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Must change password checkbox */}
+                  <div className="flex items-center pt-2 sm:pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.mustChangePassword}
+                        onChange={(e) =>
+                          setFormData({ ...formData, mustChangePassword: e.target.checked })
+                        }
+                        className="rounded text-[#147A80] focus:ring-[#147A80]"
+                      />
+                      <span className="text-xs text-slate-800 font-medium">
+                        Exigir troca no 1º acesso (Recomendado)
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Role Selection */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
+                  2. Papel / Perfil de Acesso (RBAC)
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Option 1: Dentist */}
+                  <label
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
+                      formData.role === 'dentist'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role_select"
+                      checked={formData.role === 'dentist'}
+                      onChange={() => handleRoleChange('dentist')}
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
+                    />
+                    <div>
+                      <span className="font-semibold text-slate-900 block">Dentista</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
+                        Acesso exclusivo à sua própria agenda e alertas no celular.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Option 2: Receptionist */}
+                  <label
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
+                      formData.role === 'receptionist'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role_select"
+                      checked={formData.role === 'receptionist'}
+                      onChange={() => handleRoleChange('receptionist')}
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
+                    />
+                    <div>
+                      <span className="font-semibold text-slate-900 block">Recepção</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
+                        Acesso à recepção da unidade física com check-in de pacientes.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Option 3: Admin Clínica */}
+                  <label
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
+                      formData.role === 'admin_clinica'
+                        ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role_select"
+                      checked={formData.role === 'admin_clinica'}
+                      onChange={() => handleRoleChange('admin_clinica')}
+                      className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
+                    />
+                    <div>
+                      <span className="font-semibold text-slate-900 block">Admin Clínica</span>
+                      <span className="text-[11px] text-slate-500 leading-snug block">
+                        Gestão da sua clínica e unidades derivadas, agendas e usuários.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Option 4: Admin Root (Only visible/creatable by Admin Root) */}
+                  {isAdminRoot && (
+                    <label
+                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
+                        formData.role === 'admin_root'
+                          ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                          : 'bg-white border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role_select"
+                        checked={formData.role === 'admin_root'}
+                        onChange={() => handleRoleChange('admin_root')}
+                        className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
+                      />
+                      <div>
+                        <span className="font-semibold text-slate-900 block">Admin Root</span>
+                        <span className="text-[11px] text-slate-500 leading-snug block">
+                          Acesso global irrestrito a todas as clínicas e dados técnicos.
+                        </span>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* Custom Roles Created by Admin */}
+                  {customRoles.map((cr) => (
+                    <label
+                      key={cr.id}
+                      className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors ${
+                        formData.role === cr.id
+                          ? 'bg-teal-50/70 border-[#147A80] ring-1 ring-[#147A80]/20'
+                          : 'bg-white border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role_select"
+                        checked={formData.role === cr.id}
+                        onChange={() => handleRoleChange(cr.id)}
+                        className="mt-0.5 text-[#147A80] focus:ring-[#147A80]"
+                      />
+                      <div>
+                        <span className="font-semibold text-slate-900 block">{cr.name}</span>
+                        <span className="text-[11px] text-slate-500 leading-snug block">
+                          {cr.description || 'Perfil customizado com permissões RBAC.'}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Dentist Person Linking (if role === dentist) */}
+                {formData.role === 'dentist' && (
+                  <div className="p-3 bg-teal-50/60 border border-teal-200 rounded-xl space-y-1.5">
+                    <label className="block text-slate-900 font-semibold">
+                      Vincular ao Profissional da Clinicorp:
+                    </label>
+                    <select
+                      value={formData.dentist_id || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, dentist_id: Number(e.target.value) })
+                      }
+                      className="w-full h-9 bg-white border border-teal-200 rounded-xl px-3 text-slate-900 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                    >
+                      {dentists.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.Name} ({d.CRO})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] text-slate-600 block">
+                      Permite sincronização automática de horários e pacientes deste dentista.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Clinic and Units Scope */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1.5">
+                  3. Vinculação de Clínica e Unidades Derivadas
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Clínica Matriz *</label>
+                    <select
+                      value={formData.clinicId}
+                      disabled={isAdminClinica} // Locked if admin_clinica
+                      onChange={(e) => {
+                        const newCid = Number(e.target.value);
+                        setFormData((prev) => ({
+                          ...prev,
+                          clinicId: newCid,
+                          allowedClinicIds: prev.allowedClinicIds.includes(newCid)
+                            ? prev.allowedClinicIds
+                            : [...prev.allowedClinicIds, newCid],
+                        }));
+                      }}
+                      className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#147A80] disabled:bg-slate-100 disabled:text-slate-500"
+                    >
+                      {actorAllowedClinics.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    {isAdminClinica && (
+                      <span className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Travado na sua clínica de gestão.
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Unidades Autorizadas para Acesso
+                    </label>
+                    <div className="space-y-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 max-h-32 overflow-y-auto">
+                      {actorAllowedClinics.map((c) => (
+                        <label
+                          key={c.id}
+                          className="flex items-center gap-2 cursor-pointer text-xs"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.allowedClinicIds.includes(c.id)}
+                            onChange={() => handleToggleAllowedClinic(c.id)}
+                            className="rounded text-[#147A80] focus:ring-[#147A80]"
+                          />
+                          <span className="text-slate-800 font-medium">
+                            {c.shortName} {c.id === formData.clinicId ? '(Matriz)' : ''}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Granular Permissions Matrix */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h4 className="font-bold text-slate-900 text-xs">
+                    4. Ações & Funções Permitidas (Permissões Granulares)
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        permissions: getDefaultPermissionsForRole(prev.role),
+                      }))
+                    }
+                    className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold underline cursor-pointer"
+                  >
+                    Restaurar Padrão do Perfil
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                  {PERMISSION_CATEGORIES.map((cat) => (
+                    <div key={cat.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                        <span className="font-bold text-slate-900 text-xs">{cat.title}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {cat.permissions.map((perm) => {
+                          const isConfigAndNotRoot = perm.key === 'canAccessConfig' && !isAdminRoot;
+                          return (
+                            <label
+                              key={perm.key}
+                              className={`p-2 rounded-xl border flex items-start justify-between transition-colors ${
+                                isConfigAndNotRoot
+                                  ? 'bg-slate-100 border-slate-200 opacity-60 cursor-not-allowed'
+                                  : formData.permissions[perm.key]
+                                  ? 'bg-teal-50/70 border-teal-200 cursor-pointer'
+                                  : 'bg-white border-slate-200 hover:bg-slate-100 cursor-pointer'
+                              }`}
+                            >
+                              <div className="pr-2 space-y-0.5">
+                                <span className="font-semibold text-slate-900 text-xs block">{perm.label}</span>
+                                <span className="text-[10px] text-slate-500 block leading-tight">{perm.description}</span>
+                              </div>
+                              <input
+                                type="checkbox"
+                                disabled={isConfigAndNotRoot}
+                                checked={Boolean(formData.permissions[perm.key])}
+                                onChange={() => handleTogglePermission(perm.key)}
+                                className="rounded text-[#147A80] focus:ring-[#147A80] mt-0.5 shrink-0"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="h-10 px-5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold shadow-xs transition-colors cursor-pointer"
+                >
+                  {editingUserId ? 'Salvar Alterações' : 'Criar Usuário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DEDICATED PRE-CADASTRO EM LOTE MODAL */}
+      {isPreCadastroModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight text-slate-900 leading-tight">
+                    Puxar Dentistas da Base (Pré-Cadastro em Lote)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Profissionais cadastrados no Clinicorp / Supabase prontos para virar usuários
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPreCadastroModalOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50 flex-1 text-xs">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-500 font-semibold block">Total na Base</span>
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">{dentists.length}</span>
+                  <span className="text-[10px] text-slate-400 block">profissionais Clinicorp</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Já Cadastrados
+                  </span>
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">
+                    {baseDentistsStatus.filter((b) => b.isRegistered).length}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">com acesso ativo</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-[#147A80] font-semibold flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> Pendentes
+                  </span>
+                  <span className="text-lg font-bold text-slate-900 tabular-nums">
+                    {pendingDentists.length}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">aguardando ativação</span>
+                </div>
+              </div>
+
+              {/* Batch Action Banner */}
+              {pendingDentists.length > 0 ? (
+                <div className="p-4 bg-teal-50 rounded-xl text-slate-900 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-bold text-sm leading-tight tabular-nums">
+                      Existem {pendingDentists.length} dentistas na base sem usuário criado
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Deseja puxar e pré-cadastrar todos com e-mail, telefone, CRO e clínicas em 1 clique?
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleBatchPreCadastrarAll}
+                    className="h-9 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer shrink-0 flex items-center justify-center gap-2 tabular-nums"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Pré-cadastrar Todos ({pendingDentists.length})</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2 font-semibold text-xs">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>Todos os dentistas cadastrados no Clinicorp já possuem usuário ativo no sistema!</span>
+                </div>
+              )}
+
+              {/* Dentists List */}
+              <div className="space-y-2.5">
+                <h4 className="font-bold text-slate-900 text-xs">
+                  Profissionais da Base Clinicorp & Status de Acesso
+                </h4>
+
+                <div className="space-y-2">
+                  {baseDentistsStatus.map(({ dentist, isRegistered, user }) => {
+                    const affiliatedNames = (dentist.affiliatedClinicIds || [1])
+                      .map((id) => clinics.find((c) => c.id === id)?.shortName)
+                      .filter(Boolean);
+
+                    return (
+                      <div
+                        key={dentist.id}
+                        className={`p-3.5 bg-white rounded-xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          isRegistered
+                            ? 'border-slate-200 bg-slate-50/50'
+                            : 'border-slate-200 hover:border-[#147A80]/50'
+                        }`}
+                      >
+                        {/* Info */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          {dentist.avatarUrl ? (
+                            <img
+                              src={dentist.avatarUrl}
+                              alt={dentist.Name}
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 text-[#147A80] font-bold flex items-center justify-center shrink-0">
+                              <Stethoscope className="w-5 h-5" />
+                            </div>
+                          )}
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-slate-900 text-xs truncate">
+                                {dentist.Name}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-semibold tabular-nums">
+                                {dentist.CRO}
+                              </span>
+                              {isRegistered ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <Check className="w-3 h-3" /> Já no Sistema
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                  <Clock className="w-3 h-3" /> Pendente
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-[11px] text-slate-500 mt-0.5 truncate tabular-nums">
+                              {dentist.specialty || 'Cirurgião-Dentista'} • {dentist.MobilePhone || 'Sem telefone'} • {dentist.Email}
+                            </p>
+
+                            <div className="flex items-center gap-1 mt-1 flex-wrap">
+                              <span className="text-[10px] text-slate-400 font-medium">Unidades:</span>
+                              {affiliatedNames.map((name, i) => (
+                                <span
+                                  key={i}
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                                >
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action */}
+                        <div className="flex items-center gap-2 shrink-0 sm:self-center">
+                          {isRegistered ? (
+                            <button
+                              onClick={() => {
+                                if (user) {
+                                  onSimulateUser(user);
+                                  setIsPreCadastroModalOpen(false);
+                                  onClose();
+                                }
+                              }}
+                              className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 text-[#147A80]" />
+                              <span>Simular Visão</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handlePreCadastrarDentist(dentist)}
+                              className="h-9 px-3.5 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>Pré-cadastrar Agora</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 gap-2">
+              <span className="text-xs text-slate-500">
+                Os dentistas pré-cadastrados recebem acesso instantâneo via link e push notification.
+              </span>
+              <button
+                onClick={() => setIsPreCadastroModalOpen(false)}
+                className="h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
+              >
+                Concluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WHATSAPP & EMAIL INVITE MODAL */}
+      {isInviteModalOpen && selectedUserForInvite && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Enviar Convite & Acesso</h4>
+                  <p className="text-xs text-slate-500">{selectedUserForInvite.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsInviteModalOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 sm:p-5 space-y-3.5 bg-slate-50 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-slate-500 font-semibold block text-[11px]">Destinatário:</span>
+                <span className="font-bold text-slate-900 text-xs block">{selectedUserForInvite.name}</span>
+                <span className="text-slate-600 block">{selectedUserForInvite.email}</span>
+                {selectedUserForInvite.phone && (
+                  <span className="text-[#147A80] font-semibold block tabular-nums">{formatPhoneDisplay(selectedUserForInvite.phone)}</span>
+                )}
+              </div>
+
+              {/* Message Bubble Preview */}
+              <div className="space-y-1.5">
+                <span className="font-semibold text-slate-700 block text-[11px]">
+                  Prévia da Mensagem WhatsApp (Pronta para Enviar):
+                </span>
+                <div className="p-3.5 bg-white border border-slate-200 text-slate-800 rounded-xl font-mono text-[11px] leading-relaxed whitespace-pre-line max-h-56 overflow-y-auto">
+                  {formatInviteTextMessage(selectedUserForInvite)}
+                </div>
+              </div>
+
+              {/* Evolution GO Feedback Message */}
+              {evolutionStatusMessage && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs font-semibold ${
+                    evolutionStatusMessage.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                      : evolutionStatusMessage.type === 'error'
+                      ? 'bg-rose-50 text-rose-900 border border-rose-200'
+                      : 'bg-blue-50 text-blue-900 border border-blue-200'
+                  }`}
+                >
+                  {evolutionStatusMessage.text}
+                </div>
+              )}
+
+              {/* Quick Actions */}
+              <div className="space-y-2 pt-1">
+                {/* 1. Send Automatically via Evolution GO */}
+                <button
+                  type="button"
+                  disabled={sendingViaEvolution}
+                  onClick={handleSendViaEvolutionGo}
+                  className="w-full h-10 px-4 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>
+                    {sendingViaEvolution ? 'Disparando via Evolution GO...' : 'Disparar via Evolution GO (Automático)'}
+                  </span>
+                </button>
+
+                {/* 2. Send via WhatsApp Web/App button */}
+                <a
+                  href={formatInviteWhatsAppUrl(selectedUserForInvite)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    dataService.markInviteSent(selectedUserForInvite.id);
+                    refreshUsers();
+                  }}
+                  className="w-full h-9 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4 text-[#147A80]" />
+                  <span>Abrir no WhatsApp Web / App Manual</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </a>
+
+                {/* 3. Copy Full Text button */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(formatInviteTextMessage(selectedUserForInvite));
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2500);
+                  }}
+                  className="w-full h-9 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {inviteCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-700 font-bold">Mensagem Copiada para a Área de Transferência!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-slate-500" />
+                      <span>Copiar Mensagem Completa (com link e senha)</span>
+                    </>
+                  )}
+                </button>
+
+                {/* 3. Copy Link Only */}
+                <button
+                  onClick={() => {
+                    const accessUrl = formatInviteUrl(selectedUserForInvite);
+                    navigator.clipboard.writeText(accessUrl);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2500);
+                  }}
+                  className="w-full py-1.5 text-center text-slate-500 hover:text-slate-800 font-medium text-[11px] underline cursor-pointer"
+                >
+                  Copiar apenas o link de acesso direto (com auto-configuração)
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 bg-white border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setIsInviteModalOpen(false)}
+                className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RESET PASSWORD MODAL */}
+      {isResetModalOpen && selectedUserForReset && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-[2px] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto flex flex-col">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#147A80] shrink-0">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-900">Redefinir Senha do Usuário</h4>
+              </div>
+              <button
+                onClick={() => setIsResetModalOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 sm:p-5 space-y-3.5 bg-slate-50 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-0.5">
+                <span className="font-bold text-slate-900 text-xs block">{selectedUserForReset.name}</span>
+                <span className="text-slate-600 block">{selectedUserForReset.email}</span>
+              </div>
+
+              {resetSuccessMessage && (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center gap-2 font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{resetSuccessMessage}</span>
+                </div>
+              )}
+
+              {/* Temporary password input */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-slate-700">Nova Senha Provisória:</label>
+                  <button
+                    type="button"
+                    onClick={() => setResetNewPassword(generateSecureTemporaryPassword())}
+                    className="text-[11px] text-[#147A80] hover:text-[#0f5c61] font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Gerar Outra
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  className="w-full h-9 bg-white border border-slate-200 rounded-xl px-3 text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                />
+              </div>
+
+              {/* Must change password checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={resetMustChange}
+                  onChange={(e) => setResetMustChange(e.target.checked)}
+                  className="rounded text-[#147A80] focus:ring-[#147A80]"
+                />
+                <span className="text-xs text-slate-800 font-medium">
+                  Exigir que o usuário cadastre nova senha no próximo acesso
+                </span>
+              </label>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleExecuteResetPassword(true)}
+                  className="w-full h-10 px-3 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Salvar e Enviar Nova Senha via WhatsApp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExecuteResetPassword(false)}
+                  className="w-full h-9 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  Salvar Apenas no Sistema
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

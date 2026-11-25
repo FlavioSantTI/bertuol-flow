@@ -1,0 +1,6 @@
+{
+  "name": "Bertuol Odontologia - Agenda Diária com IA",
+  "description": "Aplicativo web para visualização cronológica dos atendimentos com resumos clínicos executivos via Google AI Studio (Gemini) e Supabase.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
