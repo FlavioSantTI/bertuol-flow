@@ -1,0 +1,194 @@
+[
+  {
+    "id": "rec-agenda-completa",
+    "profile": "receptionist",
+    "category": "Agenda e Recepção",
+    "title": "Como visualizar a agenda completa da unidade e fazer o Check-in do paciente?",
+    "summary": "O perfil de atendimento enxerga todos os dentistas da unidade e dispara o alerta de chegada em 1 clique.",
+    "steps": [
+      "Ao entrar com perfil de atendimento/recepção, a agenda já libera a visualização de todos os dentistas da sua unidade sem bloqueio individual.",
+      "Quando o paciente chegar ao balcão (caso ainda não tenha escaneado o Totem QR), localize o agendamento e clique em Check-in.",
+      "O sistema notifica o dentista instantaneamente por push, som de campainha, faixa visual e WhatsApp."
+    ],
+    "keywords": ["agenda", "todos dentistas", "check-in", "recepcao", "chegada", "unidade"],
+    "includeInPrint": true,
+    "printOrder": 1,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-credenciais-clientes",
+    "profile": "receptionist",
+    "category": "Credenciais e Acesso de Pacientes",
+    "title": "Como localizar pacientes e enviar convite de acesso ao Portal pelo WhatsApp?",
+    "summary": "Busque na Central de Credenciais (6.285+ pacientes) por nome ou sobrenome e envie o acesso em 1 clique.",
+    "steps": [
+      "No menu Gestão, abra a Central de Credenciais de Clientes.",
+      "Digite o nome ou sobrenome do paciente na busca no topo (a busca ignora acentos e consulta toda a base da unidade).",
+      "Clique para gerar ou reenviar o link de ativação direto para o WhatsApp do paciente."
+    ],
+    "keywords": ["credenciais", "clientes", "acesso paciente", "convite", "whatsapp", "token", "6285", "buscar paciente"],
+    "includeInPrint": true,
+    "printOrder": 2,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-crm-funis",
+    "profile": "receptionist",
+    "category": "CRM Comercial Multi-Funil",
+    "title": "Quais funis existem no CRM e como usar a captura rápida e a ficha livre?",
+    "summary": "Trabalhe com os funis Recall 6+, Campanhas, Orçamentos em Aberto, Aniversariantes e funis personalizados.",
+    "steps": [
+      "Abra o CRM no cabeçalho principal e selecione o funil desejado na barra de funis.",
+      "Use a barra de Captura Rápida acima do Kanban para registrar leads de balcão, WhatsApp ou @instagram em uma única linha.",
+      "Arraste os cards entre colunas (Drag & Drop) ou clique em qualquer card para abrir a gaveta editável (CRMLeadDrawer) com notas cronológicas, follow-up, rótulos e campos livres.",
+      "Para criar novos funis ou editar etapas de ganho/perda, utilize o botão de Gerenciar Funis (perfis autorizados)."
+    ],
+    "keywords": ["crm", "funil", "kanban", "recall", "campanhas", "orcamentos", "captura rapida", "ficha livre", "drag and drop"],
+    "includeInPrint": true,
+    "printOrder": 3,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-crm-agendamento-clinicorp",
+    "profile": "receptionist",
+    "category": "CRM Comercial Multi-Funil",
+    "title": "Como agendar um lead do CRM direto na agenda oficial do Clinicorp?",
+    "summary": "Consulte horários livres ao vivo do dentista e grave o agendamento no Clinicorp sem sair do CRM.",
+    "steps": [
+      "No card ou na gaveta do lead no CRM, clique em Agendar Consulta.",
+      "Escolha a unidade, o profissional e a data: o sistema lê a grade real do Clinicorp mostrando horários livres, ocupados e bloqueios.",
+      "Selecione o horário disponível e confirme: o paciente é localizado ou cadastrado no Clinicorp, a consulta é criada oficialmente e o card avança automaticamente para etapa de ganho."
+    ],
+    "keywords": ["agendar", "clinicorp", "bidirecional", "horario livre", "bloqueio", "converter lead"],
+    "includeInPrint": true,
+    "printOrder": 4,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-crm-filtros-rotulos",
+    "profile": "receptionist",
+    "category": "CRM Comercial Multi-Funil",
+    "title": "Como filtrar o CRM por data e organizar atendimentos com rótulos?",
+    "summary": "Combine filtros de data (Entrada, Follow-up, Orçamento, Agendamento) com etiquetas coloridas customizadas.",
+    "steps": [
+      "Na barra de filtros do CRM, escolha qual campo de data deseja analisar e selecione um atalho (Hoje, 7 dias, 30 dias, Este mês) ou período personalizado.",
+      "Os indicadores (KPIs) no topo, o Kanban e a Lista são recalculados automaticamente para o período escolhido.",
+      "Clique em Rótulos no cabeçalho do CRM (ou + Rótulo na barra de filtros) para criar, editar cores ou aplicar etiquetas rápidas nos cards."
+    ],
+    "keywords": ["filtro data", "periodo", "rotulos", "etiquetas", "tags", "kpi", "follow-up"],
+    "includeInPrint": true,
+    "printOrder": 5,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-crm-aniversariantes",
+    "profile": "receptionist",
+    "category": "Pipeline de Aniversariantes (BRT-ANIV)",
+    "title": "Como funciona o Pipeline de Aniversariantes e a Automação Diária de Vouchers?",
+    "summary": "Todo dia o sistema identifica os aniversariantes exatos do dia, envia o voucher BRT-ANIV-XXXX no WhatsApp e cria o card no CRM.",
+    "steps": [
+      "Abra o funil Aniversariantes no CRM para acompanhar as 5 etapas: Aniversariante do Dia, Voucher Enviado, Cortesia Agendada, Voucher Resgatado e Expirado / Sem Retorno.",
+      "O agendador diário do servidor (e o webhook opcional do n8n) busca automaticamente os pacientes que fazem aniversário no dia exato (DD/MM em Brasília), gera um voucher único BRT-ANIV-XXXX válido por 7 dias, dispara o WhatsApp e cria o card com follow-up para D+4.",
+      "Cada card mostra o código BRT-ANIV-XXXX com cópia em 1 clique e contagem regressiva de vencimento.",
+      "Para ajustar horário, mensagem, simular (Dry-Run) ou copiar a configuração do n8n, clique em Automação Diária dentro do funil (acesso gerencial/admin)."
+    ],
+    "tip": "O motor possui proteção contra duplicidade anual: mesmo rodando servidor + n8n no mesmo dia, nenhum paciente recebe o voucher duas vezes no mesmo ano.",
+    "keywords": ["aniversariantes", "automacao diaria", "brt-aniv", "voucher aniversario", "n8n", "whatsapp", "dry-run", "7 dias"],
+    "includeInPrint": true,
+    "printOrder": 6,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-baixa-voucher",
+    "profile": "receptionist",
+    "category": "Vouchers e Clube Sorriso",
+    "title": "Como validar e dar baixa em um voucher (BRT-XXXX ou BRT-ANIV-XXXX) na recepção?",
+    "summary": "Valide o código no modal de Vouchers; vouchers de aniversário convertem automaticamente o card do CRM.",
+    "steps": [
+      "No menu superior, abra Resgate / Baixa de Vouchers (Clube Sorriso).",
+      "Digite ou cole o código apresentado pelo paciente (ex.: BRT-XXXX ou BRT-ANIV-XXXX) e confirme a validade.",
+      "Clique em Confirmar Baixa para registrar o uso do benefício.",
+      "Para vouchers de aniversário (BRT-ANIV), o sistema move automaticamente o card do paciente no funil Aniversariantes do CRM para Voucher Resgatado com registro de auditoria."
+    ],
+    "keywords": ["baixa voucher", "validar voucher", "resgatar", "brt-aniv", "clube sorriso", "voucher resgatado"],
+    "includeInPrint": true,
+    "printOrder": 7,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-orcamentos-historico",
+    "profile": "receptionist",
+    "category": "Orçamentos e Relatórios do CRM",
+    "title": "Como importar o histórico de até 1 ano de Orçamentos em Aberto do Clinicorp?",
+    "summary": "Carregue orçamentos OPEN em janelas seguras sem duplicidade, com simulação prévia e backup CSV/JSON.",
+    "steps": [
+      "No CRM, acesse o funil Orçamentos em Aberto e clique em Importar Histórico (disponível para gerência e administradores).",
+      "Defina o período (até 366 dias), a unidade e execute primeiro uma Simulação (Dry-Run) para conferir quantidades e valores.",
+      "Confirme a importação real para gravar apenas os orçamentos novos no Supabase (sem duplicar os existentes) e baixe o backup em CSV (Excel) ou JSON se desejar."
+    ],
+    "keywords": ["orcamentos", "importar historico", "backfill", "1 ano", "clinicorp", "open", "csv", "json"],
+    "includeInPrint": true,
+    "printOrder": 8,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-relatorios-crm",
+    "profile": "receptionist",
+    "category": "Orçamentos e Relatórios do CRM",
+    "title": "Como acessar os Relatórios Gerenciais do CRM e exportar CSV ou PDF A4?",
+    "summary": "Acompanhe conversão, receita de orçamentos, motivos de perda e alertas de SLA com exportação em 1 clique.",
+    "steps": [
+      "Dentro do CRM, clique na aba Relatórios no topo.",
+      "Alterne entre Todos os Funis ou o funil atual, respeitando os filtros de data e unidade selecionados.",
+      "Analise KPIs executivos, funil de conversão, ranking de motivos de perda, comparativos por unidade/dentista/origem e alertas de SLA acima de 48h (clique no alerta para abrir a ficha do lead).",
+      "Use Exportar CSV para abrir no Excel ou Imprimir PDF A4 para gerar o relatório gerencial formatado."
+    ],
+    "keywords": ["relatorios", "dashboard", "pdf", "csv", "excel", "sla", "motivo perda", "conversao"],
+    "includeInPrint": true,
+    "printOrder": 9,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-totem-marketing",
+    "profile": "receptionist",
+    "category": "QR Code, Totem e Mensageria",
+    "title": "Como imprimir o Totem de Check-in (A4) ou exportar o QR Code para folders?",
+    "summary": "Gere a folha A4 do balcão ou baixe o QR Code do Portal em PNG alta resolução e SVG vetorial.",
+    "steps": [
+      "Acesse Gestão → QR Code e Totem no cabeçalho.",
+      "No modo Totem de Check-in (Recepção), escolha a unidade e clique em Imprimir Folha A4 para colocar no balcão.",
+      "No modo Folder Marketing (Pacientes), escolha cor (Teal Bertuol ou Preto) e fundo transparente para baixar em PNG (1200x1200 px) ou SVG vetorial."
+    ],
+    "keywords": ["totem", "qr code", "imprimir", "folder", "marketing", "png", "svg", "balcao"],
+    "includeInPrint": true,
+    "printOrder": 10,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "rec-mensageria-equipe",
+    "profile": "receptionist",
+    "category": "QR Code, Totem e Mensageria",
+    "title": "Como usar a Mensageria Interna Multi-Participante com dentistas e pacientes?",
+    "summary": "Adicione dentistas ou colegas na mesma conversa com atribuição automática de responsável.",
+    "steps": [
+      "Abra a Mensageria Interna no cabeçalho para ver conversas com pacientes e equipe da unidade.",
+      "Ao responder ou iniciar um atendimento, o sistema atribui automaticamente o responsável (substituindo Sem responsável pelo seu nome).",
+      "Use o botão de participantes no topo do chat para incluir ou remover dentistas e outros membros da recepção na mesma conversa, podendo enviar texto, áudio e fotos."
+    ],
+    "keywords": ["mensageria", "chat", "participantes", "responsavel", "dentista", "audio", "foto"],
+    "includeInPrint": true,
+    "printOrder": 11,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  }
+]

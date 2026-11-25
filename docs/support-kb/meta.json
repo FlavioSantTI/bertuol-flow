@@ -1,0 +1,128 @@
+{
+  "version": "1.7.0",
+  "lastSyncedAt": "2026-11-24T13:05:00Z",
+  "repository": "FlavioSantTI/bertuol-flow",
+  "branch": "main",
+  "supportUrl": "https://bertuolflow.app-bertuol.tech/suporte",
+  "profiles": {
+    "patient": {
+      "id": "patient",
+      "label": "Paciente",
+      "shortLabel": "Pacientes",
+      "audience": "Pacientes das unidades Palmas - TO e Paraíso do Tocantins - TO",
+      "bookletTitle": "Cartilha do Paciente — Portal & Clube Sorriso",
+      "bookletSubtitle": "Guia prático de primeiro acesso, confirmação de consultas, check-in no Totem QR, pontos e vouchers.",
+      "suggestedQuestions": [
+        "Como faço meu primeiro acesso ao Portal do Paciente?",
+        "Como funciona o check-in no Totem QR Code da recepção?",
+        "Como usar meu voucher de aniversário BRT-ANIV?",
+        "Como instalar o aplicativo no iPhone e ativar notificações?"
+      ]
+    },
+    "dentist": {
+      "id": "dentist",
+      "label": "Dentista",
+      "shortLabel": "Dentistas",
+      "audience": "Corpo clínico e cirurgiões-dentistas da rede Bertuol",
+      "bookletTitle": "Cartilha do Dentista — Agenda Clínica & IA",
+      "bookletSubtitle": "Guia prático de timeline sincronizada com Clinicorp, resumos executivos com IA, alertas de chegada e biometria.",
+      "suggestedQuestions": [
+        "Como sou avisado quando meu paciente chega na recepção?",
+        "Como gerar o Resumo Executivo Clínico com IA?",
+        "Como ativar a biometria Face ID ou Touch ID?",
+        "Como ativar notificações push no iPhone?"
+      ]
+    },
+    "receptionist": {
+      "id": "receptionist",
+      "label": "Atendente / Recepção",
+      "shortLabel": "Atendentes",
+      "audience": "Equipe de recepção, atendimento comercial, CRM e gerência",
+      "bookletTitle": "Cartilha da Recepção & CRM Comercial",
+      "bookletSubtitle": "Guia operacional de credenciais de clientes, CRM multi-funil, agendamento Clinicorp, baixa de vouchers e automação de aniversariantes.",
+      "suggestedQuestions": [
+        "Como dar baixa em um voucher BRT-ANIV ou Clube Sorriso na recepção?",
+        "Como funciona a automação diária do funil de Aniversariantes?",
+        "Como agendar um lead do CRM direto na agenda do Clinicorp?",
+        "Como importar o histórico de 1 ano de orçamentos em aberto?"
+      ]
+    }
+  },
+  "impactMap": [
+    {
+      "pattern": "src/patient/",
+      "profiles": ["patient"],
+      "area": "Portal do Paciente e Clube Sorriso"
+    },
+    {
+      "pattern": "paciente.html",
+      "profiles": ["patient"],
+      "area": "Entrada PWA do Paciente"
+    },
+    {
+      "pattern": "public/manifest-paciente.json",
+      "profiles": ["patient"],
+      "area": "Instalação PWA Mobile do Paciente"
+    },
+    {
+      "pattern": "src/components/crm/",
+      "profiles": ["receptionist"],
+      "area": "CRM Comercial Multi-Funil e Automações"
+    },
+    {
+      "pattern": "src/utils/crm",
+      "profiles": ["receptionist"],
+      "area": "Relatórios, Backfill e Vouchers do CRM"
+    },
+    {
+      "pattern": "src/services/crmService.ts",
+      "profiles": ["receptionist"],
+      "area": "Serviço de Funis e Oportunidades do CRM"
+    },
+    {
+      "pattern": "src/components/Voucher",
+      "profiles": ["receptionist", "dentist", "patient"],
+      "area": "Resgate e Baixa de Vouchers"
+    },
+    {
+      "pattern": "src/components/Totem",
+      "profiles": ["receptionist", "patient"],
+      "area": "Central de QR Code, Totem e Marketing"
+    },
+    {
+      "pattern": "src/components/ClientAccounts",
+      "profiles": ["receptionist"],
+      "area": "Central de Credenciais de Clientes"
+    },
+    {
+      "pattern": "src/components/InternalMessaging",
+      "profiles": ["receptionist", "dentist"],
+      "area": "Mensageria Interna Multi-Participante"
+    },
+    {
+      "pattern": "src/components/DailyBriefing",
+      "profiles": ["dentist"],
+      "area": "Briefing Matinal e Resumo com IA"
+    },
+    {
+      "pattern": "src/components/WebAuthn",
+      "profiles": ["dentist", "receptionist"],
+      "area": "Acesso Biométrico WebAuthn"
+    },
+    {
+      "pattern": "src/components/Notification",
+      "profiles": ["dentist", "receptionist", "patient"],
+      "area": "Alertas Sonoros e Notificações Push"
+    },
+    {
+      "pattern": "src/components/Header.tsx",
+      "profiles": ["dentist", "receptionist"],
+      "area": "Navegação Principal da Clínica"
+    },
+    {
+      "pattern": "server.ts",
+      "profiles": ["receptionist", "dentist", "patient"],
+      "area": "APIs, Integrações Clinicorp/WhatsApp e Automações"
+    }
+  ]
+}

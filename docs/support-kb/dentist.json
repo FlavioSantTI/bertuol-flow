@@ -1,0 +1,176 @@
+[
+  {
+    "id": "den-primeiro-login",
+    "profile": "dentist",
+    "category": "Acesso, Senha e Biometria",
+    "title": "Como funciona o primeiro login do dentista no Bertuol Flow?",
+    "summary": "Entre com o e-mail e senha provisória recebidos da administração e defina sua senha pessoal definitiva.",
+    "steps": [
+      "Acesse o Bertuol Flow com o e-mail corporativo e a senha provisória enviados pela administração no WhatsApp.",
+      "No primeiro acesso, o sistema identifica a senha provisória e solicita obrigatoriamente o cadastro de uma senha pessoal definitiva (conformidade LGPD).",
+      "Se desejar entrar direto na sua agenda nas próximas vezes, marque a opção Lembrar acesso na tela de login."
+    ],
+    "keywords": ["primeiro login", "senha provisoria", "lgpd", "acesso", "lembrar acesso", "entrar"],
+    "includeInPrint": true,
+    "printOrder": 1,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-esqueci-senha",
+    "profile": "dentist",
+    "category": "Acesso, Senha e Biometria",
+    "title": "Esqueci minha senha definitiva. Como redefinir com segurança?",
+    "summary": "A redefinição é feita pela administração clínica ou TI, com envio de nova senha temporária.",
+    "steps": [
+      "Por segurança clínica e proteção de dados de prontuário, a senha não é enviada por e-mail aberto.",
+      "Solicite ao Administrador Clínico ou à equipe de TI a redefinição do seu usuário no painel de gestão.",
+      "Você receberá uma nova senha provisória no WhatsApp e definirá sua nova senha pessoal ao entrar."
+    ],
+    "keywords": ["esqueci senha", "redefinir", "resetar", "bloqueado", "ti", "administrador"],
+    "includeInPrint": true,
+    "printOrder": 2,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-biometria",
+    "profile": "dentist",
+    "category": "Acesso, Senha e Biometria",
+    "title": "Como ativar login por Biometria (Face ID / Touch ID / Digital)?",
+    "summary": "Cadastre a passkey biométrica do seu aparelho pelo menu da conta para entrar sem digitar senha.",
+    "steps": [
+      "Faça login normalmente no dispositivo (celular ou computador compatível com WebAuthn).",
+      "Abra o menu superior da clínica e selecione Biometria / Passkeys.",
+      "Toque em Cadastrar este dispositivo e confirme com seu Face ID, Touch ID ou leitor digital.",
+      "Nos próximos acessos, toque em Entrar com Biometria diretamente na tela inicial."
+    ],
+    "keywords": ["biometria", "face id", "touch id", "digital", "webauthn", "passkey"],
+    "includeInPrint": true,
+    "printOrder": 3,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-timeline-clinicorp",
+    "profile": "dentist",
+    "category": "Agenda Clínica e Unidades",
+    "title": "Quais informações aparecem na Timeline diária e como sincroniza com o Clinicorp?",
+    "summary": "A agenda é sincronizada em tempo real com o Clinicorp, exibindo horários, procedimentos, status e alertas de saúde.",
+    "steps": [
+      "Cada card exibe horário de início e término, nome completo, idade e indicação de convênio ou particular.",
+      "Os indicadores de status mostram se o paciente está confirmado, aguardando na recepção, em atendimento, finalizado ou faltou.",
+      "Alertas de prontuário (como alergias graves a látex, antibióticos ou anestésicos) aparecem em destaque visual para conferência prévia.",
+      "Novos agendamentos, remarcações ou cancelamentos feitos no Clinicorp refletem automaticamente na timeline."
+    ],
+    "keywords": ["timeline", "agenda", "clinicorp", "sincronizacao", "alergia", "prontuario", "status"],
+    "includeInPrint": true,
+    "printOrder": 4,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-troca-unidade",
+    "profile": "dentist",
+    "category": "Agenda Clínica e Unidades",
+    "title": "Como alternar entre as unidades (Palmas - TO e Paraíso do Tocantins)?",
+    "summary": "Profissionais vinculados a mais de uma unidade podem alternar no seletor do topo; vínculos únicos ficam travados automaticamente.",
+    "steps": [
+      "Se você atende em mais de uma unidade, clique no seletor de unidade no canto superior esquerdo do cabeçalho.",
+      "Escolha a clínica desejada (Palmas - TO ou Paraíso do Tocantins - TO) para carregar imediatamente os pacientes daquela unidade.",
+      "Profissionais com vínculo exclusivo em uma unidade visualizam o cadeado fixo da própria clínica para evitar trocas acidentais."
+    ],
+    "keywords": ["unidade", "palmas", "paraiso", "multi-clinica", "trocar clinica", "cadeado"],
+    "includeInPrint": true,
+    "printOrder": 5,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-alerta-chegada",
+    "profile": "dentist",
+    "category": "Alertas de Chegada e Briefing",
+    "title": "Como sou notificado quando meu paciente chega na recepção?",
+    "summary": "O check-in do paciente dispara simultaneamente alerta push, som de campainha, faixa visual e aviso no WhatsApp.",
+    "steps": [
+      "Assim que o paciente escaneia o Totem QR Code ou a recepção marca Check-in, o Bertuol Flow aciona o alerta em tempo real.",
+      "Alerta Push: exibe um card na tela de bloqueio mesmo com o aplicativo fechado.",
+      "Som e faixa visual: toca a campainha clínica e exibe o banner de chegada no topo do painel.",
+      "WhatsApp: envia aviso automático com o nome do paciente e o horário da consulta."
+    ],
+    "tip": "Toque no ícone de sino no canto superior direito para ativar/desativar som, vibração e testar a campainha no volume do seu aparelho.",
+    "keywords": ["chegada", "check-in", "alerta", "campainha", "som", "vibracao", "whatsapp", "push"],
+    "includeInPrint": true,
+    "printOrder": 6,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-briefing-matinal",
+    "profile": "dentist",
+    "category": "Alertas de Chegada e Briefing",
+    "title": "Como configurar o Briefing Matinal com IA da minha agenda?",
+    "summary": "Receba todo dia no horário escolhido um panorama executivo das consultas e alertas clínicos do dia.",
+    "steps": [
+      "Clique no ícone de sino no canto superior direito para abrir as preferências de notificação.",
+      "Ative o Briefing Matinal com IA e escolha o horário preferido (padrão às 08:00).",
+      "O sistema consolida o total de consultas, principais procedimentos e pacientes com alertas importantes para você começar o dia preparado."
+    ],
+    "keywords": ["briefing", "matinal", "08:00", "resumo do dia", "notificacao", "agenda"],
+    "includeInPrint": true,
+    "printOrder": 7,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-push-iphone",
+    "profile": "dentist",
+    "category": "Alertas de Chegada e Briefing",
+    "title": "Por que não recebo notificações push no iPhone (iOS)?",
+    "summary": "No iOS, notificações web só funcionam após instalar o Bertuol Flow na Tela de Início pelo Safari.",
+    "steps": [
+      "Abra o link do Bertuol Flow no navegador Safari do iPhone.",
+      "Toque em Compartilhar (quadrado com seta para cima) e escolha Adicionar à Tela de Início.",
+      "Abra o sistema pelo novo ícone criado na tela inicial e toque em Permitir quando o aviso de notificações aparecer."
+    ],
+    "keywords": ["iphone", "ios", "safari", "push", "nao recebo notificacao", "pwa"],
+    "includeInPrint": true,
+    "printOrder": 8,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-resumo-ia",
+    "profile": "dentist",
+    "category": "Resumos Clínicos com IA",
+    "title": "Como gerar e usar o Resumo Executivo Clínico com IA?",
+    "summary": "Sintetize histórico, queixas anteriores e alertas do prontuário Clinicorp em segundos antes do atendimento.",
+    "steps": [
+      "Clique sobre o agendamento do paciente na sua Timeline diária para abrir os detalhes clínicos.",
+      "Caso ainda não exista resumo gerado, clique em Gerar Resumo com IA.",
+      "Leia a síntese executiva com queixas anteriores, plano atual e alertas médicos antes de chamar o paciente ao consultório."
+    ],
+    "tip": "O resumo organiza dados reais do prontuário Clinicorp como apoio rápido. O diagnóstico final e a conduta clínica são sempre de responsabilidade exclusiva do cirurgião-dentista.",
+    "keywords": ["resumo", "ia", "inteligencia artificial", "gemini", "prontuario", "clinico", "pre-atendimento"],
+    "includeInPrint": true,
+    "printOrder": 9,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  },
+  {
+    "id": "den-clube-chat",
+    "profile": "dentist",
+    "category": "Clube Sorriso e Mensageria",
+    "title": "Como consultar vouchers do Clube Sorriso e falar com a recepção?",
+    "summary": "Use os botões do cabeçalho para consultar pontos/vouchers de pacientes e trocar mensagens diretas com a recepção.",
+    "steps": [
+      "No cabeçalho superior, clique em Clube Sorriso & Vouchers para consultar saldo de pontos e vouchers ativos do paciente em atendimento.",
+      "Clique no ícone de Mensageria Interna para conversar em tempo real com a recepção, enviar áudios/imagens ou alinhar encaixes e retornos."
+    ],
+    "keywords": ["clube sorriso", "voucher", "mensageria", "chat interno", "recepcao", "audio"],
+    "includeInPrint": true,
+    "printOrder": 10,
+    "updatedInVersion": "1.6.0",
+    "lastReviewedAt": "2026-11-24"
+  }
+]

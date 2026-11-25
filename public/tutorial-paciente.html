@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual & Tutorial do Paciente • Clube Sorriso Bertuol</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #147A80;
+      --primary-dark: #0E585D;
+      --primary-light: #1FB5BD;
+      --gold: #FFCC29;
+      --gold-dark: #D97706;
+      --dark: #1A1A1A;
+      --gray-bg: #F8FAFC;
+      --gray-border: #E2E8F0;
+      --text-muted: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: #E2E8F0;
+      color: var(--dark);
+      line-height: 1.45;
+      padding: 15px;
+      -webkit-print-color-adjust: exact;
+    }
+
+    /* Page container setup for strict 2-page layout */
+    .doc-wrapper {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 15mm 18mm;
+      margin-bottom: 10px;
+      background: white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page:last-child {
+      margin-bottom: 0;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #147A80 0%, #199A9F 50%, #23B3BB 100%);
+      color: white;
+      border-radius: 14px;
+      padding: 20px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px rgba(20, 122, 128, 0.2);
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(6px);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      color: #FFCC29;
+      border: 1px solid rgba(255, 204, 41, 0.3);
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .header p {
+      font-size: 12.5px;
+      color: #FFFFFF;
+      font-weight: 600;
+      opacity: 1;
+      max-width: 500px;
+      margin: 0 auto 12px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .actions-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-white {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .btn-white:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #1A1A1A;
+      box-shadow: 0 2px 8px rgba(255, 204, 41, 0.3);
+    }
+
+    .btn-gold:hover {
+      background: #f8c117;
+    }
+
+    /* Section styling */
+    section {
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 2px solid #E6F7F7;
+      padding-bottom: 4px;
+    }
+
+    p, li {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    ul, ol {
+      padding-left: 16px;
+      margin-bottom: 8px;
+    }
+
+    /* Compact Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: var(--gray-bg);
+      border: 1px solid var(--gray-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .highlight-box {
+      background: #E6F7F7;
+      border: 1px solid #B2EBF2;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+    }
+
+    .highlight-box h3 {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--gray-border);
+      font-size: 11px;
+      color: #94A3B8;
+      margin-top: 10px;
+    }
+
+    .page-number {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .doc-wrapper {
+        max-width: 100%;
+      }
+      .page {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        padding: 12mm 15mm;
+        height: 297mm;
+        page-break-after: always;
+        break-after: page;
+      }
+      .actions-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="doc-wrapper">
+
+    <!-- ================= PAGE 1 ================= -->
+    <div class="page">
+      <div>
+        <header class="header">
+          <div class="brand-pill">
+            <span>⭐ Clube Sorriso Bertuol</span>
+          </div>
+          <h1>Manual & Tutorial do Paciente</h1>
+          <p>Guia rápido de instalação do aplicativo, ativação de notificações e vantagens exclusivas do clube de benefícios.</p>
+          
+          <div class="actions-bar">
+            <button onclick="window.print()" class="btn btn-white">
+              <span>📄 Imprimir / Salvar PDF (2 Páginas)</span>
+            </button>
+            <a href="/paciente" class="btn btn-gold">
+              <span>🌟 Abrir Portal do Paciente</span>
+            </a>
+          </div>
+        </header>
+
+        <!-- SEÇÃO 1: INSTALAÇÃO -->
+        <section>
+          <h2>📱 1. Como Instalar o App Bertuol Paciente</h2>
+          <p>O aplicativo funciona direto no seu celular (PWA), sem ocupar memória ou precisar da App Store / Google Play.</p>
+          
+          <div class="grid-2">
+            <div class="card">
+              <h3>🤖 No Android (Chrome)</h3>
+              <ol style="font-size: 11.5px; color: var(--text-muted); padding-left: 14px;">
+                <li>Abra o link do Portal do Paciente enviado pela clínica.</li>
+                <li>Toque nos <strong>três pontinhos (⋮)</strong> no canto superior direito.</li>
+                <li>Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</li>
+                <li>Confirme em <strong>Instalar</strong>. Pronto!</li>
+              </ol>
+            </div>
+
+            <div class="card">
+              <h3>🍎 No iPhone / iOS (Safari)</h3>
+              <ol style="font-size: 11.5px; color: var(--text-muted); padding-left: 14px;">
+                <li>Abra o link usando obrigatoriamente o navegador <strong>Safari</strong>.</li>
+                <li>Toque no botão de <strong>Compartilhar</strong> (quadrado com seta ⎋) na barra inferior.</li>
+                <li>Role e toque em <strong>"Adicionar à Tela de Início"</strong>.</li>
+                <li>Toque em <strong>Adicionar</strong>. Pronto!</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO 2: NOTIFICAÇÕES -->
+        <section>
+          <h2>🔔 2. Como Ativar as Notificações no Celular</h2>
+          <p>Para não perder consultas e saber quando ganhou prêmios, mantenha as notificações ativadas:</p>
+          <ul style="font-size: 11.5px; margin-bottom: 0;">
+            <li>Ao abrir o app pela primeira vez, toque em <strong>"Ativar Notificações"</strong> no banner superior.</li>
+            <li>Quando o celular perguntar se o app pode enviar avisos, toque em <strong>Permitir</strong>.</li>
+            <li>Você receberá lembretes 1 dia antes e 2 horas antes de cada consulta, além de parabéns e presentes no aniversário!</li>
+          </ul>
+        </section>
+
+        <!-- SEÇÃO 3: CLUBE SORRISO -->
+        <section>
+          <h2>⭐ 3. O Clube Sorriso Bertuol (Como Funciona)</h2>
+          <p>Nosso programa de relacionamento recompensa você por cuidar da sua saúde bucal.</p>
+          
+          <div class="highlight-box" style="margin-bottom: 0; padding: 10px 14px;">
+            <h3>Como acumular pontos:</h3>
+            <ul style="font-size: 11.5px; margin-bottom: 0;">
+              <li><strong>Confirmação de Consulta:</strong> Ganhe <strong>+10 pontos</strong> confirmando presença pelo app.</li>
+              <li><strong>Check-in no Totem:</strong> Ganhe <strong>+20 pontos</strong> escaneando o QR Code na recepção ao chegar.</li>
+              <li><strong>Bônus de Aniversário:</strong> Vantagens e mimos exclusivos no mês do seu aniversário.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer">
+        <p><strong>Bertuol Odontologia Avançada</strong> • Clube Sorriso Bertuol | <span class="page-number">Página 1 de 2</span></p>
+      </footer>
+    </div>
+
+
+    <!-- ================= PAGE 2 ================= -->
+    <div class="page">
+      <div>
+        <header class="header" style="margin-bottom: 14px; padding: 16px 20px;">
+          <div class="brand-pill" style="margin-bottom: 4px;">⭐ Vantagens & Jornada</div>
+          <h1 style="font-size: 18px; margin-bottom: 2px;">Manual do Paciente • Parte 2</h1>
+          <p style="font-size: 11.5px; margin-bottom: 0;">Resgate de Vouchers, Prêmios e Passo a Passo da sua Consulta.</p>
+        </header>
+
+        <!-- SEÇÃO 4: VOUCHERS -->
+        <section>
+          <h2>🎁 4. O Sistema de Vouchers e Resgates</h2>
+          <p>Seus pontos podem ser trocados por serviços e brindes na aba <strong>Vouchers</strong> do aplicativo:</p>
+          
+          <ol style="font-size: 11.5px;">
+            <li>Acesse a aba <strong>Prêmios / Catálogo</strong> no aplicativo.</li>
+            <li>Escolha o prêmio ou procedimento desejado (ex: Clareamento, Profilaxia, Descontos).</li>
+            <li>Se tiver pontos suficientes, toque em <strong>Resgatar</strong>.</li>
+            <li>Um <strong>Voucher Digital com QR Code</strong> será gerado na sua carteira para ser apresentado na recepção da clínica no próximo atendimento.</li>
+          </ol>
+        </section>
+
+        <!-- SEÇÃO 5: JORNADA DO PACIENTE -->
+        <section>
+          <h2>🚀 5. O que Você Precisa Fazer em Cada Jornada</h2>
+          
+          <div class="grid-2">
+            <div class="card">
+              <h3>1️⃣ Antes da Consulta</h3>
+              <p style="font-size: 11.5px; margin-bottom: 0;">
+                Você receberá um aviso no celular. Abra o app, verifique o horário e toque em <strong>Confirmar Consulta</strong> para garantir seus primeiros 10 pontos.
+              </p>
+            </div>
+
+            <div class="card">
+              <h3>2️⃣ Na Chegada à Clínica</h3>
+              <p style="font-size: 11.5px; margin-bottom: 0;">
+                Ao chegar na recepção da Bertuol Odontologia, aponte a câmera para o QR Code do totem. Faça o check-in instantâneo e ganhe +20 pontos!
+              </p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 10px; padding: 10px 14px;">
+            <h3 style="color: var(--primary);">3️⃣ Resgate de Prêmios e Aniversário</h3>
+            <p style="font-size: 11.5px; margin-bottom: 0;">
+              Acompanhe seu saldo de pontos no topo da tela, troque por vouchers de descontos e aproveite benefícios exclusivos de aniversariantes.
+            </p>
+          </div>
+        </section>
+
+        <!-- DICA EXTRA -->
+        <div class="highlight-box" style="margin-top: 12px; margin-bottom: 0;">
+          <h3 style="display: flex; align-items: center; gap: 6px;">💡 Dica de Ouro</h3>
+          <p style="font-size: 11.5px; margin-bottom: 0; color: var(--dark);">
+            Mantenha o app fixado na tela inicial do seu celular. Assim, você faz o check-in na recepção em menos de 5 segundos e acumula pontos em todas as visitas!
+          </p>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p><strong>Bertuol Odontologia Avançada</strong> • Clube Sorriso Bertuol | <span class="page-number">Página 2 de 2</span></p>
+        <p style="margin-top: 2px;">Dúvidas? Entre em contato conosco pelo WhatsApp oficial da clínica.</p>
+      </footer>
+    </div>
+
+  </div>
+
+</body>
+</html>

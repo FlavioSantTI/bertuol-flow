@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>Bertuol Hyperframe Cinema Stage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    window.setScene = function(scene) {
+      const title = document.getElementById('kineticTitle');
+      const sub = document.getElementById('kineticSubtitle');
+      const callout = document.getElementById('floatingCallout');
+      const calloutTitle = document.getElementById('calloutTitle');
+      const calloutSub = document.getElementById('calloutSub');
+      const phoneCase = document.getElementById('phoneCase');
+      if (!title || !sub) return;
+
+      if (scene === 'welcome') {
+        title.innerHTML = 'Seu consultório no <span>seu bolso</span>';
+        sub.innerText = 'Acompanhe consultas, prêmios e seu histórico com facilidade.';
+        if (callout) callout.classList.remove('show');
+        if (phoneCase) phoneCase.style.transform = 'translateY(0px) rotate(0deg)';
+      } else if (scene === 'confirmation') {
+        title.innerHTML = 'Confirme sua consulta em <span>1 toque</span>';
+        sub.innerText = 'Receba o lembrete e garanta seu horário instantaneamente.';
+        if (calloutTitle) calloutTitle.innerText = 'Horário Garantido!';
+        if (calloutSub) calloutSub.innerText = 'Dentista notificado no consultório';
+        if (callout) callout.classList.add('show');
+        if (phoneCase) phoneCase.style.transform = 'scale(1.03) translateY(-10px)';
+      } else if (scene === 'points') {
+        title.innerHTML = 'Ganhe pontos e <span>troque por prêmios</span>';
+        sub.innerText = 'Cada consulta e pontualidade acumulam vantagens exclusivas.';
+        if (calloutTitle) calloutTitle.innerText = '+50 Pontos Acumulados!';
+        if (calloutSub) calloutSub.innerText = 'Parabéns, você subiu para Ouro!';
+        if (callout) callout.classList.add('show');
+        if (phoneCase) phoneCase.style.transform = 'scale(1.02) rotate(-1deg)';
+      } else if (scene === 'checkin') {
+        title.innerHTML = 'Chegou na clínica? <span>Check-in Silencioso</span>';
+        sub.innerText = 'Sem pegar fila na recepção: seu dentista sabe que você chegou.';
+        if (calloutTitle) calloutTitle.innerText = 'Check-in Realizado!';
+        if (calloutSub) calloutSub.innerText = 'Recepção de Palmas (TO)';
+        if (callout) callout.classList.add('show');
+        if (phoneCase) phoneCase.style.transform = 'scale(1.02) rotate(1deg)';
+      }
+    };
+
+    window.triggerTouch = function(x, y, tapDuration = 400) {
+      const pointer = document.getElementById('touchPointer');
+      if (!pointer) return;
+      pointer.style.left = x + 'px';
+      pointer.style.top = y + 'px';
+      pointer.classList.add('active');
+      
+      setTimeout(() => {
+        pointer.classList.add('tap');
+      }, 100);
+
+      setTimeout(() => {
+        pointer.classList.remove('tap');
+        pointer.classList.remove('active');
+      }, tapDuration);
+    };
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      background: radial-gradient(circle at 50% 20%, #17838a 0%, #0a464a 45%, #052628 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 100px 60px 80px 60px;
+      position: relative;
+    }
+
+    /* Partículas de brilho de fundo */
+    .glow-orb {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 204, 41, 0.18) 0%, rgba(20, 122, 128, 0) 70%);
+      top: 15%;
+      left: 18%;
+      filter: blur(60px);
+      z-index: 1;
+      animation: pulseGlow 6s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.9) translate(-20px, 0); opacity: 0.7; }
+      100% { transform: scale(1.15) translate(20px, -20px); opacity: 1; }
+    }
+
+    /* Cabeçalho Cinematográfico */
+    .stage-header {
+      z-index: 10;
+      text-align: center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px);
+      padding: 12px 28px;
+      border-radius: 100px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFCC29;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand-badge svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .kinetic-title {
+      font-size: 64px;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      text-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .kinetic-title span {
+      background: linear-gradient(135deg, #FFCC29 0%, #FFA800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .kinetic-subtitle {
+      font-size: 28px;
+      font-weight: 600;
+      color: #E2E8F0;
+      opacity: 0.9;
+      max-width: 800px;
+    }
+
+    /* Container do Mockup 3D do Celular */
+    .phone-stage-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 580px;
+      height: 1180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+    }
+
+    .phone-case {
+      width: 540px;
+      height: 1120px;
+      background: #111417;
+      border-radius: 68px;
+      padding: 14px;
+      box-shadow: 
+        0 40px 100px rgba(0, 0, 0, 0.65),
+        0 15px 40px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+        inset 0 0 0 6px #24292e;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(0px);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 36px;
+      background: #000000;
+      border-radius: 30px;
+      z-index: 30;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+    }
+
+    .island-camera {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #101c2b;
+      border: 1px solid #1a2c42;
+    }
+
+    .island-sensor {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #080d14;
+    }
+
+    /* Tela interna do celular com Iframe */
+    .screen-viewport {
+      width: 100%;
+      height: 100%;
+      border-radius: 54px;
+      overflow: hidden;
+      background: #FFFFFF;
+      position: relative;
+    }
+
+    .screen-viewport iframe {
+      width: 412px;
+      height: 855px;
+      border: none;
+      transform-origin: top left;
+      transform: scale(1.2427); /* Escala perfeita 412px para 512px */
+    }
+
+    /* Cursor de Toque Simulador de Dedo Humano */
+    .touch-pointer {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(255, 204, 41, 0.4);
+      border: 3px solid #FFCC29;
+      pointer-events: none;
+      z-index: 50;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      box-shadow: 0 0 25px #FFCC29;
+      transition: opacity 0.2s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .touch-pointer.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .touch-pointer.tap {
+      transform: translate(-50%, -50%) scale(0.75);
+      background: rgba(255, 204, 41, 0.85);
+    }
+
+    /* Selo Flutuante de Destaque / Callout lateral */
+    .floating-callout {
+      position: absolute;
+      right: -40px;
+      bottom: 220px;
+      background: rgba(14, 88, 93, 0.95);
+      backdrop-filter: blur(20px);
+      border: 2px solid #FFCC29;
+      padding: 20px 32px;
+      border-radius: 28px;
+      color: white;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      z-index: 40;
+      animation: floatBadge 4s infinite ease-in-out;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .floating-callout.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .floating-callout .icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #FFCC29;
+      color: #0E585D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .floating-callout .text-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .floating-callout .text-sub {
+      font-size: 18px;
+      color: #E2E8F0;
+      font-weight: 500;
+    }
+
+    @keyframes floatBadge {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+      100% { transform: translateY(0px); }
+    }
+
+    /* Rodapé com CTA */
+    .stage-footer {
+      z-index: 10;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .cta-pill {
+      background: #FFCC29;
+      color: #0E585D;
+      padding: 18px 48px;
+      border-radius: 100px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 15px 40px rgba(255, 204, 41, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .footer-sub {
+      font-size: 20px;
+      color: #A0AEC0;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-orb"></div>
+
+  <!-- Header Superior com Título Cinético -->
+  <header class="stage-header">
+    <div class="brand-badge">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+      Clube Sorriso Bertuol
+    </div>
+    <h1 class="kinetic-title" id="kineticTitle">Confirme sua consulta em <span>1 toque</span></h1>
+    <p class="kinetic-subtitle" id="kineticSubtitle">Sem filas, sem ligações e direto pelo celular no WhatsApp ou PWA.</p>
+  </header>
+
+  <!-- Palco Central com Smartphone iPhone 15 Pro -->
+  <div class="phone-stage-wrapper">
+    
+    <div class="phone-case" id="phoneCase">
+      <div class="dynamic-island">
+        <div class="island-camera"></div>
+        <div class="island-sensor"></div>
+      </div>
+      <div class="screen-viewport">
+        <!-- App Real Embutido via Iframe -->
+        <iframe 
+          id="appFrame" 
+          src="/paciente?phone=63992474826&name=Alice+P%C3%B3voa"
+          loading="eager">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- Indicador de Toque Animado -->
+    <div class="touch-pointer" id="touchPointer"></div>
+
+    <!-- Callout em Destaque Lateral -->
+    <div class="floating-callout" id="floatingCallout">
+      <div class="icon-circle">⚡</div>
+      <div>
+        <div class="text-title" id="calloutTitle">Presença Confirmada!</div>
+        <div class="text-sub" id="calloutSub">+50 Pontos no Clube Bertuol</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Rodapé com Chamada de Ação -->
+  <footer class="stage-footer">
+    <div class="cta-pill" id="ctaPill">
+      📲 bertuol.com.br/paciente
+    </div>
+    <div class="footer-sub">
+      Disponível para iOS e Android • Sem precisar baixar na App Store
+    </div>
+  </footer>
+
+  <script>
+    // Funções de controle de cena para automação via Playwright
+    window.setScene = function(scene) {
+      const title = document.getElementById('kineticTitle');
+      const sub = document.getElementById('kineticSubtitle');
+      const callout = document.getElementById('floatingCallout');
+      const calloutTitle = document.getElementById('calloutTitle');
+      const calloutSub = document.getElementById('calloutSub');
+      const phoneCase = document.getElementById('phoneCase');
+
+      if (scene === 'welcome') {
+        title.innerHTML = 'Seu consultório no <span>seu bolso</span>';
+        sub.innerText = 'Acompanhe consultas, prêmios e seu histórico com facilidade.';
+        callout.classList.remove('show');
+        phoneCase.style.transform = 'translateY(0px) rotate(0deg)';
+      } else if (scene === 'confirmation') {
+        title.innerHTML = 'Confirme sua consulta em <span>1 toque</span>';
+        sub.innerText = 'Receba o lembrete e garanta seu horário instantaneamente.';
+        calloutTitle.innerText = 'Horário Garantido!';
+        calloutSub.innerText = 'Dentista notificado no consultório';
+        callout.classList.add('show');
+        phoneCase.style.transform = 'scale(1.03) translateY(-10px)';
+      } else if (scene === 'points') {
+        title.innerHTML = 'Ganhe pontos e <span>troque por prêmios</span>';
+        sub.innerText = 'Cada consulta e pontualidade acumulam vantagens exclusivas.';
+        calloutTitle.innerText = '+50 Pontos Acumulados!';
+        calloutSub.innerText = 'Parabéns, você subiu para Ouro!';
+        callout.classList.add('show');
+        phoneCase.style.transform = 'scale(1.02) rotate(-1deg)';
+      } else if (scene === 'checkin') {
+        title.innerHTML = 'Chegou na clínica? <span>Check-in Silencioso</span>';
+        sub.innerText = 'Sem pegar fila na recepção: seu dentista sabe que você chegou.';
+        calloutTitle.innerText = 'Check-in Realizado!';
+        calloutSub.innerText = 'Recepção de Palmas (TO)';
+        callout.classList.add('show');
+        phoneCase.style.transform = 'scale(1.02) rotate(1deg)';
+      }
+    };
+
+    // Simulador de toque virtual na tela
+    window.triggerTouch = function(x, y, tapDuration = 400) {
+      const pointer = document.getElementById('touchPointer');
+      pointer.style.left = x + 'px';
+      pointer.style.top = y + 'px';
+      pointer.classList.add('active');
+      
+      setTimeout(() => {
+        pointer.classList.add('tap');
+      }, 100);
+
+      setTimeout(() => {
+        pointer.classList.remove('tap');
+        pointer.classList.remove('active');
+      }, tapDuration);
+    };
+  </script>
+</body>
+</html>

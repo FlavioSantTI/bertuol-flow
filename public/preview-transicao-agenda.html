@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proposta & Preview • Transição Suave Agenda → Detalhe (Mobile UX)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-studio: #071018;
+      --panel-bg: #0E1C2A;
+      --teal: #147A80;
+      --teal-light: #1FB5BD;
+      --gold: #FFCC29;
+      --border: rgba(56, 189, 248, 0.18);
+      --spring-curve: cubic-bezier(0.22, 1, 0.36, 1);
+      --morph-duration: 380ms;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #0F293A 0%, #071018 75%);
+      color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Studio Header */
+    .studio-header {
+      background: rgba(7, 16, 24, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .badge-lab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #5EEAD4;
+      background: rgba(31, 181, 189, 0.15);
+      border: 1px solid rgba(31, 181, 189, 0.4);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .studio-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .studio-sub {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+
+    /* Main Workspace */
+    .workspace {
+      flex: 1;
+      max-width: 1260px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    @media (max-width: 920px) {
+      .workspace {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+
+    /* Left Controls Panel */
+    .controls-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+    }
+
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #38BDF8;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .mode-option {
+      width: 100%;
+      text-align: left;
+      background: rgba(7, 16, 24, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .mode-option:hover {
+      border-color: rgba(31, 181, 189, 0.5);
+    }
+
+    .mode-option.active {
+      background: rgba(20, 122, 128, 0.28);
+      border-color: #2DD4BF;
+      box-shadow: inset 0 0 15px rgba(45, 212, 191, 0.15);
+    }
+
+    .mode-option-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+
+    .mode-option-desc {
+      font-size: 11.5px;
+      color: #94A3B8;
+      line-height: 1.4;
+    }
+
+    .speed-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .speed-chip {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(7, 16, 24, 0.65);
+      color: #CBD5E1;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .speed-chip.active {
+      background: var(--teal);
+      border-color: #5EEAD4;
+      color: #FFFFFF;
+    }
+
+    .ux-metrics {
+      background: rgba(7, 16, 24, 0.75);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 11.5px;
+      color: #CBD5E1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ux-metrics strong {
+      color: #34D399;
+    }
+
+    /* Right Stage: Mobile Phone Preview */
+    .phone-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .phone-frame {
+      width: 380px;
+      height: 760px;
+      background: #F8FAFC;
+      border-radius: 46px;
+      border: 10px solid #0F172A;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.14);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: #0F172A;
+    }
+
+    /* Status Bar */
+    .ios-status {
+      background: #FFFFFF;
+      padding: 10px 24px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 800;
+      color: #0F172A;
+      z-index: 5;
+    }
+
+    .dynamic-island {
+      width: 92px;
+      height: 22px;
+      background: #090D16;
+      border-radius: 20px;
+    }
+
+    /* App Agenda View (Background Layer) */
+    .agenda-layer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #F1F5F9;
+      transition: transform var(--morph-duration) var(--spring-curve),
+                  filter var(--morph-duration) var(--spring-curve),
+                  border-radius var(--morph-duration) var(--spring-curve);
+      transform-origin: center top;
+      overflow: hidden;
+    }
+
+    /* Scale-back effect when modal is open in Sheet/Morph mode */
+    .phone-frame.modal-open.effect-scale .agenda-layer {
+      transform: scale(0.93) translateY(10px);
+      border-radius: 24px;
+      filter: brightness(0.82);
+    }
+
+    .phone-frame.modal-open.effect-push .agenda-layer {
+      transform: translateX(-28%);
+      filter: brightness(0.78);
+    }
+
+    .app-header {
+      background: #FFFFFF;
+      padding: 12px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #147A80, #1FB5BD);
+      color: #FFFFFF;
+      font-weight: 900;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .date-bar {
+      background: #FFFFFF;
+      padding: 10px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .agenda-list {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .hint-banner {
+      background: #CCFBF1;
+      border: 1px solid #5EEAD4;
+      color: #115E59;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* Appointment Card in List */
+    .appt-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .appt-card:active {
+      transform: scale(0.965);
+      background: #F8FAFC;
+    }
+
+    .appt-card:hover {
+      border-color: #1FB5BD;
+      box-shadow: 0 8px 20px rgba(20, 122, 128, 0.1);
+    }
+
+    .appt-card-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+    }
+
+    .appt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-left: 6px;
+    }
+
+    .time-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: #0F766E;
+      background: #F0FDFA;
+      border: 1px solid #99F6E4;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .cat-pill {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .patient-name {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #0F172A;
+      padding-left: 6px;
+      margin-bottom: 3px;
+    }
+
+    .proc-text {
+      font-size: 12px;
+      color: #64748B;
+      padding-left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      margin-left: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #047857;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* Backdrop */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.42);
+      backdrop-filter: blur(3px);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--morph-duration) ease;
+    }
+
+    .phone-frame.modal-open .modal-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Animated Detail Modal Surface */
+    .detail-modal {
+      position: absolute;
+      z-index: 30;
+      background: #FFFFFF;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+      visibility: hidden;
+      box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+    }
+
+    .phone-frame.modal-open .detail-modal {
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    /* Drag Handle */
+    .sheet-handle-bar {
+      padding: 10px 0 4px;
+      display: flex;
+      justify-content: center;
+      cursor: grab;
+      background: #FFFFFF;
+    }
+
+    .sheet-pill {
+      width: 42px;
+      height: 5px;
+      border-radius: 99px;
+      background: #CBD5E1;
+    }
+
+    /* Staggered Inner Content inside Detail Modal */
+    .detail-header {
+      padding: 12px 18px 14px;
+      border-bottom: 1px solid #F1F5F9;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .btn-close-modal {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #334155;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Staggered blocks for perceived speed */
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 260ms ease, transform 280ms var(--spring-curve);
+    }
+
+    .phone-frame.modal-content-ready .stagger-item {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .phone-frame.modal-content-ready .stagger-1 { transition-delay: 40ms; }
+    .phone-frame.modal-content-ready .stagger-2 { transition-delay: 95ms; }
+    .phone-frame.modal-content-ready .stagger-3 { transition-delay: 150ms; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .info-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .info-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748B;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .info-val {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+
+    .ai-summary-card {
+      background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%);
+      border: 1px solid #99F6E4;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ai-summary-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #0F766E;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ai-summary-text {
+      font-size: 12.5px;
+      color: #1E293B;
+      line-height: 1.5;
+    }
+
+    .action-footer {
+      padding: 12px 18px 20px;
+      border-top: 1px solid #F1F5F9;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary-app {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #147A80 0%, #1FB5BD 100%);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+
+    .btn-secondary-app {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #334155;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="studio-header">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="badge-lab">PROPOSTA UX MOBILE • ISOLADA</span>
+      <div>
+        <div class="studio-title">Preview Interativo: Transição Suave Agenda → Detalhe do Atendimento</div>
+        <div class="studio-sub">Protótipo isolado para avaliação — não altera o código de produção do app principal</div>
+      </div>
+    </div>
+    <div>
+      <a href="/root" style="color:#5EEAD4; font-size:12px; font-weight:700; text-decoration:none;">⬅ Voltar à Central Root</a>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left Controls: Choose Transition Architecture -->
+    <aside class="controls-card">
+      <div>
+        <span class="section-tag">1. Escolha o Estilo de Transição</span>
+
+        <button class="mode-option active" id="opt-morph" onclick="selectTransitionMode('morph')">
+          <div class="mode-option-title">
+            <span>✨ Opção A: Card Morph (FLIP)</span>
+            <span style="font-size:10px; color:#5EEAD4;">Recomendada</span>
+          </div>
+          <p class="mode-option-desc">
+            O próprio card tocado se expande geometricamente até virar o modal, enquanto a lista ao fundo recua em escala 3D.
+          </p>
+        </button>
+
+        <button class="mode-option" id="opt-sheet" onclick="selectTransitionMode('sheet')">
+          <div class="mode-option-title">
+            <span>📱 Opção B: Bottom Sheet Elástica (iOS 18)</span>
+          </div>
+          <p class="mode-option-desc">
+            Gaveta inferior com mola suave (`cubic-bezier(0.22, 1, 0.36, 1)`) + recuo de profundidade na agenda ao fundo.
+          </p>
+        </button>
+
+        <button class="mode-option" id="opt-push" onclick="selectTransitionMode('push')">
+          <div class="mode-option-title">
+            <span>⚡ Opção C: Push Nativo Horizontal</span>
+          </div>
+          <p class="mode-option-desc">
+            Deslize lateral instantâneo da direita para a esquerda com paralaxe de -28% na lista da agenda.
+          </p>
+        </button>
+      </div>
+
+      <div>
+        <span class="section-tag">2. Velocidade da Curva (Percepção de Performance)</span>
+        <div class="speed-row">
+          <button class="speed-chip" onclick="setDuration(240, this)">⚡ Rápida (240ms)</button>
+          <button class="speed-chip active" onclick="setDuration(380, this)">🎯 Fluida (380ms)</button>
+          <button class="speed-chip" onclick="setDuration(600, this)">🔍 Lenta (600ms)</button>
+        </div>
+      </div>
+
+      <div class="ux-metrics">
+        <div><strong>Por que melhora a percepção de performance?</strong></div>
+        <div>1. <b>Feedback Tátil Imediato (0ms):</b> O card responde ao toque com micro-compressão (`scale(0.965)`) antes mesmo da abertura.</div>
+        <div>2. <b>Continuidade Espacial:</b> O olho do dentista acompanha o card se transformando no prontuário, eliminando o "pulo" seco na tela.</div>
+        <div>3. <b>Cascata Progressiva (Stagger):</b> O cabeçalho aparece no frame zero e o Resumo IA desliza `80ms` depois, dando sensação de carregamento instantâneo.</div>
+      </div>
+    </aside>
+
+    <!-- Right Stage: Interactive Mobile Frame -->
+    <section class="phone-stage">
+      <div class="phone-frame effect-scale" id="phoneFrame">
+        <div class="ios-status">
+          <span>09:41</span>
+          <div class="dynamic-island"></div>
+          <span>5G • 100%</span>
+        </div>
+
+        <!-- Layer 1: Agenda List -->
+        <div class="agenda-layer" id="agendaLayer">
+          <div class="app-header">
+            <div class="brand-row">
+              <div class="brand-icon">B</div>
+              <div>
+                <div style="font-size:13px; font-weight:800;">Bertuol Flow</div>
+                <div style="font-size:10.5px; color:#64748B;">🔒 Unidade Palmas • Dra. Ariane</div>
+              </div>
+            </div>
+            <span style="font-size:10px; font-weight:800; background:#FEF3C7; color:#92400E; padding:3px 8px; border-radius:6px;">v1.5.0</span>
+          </div>
+
+          <div class="date-bar">
+            <span>◀</span>
+            <span>📅 Quarta-feira, 18 de Nov</span>
+            <span>▶</span>
+          </div>
+
+          <div class="agenda-list" id="agendaList">
+            <div class="hint-banner">
+              👆 Toque em qualquer paciente abaixo para testar a transição!
+            </div>
+
+            <!-- Cards rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Layer 2: Dimmed Backdrop -->
+        <div class="modal-backdrop" id="modalBackdrop" onclick="closeDetailModal()"></div>
+
+        <!-- Layer 3: Animated Detail Modal -->
+        <div class="detail-modal" id="detailModal">
+          <div class="sheet-handle-bar" onclick="closeDetailModal()" title="Toque para fechar">
+            <div class="sheet-pill"></div>
+          </div>
+
+          <div class="detail-header">
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <span class="time-pill" id="modalTime">14:30</span>
+                <span class="cat-pill" id="modalCategory" style="background:#E0F2FE; color:#0369A1;">Ortodontia</span>
+              </div>
+              <h3 style="font-size:17px; font-weight:800; color:#0F172A;" id="modalPatient">Alice Póvoa</h3>
+              <p style="font-size:11.5px; color:#64748B;" id="modalProc">Manutenção de Alinhadores Invisíveis</p>
+            </div>
+            <button class="btn-close-modal" onclick="closeDetailModal()">✕</button>
+          </div>
+
+          <div class="detail-body">
+            <div class="info-grid stagger-item stagger-1">
+              <div class="info-box">
+                <span class="info-label">Status Recepção</span>
+                <span class="info-val" style="color:#059669;" id="modalStatus">✅ Na Recepção</span>
+              </div>
+              <div class="info-box">
+                <span class="info-label">Clube Sorriso</span>
+                <span class="info-val" style="color:#D97706;" id="modalPoints">⭐ 140 pts (Ouro)</span>
+              </div>
+            </div>
+
+            <div class="ai-summary-card stagger-item stagger-2">
+              <div class="ai-summary-title">
+                <span>✨ Resumo Executivo com IA (Gemini)</span>
+                <span style="font-size:10px; background:#CCFBF1; padding:2px 6px; border-radius:4px;">Pronto</span>
+              </div>
+              <p class="ai-summary-text" id="modalAiSummary">
+                Paciente na 4ª etapa do alinhador superior. Relatou leve pressão no incisivo lateral direito nos primeiros 2 dias, já estabilizada. Higiene excelente.
+              </p>
+            </div>
+
+            <div class="info-box stagger-item stagger-3">
+              <span class="info-label">Observações do Agendamento (Clinicorp)</span>
+              <p style="font-size:12px; color:#334155; margin-top:3px;" id="modalNotes">
+                Entregar par de alinhadores #05 e #06. Conferir voucher de profilaxia resgatado no Clube Sorriso.
+              </p>
+            </div>
+          </div>
+
+          <div class="action-footer stagger-item stagger-3">
+            <button class="btn-secondary-app" onclick="closeDetailModal()">⬅ Voltar à Agenda</button>
+            <button class="btn-primary-app" onclick="closeDetailModal()">💬 Chamar Paciente</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const APPOINTMENTS = [
+      {
+        id: 1,
+        time: "14:00 - 14:40",
+        patient: "Alice Póvoa",
+        category: "Ortodontia",
+        catBg: "#E0F2FE",
+        catColor: "#0369A1",
+        barColor: "#0284C7",
+        procedure: "Manutenção de Alinhadores Invisíveis",
+        status: "✅ Check-in via Totem",
+        points: "⭐ 140 pts (Ouro)",
+        aiSummary: "Paciente na 4ª etapa do alinhador superior. Relatou leve pressão no incisivo lateral direito nos primeiros 2 dias, já estabilizada. Higiene excelente.",
+        notes: "Entregar par de alinhadores #05 e #06. Conferir voucher resgatado no Clube Sorriso."
+      },
+      {
+        id: 2,
+        time: "15:00 - 16:00",
+        patient: "Carlos Eduardo Mendes",
+        category: "Implante",
+        catBg: "#FEF3C7",
+        catColor: "#B45309",
+        barColor: "#F59E0B",
+        procedure: "Reavaliação Pós-Operatória + Tomografia",
+        status: "🕒 Confirmado (1 Toque)",
+        points: "⭐ 210 pts (Diamante)",
+        aiSummary: "7º dia pós-instalação de implante na região do dente 36. Sem queixas álgicas ou edema. Indicada remoção de sutura hoje.",
+        notes: "Verificar radiografia periapical de controle antes da remoção dos pontos."
+      },
+      {
+        id: 3,
+        time: "16:15 - 17:00",
+        patient: "Mariana Ribeiro Tocantins",
+        category: "Estética",
+        catBg: "#FCE7F3",
+        catColor: "#BE185D",
+        barColor: "#EC4899",
+        procedure: "Prova de Facetas em Resina Composta",
+        status: "✅ Na Recepção",
+        points: "⭐ 95 pts (Prata)",
+        aiSummary: "Aprovou mock-up digital na sessão anterior. Preferência por tom BL3 natural com translucidez incisal discreta.",
+        notes: "Fotografar protocolo inicial e final para acompanhamento clínico."
+      },
+      {
+        id: 4,
+        time: "17:15 - 18:00",
+        patient: "Roberto Alves Júnior",
+        category: "Prevenção",
+        catBg: "#DCFCE7",
+        catColor: "#15803D",
+        barColor: "#10B981",
+        procedure: "Profilaxia + Check-up Preventivo Recall",
+        status: "🕒 Confirmado",
+        points: "⭐ 60 pts (Bronze)",
+        aiSummary: "Retorno preventivo de 6 meses acionado via CRM. Histórico de sensibilidade cervical leve no quadrante inferior esquerdo.",
+        notes: "Aplicar dessensibilizante tópico antes do ultrassom."
+      }
+    ];
+
+    let currentMode = 'morph'; // 'morph' | 'sheet' | 'push'
+    let durationMs = 380;
+    let lastClickedCardEl = null;
+
+    const phoneFrame = document.getElementById('phoneFrame');
+    const detailModal = document.getElementById('detailModal');
+    const agendaList = document.getElementById('agendaList');
+
+    function renderCards() {
+      const cardsHtml = APPOINTMENTS.map((a, idx) => `
+        <div class="appt-card" id="card-${a.id}" onclick="openDetailModal(${idx}, this)">
+          <div class="appt-card-bar" style="background:${a.barColor};"></div>
+          <div class="appt-top">
+            <span class="time-pill">${a.time}</span>
+            <span class="cat-pill" style="background:${a.catBg}; color:${a.catColor};">${a.category}</span>
+          </div>
+          <div class="patient-name">${a.patient}</div>
+          <div class="proc-text">
+            <span>${a.procedure}</span>
+            <span style="font-weight:800; color:#147A80;">➔</span>
+          </div>
+          <div class="ai-badge">✨ Resumo IA Disponível • ${a.status}</div>
+        </div>
+      `).join('');
+      agendaList.insertAdjacentHTML('beforeend', cardsHtml);
+    }
+
+    window.selectTransitionMode = function(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-option').forEach(b => b.classList.remove('active'));
+      document.getElementById('opt-' + mode).classList.add('active');
+
+      phoneFrame.classList.remove('effect-scale', 'effect-push');
+      if (mode === 'push') {
+        phoneFrame.classList.add('effect-push');
+      } else {
+        phoneFrame.classList.add('effect-scale');
+      }
+
+      if (phoneFrame.classList.contains('modal-open')) {
+        closeDetailModal();
+      }
+    };
+
+    window.setDuration = function(ms, btnEl) {
+      durationMs = ms;
+      document.documentElement.style.setProperty('--morph-duration', ms + 'ms');
+      document.querySelectorAll('.speed-chip').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    };
+
+    window.openDetailModal = function(index, cardEl) {
+      const a = APPOINTMENTS[index];
+      lastClickedCardEl = cardEl;
+
+      // Populate Content
+      document.getElementById('modalTime').textContent = a.time;
+      const catEl = document.getElementById('modalCategory');
+      catEl.textContent = a.category;
+      catEl.style.background = a.catBg;
+      catEl.style.color = a.catColor;
+      document.getElementById('modalPatient').textContent = a.patient;
+      document.getElementById('modalProc').textContent = a.procedure;
+      document.getElementById('modalStatus').textContent = a.status;
+      document.getElementById('modalPoints').textContent = a.points;
+      document.getElementById('modalAiSummary').textContent = a.aiSummary;
+      document.getElementById('modalNotes').textContent = a.notes;
+
+      const frameRect = phoneFrame.getBoundingClientRect();
+      const cardRect = cardEl.getBoundingClientRect();
+
+      detailModal.style.transition = 'none';
+      phoneFrame.classList.remove('modal-content-ready');
+
+      if (currentMode === 'morph') {
+        // Start from the exact bounding box of the clicked card inside the phone frame
+        const startTop = cardRect.top - frameRect.top;
+        const startLeft = cardRect.left - frameRect.left;
+        detailModal.style.top = startTop + 'px';
+        detailModal.style.left = startLeft + 'px';
+        detailModal.style.width = cardRect.width + 'px';
+        detailModal.style.height = cardRect.height + 'px';
+        detailModal.style.borderRadius = '16px';
+        detailModal.style.transform = 'translate3d(0,0,0)';
+        detailModal.style.opacity = '0.6';
+
+        // Force layout reflow
+        detailModal.offsetHeight;
+
+        phoneFrame.classList.add('modal-open');
+        detailModal.style.transition = `all ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.top = '54px';
+        detailModal.style.left = '0px';
+        detailModal.style.width = '100%';
+        detailModal.style.height = 'calc(100% - 54px)';
+        detailModal.style.borderRadius = '28px 28px 0 0';
+        detailModal.style.opacity = '1';
+
+      } else if (currentMode === 'sheet') {
+        detailModal.style.top = '54px';
+        detailModal.style.left = '0px';
+        detailModal.style.width = '100%';
+        detailModal.style.height = 'calc(100% - 54px)';
+        detailModal.style.borderRadius = '28px 28px 0 0';
+        detailModal.style.opacity = '1';
+        detailModal.style.transform = 'translate3d(0, 100%, 0)';
+
+        detailModal.offsetHeight;
+
+        phoneFrame.classList.add('modal-open');
+        detailModal.style.transition = `transform ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.transform = 'translate3d(0, 0, 0)';
+
+      } else if (currentMode === 'push') {
+        detailModal.style.top = '40px';
+        detailModal.style.left = '0px';
+        detailModal.style.width = '100%';
+        detailModal.style.height = 'calc(100% - 40px)';
+        detailModal.style.borderRadius = '0px';
+        detailModal.style.opacity = '1';
+        detailModal.style.transform = 'translate3d(100%, 0, 0)';
+
+        detailModal.offsetHeight;
+
+        phoneFrame.classList.add('modal-open');
+        detailModal.style.transition = `transform ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.transform = 'translate3d(0, 0, 0)';
+      }
+
+      setTimeout(() => {
+        phoneFrame.classList.add('modal-content-ready');
+      }, Math.min(110, durationMs * 0.35));
+    };
+
+    window.closeDetailModal = function() {
+      phoneFrame.classList.remove('modal-content-ready');
+
+      if (currentMode === 'morph' && lastClickedCardEl) {
+        const frameRect = phoneFrame.getBoundingClientRect();
+        const cardRect = lastClickedCardEl.getBoundingClientRect();
+        const targetTop = cardRect.top - frameRect.top;
+        const targetLeft = cardRect.left - frameRect.left;
+
+        detailModal.style.transition = `all ${Math.round(durationMs * 0.85)}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.top = targetTop + 'px';
+        detailModal.style.left = targetLeft + 'px';
+        detailModal.style.width = cardRect.width + 'px';
+        detailModal.style.height = cardRect.height + 'px';
+        detailModal.style.borderRadius = '16px';
+        detailModal.style.opacity = '0';
+      } else if (currentMode === 'sheet') {
+        detailModal.style.transition = `transform ${Math.round(durationMs * 0.85)}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.transform = 'translate3d(0, 105%, 0)';
+      } else if (currentMode === 'push') {
+        detailModal.style.transition = `transform ${Math.round(durationMs * 0.85)}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        detailModal.style.transform = 'translate3d(105%, 0, 0)';
+      }
+
+      phoneFrame.classList.remove('modal-open');
+    };
+
+    renderCards();
+  </script>
+</body>
+</html>
