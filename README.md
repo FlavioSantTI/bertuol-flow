@@ -323,6 +323,6 @@ Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paul
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.7.0`
+- **Versão**: `v1.9.0`
 - **Gestão**: Flávio Santiago & Favuca Dias
 
