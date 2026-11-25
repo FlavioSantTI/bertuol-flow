@@ -11,6 +11,7 @@ import {
 } from '../../types/crm';
 import { CRMService } from '../../services/crmService';
 import { dataService } from '../../services/dataService';
+import { APP_VERSION } from '../../config/version';
 import { Clinic, Dentist, Patient, Appointment, AppUserContext } from '../../types/database';
 import { CRMLeadCard } from './CRMLeadCard';
 import { CRMQuickContactModal } from './CRMQuickContactModal';
@@ -195,9 +196,9 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
     setLabels(supaLabels);
     setOpportunities(supaOpps);
 
-    if (!supaPipelines.some((p) => p.id === activePipelineId) && supaPipelines[0]) {
-      setActivePipelineId(supaPipelines[0].id);
-    }
+    setActivePipelineId((curr) =>
+      supaPipelines.some((p) => p.id === curr) ? curr : supaPipelines[0]?.id || curr
+    );
 
     // Automatic Clinicorp OPEN estimates sync (D-3 to today)
     if (!estimateSyncInFlightRef.current) {
@@ -735,18 +736,34 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const pipelineStages = activePipeline?.stages || [];
 
   const crmMainOverlay = (
-    <div className="crm-modal-backdrop fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-2 sm:p-4">
-      <div className="crm-modal-shell bg-slate-50 rounded-2xl w-full max-w-[1440px] h-[95vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        {/* 1. Clean Clinical Single-Row Header */}
-        <header className="crm-no-print bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <h2 className="font-bold text-base tracking-tight text-slate-900 whitespace-nowrap shrink-0">
-              CRM Bertuol
-            </h2>
+    <div className="crm-modal-backdrop fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-0 sm:p-4">
+      <div className="crm-modal-shell bg-slate-50 rounded-none sm:rounded-2xl w-full max-w-[1440px] h-[100dvh] sm:h-[95vh] shadow-2xl border-0 sm:border sm:border-slate-200 overflow-hidden flex flex-col">
+        {/* 1. Responsive Clinical Header (2 clean rows on mobile, single row on sm+) */}
+        <header className="crm-no-print bg-white border-b border-slate-200 px-3.5 sm:px-5 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4 shrink-0">
+          {/* Mobile Row 1 / Desktop Left: Title + Version + Mobile Close */}
+          <div className="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 whitespace-nowrap shrink-0">
+                CRM Bertuol
+              </h2>
+              <span className="text-[11px] font-mono tabular-nums text-slate-400 whitespace-nowrap shrink-0">
+                v{APP_VERSION}
+              </span>
+            </div>
 
-            <span className="h-4 w-px bg-slate-200 mx-1 shrink-0" aria-hidden="true" />
+            {/* Mobile-only Close Button pinned top-right */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="sm:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              aria-label="Fechar CRM"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            {/* Pipeline Dropdown Selector with Active Counts */}
+            <span className="hidden sm:block h-4 w-px bg-slate-200 mx-1 shrink-0" aria-hidden="true" />
+
+            {/* Desktop Pipeline Dropdown Selector */}
             <select
               value={activeView === 'pipeline' ? activePipelineId : ''}
               onChange={(e) => {
@@ -757,7 +774,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                 }
               }}
               aria-label="Selecionar Funil do CRM"
-              className="h-9 bg-teal-50/70 border border-teal-200 text-[#0f5c61] font-semibold text-xs rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer"
+              className="hidden sm:block h-9 bg-teal-50/70 border border-teal-200 text-[#0f5c61] font-semibold text-xs rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer max-w-[240px] truncate"
             >
               {pipelines.map((pl) => {
                 const count = opportunities.filter((o) => {
@@ -773,7 +790,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
               })}
             </select>
 
-            {/* View Switchers (Templates + Reports) */}
+            {/* Desktop View Switchers (Templates + Reports) */}
             <nav className="hidden md:flex items-center gap-1">
               <button
                 type="button"
@@ -803,28 +820,88 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 relative">
+          {/* Mobile Row 2 / Desktop Right: Pipeline Selector (mobile) + Ações + Novo Lead + Desktop Close */}
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0 relative min-w-0">
+            {/* Mobile-only Pipeline Dropdown Selector (flex-1 so it never overlaps buttons) */}
+            <select
+              value={activeView === 'pipeline' ? activePipelineId : ''}
+              onChange={(e) => {
+                const targetId = e.target.value;
+                if (targetId) {
+                  setActivePipelineId(targetId);
+                  setActiveView('pipeline');
+                }
+              }}
+              aria-label="Selecionar Funil do CRM"
+              className="sm:hidden flex-1 min-w-0 h-10 bg-teal-50/70 border border-teal-200 text-[#0f5c61] font-semibold text-xs rounded-lg px-2.5 focus:outline-none focus:ring-2 focus:ring-[#147A80] cursor-pointer truncate"
+            >
+              {pipelines.map((pl) => {
+                const count = opportunities.filter((o) => {
+                  const matchesClinic = selectedClinicId === 'all' || o.clinicId === selectedClinicId;
+                  const sem = CRMService.resolveStageSemantic(pl, o.stage);
+                  return matchesClinic && o.pipelineId === pl.id && sem !== 'converted' && sem !== 'lost';
+                }).length;
+                return (
+                  <option key={pl.id} value={pl.id}>
+                    {pl.name} ({count})
+                  </option>
+                );
+              })}
+            </select>
+
             {/* Ações Secundárias Dropdown */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setIsActionsMenuOpen((v) => !v)}
-                className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                className="h-10 sm:h-8 flex items-center gap-1.5 px-2.5 sm:px-3 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
               >
-                <Settings className="w-3.5 h-3.5 text-slate-500" />
+                <Settings className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span>Ações</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
               </button>
 
               {isActionsMenuOpen && (
                 <div
-                  className="absolute right-0 mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs"
+                  className="absolute right-0 mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs"
                   onClick={() => setIsActionsMenuOpen(false)}
                 >
+                  {/* Mobile/Tablet View Switchers inside Ações menu */}
+                  <div className="md:hidden">
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('pipeline')}
+                      className={`w-full text-left px-3.5 py-2.5 hover:bg-slate-50 font-medium flex items-center gap-2 cursor-pointer ${
+                        activeView === 'pipeline' ? 'text-[#147A80] font-semibold' : 'text-slate-700'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5 text-[#147A80]" /> Funil (Kanban / Lista)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('templates')}
+                      className={`w-full text-left px-3.5 py-2.5 hover:bg-slate-50 font-medium flex items-center gap-2 cursor-pointer ${
+                        activeView === 'templates' ? 'text-[#147A80] font-semibold' : 'text-slate-700'
+                      }`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-[#147A80]" /> Modelos de Mensagem
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('dashboard')}
+                      className={`w-full text-left px-3.5 py-2.5 hover:bg-slate-50 font-medium flex items-center gap-2 cursor-pointer ${
+                        activeView === 'dashboard' ? 'text-[#147A80] font-semibold' : 'text-slate-700'
+                      }`}
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 text-[#147A80]" /> Relatórios do CRM
+                    </button>
+                    <div className="h-px bg-slate-100 my-1" />
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setIsLabelsManagerOpen(true)}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center justify-between cursor-pointer"
+                    className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center justify-between cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
                       <Tag className="w-3.5 h-3.5 text-[#147A80]" /> Gerenciar Rótulos
@@ -837,7 +914,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsPipelineManagerOpen(true)}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                    className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
                   >
                     <Layers className="w-3.5 h-3.5 text-slate-500" /> Gerenciar Funis
                   </button>
@@ -846,7 +923,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsEstimatesBackfillOpen(true)}
-                      className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <History className="w-3.5 h-3.5 text-[#147A80]" /> Importar Histórico (1 Ano)
                     </button>
@@ -856,7 +933,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsBirthdayAutomationOpen(true)}
-                      className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <Cake className="w-3.5 h-3.5 text-[#147A80]" /> Automação de Aniversariantes
                     </button>
@@ -868,7 +945,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                     type="button"
                     onClick={handleRefreshFromSupabase}
                     disabled={isSyncing}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSyncing ? 'animate-spin' : ''}`} />
                     <span>Sincronizar Supabase</span>
@@ -880,16 +957,17 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             <button
               type="button"
               onClick={() => setIsNewOppModalOpen(true)}
-              className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+              className="h-10 sm:h-8 flex items-center gap-1.5 px-3 sm:px-3.5 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap shadow-2xs shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              <span>Novo Lead</span>
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Novo Lead</span>
+              <span className="sm:hidden">Lead</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
               aria-label="Fechar CRM"
             >
               <X className="w-5 h-5" />
@@ -899,26 +977,26 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
 
         {/* Toast Notification */}
         {syncToast && (
-          <div className="crm-no-print bg-teal-50 border-b border-teal-200 px-5 py-2 text-xs font-semibold text-[#0f5c61] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#147A80]" />
-              <span>{syncToast}</span>
+          <div className="crm-no-print bg-teal-50 border-b border-teal-200 px-4 sm:px-5 py-2 text-xs font-semibold text-[#0f5c61] flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 className="w-4 h-4 text-[#147A80] shrink-0" />
+              <span className="truncate">{syncToast}</span>
             </div>
             <button
               type="button"
               onClick={() => setSyncToast(null)}
-              className="text-[#147A80] hover:underline cursor-pointer"
+              className="text-[#147A80] hover:underline cursor-pointer shrink-0"
             >
               Fechar
             </button>
           </div>
         )}
 
-        {/* 2. Clean Clinical KPI Strip */}
-        <div className="crm-no-print bg-white border-b border-slate-200 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shrink-0">
-          <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 block">
+        {/* 2. Clean Clinical KPI Strip (crisp stacked 2x2 on mobile, inline 4-col on lg+) */}
+        <div className="crm-no-print bg-white border-b border-slate-200 grid grid-cols-2 lg:grid-cols-4 shrink-0">
+          <div className="px-3.5 py-2.5 sm:px-5 sm:py-2.5 border-r border-b lg:border-b-0 border-slate-200 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2 min-w-0">
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-slate-500 block truncate">
                 {displayedStripScopeTitle}
                 {resolvedDateRange.isActive && (
                   <span className="text-[#147A80] font-semibold">
@@ -926,26 +1004,26 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                   </span>
                 )}
               </span>
-              <span className="text-base font-bold text-slate-900 tabular-nums">
+              <span className="text-sm sm:text-base font-bold text-slate-900 tabular-nums whitespace-nowrap">
                 {displayedStripStats.totalActive} leads
               </span>
             </div>
-            <span className="text-xs font-mono font-semibold text-slate-600 tabular-nums">
+            <span className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 tabular-nums whitespace-nowrap">
               R$ {displayedStripStats.totalPipelineValue.toLocaleString('pt-BR')}
             </span>
           </div>
 
-          <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 block">
+          <div className="px-3.5 py-2.5 sm:px-5 sm:py-2.5 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2 min-w-0">
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-slate-500 block truncate">
                 Follow-ups e SLA
               </span>
-              <span className="text-base font-bold text-amber-700 tabular-nums">
+              <span className="text-sm sm:text-base font-bold text-amber-700 tabular-nums whitespace-nowrap">
                 {displayedStripStats.totalFollowUpsDue} pendentes
               </span>
             </div>
             <span
-              className={`text-xs font-semibold tabular-nums ${
+              className={`text-[11px] sm:text-xs font-semibold tabular-nums whitespace-nowrap ${
                 displayedStripStats.totalSLAAlert > 0 ? 'text-rose-700' : 'text-slate-400'
               }`}
             >
@@ -953,183 +1031,216 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
             </span>
           </div>
 
-          <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 block">
+          <div className="px-3.5 py-2.5 sm:px-5 sm:py-2.5 border-r border-slate-200 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2 min-w-0">
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-slate-500 block truncate">
                 Agendados na grade
               </span>
-              <span className="text-base font-bold text-[#147A80] tabular-nums">
+              <span className="text-sm sm:text-base font-bold text-[#147A80] tabular-nums whitespace-nowrap">
                 {displayedStripStats.totalScheduled} consultas
               </span>
             </div>
-            <span className="text-xs text-slate-500">1-clique agenda</span>
+            <span className="text-[11px] sm:text-xs text-slate-500 whitespace-nowrap">1-clique agenda</span>
           </div>
 
-          <div className="px-5 py-2.5 flex items-baseline justify-between gap-2">
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 block">
+          <div className="px-3.5 py-2.5 sm:px-5 sm:py-2.5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2 min-w-0">
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-slate-500 block truncate">
                 Receita convertida
               </span>
-              <span className="text-base font-bold text-emerald-700 font-mono tabular-nums">
+              <span className="text-sm sm:text-base font-bold text-emerald-700 font-mono tabular-nums whitespace-nowrap">
                 R$ {displayedStripStats.convertedRevenueMonth.toLocaleString('pt-BR')}
               </span>
             </div>
-            <span className="text-xs font-semibold text-emerald-700 tabular-nums">
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 tabular-nums whitespace-nowrap">
               {displayedStripStats.totalConvertedMonth} ganhos
             </span>
           </div>
         </div>
 
-        {/* 3. Unified Compact Filter Toolbar (When viewing Pipeline) */}
+        {/* 3. Unified Compact Filter Toolbar (Search + View on top row on mobile, scrollable filter strip below) */}
         {activeView === 'pipeline' && (
-          <div className="bg-white border-b border-slate-200 px-5 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
-            <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <div className="bg-white border-b border-slate-200 px-3.5 sm:px-5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 shrink-0">
+            {/* Search + Mobile View Toggle */}
+            <div className="flex items-center gap-2 w-full lg:w-auto lg:min-w-[220px] lg:max-w-xs shrink-0">
+              <div className="relative flex-1 min-w-0">
                 <input
                   type="text"
                   placeholder="Buscar paciente, fone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-8 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-lg pl-8 pr-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+                  className="w-full h-10 sm:h-8 bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium rounded-lg pl-8 pr-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#147A80]"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               </div>
 
-              {/* Clinic Select */}
-              <select
-                value={selectedClinicId}
-                onChange={(e) =>
-                  setSelectedClinicId(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                }
-                className="h-8 bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
-              >
-                <option value="all">Todas Clínicas</option>
-                {clinics
-                  .filter((c) => c.active)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.shortName}
-                    </option>
-                  ))}
-              </select>
-
-              {/* Type Select */}
-              <select
-                value={selectedTypeFilter}
-                onChange={(e) => setSelectedTypeFilter(e.target.value as CRMType | 'all')}
-                className="h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
-              >
-                <option value="all">Todos Tipos</option>
-                <option value="recall_6m">Recall 6m</option>
-                <option value="whatsapp_lead">WhatsApp</option>
-                <option value="treatment_pending">Orç. Aberto</option>
-                <option value="birthday">Aniversário</option>
-                <option value="indication">Indicação</option>
-              </select>
-
-              {/* Label Select */}
-              <select
-                value={selectedLabelFilter}
-                onChange={(e) => setSelectedLabelFilter(e.target.value)}
-                className="h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
-              >
-                <option value="all">Todos Rótulos</option>
-                {labels.map((lbl) => (
-                  <option key={lbl.id} value={lbl.id}>
-                    {lbl.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Follow-ups Toggle */}
-              <button
-                type="button"
-                onClick={() => setOnlyFollowUpsFilter((v) => !v)}
-                className={`h-8 flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
-                  onlyFollowUpsFilter
-                    ? 'bg-amber-600 text-white border-amber-600'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Follow-ups</span>
-                <span
-                  className={`px-1 rounded text-[10px] font-mono tabular-nums ${
-                    onlyFollowUpsFilter ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
-                  }`}
-                >
-                  {urgentCount}
-                </span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Date Preset Selector */}
-              <select
-                value={datePreset}
-                onChange={(e) => {
-                  const val = e.target.value as CRMDatePreset;
-                  setDatePreset(val);
-                  if (val !== 'custom') {
-                    setCustomStartDate('');
-                    setCustomEndDate('');
-                  }
-                }}
-                className="h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
-              >
-                {CRM_DATE_PRESET_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label === 'Todos' ? 'Período: Todos' : opt.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Cadastro Rápido Button */}
-              <button
-                type="button"
-                onClick={() => setIsQuickCaptureOpen((v) => !v)}
-                className={`h-8 flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
-                  isQuickCaptureOpen
-                    ? 'bg-[#147A80] text-white border-[#147A80]'
-                    : 'bg-teal-50 text-[#147A80] border-teal-200 hover:bg-teal-100'
-                }`}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Cad. Rápido</span>
-              </button>
-
-              {/* View Mode Toggle (Kanban / List) */}
-              <div className="h-8 flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+              {/* View Mode Toggle (Kanban / List) - pinned right of search on mobile */}
+              <div className="lg:hidden h-10 sm:h-8 flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('kanban')}
                   title="Modo Kanban"
-                  className={`h-full px-2 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                  aria-label="Modo Kanban"
+                  className={`h-full px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap ${
                     viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Kanban</span>
+                  <span className="hidden sm:inline">Kanban</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
                   title="Modo Lista"
-                  className={`h-full px-2 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                  aria-label="Modo Lista"
+                  className={`h-full px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap ${
                     viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <List className="w-3.5 h-3.5" />
-                  <span>Lista</span>
+                  <span className="hidden sm:inline">Lista</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Scrollable Secondary Filter Strip on Mobile, inline on lg+ */}
+            <div className="flex items-center gap-2 overflow-x-auto touch-pan-x pb-0.5 lg:pb-0 lg:flex-1 lg:justify-between min-w-0">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Clinic Select */}
+                <select
+                  value={selectedClinicId}
+                  onChange={(e) =>
+                    setSelectedClinicId(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                  }
+                  className="h-9 sm:h-8 bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80] shrink-0"
+                >
+                  <option value="all">Todas Clínicas</option>
+                  {clinics
+                    .filter((c) => c.active)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.shortName}
+                      </option>
+                    ))}
+                </select>
+
+                {/* Type Select */}
+                <select
+                  value={selectedTypeFilter}
+                  onChange={(e) => setSelectedTypeFilter(e.target.value as CRMType | 'all')}
+                  className="h-9 sm:h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80] shrink-0"
+                >
+                  <option value="all">Todos Tipos</option>
+                  <option value="recall_6m">Recall 6m</option>
+                  <option value="whatsapp_lead">WhatsApp</option>
+                  <option value="treatment_pending">Orç. Aberto</option>
+                  <option value="birthday">Aniversário</option>
+                  <option value="indication">Indicação</option>
+                </select>
+
+                {/* Label Select */}
+                <select
+                  value={selectedLabelFilter}
+                  onChange={(e) => setSelectedLabelFilter(e.target.value)}
+                  className="h-9 sm:h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80] shrink-0"
+                >
+                  <option value="all">Todos Rótulos</option>
+                  {labels.map((lbl) => (
+                    <option key={lbl.id} value={lbl.id}>
+                      {lbl.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Follow-ups Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setOnlyFollowUpsFilter((v) => !v)}
+                  className={`h-9 sm:h-8 flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    onlyFollowUpsFilter
+                      ? 'bg-amber-600 text-white border-amber-600'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Follow-ups</span>
+                  <span
+                    className={`px-1 rounded text-[10px] font-mono tabular-nums ${
+                      onlyFollowUpsFilter ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
+                    }`}
+                  >
+                    {urgentCount}
+                  </span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Date Preset Selector */}
+                <select
+                  value={datePreset}
+                  onChange={(e) => {
+                    const val = e.target.value as CRMDatePreset;
+                    setDatePreset(val);
+                    if (val !== 'custom') {
+                      setCustomStartDate('');
+                      setCustomEndDate('');
+                    }
+                  }}
+                  className="h-9 sm:h-8 bg-slate-50 border border-slate-200 text-slate-700 font-medium text-xs rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80] shrink-0"
+                >
+                  {CRM_DATE_PRESET_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label === 'Todos' ? 'Período: Todos' : opt.label}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Cadastro Rápido Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCaptureOpen((v) => !v)}
+                  className={`h-9 sm:h-8 flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    isQuickCaptureOpen
+                      ? 'bg-[#147A80] text-white border-[#147A80]'
+                      : 'bg-teal-50 text-[#147A80] border-teal-200 hover:bg-teal-100'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Cad. Rápido</span>
+                </button>
+
+                {/* Desktop View Mode Toggle (Kanban / List) */}
+                <div className="hidden lg:flex h-8 items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('kanban')}
+                    title="Modo Kanban"
+                    className={`h-full px-2 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                      viewMode === 'kanban' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Kanban</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    title="Modo Lista"
+                    className={`h-full px-2 rounded-md text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                      viewMode === 'list' ? 'bg-white shadow-2xs text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span>Lista</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* 4. Main Content Area */}
-        <div className="crm-modal-scroll flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-50">
+        <div className="crm-modal-scroll flex-1 overflow-y-auto p-3.5 sm:p-5 bg-slate-50">
           {activeView === 'pipeline' && activePipeline && (
             <div className="space-y-3 h-full flex flex-col">
               {/* Pipeline Operational Note Banner */}

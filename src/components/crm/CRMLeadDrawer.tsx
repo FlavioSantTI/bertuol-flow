@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   CRMCustomField,
@@ -133,8 +133,18 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState<CRMLabel['color']>('teal');
 
+  // Prevent parent polling / background sync from wiping unsaved edits on the same lead
+  const lastInitializedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!opportunity) return;
+    if (!isOpen || !opportunity) {
+      lastInitializedKeyRef.current = null;
+      return;
+    }
+    const initKey = `${opportunity.id}`;
+    if (lastInitializedKeyRef.current === initKey) return;
+    lastInitializedKeyRef.current = initKey;
+
     setPatientName(opportunity.patientName || '');
     setPatientPhone(opportunity.patientPhone || '');
     setClinicId(opportunity.clinicId || clinics[0]?.id || 1);
@@ -285,7 +295,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
-        <div className="bg-white border-b border-slate-200 px-5 py-4 shrink-0 space-y-3">
+        <div className="bg-white border-b border-slate-200 px-4 sm:px-5 py-3.5 sm:py-4 shrink-0 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-xs text-[#147A80] font-semibold">
@@ -307,7 +317,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0 transition-colors"
+              className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0 transition-colors"
               aria-label="Fechar ficha"
             >
               <X className="w-5 h-5" />
@@ -315,29 +325,29 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
           </div>
 
           {/* Instant Action Strip */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-0.5">
             <button
               type="button"
               onClick={() => onOpenQuickContact(opportunity)}
-              className="h-9 flex items-center gap-1.5 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
+              className="h-10 sm:h-9 flex items-center justify-center gap-1.5 px-3 rounded-lg bg-[#147A80] hover:bg-[#0f5c61] text-white text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
               <span>WhatsApp</span>
             </button>
 
             <button
               type="button"
               onClick={() => onOpenQuickSchedule(opportunity)}
-              className="h-9 flex items-center gap-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
+              className="h-10 sm:h-9 flex items-center justify-center gap-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors"
             >
-              <CalendarPlus className="w-3.5 h-3.5 text-[#147A80]" />
+              <CalendarPlus className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
               <span>Agendar na Grade</span>
             </button>
 
             <select
               value={opportunity.stage}
               onChange={(e) => onStageChangeRequest(opportunity, e.target.value)}
-              className="h-9 ml-auto bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
+              className="col-span-2 sm:col-span-1 sm:ml-auto h-10 sm:h-9 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#147A80]"
             >
               {pipelineStages.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -349,57 +359,57 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
         </div>
 
         {/* Drawer Sub-Tabs */}
-        <div className="bg-slate-50 border-b border-slate-200 px-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
+        <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-5 flex items-center justify-between gap-3 overflow-x-auto touch-pan-x shrink-0">
+          <div className="flex items-center gap-4 shrink-0">
             <button
               type="button"
               onClick={() => setDrawerTab('ficha')}
-              className={`py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 drawerTab === 'ficha'
                   ? 'border-[#147A80] text-[#147A80]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
               <span>Ficha & Campos Livres</span>
             </button>
 
             <button
               type="button"
               onClick={() => setDrawerTab('notas')}
-              className={`py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 drawerTab === 'notas'
                   ? 'border-[#147A80] text-[#147A80]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5 shrink-0" />
               <span>Notas ({history.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setDrawerTab('copilot')}
-              className={`py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 drawerTab === 'copilot'
                   ? 'border-[#147A80] text-[#147A80]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
               <span>Copiloto IA</span>
             </button>
           </div>
 
           {savedFeedback && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 whitespace-nowrap shrink-0">
               <Check className="w-3.5 h-3.5" /> Salvo no Supabase
             </span>
           )}
         </div>
 
         {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-slate-50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 bg-slate-50">
           {drawerTab === 'ficha' ? (
             <form onSubmit={handleSaveFicha} className="space-y-4">
               {/* Primary Contact Info */}
@@ -900,7 +910,7 @@ export const CRMLeadDrawer: React.FC<CRMLeadDrawerProps> = ({
               <div className="sticky bottom-0 bg-slate-50 pt-2 pb-1 flex items-center justify-end gap-2">
                 <button
                   type="submit"
-                  className="w-full h-10 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  className="w-full h-11 sm:h-10 rounded-xl bg-[#147A80] hover:bg-[#0f5c61] text-white font-semibold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>Salvar Alterações da Ficha</span>

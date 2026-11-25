@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
 import { getDefaultPermissionsForRole, normalizeUserRole } from '../services/dataService';
+import { APP_VERSION } from '../config/version';
 import { BertuolLogo } from './BertuolLogo';
 import {
   ChevronDown,
@@ -191,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
           {userContext.userName || 'Equipe Bertuol'}
         </p>
         <p className="text-[11px] text-slate-500">
-          {roleLabel} · {selectedClinicId === 'all' ? 'Todas as Unidades' : boundClinic?.shortName || 'Unidade Local'}
+          {roleLabel} · {selectedClinicId === 'all' ? 'Todas as Unidades' : boundClinic?.shortName || 'Unidade Local'} · <span className="font-mono tabular-nums">v{APP_VERSION}</span>
         </p>
       </div>
 
@@ -427,8 +428,11 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="hidden sm:flex max-w-7xl mx-auto px-4 py-2.5 items-center justify-between gap-6">
         {/* Zone 1: Brand + Context Selectors */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <BertuolLogo size="md" mode="horizontal" />
+            <span className="text-[11px] font-mono tabular-nums text-slate-400 whitespace-nowrap shrink-0">
+              v{APP_VERSION}
+            </span>
           </div>
 
           <span className="h-5 w-px bg-slate-200 hidden lg:block shrink-0" aria-hidden="true" />
@@ -613,11 +617,16 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* MOBILE 2-ROW CLEAN HEADER */}
-      <div className="sm:hidden w-full px-3 py-2.5 flex flex-col gap-2">
-        {/* Row 1: Brand + Primary Actions (Chat, CRM/Alertas, Menu) */}
+      <div className="sm:hidden w-full px-3.5 py-2.5 flex flex-col gap-2.5">
+        {/* Row 1: Brand + Version + Primary Actions (Chat, CRM/Alertas, Menu) */}
         <div className="flex items-center justify-between gap-2 w-full min-w-0">
-          <div className="min-w-0 shrink-0">
-            <BertuolLogo size="sm" mode="horizontal" />
+          <div className="flex items-center gap-1.5 min-w-0 shrink">
+            <div className="shrink-0">
+              <BertuolLogo size="sm" mode="horizontal" />
+            </div>
+            <span className="text-[10px] font-mono tabular-nums text-slate-400 whitespace-nowrap shrink-0">
+              v{APP_VERSION}
+            </span>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -625,11 +634,11 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenMessagingModal}
-                className={`flex items-center gap-1.5 px-3 h-10 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 min-h-[42px] rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                   hasUnread ? 'bg-amber-600 text-white' : 'bg-[#147A80] text-white'
                 }`}
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4 shrink-0" />
                 <span>Chat</span>
                 {hasUnread && (
                   <span className="px-1 rounded bg-white/20 text-[10px] font-mono tabular-nums">
@@ -643,9 +652,9 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenCRMModal}
-                className="flex items-center gap-1 px-2.5 h-10 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs font-semibold cursor-pointer"
+                className="flex items-center gap-1 px-2.5 min-h-[42px] rounded-lg bg-white border border-slate-200 text-slate-800 text-xs font-semibold cursor-pointer whitespace-nowrap"
               >
-                <Target className="w-4 h-4 text-[#147A80]" />
+                <Target className="w-4 h-4 text-[#147A80] shrink-0" />
                 <span>CRM</span>
               </button>
             )}
@@ -654,7 +663,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onOpenNotificationModal}
               aria-label="Alertas"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-700 cursor-pointer"
+              className="flex items-center justify-center min-w-[42px] min-h-[42px] rounded-lg bg-white border border-slate-200 text-slate-700 cursor-pointer shrink-0"
             >
               <Bell className="w-4 h-4" />
             </button>
@@ -663,7 +672,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={() => setIsMobileMenuOpen((v) => !v)}
               aria-label="Menu de Gestão"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 cursor-pointer"
+              className="flex items-center justify-center min-w-[42px] min-h-[42px] rounded-lg bg-slate-100 border border-slate-200 text-slate-800 cursor-pointer shrink-0"
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
@@ -673,8 +682,8 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Row 2: 50/50 Clinic & Dentist Selectors */}
         <div className="flex items-center gap-2 w-full min-w-0">
           {!canSwitchAllClinics ? (
-            <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium h-10">
-              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium min-h-[42px]">
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate">{boundClinic?.shortName || 'Unidade Palmas'}</span>
             </div>
           ) : (
@@ -687,7 +696,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
                   onSelectClinic(val);
                 }}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-7 pr-6 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
+                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-8 pr-6 min-h-[42px] focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
               >
                 <option value="all">
                   {clinics.filter((c) => c.active).length === 1 ? 'Palmas' : 'Todas Clínicas'}
@@ -718,7 +727,7 @@ export const Header: React.FC<HeaderProps> = ({
                   const found = dentists.find((d) => d.id === val);
                   if (found) onSelectDentist(found);
                 }}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-2.5 pr-6 h-10 focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
+                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 font-medium text-xs rounded-lg pl-3 pr-6 min-h-[42px] focus:outline-hidden focus:ring-2 focus:ring-[#147A80]/30 truncate"
               >
                 <option value="all">Todos os Dentistas</option>
                 {dentists.length === 0 ? (
@@ -734,7 +743,7 @@ export const Header: React.FC<HeaderProps> = ({
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           ) : isDentist ? (
-            <div className="flex items-center gap-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium flex-1 min-w-0 h-10">
+            <div className="flex items-center gap-1.5 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium flex-1 min-w-0 min-h-[42px]">
               <Stethoscope className="w-3.5 h-3.5 text-[#147A80] shrink-0" />
               <span className="truncate">{selectedDentist?.Name || userContext.userName || 'Profissional'}</span>
             </div>

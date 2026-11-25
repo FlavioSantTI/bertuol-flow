@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.9.1
+# 🦷 Bertuol Odontologia Avançada — Versão 1.9.3
 
 > **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Data do Orçamento separada da Última Vinda Real à Clínica (Clinicorp), Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`) com Integração Direta Supabase & n8n, Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro & Ordenação por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.1-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.3-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -323,6 +323,6 @@ Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paul
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.9.1`
+- **Versão**: `v1.9.3`
 - **Gestão**: Flávio Santiago & Favuca Dias
 
