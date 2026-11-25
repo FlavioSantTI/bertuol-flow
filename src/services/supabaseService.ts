@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { APP_ROUTES, buildOfficialUrl } from '../config/siteUrls';
 
 // New Mature Clinic Database (DB_Bertuol)
 const DEFAULT_SUPABASE_URL = 'https://sswbkfrpxboxmjvunhzt.supabase.co';
@@ -426,19 +427,18 @@ export function formatPatientPortalUrl(
   token?: string,
   customBaseUrl?: string
 ): string {
-  const baseUrl =
-    customBaseUrl ||
-    (typeof window !== 'undefined' ? window.location.origin : 'https://bertuolflow.app-bertuol.tech');
   const params = new URLSearchParams();
-  params.set('portal', 'paciente');
   if (patient.mobile_phone) {
     params.set('phone', patient.mobile_phone.replace(/\D/g, ''));
   }
-  params.set('name', patient.name);
-  if (token || patient.activation_token) {
-    params.set('activation_token', token || patient.activation_token || '');
+  if (patient.name) {
+    params.set('name', patient.name);
   }
-  return `${baseUrl}/paciente?${params.toString()}`;
+  const resolvedToken = (token || patient.activation_token || '').trim();
+  if (resolvedToken) {
+    params.set('activation_token', resolvedToken);
+  }
+  return buildOfficialUrl(APP_ROUTES.PATIENT, params, customBaseUrl);
 }
 
 export function formatPatientInviteMessage(

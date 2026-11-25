@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_ROUTES, buildOfficialUrl } from '../../config/siteUrls';
 import {
   Bell,
   BellRing,
@@ -115,7 +116,10 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                 )}
                 {typeof window !== 'undefined' && window.self !== window.top && (
                   <a
-                    href={window.location.href}
+                    href={buildOfficialUrl(
+                      APP_ROUTES.PATIENT,
+                      new URLSearchParams(window.location.search)
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block text-center text-[10px] text-teal-300 hover:underline font-bold pt-1"

@@ -422,7 +422,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <a href="/?app=paciente" target="_blank" class="btn">📱 Abrir Portal do Paciente</a>
+      <a href="/paciente" target="_blank" class="btn">📱 Abrir Portal do Paciente</a>
       <a href="/" target="_blank" class="btn">🩺 Abrir Painel da Clínica</a>
       <a href="/slideshow-hyperframes.html" class="btn btn-gold">🎬 Estúdio 3D 60m</a>
     </div>
@@ -472,8 +472,8 @@
     const SCRIPTS = {
       v1: {
         title: "Vídeo 1: Jornada do Paciente & Clube Sorriso (2 Minutos • ~292 palavras)",
-        subtitle: "Rota principal para gravação de tela: /?app=paciente (Portal Mobile PWA + Clube Sorriso)",
-        openUrl: "/?app=paciente",
+        subtitle: "Rota principal para gravação de tela: /paciente (Portal Mobile PWA + Clube Sorriso)",
+        openUrl: "/paciente",
         openLabel: "📱 Abrir Portal do Paciente para Gravar",
         scenes: [
           {
@@ -489,7 +489,7 @@
             num: "Cena 2",
             duration: "~20s (0:15 - 0:35)",
             title: "Acesso Rápido & Confirmação de Consulta em 1 Toque",
-            capture: "Abrir /?app=paciente (PatientApp.tsx). Mostrar o cabeçalho com Alice Póvoa, o nível do Clube Sorriso e o card 'Próxima Consulta', clicando no botão dourado 'Confirmar Presença (+10 pts)'. (LGPD: usar perfil demonstrativo ou borrar CPF/telefone).",
+            capture: "Abrir /paciente (PatientApp.tsx). Mostrar o cabeçalho com Alice Póvoa, o nível do Clube Sorriso e o card 'Próxima Consulta', clicando no botão dourado 'Confirmar Presença (+10 pts)'. (LGPD: usar perfil demonstrativo ou borrar CPF/telefone).",
             framing: "Bolha Circular no Canto Inferior Direito (deixa livre o card principal da consulta no centro).",
             voiceover: "Ao abrir o Portal do Paciente pelo celular, sem precisar instalar nada pesado, você já visualiza o dia, o horário e o nome do seu dentista. Com um único toque no botão Confirmar Presença, sua vaga está garantida e você ganha dez pontos na hora.",
             veo: "Close-up over-the-shoulder shot of a woman tapping a glowing gold confirmation button on her smartphone screen while having morning coffee, soft natural lighting, warm premium aesthetic, 4k."
@@ -498,7 +498,7 @@
             num: "Cena 3",
             duration: "~20s (0:35 - 0:55)",
             title: "Chegada na Clínica & Scanner do Totem QR Code",
-            capture: "Ainda em /?app=paciente, clicar em 'Fazer Check-in QR Code' para abrir o modal da câmera (CheckinScanner.tsx / CheckinTutorialOverlay.tsx) e simular a leitura do QR Code do Totem (+30 pts).",
+            capture: "Ainda em /paciente, clicar em 'Fazer Check-in QR Code' para abrir o modal da câmera (CheckinScanner.tsx / CheckinTutorialOverlay.tsx) e simular a leitura do QR Code do Totem (+30 pts).",
             framing: "Bolha Circular no Canto Inferior Esquerdo (para não cobrir o botão central do scanner).",
             voiceover: "Quando você chega à clínica em Palmas ou Paraíso, esqueça a fila no balcão. Basta tocar em Fazer Check-in QR Code e apontar a câmera para o Totem da recepção. O sistema avisa seu dentista imediatamente que você chegou e credita mais trinta pontos de pontualidade.",
             veo: "Medium shot of a patient in a modern dental clinic reception scanning a sleek acrylic QR code stand on the counter with a smartphone, subtle turquoise light reflection, smooth gimbal movement, 4k."
@@ -659,11 +659,11 @@
     };
 
     const TECH_MODULES = [
-      ["1. Portal do Paciente (PWA Mobile)", "/?app=paciente | src/patient/PatientApp.tsx", "Login por CPF/Telefone, visualização do próximo agendamento e confirmação em 1 toque (POST /api/patient/confirm-appointment).", "Paciente confirma presença sem ligar para a clínica e ganha +10 pts automáticos."],
-      ["2. Scanner de Check-in QR Code", "/?app=paciente | CheckinScanner.tsx", "Leitura pela câmera do celular (html5-qrcode) do QR Code do Totem da recepção (POST /api/patient/checkin-totem).", "Elimina fila no balcão, credita +30 pts de pontualidade e dispara alerta para o dentista."],
-      ["3. Clube Sorriso (Catálogo & Vouchers)", "/?app=paciente | RewardsCatalog.tsx & VouchersDrawer.tsx", "Consulta de nível (Bronze a Diamante), extrato de pontos e resgate de prêmios gerando código BRT-XXXX.", "Fidelização gamificada com vouchers reais validáveis na recepção."],
-      ["4. Presente de Aniversário & Avisos", "/?app=paciente | BirthdayGiftModal.tsx", "Agendamento de benefício anual de aniversário (POST /api/patient/schedule-birthday-gift) e central de notificações.", "Aumenta a retenção anual e o retorno preventivo do paciente."],
-      ["5. Falar com a Clínica (Chat Paciente)", "/?app=paciente | PatientMessagingDrawer.tsx", "Envio de mensagens de texto, áudio gravado no navegador e fotos/anexos direto para a recepção.", "Canal oficial centralizado na clínica, separado do WhatsApp pessoal."],
+      ["1. Portal do Paciente (PWA Mobile)", "/paciente | src/patient/PatientApp.tsx", "Login por CPF/Telefone, visualização do próximo agendamento e confirmação em 1 toque (POST /api/patient/confirm-appointment).", "Paciente confirma presença sem ligar para a clínica e ganha +10 pts automáticos."],
+      ["2. Scanner de Check-in QR Code", "/paciente | CheckinScanner.tsx", "Leitura pela câmera do celular (html5-qrcode) do QR Code do Totem da recepção (POST /api/patient/checkin-totem).", "Elimina fila no balcão, credita +30 pts de pontualidade e dispara alerta para o dentista."],
+      ["3. Clube Sorriso (Catálogo & Vouchers)", "/paciente | RewardsCatalog.tsx & VouchersDrawer.tsx", "Consulta de nível (Bronze a Diamante), extrato de pontos e resgate de prêmios gerando código BRT-XXXX.", "Fidelização gamificada com vouchers reais validáveis na recepção."],
+      ["4. Presente de Aniversário & Avisos", "/paciente | BirthdayGiftModal.tsx", "Agendamento de benefício anual de aniversário (POST /api/patient/schedule-birthday-gift) e central de notificações.", "Aumenta a retenção anual e o retorno preventivo do paciente."],
+      ["5. Falar com a Clínica (Chat Paciente)", "/paciente | PatientMessagingDrawer.tsx", "Envio de mensagens de texto, áudio gravado no navegador e fotos/anexos direto para a recepção.", "Canal oficial centralizado na clínica, separado do WhatsApp pessoal."],
       ["6. Painel Clínico & Agenda Clinicorp", "/ | src/App.tsx & DateNavigator.tsx", "Navegação diária por data, filtro por categoria clínica e sincronização com a API do Clinicorp (/api/clinicorp/appointments).", "Dentista visualiza exclusivamente a própria agenda na unidade vinculada (🔒 Palmas ou 🔒 Paraíso)."],
       ["7. Alerta Sonoro de Chegada (RF04)", "/ | src/App.tsx (/api/reception/checkins/recent)", "Polling em tempo real que exibe banner verde e toca chime musical (Web Audio API Ré5 → Lá5) no check-in.", "Dentista sabe no mesmo segundo que o paciente chegou na recepção."],
       ["8. Prontuário & Resumo Executivo IA", "/ | AppointmentDetailModal.tsx (/api/generate-summary)", "Geração e edição de resumo clínico via IA (Google Gemini) com persistência no Supabase.", "Dentista lê em 5 segundos o contexto clínico antes de chamar o paciente à cadeira."],

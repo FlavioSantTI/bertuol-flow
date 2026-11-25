@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { APP_ROUTES, buildOfficialUrl } from '../config/siteUrls';
 import {
   X,
   Bell,
@@ -400,10 +401,11 @@ export async function sendDentistPushNotification({
   const customWhatsAppText = `🦷 *Bertuol Odontologia*: Olá Dr. Ari Bertuol! Seu paciente Marcos Vinicius (Cirurgia e Implante) acabou de fazer check-in na recepção. O resumo clínico inteligente da IA já está disponível no seu app.`;
   const directWhatsAppUrl = `https://wa.me/${fullWhatsAppNumber}?text=${encodeURIComponent(customWhatsAppText)}`;
 
-  const mobileAppUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}?dentist=6177152107544576&v=2.3&clear_cache=1`
-      : 'https://ais-pre-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app?dentist=6177152107544576&v=2.3&clear_cache=1';
+  const mobileAppUrl = buildOfficialUrl(APP_ROUTES.PROFESSIONAL, {
+    dentist: 6177152107544576,
+    v: '2.3',
+    clear_cache: 1,
+  });
 
   const handleCopyMobileLink = () => {
     navigator.clipboard.writeText(mobileAppUrl);

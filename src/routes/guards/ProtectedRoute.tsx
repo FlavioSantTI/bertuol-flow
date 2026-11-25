@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppUserContext, UserPermissions } from '../../types/database';
+import { APP_ROUTES } from '../../config/siteUrls';
 import { Lock, UserX, ShieldAlert } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -41,7 +42,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => (window.location.href = userContext.role === 'paciente' ? '/?app=paciente' : '/')}
+            onClick={() =>
+              (window.location.href = userContext.role === 'paciente' ? APP_ROUTES.PATIENT : APP_ROUTES.HOME)
+            }
             className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition-colors cursor-pointer"
           >
             Voltar para Minha Área
@@ -68,7 +71,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => (window.location.href = '/?app=paciente')}
+              onClick={() => (window.location.href = APP_ROUTES.PATIENT)}
               className="w-full py-2.5 rounded-xl bg-[#147A80] hover:bg-teal-700 text-white font-bold text-xs transition-colors cursor-pointer"
             >
               Ir para o Portal do Paciente

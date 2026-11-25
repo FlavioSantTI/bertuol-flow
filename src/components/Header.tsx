@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Dentist, Clinic, AppUserContext } from '../types/database';
 import { getDefaultPermissionsForRole, normalizeUserRole } from '../services/dataService';
 import { APP_VERSION } from '../config/version';
+import { OFFICIAL_SITE_URL } from '../config/siteUrls';
 import { BertuolLogo } from './BertuolLogo';
 import {
   ChevronDown,
@@ -107,8 +108,9 @@ export const Header: React.FC<HeaderProps> = ({
   }, [isAdminMenuOpen]);
 
   const handleCopyLink = () => {
+    const officialShareUrl = `${OFFICIAL_SITE_URL}${window.location.pathname}${window.location.search}`;
     try {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(officialShareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {

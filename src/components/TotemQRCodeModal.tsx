@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import { OFFICIAL_SITE_URL, APP_ROUTES, buildOfficialUrl } from '../config/siteUrls';
 import {
   X,
   Printer,
@@ -22,7 +23,7 @@ interface TotemQRCodeModalProps {
   onSimulateScan?: (clinicId: number, clinicName: string) => void;
 }
 
-const OFFICIAL_DOMAIN = 'https://bertuolflow.app-bertuol.tech';
+const OFFICIAL_DOMAIN = OFFICIAL_SITE_URL;
 
 export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
   isOpen,
@@ -56,20 +57,18 @@ export const TotemQRCodeModal: React.FC<TotemQRCodeModalProps> = ({
     }
   }, [isOpen, onSimulateScan]);
 
-  const totemBaseUrl =
-    typeof window !== 'undefined' ? window.location.origin : OFFICIAL_DOMAIN;
-  const totemPayload = `${totemBaseUrl}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
-    selectedClinic.name
-  )}`;
+  const totemPayload = buildOfficialUrl(APP_ROUTES.PATIENT, {
+    checkin: 'totem',
+    clinic_id: selectedClinic.id,
+    clinic_name: selectedClinic.name,
+  });
 
   const marketingPayload =
     marketingPreset === 'patient_portal'
-      ? `${OFFICIAL_DOMAIN}/paciente`
+      ? buildOfficialUrl(APP_ROUTES.PATIENT)
       : marketingPreset === 'checkin_direct'
-        ? `${OFFICIAL_DOMAIN}/paciente?checkin=totem&clinic_id=${selectedClinic.id}&clinic_name=${encodeURIComponent(
-            selectedClinic.name
-          )}`
-        : customUrl.trim() || `${OFFICIAL_DOMAIN}/paciente`;
+        ? totemPayload
+        : customUrl.trim() || buildOfficialUrl(APP_ROUTES.PATIENT);
 
   const qrPayload = activeMode === 'marketing' ? marketingPayload : totemPayload;
 

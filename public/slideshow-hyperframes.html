@@ -1377,7 +1377,7 @@
             <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/')">
               🩺 Painel Clínica Ao Vivo
             </button>
-            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/?app=paciente')">
+            <button class="btn-secondary" style="padding:5px 10px; font-size:11px;" onclick="window.setLiveOverlayUrl('/paciente')">
               📱 Portal Paciente Ao Vivo
             </button>
             <a href="/slideshow-hyperframes.html?mode=projector" target="_blank" class="btn-gold" style="padding:5px 10px; font-size:11px;">
@@ -1526,8 +1526,8 @@
             <p style="font-size:11px; color:#78350F;">
               Carteira de pontos, roleta premiada, missões de higiene e check-in sem fila.
             </p>
-            <a href="/?app=paciente" target="_blank" class="btn-action-app">
-              📲 Abrir Portal do Paciente (?app=paciente)
+            <a href="/paciente" target="_blank" class="btn-action-app">
+              📲 Abrir Portal do Paciente (/paciente)
             </a>
           </div>
         `
@@ -1841,7 +1841,7 @@
             </div>
           </div>
 
-          <a href="/faq.html" target="_blank" class="btn-action-app gold">
+          <a href="/suporte" target="_blank" class="btn-action-app gold">
             ❓ Abrir Central de Ajuda (FAQ Interativo)
           </a>
         `
@@ -2152,7 +2152,7 @@
               Check-in automático, lembretes pontuais e pontos que viram saúde e estética para o seu sorriso.
             </p>
             <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 100px; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #FFCC29;">
-              📲 bertuolflow.app-bertuol.tech/?app=paciente
+              📲 bertuolflow.app-bertuol.tech/paciente
             </div>
           </div>
         `
@@ -2251,8 +2251,8 @@
           iframe.setAttribute('src', url);
         }
         title.innerText = url.includes('paciente')
-          ? 'Portal do Paciente & Clube Sorriso (/?app=paciente)'
-          : 'Painel da Clínica • Bertuol Flow v1.4 (/)';
+          ? 'Portal do Paciente & Clube Sorriso (/paciente)'
+          : 'Painel da Clínica • Bertuol Flow (/)';
         overlay.classList.add('active');
       } else {
         overlay.classList.remove('active');

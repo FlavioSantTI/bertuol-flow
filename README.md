@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.9.3
+# 🦷 Bertuol Odontologia Avançada — Versão 1.9.4
 
 > **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Data do Orçamento separada da Última Vinda Real à Clínica (Clinicorp), Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`) com Integração Direta Supabase & n8n, Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro & Ordenação por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.3-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.4-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -20,7 +20,7 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 | **🩺 App do Profissional (Dentistas)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Interface clínica 100% limpa com agenda cronológica sincronizada com Clinicorp, Resumos Executivos com IA Gemini Flash, Alerta Sonoro de chegada, Consulta ao **Clube Sorriso & Vouchers**, Biometria WebAuthn e Chat Interno. |
 | **🏢 Gestão & Recepção (CRM, Atendentes, Gerentes & Admin)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Central de Credenciais de Clientes (`6.285+`), CRM de Recall 6+ meses, Totem QR Code (`/totem-imprimir`), Resgate e Baixa de Vouchers, Mensageria Unificada e Gestão de Usuários. |
 | **👑 Central Global SuperAdmin Root & Tutoriais (`/root` / `/tutoriais`)** | [`https://bertuolflow.app-bertuol.tech/root`](https://bertuolflow.app-bertuol.tech/root) *(ou `?app=root` / `?app=tutoriais`)* | **Acesso Restrito `admin_root`:** Central unificada de Tutoriais, Estúdio 3D 60m, Modos Telão/Apresentador, Roteiros HeyGen, Governança Multi-Tenant e Checklist de Lançamento. |
-| **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente.html`](https://bertuolflow.app-bertuol.tech/paciente.html) *(ou `?app=paciente`)* | PWA instalável com confirmação em 1 toque (`+10 pts`), Scanner QR Code de Check-in no Totem (`+30 pts`), Catálogo de Recompensas, Vouchers `BRT-XXXX`, Presente de Aniversário e Chat com a Clínica. |
+| **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente`](https://bertuolflow.app-bertuol.tech/paciente) | PWA instalável com confirmação em 1 toque (`+10 pts`), Scanner QR Code de Check-in no Totem (`+30 pts`), Catálogo de Recompensas, Vouchers `BRT-XXXX`, Presente de Aniversário e Chat com a Clínica. |
 | **🎬 Estúdio 3D de Treinamento (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html`](https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html) | Palco Three.js 3D (Cápsulas de Vidro Flutuantes + Rede Neural) com separação em duas telas sincronizadas via `BroadcastChannel` + SSE: **`?mode=projector`** (Só Telão) e **`?mode=presenter`** (Só Trilha + Teleprompter + Cronômetro 60m). |
 | **🎙️ Central de Roteiros HeyGen & Mapa Técnico (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/roteiros-heygen.html`](https://bertuolflow.app-bertuol.tech/roteiros-heygen.html) | 3 roteiros completos de 2 minutos (6 cenas cada: Paciente + Clube, Dentista, Recepção) com cópia em 1 clique, prompts B-roll para Veo/Flow e tabela de mapeamento real dos 16 módulos do código. |
 | **❓ Central de Suporte Unificada (FAQ, IA & Cartilhas A4)** | [`https://bertuolflow.app-bertuol.tech/suporte`](https://bertuolflow.app-bertuol.tech/suporte) *(com redirect de `/faq.html`)* | Base unificada separada por perfil (**Paciente**, **Dentista** e **Recepção & CRM**) com Chat de IA isolado por perfil, citações clicáveis e download/impressão de Cartilhas A4 em PDF. |
@@ -158,7 +158,7 @@ O **Bertuol Flow** chega à **Versão 1.8.0** trazendo a separação definitiva 
     2. **Modo Só Telão 3D Limpo (Projetor)** (`/slideshow-hyperframes.html?mode=projector`)
     3. **Modo Só Trilha & Teleprompter (Apresentador)** (`/slideshow-hyperframes.html?mode=presenter`)
     4. **Central de Roteiros HeyGen (3 Vídeos de 2 Min) & Mapa Técnico** (`/roteiros-heygen.html`)
-    5. **Central de Ajuda & FAQ da Equipe** (`/faq.html`)
+    5. **Central de Suporte & FAQ Unificada** (`/suporte`)
     6. **Folha Oficial do Totem QR Code A4** (`/totem-imprimir`)
     7. **Tutorial do Paciente & Clube Sorriso** (`/tutorial-paciente.html`)
     8. **Manual de Instalação PWA & Notificações Push** (`/manual-instalacao.html`)
@@ -168,12 +168,12 @@ O **Bertuol Flow** chega à **Versão 1.8.0** trazendo a separação definitiva 
   - Fundo espacial com **Rede Neural 3D interativa**, **4 Cápsulas de Vidro Fosco Flutuantes (`MeshPhysicalMaterial`)** com bordas luminosas e **celular em perspectiva 3D** que inclina a cada etapa.
 - **Separação Telão (Projetor) + Trilha (Apresentador) em Tempo Real**:
   - **`?mode=projector` (Só Telão)**: Exibe apenas o palco visual 3D limpo em tela cheia para projetor ou TV, ocultando a trilha lateral e o teleprompter.
-  - **`?mode=presenter` (Só Trilha)**: Painel exclusivo para o notebook ou celular do apresentador, com **Teleprompter em fonte grande**, **Cronômetro de 60 minutos**, **Prévia da próxima etapa**, lista clicável dos 8 blocos e botões para projetar o sistema ao vivo (`/` ou `/?app=paciente`) diretamente no Telão.
+  - **`?mode=presenter` (Só Trilha)**: Painel exclusivo para o notebook ou celular do apresentador, com **Teleprompter em fonte grande**, **Cronômetro de 60 minutos**, **Prévia da próxima etapa**, lista clicável dos 8 blocos e botões para projetar o sistema ao vivo (`/` ou `/paciente`) diretamente no Telão.
   - **Sincronização Dupla (`BroadcastChannel` + Server-Sent Events `/api/presentation/events`)**: Mudanças de slide entre janelas no mesmo computador ocorrem em `< 2ms` e também sincronizam entre celular e computador via servidor.
 
 #### 3. 🎙️ Central de Roteiros HeyGen & Mapeamento Técnico (`/roteiros-heygen.html`)
 - **3 Roteiros Estruturados de 2 Minutos (6 Cenas cada)**:
-  1. **Vídeo 1:** Jornada do Paciente & Clube Sorriso (`/?app=paciente`).
+  1. **Vídeo 1:** Jornada do Paciente & Clube Sorriso (`/paciente`).
   2. **Vídeo 2:** Jornada do Dentista & Corpo Clínico (`/` no perfil `dentist`).
   3. **Vídeo 3:** Jornada da Atendente / Recepção (`/` no perfil `receptionist`).
 - **Mapeamento Técnico Auditado**: Tabela completa dos **16 módulos reais** encontrados no código-fonte com rotas, arquivos, endpoints e impacto operacional, além de botões de cópia em 1 clique para o **HeyGen AI Studio** e prompts B-roll para **Google Flow / Veo**.
@@ -323,6 +323,6 @@ Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paul
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.9.3`
+- **Versão**: `v1.9.4`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

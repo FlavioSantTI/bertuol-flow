@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { OFFICIAL_SITE_URL } from '../config/siteUrls';
 import {
   X,
   Building2,
@@ -166,7 +167,7 @@ export const MultiClinicModal: React.FC<MultiClinicModalProps> = ({
 
   if (!isOpen) return null;
 
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://app.bertuol.com';
+  const currentOrigin = OFFICIAL_SITE_URL;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

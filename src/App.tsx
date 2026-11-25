@@ -194,7 +194,12 @@ export default function App() {
     ) {
       return 'root';
     }
-    if (pathname.startsWith('/portal') || appParam === 'paciente' || appParam === 'patient') {
+    if (
+      pathname.startsWith('/paciente') ||
+      pathname.startsWith('/portal') ||
+      appParam === 'paciente' ||
+      appParam === 'patient'
+    ) {
       return 'patient';
     }
     return 'dentist';
@@ -775,22 +780,29 @@ export default function App() {
   const handleSwitchToDentist = () => {
     const url = new URL(window.location.href);
     url.searchParams.delete('app');
-    const nextPath = url.pathname.toLowerCase().startsWith('/portal') ? '/' : url.pathname;
+    const lowerPath = url.pathname.toLowerCase();
+    const nextPath =
+      lowerPath.startsWith('/portal') ||
+      lowerPath.startsWith('/paciente') ||
+      lowerPath.startsWith('/root') ||
+      lowerPath.startsWith('/tutoriais')
+        ? '/'
+        : url.pathname;
     window.history.pushState({}, '', nextPath + (url.search ? url.search : ''));
     setAppMode('dentist');
   };
 
   const handleSwitchToPatient = () => {
     const url = new URL(window.location.href);
-    url.searchParams.set('app', 'paciente');
-    window.history.pushState({}, '', url.pathname + '?' + url.searchParams.toString());
+    url.searchParams.delete('app');
+    window.history.pushState({}, '', '/paciente' + (url.search ? url.search : ''));
     setAppMode('patient');
   };
 
   const handleSwitchToRoot = () => {
     const url = new URL(window.location.href);
-    url.searchParams.set('app', 'root');
-    window.history.pushState({}, '', url.pathname + '?' + url.searchParams.toString());
+    url.searchParams.delete('app');
+    window.history.pushState({}, '', '/root' + (url.search ? url.search : ''));
     setAppMode('root');
   };
 

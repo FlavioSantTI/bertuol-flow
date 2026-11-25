@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AppUserContext, Clinic } from '../../types/database';
 import { CRMService } from '../../services/crmService';
+import { buildOfficialUrl } from '../../config/siteUrls';
 import {
   BirthdayAutomationConfig,
   BirthdayConfigResponse,
@@ -264,10 +265,7 @@ export const CRMBirthdayAutomationModal: React.FC<CRMBirthdayAutomationModalProp
     validade: previewExpiryDate,
   });
 
-  const webhookFullUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${meta.webhookPath}`
-      : `https://bertuolflow.app-bertuol.tech${meta.webhookPath}`;
+  const webhookFullUrl = buildOfficialUrl(meta.webhookPath);
 
   const n8nPayloadExample = JSON.stringify(
     {

@@ -11,6 +11,7 @@ import type {
   SupportProfileId,
 } from '../../types/support';
 import { APP_VERSION } from '../../config/version';
+import { APP_ROUTES, buildOfficialUrl } from '../../config/siteUrls';
 import {
   generateSupportBookletPdf,
   triggerBlobDownload,
@@ -90,10 +91,7 @@ export const SupportPrintBooklet: React.FC<SupportPrintBookletProps> = ({
   }, [printableArticles]);
 
   const supportPublicUrl = useMemo(() => {
-    if (typeof window !== 'undefined' && window.location.origin) {
-      return `${window.location.origin}/suporte`;
-    }
-    return meta.supportUrl || 'https://bertuolflow.app-bertuol.tech/suporte';
+    return meta.supportUrl || buildOfficialUrl(APP_ROUTES.SUPPORT);
   }, [meta.supportUrl]);
 
   const versionLabel = meta.version || APP_VERSION;

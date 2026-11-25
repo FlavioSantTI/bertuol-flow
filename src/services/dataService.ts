@@ -1,4 +1,5 @@
 import { Appointment, Category, Dentist, Patient, Clinic, AppUserContext, UserRole, SystemUser, UserPermissions, CustomRoleDefinition } from '../types/database';
+import { APP_ROUTES, getOfficialBaseUrl } from '../config/siteUrls';
 
 export const CLINIC_BUSINESS_ID_PALMAS = 5053762760081408;
 export const CLINIC_BUSINESS_ID_PARAiSO = 5053762760081409;
@@ -777,7 +778,7 @@ export function generateSecureTemporaryPassword(): string {
 }
 
 export function formatInviteUrl(user: SystemUser, customAppUrl?: string): string {
-  const appUrl = customAppUrl || 'https://bertuolflow.app-bertuol.tech';
+  const appUrl = getOfficialBaseUrl(customAppUrl);
 
   const params = new URLSearchParams();
   params.set('user_id', user.id);
@@ -788,13 +789,13 @@ export function formatInviteUrl(user: SystemUser, customAppUrl?: string): string
   if (user.clinicId) params.set('clinic_id', String(user.clinicId));
   if (user.mustChangePassword) params.set('first_access', '1');
 
-  return `${appUrl}/?${params.toString()}`;
+  return `${appUrl}${APP_ROUTES.PROFESSIONAL}?${params.toString()}`;
 }
 
 export function formatInviteTextMessage(user: SystemUser, temporaryPassword?: string, customAppUrl?: string): string {
-  const baseUrl = customAppUrl || 'https://bertuolflow.app-bertuol.tech';
+  const baseUrl = getOfficialBaseUrl(customAppUrl);
   const accessUrl = formatInviteUrl(user, baseUrl);
-  const manualUrl = `${baseUrl}/manual-instalacao.html`;
+  const manualUrl = `${baseUrl}${APP_ROUTES.MANUAL_INSTALL}`;
   const pass = temporaryPassword || user.initialPassword || user.password || 'Bertuol@2026';
 
   return `🦷 *Olá, ${user.name}!*

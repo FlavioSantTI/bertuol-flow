@@ -2074,6 +2074,10 @@ const getExpectedOrigins = (req: Request): string[] => {
   origins.add(`${proto}://${cleanHost}`);
   origins.add(`https://${cleanHost}`);
   origins.add(`http://${cleanHost}`);
+  origins.add('https://bertuolflow.app-bertuol.tech');
+  if (process.env.OFFICIAL_APP_URL && process.env.OFFICIAL_APP_URL !== 'MY_APP_URL') {
+    origins.add(process.env.OFFICIAL_APP_URL.replace(/\/+$/, ''));
+  }
   origins.add('https://ais-dev-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app');
   origins.add('https://ais-pre-azxs3f6wa2xqxtogd4sk3s-21827226279.us-east5.run.app');
   origins.add('http://localhost:3000');
@@ -8445,9 +8449,12 @@ app.get('/totem-imprimir', async (req: Request, res: Response) => {
     const clinicName = clinicId === 2 ? 'Unidade Paraíso do Tocantins' : 'Unidade Matriz Palmas';
     const clinicAddress = clinicId === 2 ? 'Av. Bernardo Sayão, Centro, Paraíso - TO' : '104 Sul, Av. JK, Palmas - TO';
 
-    const host = req.get('host') || 'bertuolflow.app-bertuol.tech';
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const qrTarget = `${protocol}://${host}/paciente?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
+    const officialPublicUrl = (
+      process.env.OFFICIAL_APP_URL ||
+      process.env.VITE_OFFICIAL_APP_URL ||
+      'https://bertuolflow.app-bertuol.tech'
+    ).replace(/\/+$/, '');
+    const qrTarget = `${officialPublicUrl}/paciente?checkin=totem&clinic_id=${clinicId}&clinic_name=${encodeURIComponent(clinicName)}`;
 
     let qrDataUrl = '';
     try {
