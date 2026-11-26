@@ -29,10 +29,12 @@ ENV PORT=3000
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev || npm install --omit=dev; else npm install --omit=dev; fi
 
-# Copy built frontend assets and server file
+# Copy built frontend assets and server files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./server.ts
+COPY --from=builder /app/server ./server
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Expose port
 EXPOSE 3000
