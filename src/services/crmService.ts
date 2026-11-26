@@ -128,6 +128,7 @@ export const DEFAULT_CRM_PIPELINES: CRMPipeline[] = [
 ];
 
 export const DEFAULT_CRM_LABELS: CRMLabel[] = [
+  { id: 'lbl_lancamento_sorriso', name: 'LANCAMENTO_SORRISO', color: 'teal' },
   { id: 'lbl_vip', name: 'VIP Clube Sorriso', color: 'amber' },
   { id: 'lbl_implante', name: 'Implante / Prótese', color: 'teal' },
   { id: 'lbl_orto', name: 'Ortodontia / Alinhador', color: 'indigo' },

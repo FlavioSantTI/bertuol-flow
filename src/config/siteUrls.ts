@@ -33,6 +33,7 @@ export const APP_ROUTES = {
   HEYGEN_SCRIPTS: '/roteiros-heygen.html',
   CLINICORP_WEBHOOK_PREFIX: '/api/webhooks/clinicorp',
   BIRTHDAY_WEBHOOK: '/api/crm/birthdays/run-daily',
+  SORRISO_CAMPAIGN_WEBHOOK: '/api/crm/campaigns/sorriso/process-batch',
 } as const;
 
 export function getOfficialBaseUrl(customBaseUrl?: string): string {

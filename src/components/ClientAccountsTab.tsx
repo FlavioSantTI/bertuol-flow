@@ -364,11 +364,12 @@ export const ClientAccountsTab: React.FC<ClientAccountsTabProps> = ({
         body: JSON.stringify({
           recipientPhone: patient.mobile_phone,
           message,
+          linkPreview: true,
         }),
       });
       const data = await response.json();
-      if (data.success && data.mode === 'evolution_go') {
-        showToast('success', `Mensagem enviada automaticamente via WhatsApp para ${patient.name}!`);
+      if (data.success) {
+        showToast('success', `Mensagem enviada automaticamente via WhatsApp (${data.mode === 'waha' ? 'WAHA' : 'Gateway'}) para ${patient.name}!`);
       } else {
         handleSendWhatsAppInvite(patient, token, tempPass, isReset);
       }

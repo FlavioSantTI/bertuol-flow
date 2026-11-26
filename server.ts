@@ -18,6 +18,7 @@ import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
+import { registerSorrisoCampaignRoutes } from './server/sorrisoCampaignEngine';
 
 dotenv.config({ override: true });
 
@@ -4683,11 +4684,58 @@ async function getWhatsAppSessions(baseUrl: string, globalKey: string) {
   }
 }
 
+// Helper to build WAHA authentication headers consistently
+function buildWahaAuthHeaders(globalKey: string): Record<string, string> {
+  const wahaAuthHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Api-Key': globalKey,
+    'apikey': globalKey,
+    'Authorization': `Bearer ${globalKey}`,
+  };
+
+  if (process.env.WAHA_DASHBOARD_USERNAME && process.env.WAHA_DASHBOARD_PASSWORD) {
+    const basicAuth = Buffer.from(
+      `${process.env.WAHA_DASHBOARD_USERNAME}:${process.env.WAHA_DASHBOARD_PASSWORD}`
+    ).toString('base64');
+    wahaAuthHeaders['Authorization'] = `Basic ${basicAuth}`;
+  }
+
+  return wahaAuthHeaders;
+}
+
+// Best-effort WAHA typing indicator to emulate natural human behavior (anti-ban)
+async function simulateWahaTyping(
+  whatsappUrl: string,
+  headers: Record<string, string>,
+  session: string,
+  chatId: string,
+  durationMs = 700
+): Promise<void> {
+  try {
+    await fetch(`${whatsappUrl}/api/startTyping`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ session, chatId }),
+    }).catch(() => null);
+    await new Promise((resolve) => setTimeout(resolve, durationMs));
+    await fetch(`${whatsappUrl}/api/stopTyping`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ session, chatId }),
+    }).catch(() => null);
+  } catch {
+    // Non-fatal: older WAHA engines may not expose typing endpoints
+  }
+}
+
 // Reusable server-side WhatsApp dispatcher (WAHA API + Evolution GO fallback)
 async function sendWhatsAppTextDirect(params: {
   recipientPhone: string;
   message: string;
   instanceName?: string;
+  linkPreview?: boolean;
+  linkPreviewHighQuality?: boolean;
 }): Promise<{
   success: boolean;
   mode: string;
@@ -4713,25 +4761,25 @@ async function sendWhatsAppTextDirect(params: {
     'Atendimento';
 
   const formattedChatId = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
+  const hasUrlInMessage = /https?:\/\/\S+/i.test(String(params.message || ''));
+  const shouldEnableLinkPreview =
+    typeof params.linkPreview === 'boolean' ? params.linkPreview : hasUrlInMessage;
 
-  // 1. Tentar Envio via WAHA API (/api/sendText)
+  // 1. Tentar Envio via WAHA API (/api/sendText) com suporte a Link Preview
   try {
-    const wahaAuthHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Api-Key': globalKey,
-      'apikey': globalKey,
-      'Authorization': `Bearer ${globalKey}`,
-    };
+    const wahaAuthHeaders = buildWahaAuthHeaders(globalKey);
+    await simulateWahaTyping(whatsappUrl, wahaAuthHeaders, targetSessionName, formattedChatId, 600);
 
-    if (process.env.WAHA_DASHBOARD_USERNAME && process.env.WAHA_DASHBOARD_PASSWORD) {
-      const basicAuth = Buffer.from(
-        `${process.env.WAHA_DASHBOARD_USERNAME}:${process.env.WAHA_DASHBOARD_PASSWORD}`
-      ).toString('base64');
-      wahaAuthHeaders['Authorization'] = `Basic ${basicAuth}`;
-    }
-
-    const wahaPayloads = [
+    const wahaPayloads: Record<string, any>[] = [
+      {
+        session: targetSessionName,
+        chatId: formattedChatId,
+        text: params.message,
+        linkPreview: shouldEnableLinkPreview,
+        ...(params.linkPreviewHighQuality && shouldEnableLinkPreview
+          ? { linkPreviewHighQuality: true }
+          : {}),
+      },
       {
         session: targetSessionName,
         chatId: formattedChatId,
@@ -4806,6 +4854,7 @@ async function sendWhatsAppTextDirect(params: {
           number: cleanPhone,
           text: params.message,
           delay: 1200,
+          linkPreview: shouldEnableLinkPreview,
         }),
       });
 
@@ -4843,10 +4892,184 @@ async function sendWhatsAppTextDirect(params: {
   };
 }
 
+// Reusable server-side WhatsApp Image / QR Code dispatcher (WAHA /api/sendImage + Evolution GO fallback)
+async function sendWhatsAppImageDirect(params: {
+  recipientPhone: string;
+  imageBase64: string;
+  mimetype?: string;
+  filename?: string;
+  caption?: string;
+  instanceName?: string;
+}): Promise<{
+  success: boolean;
+  mode: string;
+  session?: string;
+  instance?: string;
+  data?: any;
+  error?: string;
+  details?: any;
+  status: number;
+}> {
+  const cleanPhone = formatPhoneForDatabase(params.recipientPhone);
+  const whatsappUrl = (
+    process.env.WAHA_API_URL ||
+    process.env.EVOLUTION_API_URL ||
+    'https://go.app-bertuol.tech'
+  ).replace(/\/+$/, '');
+  const globalKey = WHATSAPP_GLOBAL_API_KEY;
+  const targetSessionName =
+    params.instanceName ||
+    process.env.WAHA_SESSION ||
+    process.env.EVOLUTION_INSTANCE_NAME ||
+    'Atendimento';
+
+  const formattedChatId = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
+  const mimetype = params.mimetype || 'image/png';
+  const filename = params.filename || 'clube-sorriso-bertuol-qrcode.png';
+  const rawBase64 = String(params.imageBase64 || '').replace(/^data:[^;]+;base64,/i, '').trim();
+  const dataUri = `data:${mimetype};base64,${rawBase64}`;
+  const caption = String(params.caption || '');
+
+  if (!rawBase64) {
+    return {
+      success: false,
+      mode: 'whatsapp_image',
+      status: 400,
+      error: 'Imagem base64 vazia para envio no WhatsApp.',
+    };
+  }
+
+  let lastError: any = null;
+  let lastStatus = 500;
+
+  // 1. Tentar Envio via WAHA API (/api/sendImage)
+  try {
+    const wahaAuthHeaders = buildWahaAuthHeaders(globalKey);
+    await simulateWahaTyping(whatsappUrl, wahaAuthHeaders, targetSessionName, formattedChatId, 500);
+
+    const wahaImagePayloads = [
+      {
+        session: targetSessionName,
+        chatId: formattedChatId,
+        file: {
+          mimetype,
+          filename,
+          data: rawBase64,
+        },
+        caption,
+      },
+      {
+        session: targetSessionName,
+        chatId: formattedChatId,
+        file: {
+          mimetype,
+          filename,
+          data: dataUri,
+        },
+        caption,
+      },
+    ];
+
+    for (const payload of wahaImagePayloads) {
+      const wahaRes = await fetch(`${whatsappUrl}/api/sendImage`, {
+        method: 'POST',
+        headers: wahaAuthHeaders,
+        body: JSON.stringify(payload),
+      });
+
+      const data = await wahaRes.json().catch(() => ({}));
+      if (wahaRes.ok) {
+        return {
+          success: true,
+          mode: 'waha_image',
+          session: targetSessionName,
+          data,
+          status: 200,
+        };
+      }
+      lastStatus = wahaRes.status;
+      lastError = data;
+    }
+  } catch (wahaErr: any) {
+    lastError = wahaErr;
+    console.warn('[WAHA API] Falha em /api/sendImage, tentando Evolution GO...', wahaErr.message);
+  }
+
+  // 2. Fallback: Evolution GO (/send/media)
+  try {
+    const instances = await getWhatsAppSessions(whatsappUrl, globalKey);
+    const matchedInstance =
+      instances.find(
+        (inst: any) =>
+          inst.name === targetSessionName ||
+          inst.id === targetSessionName ||
+          (inst.name && inst.name.toLowerCase().includes(targetSessionName.toLowerCase()))
+      ) ||
+      instances.find((inst: any) => inst.connected) ||
+      instances[0];
+
+    const instanceToken =
+      matchedInstance?.token ||
+      process.env.EVOLUTION_INSTANCE_TOKEN ||
+      '22a95d2c-082a-4df2-80aa-0b36982b8ced';
+
+    const candidateAuthHeaders: Record<string, string>[] = [
+      { 'apikey': globalKey, 'X-Api-Key': globalKey },
+      { 'apikey': instanceToken, 'token': instanceToken },
+    ];
+
+    for (const authHeader of candidateAuthHeaders) {
+      const response = await fetch(`${whatsappUrl}/send/media`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          number: cleanPhone,
+          mediatype: 'image',
+          mimetype,
+          fileName: filename,
+          media: rawBase64,
+          caption,
+          delay: 1200,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        return {
+          success: true,
+          mode: 'evolution_go_image',
+          instance: matchedInstance?.name || targetSessionName,
+          data,
+          status: 200,
+        };
+      }
+      lastStatus = response.status;
+      lastError = data;
+    }
+  } catch (err: any) {
+    lastError = err;
+  }
+
+  return {
+    success: false,
+    mode: 'whatsapp_image',
+    status: lastStatus,
+    error:
+      lastError?.message ||
+      lastError?.error ||
+      `Erro ${lastStatus} ao enviar imagem/QR Code via WhatsApp (${whatsappUrl})`,
+    details: lastError,
+  };
+}
+
 // Endpoint: Send WhatsApp message via WAHA API or Evolution GO
 app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
   try {
-    const { recipientPhone, message, instanceName } = req.body;
+    const { recipientPhone, message, instanceName, linkPreview, linkPreviewHighQuality } = req.body;
 
     if (!recipientPhone || !message) {
       return res.status(400).json({
@@ -4855,7 +5078,13 @@ app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
       });
     }
 
-    const result = await sendWhatsAppTextDirect({ recipientPhone, message, instanceName });
+    const result = await sendWhatsAppTextDirect({
+      recipientPhone,
+      message,
+      instanceName,
+      linkPreview: typeof linkPreview === 'boolean' ? linkPreview : undefined,
+      linkPreviewHighQuality: Boolean(linkPreviewHighQuality),
+    });
     if (result.success) {
       return res.json({
         success: true,
@@ -4880,6 +5109,74 @@ app.post('/api/whatsapp/send-text', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro no endpoint de WhatsApp:', error);
     return res.status(500).json({ success: false, error: 'Erro interno ao processar envio de WhatsApp.' });
+  }
+});
+
+// Endpoint: Send WhatsApp QR Code / Image via WAHA (/api/sendImage) or Evolution GO
+app.post('/api/whatsapp/send-image', async (req: Request, res: Response) => {
+  try {
+    const { recipientPhone, caption, qrCodeUrl, imageBase64, filename, instanceName } = req.body || {};
+    if (!recipientPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Número de telefone do destinatário é obrigatório.',
+      });
+    }
+
+    let resolvedBase64 = typeof imageBase64 === 'string' ? imageBase64.trim() : '';
+    if (!resolvedBase64 && typeof qrCodeUrl === 'string' && qrCodeUrl.trim()) {
+      const trimmedUrl = qrCodeUrl.trim();
+      if (!/^https:\/\//i.test(trimmedUrl) || trimmedUrl.length > 600) {
+        return res.status(400).json({
+          success: false,
+          error: 'URL do QR Code inválida (use https://).',
+        });
+      }
+      const QRCode = (await import('qrcode')).default;
+      resolvedBase64 = await QRCode.toDataURL(trimmedUrl, {
+        width: 640,
+        margin: 2,
+        color: { dark: '#0F172A', light: '#FFFFFF' },
+        errorCorrectionLevel: 'M',
+      });
+    }
+
+    if (!resolvedBase64) {
+      return res.status(400).json({
+        success: false,
+        error: 'Informe qrCodeUrl ou imageBase64 para enviar imagem no WhatsApp.',
+      });
+    }
+
+    const result = await sendWhatsAppImageDirect({
+      recipientPhone,
+      imageBase64: resolvedBase64,
+      mimetype: 'image/png',
+      filename: typeof filename === 'string' && filename.trim() ? filename.trim() : 'acesso-app-bertuol.png',
+      caption: typeof caption === 'string' ? caption : '',
+      instanceName,
+    });
+
+    if (result.success) {
+      return res.json({
+        success: true,
+        mode: result.mode,
+        session: result.session,
+        instance: result.instance,
+        data: result.data,
+        message: 'Imagem/QR Code enviado com sucesso via WhatsApp!',
+      });
+    }
+
+    return res.status(result.status || 500).json({
+      success: false,
+      mode: result.mode,
+      error: result.error,
+      details: result.details,
+    });
+  } catch (error: any) {
+    console.error('Erro no endpoint de imagem WhatsApp:', error);
+    return res.status(500).json({ success: false, error: 'Erro interno ao enviar imagem via WhatsApp.' });
   }
 });
 
@@ -7317,6 +7614,18 @@ function startBirthdayDailyScheduler() {
   // Check every 60 seconds (low overhead, exact BRT HH:MM trigger)
   setInterval(tick, 60 * 1000);
 }
+
+const sorrisoCampaignEngine = registerSorrisoCampaignRoutes(app, {
+  supabase,
+  dataDir: __dirname,
+  multiTenantClinics: MULTI_TENANT_CLINICS,
+  isAdminRequest: isBirthdayAdminRequest,
+  sendWhatsAppTextDirect,
+  sendWhatsAppImageDirect,
+  resolveClinicorpContext,
+  getSaoPauloClockParts,
+  addDaysYMD: addDaysYMDServer,
+});
 
 // ============================================================
 // CRUD DE REGRAS DE PONTUAÇÃO (RF05)
@@ -11364,4 +11673,5 @@ if (isProd) {
 app.listen(PORT, HOST, () => {
   console.log(`Servidor Bertuol Odontologia escutando em http://${HOST}:${PORT} (${isProd ? 'produção' : 'desenvolvimento'})`);
   startBirthdayDailyScheduler();
+  sorrisoCampaignEngine.startWorker();
 });

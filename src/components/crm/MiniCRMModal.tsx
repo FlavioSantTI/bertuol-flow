@@ -29,6 +29,7 @@ import { CRMLostReasonModal } from './CRMLostReasonModal';
 import { CRMDashboardView } from './CRMDashboardView';
 import { CRMEstimatesBackfillModal } from './CRMEstimatesBackfillModal';
 import { CRMBirthdayAutomationModal } from './CRMBirthdayAutomationModal';
+import { CRMCampaignLaunchModal } from './CRMCampaignLaunchModal';
 import {
   X,
   RefreshCw,
@@ -53,6 +54,7 @@ import {
   ArrowUpDown,
   ChevronDown,
   Settings,
+  Megaphone,
 } from 'lucide-react';
 import {
   CRM_DATE_FIELD_OPTIONS,
@@ -136,6 +138,7 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
   const [isLabelsManagerOpen, setIsLabelsManagerOpen] = useState(false);
   const [isEstimatesBackfillOpen, setIsEstimatesBackfillOpen] = useState(false);
   const [isBirthdayAutomationOpen, setIsBirthdayAutomationOpen] = useState(false);
+  const [isCampaignLaunchOpen, setIsCampaignLaunchOpen] = useState(false);
   const [notesLabelsOppId, setNotesLabelsOppId] = useState<string | null>(null);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 
@@ -938,6 +941,27 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
                       <Cake className="w-3.5 h-3.5 text-[#147A80]" /> Automação de Aniversariantes
                     </button>
                   )}
+
+                  {canRunEstimatesBackfill &&
+                    (activePipeline?.id === 'campaigns' ||
+                      (activePipeline?.name || '')
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .includes('sorriso') ||
+                      (activePipeline?.name || '')
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .includes('lancamento')) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCampaignLaunchOpen(true)}
+                        className="w-full text-left px-3.5 py-2.5 sm:py-2 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                      >
+                        <Megaphone className="w-3.5 h-3.5 text-[#147A80]" /> Campanha WhatsApp (Lançamento)
+                      </button>
+                    )}
 
                   <div className="h-px bg-slate-100 my-1" />
 
@@ -1829,6 +1853,21 @@ export const MiniCRMModal: React.FC<MiniCRMModalProps> = ({
         userContext={userContext}
         defaultClinicId={selectedClinicId}
         onAfterRun={(summaryMsg) => {
+          CRMService.fetchFromSupabase().then((fresh) => {
+            setOpportunities(fresh);
+            showToast(summaryMsg);
+          });
+        }}
+      />
+
+      <CRMCampaignLaunchModal
+        isOpen={isCampaignLaunchOpen}
+        onClose={() => setIsCampaignLaunchOpen(false)}
+        clinics={clinics}
+        userContext={userContext}
+        defaultClinicId={selectedClinicId}
+        activePipelineId={activePipeline?.id}
+        onAfterSync={(summaryMsg) => {
           CRMService.fetchFromSupabase().then((fresh) => {
             setOpportunities(fresh);
             showToast(summaryMsg);

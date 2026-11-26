@@ -1,10 +1,10 @@
 // ========================================================
 // Bertuol Odontologia • Service Worker Web Push Handler
-// Versão: 1.9.4
+// Versão: 1.9.5
 // Recebe Notificações Push nativas com o app fechado
 // ========================================================
 
-const SW_VERSION = '1.9.4';
+const SW_VERSION = '1.9.5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
