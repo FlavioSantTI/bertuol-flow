@@ -8,48 +8,108 @@
     "steps": [
       "Ao entrar com perfil de atendimento/recepção, a agenda já libera a visualização de todos os dentistas da sua unidade sem bloqueio individual.",
       "Quando o paciente chegar ao balcão (caso ainda não tenha escaneado o Totem QR), localize o agendamento e clique em Check-in.",
-      "O sistema notifica o dentista instantaneamente por push, som de campainha, faixa visual e WhatsApp."
+      "O sistema notifica o dentista instantaneamente por push, som de campainha, faixa visual e WhatsApp.",
+      "Atenção especial a pacientes com Selo Diamante: a meta operacional é conduzir do check-in ao consultório em no máximo 10 minutos."
     ],
-    "keywords": ["agenda", "todos dentistas", "check-in", "recepcao", "chegada", "unidade"],
+    "keywords": ["agenda", "todos dentistas", "check-in", "recepcao", "chegada", "unidade", "diamante", "10 minutos"],
     "includeInPrint": true,
     "printOrder": 1,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-credenciais-clientes",
     "profile": "receptionist",
     "category": "Credenciais e Acesso de Pacientes",
-    "title": "Como localizar pacientes e enviar convite de acesso ao Portal pelo WhatsApp?",
-    "summary": "Busque na Central de Credenciais (6.285+ pacientes) por nome ou sobrenome e envie o acesso em 1 clique.",
+    "title": "Como localizar pacientes, enviar convite de acesso e orientar o aceite de termos (LGPD)?",
+    "summary": "Busque na Central de Credenciais por nome ou sobrenome, envie o link pelo WhatsApp e ajude o paciente a concluir o aceite obrigatório no primeiro acesso.",
     "steps": [
       "No menu Gestão, abra a Central de Credenciais de Clientes.",
       "Digite o nome ou sobrenome do paciente na busca no topo (a busca ignora acentos e consulta toda a base da unidade).",
-      "Clique para gerar ou reenviar o link de ativação direto para o WhatsApp do paciente."
+      "Clique para gerar ou reenviar o link de ativação direto para o WhatsApp do paciente.",
+      "Roteiro rápido de balcão (60 segundos): apresente o Clube Sorriso, ajude a abrir o link, oriente o paciente a ler e marcar o aceite obrigatório do Regulamento Versão 1.0 e Privacidade (LGPD) — sem esse aceite o app permanece bloqueado — e explique que os 100 pontos de boas-vindas entram ao completar o perfil."
     ],
-    "keywords": ["credenciais", "clientes", "acesso paciente", "convite", "whatsapp", "token", "6285", "buscar paciente"],
+    "tip": "O consentimento de comunicações de marketing é separado e opcional pela LGPD: nunca marque a caixinha no lugar do paciente; deixe sempre o titular confirmar no próprio celular.",
+    "keywords": ["credenciais", "clientes", "acesso paciente", "convite", "whatsapp", "token", "buscar paciente", "aceite", "termos", "lgpd"],
     "includeInPrint": true,
     "printOrder": 2,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
+  },
+  {
+    "id": "rec-clube-sorriso-niveis-protocolo",
+    "profile": "receptionist",
+    "category": "Clube Sorriso v1.0 e Protocolo Diamante",
+    "title": "Como aplicar as regras do Clube Sorriso v1.0, Fast-Track e Protocolo de Prioridade Diamante?",
+    "summary": "Conheça os 4 níveis oficiais (Bronze a Diamante), a entrada acelerada por contrato comercial, entrega de presentes de ascensão e o protocolo de atendimento Diamante.",
+    "steps": [
+      "Níveis e multiplicadores oficiais: Bronze (1,00x · cadastro e 1ª consulta), Prata (1,15x · 2.500 pts de status em 12 meses ou 2 indicações convertidas), Ouro (1,25x · 7.000 pts ou contrato ≥ R$ 7.000 com entrada paga) e Diamante (1,50x · 15.000 pts ou contrato ≥ R$ 15.000 com entrada paga).",
+      "Fast-track comercial: ao fechar contrato ≥ R$ 7.000 (Ouro) ou ≥ R$ 15.000 (Diamante) com entrada paga, o paciente já entra no nível imediatamente e o multiplicador incide sobre cada parcela paga em dia. Em caso de cancelamento ou inadimplência > 60 dias, o nível é recalculado pelos pontos pagos.",
+      "Presentes de ascensão (entregar sempre pessoalmente na clínica com cartão assinado — nunca enviar pelo correio sem contato): Prata (Kit Cuidado Profissional Curaprox), Ouro (Escova elétrica Oral-B Pro Series 1) e Diamante (Irrigador oral Waterpik Cordless Enhance WF21 com orientação de uso).",
+      "Protocolo de Prioridade Diamante: urgência odontológica no mesmo dia ou em até 24h; 2 horários reservados por semana em cada unidade (liberados para lista de espera 48h antes se não utilizados); Concierge via WhatsApp com resposta em até 1h no horário comercial; espera máxima de 10 minutos na recepção; atendimento integrado Palmas/Paraíso sem repetir cadastro; e ligação pós-procedimento em até 48h.",
+      "Atenção ética e Google Reviews: nunca prometa pontos por avaliações no Google (violação de política do Google). Para coletar feedback com pontos (+30 pts base), utilize sempre a pesquisa interna de satisfação (NPS) do aplicativo."
+    ],
+    "tip": "Conta Família: titulares Ouro podem vincular até 3 dependentes (cônjuge/filhos) somando pontos ao saldo; titulares Diamante vinculam até 5 dependentes, que recebem multiplicador Prata (1,15x) enquanto o titular for Diamante.",
+    "keywords": ["clube sorriso", "niveis", "bronze", "prata", "ouro", "diamante", "fast-track", "protocolo diamante", "concierge", "urgencia 24h", "presente ascensao", "conta familia", "google"],
+    "includeInPrint": true,
+    "printOrder": 3,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
+  },
+  {
+    "id": "rec-baixa-voucher",
+    "profile": "receptionist",
+    "category": "Clube Sorriso v1.0 e Protocolo Diamante",
+    "title": "Como validar e dar baixa em vouchers (Clube Sorriso, Crédito Sorriso e BRT-ANIV)?",
+    "summary": "Valide o código no modal de Vouchers respeitando o limite de 30% do Crédito Sorriso e a avaliação clínica obrigatória para serviços.",
+    "steps": [
+      "No menu superior, abra Resgate / Baixa de Vouchers (Clube Sorriso).",
+      "Digite ou cole o código apresentado pelo paciente (ex.: BT-XXXX ou BRT-ANIV-XXXX) e confira se o nível e a validade estão ativos.",
+      "Para Crédito Sorriso: confirme o mínimo de 3.000 pontos (1.000 pts = R$ 30,00) e verifique o teto máximo de 30% de abatimento sobre o valor do pagamento.",
+      "Regra Clínica Inegociável: para vouchers de serviços clínicos (flúor, profilaxia extra, manutenção de lentes, simulação digital, clareamento) ou refil de gel clareador, a baixa definitiva só ocorre após avaliação e aprovação do cirurgião-dentista. Se houver contraindicação clínica, cancele o voucher e devolva integralmente os pontos ao saldo do paciente.",
+      "Para vouchers de aniversário (BRT-ANIV), a baixa move automaticamente o card do paciente no funil Aniversariantes do CRM para Voucher Resgatado com auditoria."
+    ],
+    "keywords": ["baixa voucher", "validar voucher", "resgatar", "brt-aniv", "clube sorriso", "credito sorriso", "30%", "avaliacao clinica", "estorno"],
+    "includeInPrint": true,
+    "printOrder": 4,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
+  },
+  {
+    "id": "rec-campanha-lancamento-sorriso",
+    "profile": "receptionist",
+    "category": "CRM Comercial Multi-Funil",
+    "title": "Como operar o funil Lançamento Sorriso Bertuol e a Campanha WhatsApp?",
+    "summary": "Gere lotes de pacientes elegíveis na fase Lead Gerado para envio cadenciado de convites com link e QR Code via WhatsApp (WAHA / n8n).",
+    "steps": [
+      "No CRM, abra o funil Lançamento Sorriso Bertuol e clique em Campanha WhatsApp para preparar o lote de pacientes elegíveis.",
+      "Revise a lista gerada e aprove o lote: os leads são gravados na etapa inicial Lead Gerado já com mensagem personalizada e link oficial de acesso.",
+      "A automação externa (n8n + WAHA) consulta os leads em Lead Gerado, valida o número no WhatsApp, aplica atraso anti-bloqueio entre envios (ex.: 10 disparos por hora) e avança automaticamente cada card após o envio.",
+      "Acompanhe o retorno dos pacientes no Kanban conforme eles ativam o app, aceitam o regulamento e agendam a revisão."
+    ],
+    "keywords": ["lancamento sorriso", "campanha whatsapp", "lead gerado", "waha", "n8n", "convite", "qr code", "lote"],
+    "includeInPrint": true,
+    "printOrder": 5,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-crm-funis",
     "profile": "receptionist",
     "category": "CRM Comercial Multi-Funil",
     "title": "Quais funis existem no CRM e como usar a captura rápida e a ficha livre?",
-    "summary": "Trabalhe com os funis Recall 6+, Campanhas, Orçamentos em Aberto, Aniversariantes e funis personalizados.",
+    "summary": "Trabalhe com os funis Recall 6+, Campanhas, Orçamentos em Aberto, Aniversariantes, Lançamento Sorriso Bertuol e funis personalizados.",
     "steps": [
       "Abra o CRM no cabeçalho principal e selecione o funil desejado na barra de funis.",
       "Use a barra de Captura Rápida acima do Kanban para registrar leads de balcão, WhatsApp ou @instagram em uma única linha.",
-      "Arraste os cards entre colunas (Drag & Drop) ou clique em qualquer card para abrir a gaveta editável (CRMLeadDrawer) com notas cronológicas, follow-up, rótulos e campos livres.",
+      "Arraste os cards entre colunas (Drag & Drop) ou clique em qualquer card para abrir a gaveta editável com notas cronológicas, follow-up, rótulos e campos livres.",
       "Para criar novos funis ou editar etapas de ganho/perda, utilize o botão de Gerenciar Funis (perfis autorizados)."
     ],
     "keywords": ["crm", "funil", "kanban", "recall", "campanhas", "orcamentos", "captura rapida", "ficha livre", "drag and drop"],
     "includeInPrint": true,
-    "printOrder": 3,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 6,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-crm-agendamento-clinicorp",
@@ -64,9 +124,9 @@
     ],
     "keywords": ["agendar", "clinicorp", "bidirecional", "horario livre", "bloqueio", "converter lead"],
     "includeInPrint": true,
-    "printOrder": 4,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 7,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-crm-filtros-rotulos",
@@ -81,9 +141,9 @@
     ],
     "keywords": ["filtro data", "periodo", "rotulos", "etiquetas", "tags", "kpi", "follow-up"],
     "includeInPrint": true,
-    "printOrder": 5,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 8,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-crm-aniversariantes",
@@ -100,27 +160,9 @@
     "tip": "O motor possui proteção contra duplicidade anual: mesmo rodando servidor + n8n no mesmo dia, nenhum paciente recebe o voucher duas vezes no mesmo ano.",
     "keywords": ["aniversariantes", "automacao diaria", "brt-aniv", "voucher aniversario", "n8n", "whatsapp", "dry-run", "7 dias"],
     "includeInPrint": true,
-    "printOrder": 6,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
-  },
-  {
-    "id": "rec-baixa-voucher",
-    "profile": "receptionist",
-    "category": "Vouchers e Clube Sorriso",
-    "title": "Como validar e dar baixa em um voucher (BRT-XXXX ou BRT-ANIV-XXXX) na recepção?",
-    "summary": "Valide o código no modal de Vouchers; vouchers de aniversário convertem automaticamente o card do CRM.",
-    "steps": [
-      "No menu superior, abra Resgate / Baixa de Vouchers (Clube Sorriso).",
-      "Digite ou cole o código apresentado pelo paciente (ex.: BRT-XXXX ou BRT-ANIV-XXXX) e confirme a validade.",
-      "Clique em Confirmar Baixa para registrar o uso do benefício.",
-      "Para vouchers de aniversário (BRT-ANIV), o sistema move automaticamente o card do paciente no funil Aniversariantes do CRM para Voucher Resgatado com registro de auditoria."
-    ],
-    "keywords": ["baixa voucher", "validar voucher", "resgatar", "brt-aniv", "clube sorriso", "voucher resgatado"],
-    "includeInPrint": true,
-    "printOrder": 7,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 9,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-orcamentos-historico",
@@ -135,9 +177,9 @@
     ],
     "keywords": ["orcamentos", "importar historico", "backfill", "1 ano", "clinicorp", "open", "csv", "json"],
     "includeInPrint": true,
-    "printOrder": 8,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 10,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-relatorios-crm",
@@ -153,9 +195,9 @@
     ],
     "keywords": ["relatorios", "dashboard", "pdf", "csv", "excel", "sla", "motivo perda", "conversao"],
     "includeInPrint": true,
-    "printOrder": 9,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 11,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-totem-marketing",
@@ -170,9 +212,9 @@
     ],
     "keywords": ["totem", "qr code", "imprimir", "folder", "marketing", "png", "svg", "balcao"],
     "includeInPrint": true,
-    "printOrder": 10,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 12,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "rec-mensageria-equipe",
@@ -187,8 +229,8 @@
     ],
     "keywords": ["mensageria", "chat", "participantes", "responsavel", "dentista", "audio", "foto"],
     "includeInPrint": true,
-    "printOrder": 11,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 13,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   }
 ]

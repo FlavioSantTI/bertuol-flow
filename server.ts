@@ -19,6 +19,11 @@ import type {
   AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
 import { registerSorrisoCampaignRoutes } from './server/sorrisoCampaignEngine';
+import {
+  registerPatientTermsRoutes,
+  getPatientTermsAcceptance,
+  ensurePatientTermsAccepted,
+} from './server/patientTermsEngine';
 
 dotenv.config({ override: true });
 
@@ -612,10 +617,11 @@ app.post('/api/patient/notifications/mark-read', (req: Request, res: Response) =
 });
 
 // Endpoint: Paciente Agenda a Cortesia de Aniversário Diretamente no App (Sem WhatsApp)
-app.post('/api/patient/schedule-birthday-gift', (req: Request, res: Response) => {
+app.post('/api/patient/schedule-birthday-gift', async (req: Request, res: Response) => {
   try {
     const { phone, patientName, preferredDate, preferredPeriod, unit, notes } = req.body;
     const cleanPhone = String(phone || '').replace(/\D/g, '');
+    if (!(await ensurePatientTermsAccepted(supabase, { phone: cleanPhone }, res))) return;
 
     const newRequest: BirthdayGiftRequest = {
       id: 'bday_req_' + Date.now(),
@@ -5352,7 +5358,8 @@ const memoryTiers: InMemTier[] = [
     min_points: 0,
     color_theme: 'bronze',
     multiplier: 1.0,
-    benefits_description: 'Acesso ao Clube de Vantagens e acúmulo padrão de pontos.',
+    benefits_description:
+      'Acesso ao clube, boas-vindas (100 pts perfil + 50 pts anamnese), lembretes inteligentes, bônus de aniversário (150 pts), catálogo Bronze e Crédito Sorriso.',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -5361,10 +5368,11 @@ const memoryTiers: InMemTier[] = [
     id: 'tier_prata',
     name: 'Prata',
     badge: '🥈',
-    min_points: 80,
+    min_points: 2500,
     color_theme: 'prata',
-    multiplier: 1.1,
-    benefits_description: '10% de bônus adicional em pontos por pontualidade no Totem.',
+    multiplier: 1.15,
+    benefits_description:
+      'Multiplicador 1,15x, Kit Cuidado Profissional na ascensão, catálogo Prata ampliado e lista de espera preferencial na agenda.',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -5373,10 +5381,11 @@ const memoryTiers: InMemTier[] = [
     id: 'tier_ouro',
     name: 'Ouro',
     badge: '🥇',
-    min_points: 180,
+    min_points: 7000,
     color_theme: 'ouro',
     multiplier: 1.25,
-    benefits_description: '25% de bônus em todas as pontuações e brinde exclusivo de aniversário.',
+    benefits_description:
+      'Multiplicador 1,25x, Escova elétrica Oral-B Pro Series 1 na ascensão, Kit Aniversário Ouro, agenda preferencial (7 dias), Conta Família (até 3 dependentes) e revisão estética anual.',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -5385,10 +5394,11 @@ const memoryTiers: InMemTier[] = [
     id: 'tier_diamante',
     name: 'Diamante',
     badge: '💎',
-    min_points: 300,
+    min_points: 15000,
     color_theme: 'diamante',
     multiplier: 1.5,
-    benefits_description: '50% de bônus em pontuações, vouchers premium e atendimento prioritário.',
+    benefits_description:
+      'Multiplicador 1,50x, Irrigador oral Waterpik na ascensão, Protocolo de Prioridade Absoluta (urgência 24h, concierge WhatsApp 1h, recepção ≤10 min), Check-up anual e Conta Família (5 dependentes com 1,15x).',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -5397,19 +5407,39 @@ const memoryTiers: InMemTier[] = [
 
 const memoryRules: InMemRule[] = [
   {
-    id: 'rule_confirmation',
-    title: 'Confirmação Antecipada',
-    description: 'Confirmou a presença na véspera pelo link do WhatsApp',
-    points_reward: 10,
-    trigger_event: 'appointment_confirmed',
+    id: 'rule_payment_base',
+    title: 'Pagamento de Consulta ou Tratamento',
+    description: 'Cada R$ 1,00 efetivamente pago gera 1 ponto de status + 1 ponto base multiplicado pelo nível vigente.',
+    points_reward: 1,
+    trigger_event: 'payment_received_per_brl',
     is_active: true,
     updated_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
-    id: 'rule_punctual',
-    title: 'Pontualidade no Check-in',
-    description: 'Realizou check-in pelo QR Code do balcão no horário',
+    id: 'rule_profile_complete',
+    title: 'Cadastro no App com Perfil Completo',
+    description: 'Bônus de boas-vindas ao completar o cadastro no aplicativo Clube Sorriso (uma vez).',
+    points_reward: 100,
+    trigger_event: 'profile_completed',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_digital_anamnesis',
+    title: 'Anamnese Digital Antes da 1ª Consulta',
+    description: 'Preenchimento da anamnese digital pelo app antes do primeiro atendimento (uma vez).',
+    points_reward: 50,
+    trigger_event: 'digital_anamnesis_completed',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_punctual_checkin',
+    title: 'Check-in Pontual na Recepção',
+    description: 'Check-in realizado via QR Code no totem até o horário marcado da consulta (por consulta).',
     points_reward: 20,
     trigger_event: 'checkin_on_time',
     is_active: true,
@@ -5417,21 +5447,71 @@ const memoryRules: InMemRule[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: 'rule_preventive_streak',
-    title: 'Fidelidade Preventiva',
-    description: 'Compareceu a consultas de prevenção sem faltas consecutivas',
-    points_reward: 50,
-    trigger_event: 'preventive_streak',
+    id: 'rule_semiannual_review',
+    title: 'Revisão Semestral Realizada no Prazo',
+    description: 'Comparecimento à consulta preventiva semestral dentro da janela recomendada (até 2 por ano).',
+    points_reward: 150,
+    trigger_event: 'semiannual_preventive_review',
     is_active: true,
     updated_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
-    id: 'rule_referral',
-    title: 'Indicação de Amigo ou Familiar',
-    description: 'Indicou um novo paciente que compareceu à primeira consulta',
-    points_reward: 80,
-    trigger_event: 'friend_referral',
+    id: 'rule_installment_on_time',
+    title: 'Parcela Paga Até o Vencimento',
+    description: 'Bônus de adimplência creditado a cada parcela paga até o vencimento.',
+    points_reward: 15,
+    trigger_event: 'installment_paid_on_time',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_referral_converted',
+    title: 'Indicação Convertida',
+    description: 'Novo paciente indicado realiza e paga a 1ª consulta ou tratamento (sem limite).',
+    points_reward: 500,
+    trigger_event: 'referral_converted',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_referred_welcome',
+    title: 'Bônus de Boas-vindas do Indicado',
+    description: 'Crédito especial de boas-vindas para paciente indicado por membro do clube (uma vez).',
+    points_reward: 200,
+    trigger_event: 'referred_patient_welcome',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_birthday',
+    title: 'Aniversário do Titular',
+    description: 'Bônus anual creditado no aniversário do membro titular (1 por ano).',
+    points_reward: 150,
+    trigger_event: 'patient_birthday',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_social_tag',
+    title: 'Publicação Marcando a Clínica (com Termo de Imagem)',
+    description: 'Publicação orgânica marcando a clínica com termo de autorização de imagem assinado (1 por mês).',
+    points_reward: 100,
+    trigger_event: 'social_media_mention',
+    is_active: true,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'rule_internal_nps',
+    title: 'Pesquisa Interna de Satisfação (NPS)',
+    description: 'Resposta à pesquisa interna pós-atendimento no app (avaliações no Google não são premiadas).',
+    points_reward: 30,
+    trigger_event: 'internal_nps_answered',
     is_active: true,
     updated_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
@@ -5440,12 +5520,104 @@ const memoryRules: InMemRule[] = [
 
 const memoryRewards: InMemReward[] = [
   {
-    id: 'rew_kit_higiene',
+    id: 'rew_credito_sorriso_3000',
     clinic_id: null,
-    title: 'Kit Higiene Bucal Premium Bertuol',
-    description: 'Estojo personalizado com escova ultra-macia, fio dental e gel dental.',
-    points_required: 50,
-    stock_available: 48,
+    title: 'Crédito Sorriso · R$ 90 em Tratamentos (3.000 pts)',
+    description:
+      'Resgate universal (Bronze+): cada 1.000 pts = R$ 30,00 de abatimento em qualquer tratamento, limitado a até 30% do pagamento.',
+    points_required: 3000,
+    stock_available: 999,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_fluor_dessensibilizante',
+    clinic_id: null,
+    title: 'Aplicação de Flúor ou Dessensibilizante',
+    description: 'Serviço clínico (Bronze+) — gera voucher sujeito à avaliação e indicação do profissional.',
+    points_required: 1500,
+    stock_available: 60,
+    voucher_validity_days: 45,
+    image_url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_profilaxia_extra',
+    clinic_id: null,
+    title: 'Profilaxia e Polimento Extra (fora das revisões)',
+    description: 'Serviço clínico (Bronze+) — limpeza profissional extra condicionada à avaliação clínica.',
+    points_required: 3000,
+    stock_available: 50,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_manutencao_lentes',
+    clinic_id: null,
+    title: 'Manutenção e Polimento de Lentes de Resina',
+    description: 'Serviço clínico (Prata+) — polimento de alto brilho mediante avaliação do especialista.',
+    points_required: 4500,
+    stock_available: 40,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_simulacao_digital',
+    clinic_id: null,
+    title: 'Simulação Digital do Sorriso (Escaneamento e Projeto)',
+    description: 'Serviço clínico (Ouro+) — escaneamento intraoral e projeto digital mediante indicação profissional.',
+    points_required: 6000,
+    stock_available: 30,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_clareamento_caseiro',
+    clinic_id: null,
+    title: 'Clareamento Caseiro Completo (Moldeiras e Gel)',
+    description: 'Serviço clínico (Ouro+) — moldeiras personalizadas e gel profissional mediante avaliação clínica.',
+    points_required: 9000,
+    stock_available: 25,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_srv_clareamento_consultorio',
+    clinic_id: null,
+    title: 'Sessão de Clareamento em Consultório',
+    description: 'Serviço clínico (Ouro+) — sessão estética conduzida pelo especialista após avaliação prévia.',
+    points_required: 12000,
+    stock_available: 20,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_prod_fio_oralb',
+    clinic_id: null,
+    title: 'Fio Dental Oral-B Essential 50 m',
+    description: 'Produto de cuidado bucal (Bronze+) — retirada na recepção da clínica.',
+    points_required: 600,
+    stock_available: 80,
     voucher_validity_days: 30,
     image_url: 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
     is_active: true,
@@ -5453,25 +5625,77 @@ const memoryRewards: InMemReward[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'rew_profilaxia',
+    id: 'rew_prod_escova_curaprox',
     clinic_id: null,
-    title: 'Profilaxia Preventiva & Aplicação de Flúor',
-    description: 'Sessão completa de limpeza dental para manter seu sorriso protegido e brilhante.',
-    points_required: 120,
-    stock_available: 22,
-    voucher_validity_days: 45,
-    image_url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&auto=format&fit=crop&q=80',
+    title: 'Escova Curaprox CS 5460 Ultra Soft',
+    description: 'Produto de cuidado bucal (Bronze+) — escova suíça ultramacia com 5.460 cerdas.',
+    points_required: 1300,
+    stock_available: 60,
+    voucher_validity_days: 30,
+    image_url: 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'rew_escova_eletrica',
+    id: 'rew_prod_kit_viagem',
     clinic_id: null,
-    title: 'Escova Dental Elétrica Sônica Bertuol',
-    description: 'Tecnologia sônica de alta frequência para máxima remoção de placa bacteriana.',
-    points_required: 250,
-    stock_available: 14,
+    title: 'Kit Viagem de Higiene Bucal',
+    description: 'Produto de cuidado bucal (Bronze+) — estojo com escova, creme dental e fio dental.',
+    points_required: 1300,
+    stock_available: 50,
+    voucher_validity_days: 30,
+    image_url: 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_prod_raspador_curaprox',
+    clinic_id: null,
+    title: 'Raspador de Língua Curaprox',
+    description: 'Produto de cuidado bucal (Bronze+) — higienizador lingual anatômico Curaprox.',
+    points_required: 1600,
+    stock_available: 40,
+    voucher_validity_days: 30,
+    image_url: 'https://images.unsplash.com/photo-1559591937-e1022067756f?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_prod_garrafa_inox',
+    clinic_id: null,
+    title: 'Garrafa Térmica Inox Personalizada',
+    description: 'Mimo exclusivo (Prata+) — garrafa em aço inox personalizada com o nome do paciente.',
+    points_required: 1600,
+    stock_available: 35,
+    voucher_validity_days: 45,
+    image_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_prod_refil_gel_clareador',
+    clinic_id: null,
+    title: 'Refil de Gel Clareador Caseiro (4 seringas, com avaliação)',
+    description: 'Produto profissional (Prata+) — entregue somente com moldeira da clínica e avaliação prévia.',
+    points_required: 2000,
+    stock_available: 30,
+    voucher_validity_days: 45,
+    image_url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'rew_prod_escova_eletrica_oralb',
+    clinic_id: null,
+    title: 'Escova Elétrica Oral-B Pro Series 1',
+    description: 'Produto premium (Ouro+) — tecnologia profissional com sensor de pressão.',
+    points_required: 5700,
+    stock_available: 15,
     voucher_validity_days: 60,
     image_url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
     is_active: true,
@@ -5479,14 +5703,14 @@ const memoryRewards: InMemReward[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'rew_clareamento_desconto',
+    id: 'rew_prod_irrigador_waterpik',
     clinic_id: null,
-    title: 'Voucher 20% OFF em Clareamento a Laser',
-    description: 'Desconto exclusivo no tratamento de clareamento estético no consultório.',
-    points_required: 180,
-    stock_available: 10,
-    voucher_validity_days: 30,
-    image_url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    title: 'Irrigador Oral Waterpik Cordless Enhance WF21',
+    description: 'Produto exclusivo (Diamante) — irrigador portátil indicado para implantes, coroas e familiares.',
+    points_required: 23000,
+    stock_available: 8,
+    voucher_validity_days: 60,
+    image_url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -5527,12 +5751,17 @@ app.post('/api/patient/auth/session', async (req: Request, res: Response) => {
       };
     }
 
+    const termsStatus = await getPatientTermsAcceptance(supabase, { phone: cleanPhone });
+
     return res.json({
       success: true,
       token,
       phone: cleanPhone,
       patientName,
       points: memoryPoints[cleanPhone].points,
+      termsAccepted: termsStatus.accepted,
+      termsRequiredVersion: termsStatus.requiredVersion,
+      termsAcceptance: termsStatus.acceptance,
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message });
@@ -5738,9 +5967,17 @@ app.post('/api/patient/auth/login', async (req: Request, res: Response) => {
       ensureWelcomePoints(resolvedPhone, resolvedName);
       const sessionToken = Buffer.from(`${resolvedPhone || matched.id}_${Date.now()}`).toString('base64url');
 
+      const termsStatus = await getPatientTermsAcceptance(supabase, {
+        phone: resolvedPhone,
+        patientId: matched.id,
+      });
+
       return res.json({
         success: true,
         token: sessionToken,
+        termsAccepted: termsStatus.accepted,
+        termsRequiredVersion: termsStatus.requiredVersion,
+        termsAcceptance: termsStatus.acceptance,
         patient: {
           id: matched.id,
           name: resolvedName,
@@ -5801,9 +6038,17 @@ app.post('/api/patient/auth/login', async (req: Request, res: Response) => {
       ensureWelcomePoints(resolvedPhone, resolvedName);
 
       const sessionToken = Buffer.from(`${resolvedPhone}_${Date.now()}`).toString('base64url');
+      const termsStatus = await getPatientTermsAcceptance(supabase, {
+        phone: resolvedPhone,
+        patientId: matched?.id,
+      });
+
       return res.json({
         success: true,
         token: sessionToken,
+        termsAccepted: termsStatus.accepted,
+        termsRequiredVersion: termsStatus.requiredVersion,
+        termsAcceptance: termsStatus.acceptance,
         patient: {
           id: matched?.id || `pat_${resolvedPhone}`,
           name: resolvedName,
@@ -5898,9 +6143,17 @@ app.post('/api/patient/auth/login', async (req: Request, res: Response) => {
       ensureWelcomePoints(targetPhone, targetName);
 
       const sessionToken = Buffer.from(`${targetPhone}_${Date.now()}`).toString('base64url');
+      const termsStatus = await getPatientTermsAcceptance(supabase, {
+        phone: targetPhone,
+        patientId: matched?.id,
+      });
+
       return res.json({
         success: true,
         token: sessionToken,
+        termsAccepted: termsStatus.accepted,
+        termsRequiredVersion: termsStatus.requiredVersion,
+        termsAcceptance: termsStatus.acceptance,
         patient: {
           id: matched?.id || `pat_${targetPhone}`,
           name: targetName,
@@ -5983,9 +6236,17 @@ app.post('/api/patient/auth/login', async (req: Request, res: Response) => {
     ensureWelcomePoints(resolvedPhone, resolvedName);
 
     const sessionToken = Buffer.from(`${resolvedPhone}_${Date.now()}`).toString('base64url');
+    const termsStatus = await getPatientTermsAcceptance(supabase, {
+      phone: resolvedPhone,
+      patientId: matched?.id,
+    });
+
     return res.json({
       success: true,
       token: sessionToken,
+      termsAccepted: termsStatus.accepted,
+      termsRequiredVersion: termsStatus.requiredVersion,
+      termsAcceptance: termsStatus.acceptance,
       patient: {
         id: matched?.id || `pat_${resolvedPhone}`,
         name: resolvedName,
@@ -6046,6 +6307,7 @@ app.get('/api/patient/profile', async (req: Request, res: Response) => {
     const tier = currentTier.name.toLowerCase();
 
     const patientVouchers = memoryVouchers.filter((v) => sanitizePhone(v.patientPhone) === cleanPhone);
+    const termsStatus = await getPatientTermsAcceptance(supabase, { phone: cleanPhone });
 
     return res.json({
       phone: cleanPhone,
@@ -6055,6 +6317,9 @@ app.get('/api/patient/profile', async (req: Request, res: Response) => {
       nextTierPoints,
       pointsHistory: record.history,
       activeVouchers: patientVouchers,
+      termsAccepted: termsStatus.accepted,
+      termsRequiredVersion: termsStatus.requiredVersion,
+      termsAcceptance: termsStatus.acceptance,
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message });
@@ -6070,6 +6335,7 @@ app.post('/api/patient/confirm-appointment', async (req: Request, res: Response)
     if (!cleanPhone) {
       return res.status(400).json({ error: 'Telefone é obrigatório.' });
     }
+    if (!(await ensurePatientTermsAccepted(supabase, { phone: cleanPhone }, res))) return;
 
     if (!memoryPoints[cleanPhone]) {
       memoryPoints[cleanPhone] = { points: 0, history: [] };
@@ -6117,6 +6383,7 @@ app.post(['/api/patient/checkin', '/api/patient/checkin-totem'], async (req: Req
   try {
     const { clinicId, phone, patientName, appointmentId, dentistId, dentistName, method } = req.body;
     const cleanPhone = sanitizePhone(phone);
+    if (!(await ensurePatientTermsAccepted(supabase, { phone: cleanPhone }, res))) return;
 
     const targetClinicId = Number(clinicId) || 1;
     const targetDentistId = Number(dentistId) || 6036933394890752; // Padrão: Avaliador Bertuol (Modo Seguro de Testes)
@@ -6171,10 +6438,25 @@ app.post(['/api/patient/checkin', '/api/patient/checkin-totem'], async (req: Req
   }
 });
 
-// 5. Catálogo de Prêmios (Para o Paciente)
+// 5. Catálogo de Prêmios (Para o Paciente) — lê do Supabase clube_sorriso_rewards com fallback oficial v1.0
 app.get('/api/patient/rewards', async (req: Request, res: Response) => {
   try {
     const clinicId = req.query.clinic_id ? Number(req.query.clinic_id) : undefined;
+    try {
+      const { data, error } = await supabase
+        .from('clube_sorriso_rewards')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const filtered = clinicId
+          ? data.filter((r: any) => !r.clinic_id || Number(r.clinic_id) === clinicId)
+          : data;
+        return res.json(filtered);
+      }
+    } catch {
+      // Fallback para catálogo oficial em memória caso a tabela ainda não exista no Supabase
+    }
     let list = memoryRewards.filter((r) => r.is_active);
     if (clinicId) {
       list = list.filter((r) => !r.clinic_id || r.clinic_id === clinicId);
@@ -6194,6 +6476,7 @@ app.post(['/api/patient/redeem', '/api/patient/redeem-reward'], async (req: Requ
     if (!cleanPhone || !rewardId) {
       return res.status(400).json({ error: 'Telefone e ID do prêmio são obrigatórios.' });
     }
+    if (!(await ensurePatientTermsAccepted(supabase, { phone: cleanPhone }, res))) return;
 
     const targetReward = memoryRewards.find((r) => r.id === rewardId) || {
       id: rewardId,
@@ -7627,10 +7910,25 @@ const sorrisoCampaignEngine = registerSorrisoCampaignRoutes(app, {
   addDaysYMD: addDaysYMDServer,
 });
 
+registerPatientTermsRoutes(app, supabase, {
+  isAdminRequest: isBirthdayAdminRequest,
+});
+
 // ============================================================
 // CRUD DE REGRAS DE PONTUAÇÃO (RF05)
 // ============================================================
-app.get('/api/gamification/rules', (_req: Request, res: Response) => {
+app.get('/api/gamification/rules', async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('clube_sorriso_scoring_rules')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return res.json(data);
+    }
+  } catch {
+    // Fallback para regras oficiais em memória
+  }
   return res.json(memoryRules);
 });
 
@@ -7690,7 +7988,18 @@ app.delete('/api/gamification/rules/:id', (req: Request, res: Response) => {
 // ============================================================
 // CRUD DO CATÁLOGO DE PRÊMIOS (RF06)
 // ============================================================
-app.get('/api/gamification/rewards', (_req: Request, res: Response) => {
+app.get('/api/gamification/rewards', async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('clube_sorriso_rewards')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return res.json(data);
+    }
+  } catch {
+    // Fallback para catálogo oficial em memória
+  }
   return res.json(memoryRewards);
 });
 
@@ -7756,7 +8065,18 @@ app.delete('/api/gamification/rewards/:id', (req: Request, res: Response) => {
 // ============================================================
 // CRUD DE CATEGORIAS / NÍVEIS DE FIDELIDADE (TIERS - BRONZE, PRATA, OURO, DIAMANTE...)
 // ============================================================
-app.get('/api/gamification/tiers', (_req: Request, res: Response) => {
+app.get('/api/gamification/tiers', async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('clube_sorriso_tiers')
+      .select('*')
+      .order('min_points', { ascending: true });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return res.json(data);
+    }
+  } catch {
+    // Fallback para níveis oficiais em memória
+  }
   const sorted = [...memoryTiers].sort((a, b) => a.min_points - b.min_points);
   return res.json(sorted);
 });

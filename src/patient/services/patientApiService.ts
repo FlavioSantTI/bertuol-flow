@@ -167,4 +167,52 @@ export const patientApiService = {
     });
     return res.json();
   },
+
+  /**
+   * Verifica no servidor se o paciente já aceitou a versão vigente do Regulamento e Privacidade
+   */
+  async getTermsStatus(phone: string, patientId?: string): Promise<import('../../data/clubeSorrisoTerms').PatientTermsStatusResponse> {
+    const params = new URLSearchParams();
+    if (phone) params.set('phone', phone);
+    if (patientId) params.set('patientId', patientId);
+    const res = await fetch(`/api/patient/terms/status?${params.toString()}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao verificar aceite dos termos');
+    }
+    return res.json();
+  },
+
+  /**
+   * Registra no banco de dados o aceite eletrônico dos Termos e Política de Privacidade (LGPD)
+   */
+  async acceptTerms(payload: {
+    phone: string;
+    patientId?: string;
+    patientName: string;
+    clinicId?: number;
+    acceptedTerms: boolean;
+    acceptedPrivacy: boolean;
+    marketingOptIn: boolean;
+    termsVersion: string;
+    channel?: string;
+  }): Promise<{
+    success: boolean;
+    accepted: boolean;
+    requiredVersion: string;
+    storage?: 'supabase' | 'local_fallback';
+    supabaseTableReady?: boolean;
+    acceptance: import('../../data/clubeSorrisoTerms').PatientTermsAcceptanceRecord;
+  }> {
+    const res = await fetch('/api/patient/terms/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Não foi possível registrar o aceite dos termos.');
+    }
+    return data;
+  },
 };

@@ -1,8 +1,8 @@
-# 🦷 Bertuol Odontologia Avançada — Versão 1.9.4
+# 🦷 Bertuol Odontologia Avançada — Versão 1.9.8
 
-> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Central de Suporte Unificada (FAQ por Perfil, Chat de IA com Isolamento, Cartilhas A4 em PDF e Sincronização via GitHub PR), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Data do Orçamento separada da Última Vinda Real à Clínica (Clinicorp), Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`) com Integração Direta Supabase & n8n, Dashboard de Relatórios (CSV/PDF), Carga Histórica de 1 Ano de Orçamentos Clinicorp (UI + CLI), Filtro & Ordenação por Data, Gestão de Rótulos e Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini, PWA do Paciente com Login Seguro, Central de QR Code (Marketing & Totem) e Central Exclusiva Admin Root.**
+> **Plataforma Web Multi-Tenant de Gestão de Clínicas Odontológicas, Clube Sorriso Bertuol v1.0 (4 Níveis, 11 Regras, 15 Recompensas, Crédito Sorriso & Aceite Obrigatório de Termos e LGPD no Primeiro Acesso), Central de Suporte Unificada (36 Guias por Perfil, Chat de IA com Isolamento e Cartilhas A4 em PDF), Central de Credenciais de Clientes (6.285+ Pacientes), CRM Comercial Multi-Funil com Data do Orçamento separada da Última Vinda Real à Clínica (Clinicorp), Pipeline de Aniversariantes & Automação Diária de Vouchers (`BRT-ANIV`), Integração Bidirecional Clinicorp & WhatsApp, Mensageria Interna Multi-Participante, Agenda Diária Inteligente com IA Gemini e PWA do Paciente.**
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.4-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.9.8-147A80.svg?style=for-the-badge)](https://github.com/FlavioSantTI/bertuol-flow)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
@@ -17,19 +17,34 @@ As rotas principais da aplicação estão homologadas, isoladas por perfil (`RBA
 
 | Rota / Perfil | URL de Acesso Direto | Descrição & Recursos |
 | :--- | :--- | :--- |
-| **🩺 App do Profissional (Dentistas)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Interface clínica 100% limpa com agenda cronológica sincronizada com Clinicorp, Resumos Executivos com IA Gemini Flash, Alerta Sonoro de chegada, Consulta ao **Clube Sorriso & Vouchers**, Biometria WebAuthn e Chat Interno. |
-| **🏢 Gestão & Recepção (CRM, Atendentes, Gerentes & Admin)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Central de Credenciais de Clientes (`6.285+`), CRM de Recall 6+ meses, Totem QR Code (`/totem-imprimir`), Resgate e Baixa de Vouchers, Mensageria Unificada e Gestão de Usuários. |
+| **🩺 App do Profissional (Dentistas)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Interface clínica 100% limpa com agenda cronológica sincronizada com Clinicorp, Resumos Executivos com IA Gemini Flash, Alerta Sonoro de chegada, Consulta ao **Clube Sorriso & Vouchers** (com Autonomia Clínica), Biometria WebAuthn e Chat Interno. |
+| **🏢 Gestão & Recepção (CRM, Atendentes, Gerentes & Admin)** | [`https://bertuolflow.app-bertuol.tech/`](https://bertuolflow.app-bertuol.tech/) | Central de Credenciais de Clientes (`6.285+`), CRM de Recall 6+ meses, Totem QR Code (`/totem-imprimir`), Resgate e Baixa de Vouchers (com teto de 30% do Crédito Sorriso), Protocolo Prioritário Diamante, Mensageria Unificada e Gestão de Usuários. |
 | **👑 Central Global SuperAdmin Root & Tutoriais (`/root` / `/tutoriais`)** | [`https://bertuolflow.app-bertuol.tech/root`](https://bertuolflow.app-bertuol.tech/root) *(ou `?app=root` / `?app=tutoriais`)* | **Acesso Restrito `admin_root`:** Central unificada de Tutoriais, Estúdio 3D 60m, Modos Telão/Apresentador, Roteiros HeyGen, Governança Multi-Tenant e Checklist de Lançamento. |
-| **📱 Portal & PWA do Paciente (Clube Sorriso)** | [`https://bertuolflow.app-bertuol.tech/paciente`](https://bertuolflow.app-bertuol.tech/paciente) | PWA instalável com confirmação em 1 toque (`+10 pts`), Scanner QR Code de Check-in no Totem (`+30 pts`), Catálogo de Recompensas, Vouchers `BRT-XXXX`, Presente de Aniversário e Chat com a Clínica. |
+| **📱 Portal & PWA do Paciente (Clube Sorriso v1.0)** | [`https://bertuolflow.app-bertuol.tech/paciente`](https://bertuolflow.app-bertuol.tech/paciente) | PWA instalável com **Aceite Obrigatório dos Termos & LGPD no 1º acesso**, confirmação em 1 toque (`+10 pts base`), Scanner QR Code de Check-in no Totem (`+20 pts base`), 4 Níveis (`Bronze`, `Prata`, `Ouro`, `Diamante`), Catálogo com 15 Recompensas, Crédito Sorriso, Vouchers `BRT-XXXX` e Chat com a Clínica. |
 | **🎬 Estúdio 3D de Treinamento (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html`](https://bertuolflow.app-bertuol.tech/slideshow-hyperframes.html) | Palco Three.js 3D (Cápsulas de Vidro Flutuantes + Rede Neural) com separação em duas telas sincronizadas via `BroadcastChannel` + SSE: **`?mode=projector`** (Só Telão) e **`?mode=presenter`** (Só Trilha + Teleprompter + Cronômetro 60m). |
 | **🎙️ Central de Roteiros HeyGen & Mapa Técnico (Acesso via Central Root)** | [`https://bertuolflow.app-bertuol.tech/roteiros-heygen.html`](https://bertuolflow.app-bertuol.tech/roteiros-heygen.html) | 3 roteiros completos de 2 minutos (6 cenas cada: Paciente + Clube, Dentista, Recepção) com cópia em 1 clique, prompts B-roll para Veo/Flow e tabela de mapeamento real dos 16 módulos do código. |
-| **❓ Central de Suporte Unificada (FAQ, IA & Cartilhas A4)** | [`https://bertuolflow.app-bertuol.tech/suporte`](https://bertuolflow.app-bertuol.tech/suporte) *(com redirect de `/faq.html`)* | Base unificada separada por perfil (**Paciente**, **Dentista** e **Recepção & CRM**) com Chat de IA isolado por perfil, citações clicáveis e download/impressão de Cartilhas A4 em PDF. |
+| **❓ Central de Suporte Unificada (FAQ, IA & Cartilhas A4)** | [`https://bertuolflow.app-bertuol.tech/suporte`](https://bertuolflow.app-bertuol.tech/suporte) *(com redirect de `/faq.html`)* | Base unificada com **36 guias oficiais** separados por perfil (**Paciente (12)**, **Dentista (11)** e **Recepção & CRM (13)**), Chat de IA isolado por perfil, citações clicáveis e download/impressão de Cartilhas A4 em PDF. |
 
 ---
 
-## 🌟 Visão Geral da Jornada & Versão 1.8.0
+## 🌟 Novidades da Versão 1.9.8 — Clube Sorriso Bertuol v1.0 & Aceite Obrigatório LGPD
 
-O **Bertuol Flow** chega à **Versão 1.8.0** trazendo a separação definitiva entre **Data do Orçamento** e **Última Vinda Real à Clínica** (presença efetivamente atendida no Clinicorp) em todos os funis do CRM, com atualização em lote (12 meses) e consulta individual em 1 clique — mantendo os cards e a barra de filtros enxutos e livres de poluição visual.
+A **Versão 1.9.8** oficializa as regras do **Plano & Regulamento do Clube Sorriso Bertuol v1.0**, implementa o **aceite obrigatório e auditável dos Termos & Política de Privacidade (LGPD)** no primeiro acesso do paciente e atualiza integralmente todos os manuais, cartilhas A4 e a Central de Suporte com IA.
+
+- **🛡️ Aceite Obrigatório de Termos & LGPD no 1º Acesso (`PatientTermsGate`, `server/patientTermsEngine.ts` & `public.patient_terms_acceptances`)**:
+  - Após a autenticação do paciente (`/paciente`), o sistema verifica no servidor se o paciente já aceitou a versão vigente (`1.0-2026-11`). Sem o aceite, o portal permanece bloqueado (fail-closed) tanto na interface quanto nas rotas de ação do backend (`HTTP 403 TERMS_ACCEPTANCE_REQUIRED`).
+  - Exibe na íntegra as **12 Cláusulas do Regulamento Oficial**, os 4 níveis, as regras de pontuação/validade e a Política de Privacidade LGPD, exigindo leitura até o final e confirmação das 3 declarações.
+  - Registra em banco de dados (Supabase `public.patient_terms_acceptances`) com protocolo único, data/hora, versão, hash **SHA-256** do documento, IP e navegador; após o aceite, o paciente pode consultar o documento e seu comprovante a qualquer momento no cabeçalho do app.
+- **🏆 Clube Sorriso Bertuol v1.0 — Schema & Seed Oficial (`CLUBE_SORRISO_DATABASE_SETUP.sql`)**:
+  - **4 Níveis Oficiais**: **Bronze** (0–1.499 pts · `1,00x`), **Prata** (1.500–4.999 pts · `1,15x`), **Ouro** (5.000–11.999 pts · `1,25x`) e **Diamante** (12.000+ pts · `1,50x`).
+  - **11 Regras de Pontuação** (tratamento `1 pt / R$ 1`, confirmação `+10 pts`, check-in no Totem `+20 pts`, retorno 6 meses `+100 pts`, avaliação Google `+100 pts`, indicação convertida `+300 pts`, aniversário `+100 pts`, entre outras) e **validade de 24 meses**.
+  - **Catálogo com 15 Recompensas Oficiais** em 4 categorias (*Mimos & Kit Higiene, Cuidado Preventivo, Experiências VIP e Crédito Sorriso*: `1.000 pts = R$ 30,00` com teto de até 30% do valor do tratamento), além da **Regra de Autonomia Clínica (CFO 271/2025)**.
+- **📚 Manuais, Cartilhas A4 e Central de Suporte Atualizados (`docs/support-kb/` & `public/tutorial-paciente.html`)**:
+  - 36 artigos revisados para **Paciente (12)**, **Dentista (11)** e **Recepção & CRM (13)** — incluindo Protocolo Prioritário Diamante, Fast-Track Ouro, Funil de Lançamento via WhatsApp, Regra de Autonomia Clínica e guia completo do Aceite LGPD.
+
+---
+
+## 🌟 Histórico de Versões — v1.8.0 (Data do Orçamento vs. Última Vinda Real)
 
 ### 🗓️ Novidades da v1.8.0 — Data do Orçamento vs. Última Vinda Real à Clínica (Clinicorp)
 
@@ -265,6 +280,15 @@ ALTER TABLE public.patients
 -- Tabelas: public.crm_pipelines, public.crm_labels e extensões em public.crm_leads_recall
 ALTER TABLE public.crm_leads_recall
   ADD COLUMN IF NOT EXISTS custom_fields JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- 4. CLUBE SORRISO BERTUOL v1.0 & ACEITE OBRIGATÓRIO LGPD (v1.9.8)
+-- Execute o script completo e idempotente na raiz do repositório no SQL Editor do Supabase:
+--   -> CLUBE_SORRISO_DATABASE_SETUP.sql
+-- Cria e povoa 9 tabelas oficiais:
+--   public.patient_terms_acceptances, public.clube_sorriso_tiers (4 níveis),
+--   public.clube_sorriso_tier_benefits (16 benefícios), public.clube_sorriso_scoring_rules (11 regras),
+--   public.clube_sorriso_rewards (15 itens do catálogo), public.clube_sorriso_member_wallets,
+--   public.clube_sorriso_points_ledger, public.clube_sorriso_vouchers e public.clube_sorriso_referrals.
 ```
 
 ---
@@ -323,6 +347,6 @@ Configure um nó **Schedule Trigger** diário (ex.: `08:35` em `America/Sao_Paul
 ## 📜 Licença e Propriedade
 
 Desenvolvido para **Bertuol Odontologia Avançada**. Direitos reservados.
-- **Versão**: `v1.9.4`
+- **Versão**: `v1.9.8`
 - **Gestão**: Flávio Santiago & Favuca Dias
 

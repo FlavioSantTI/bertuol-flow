@@ -1,6 +1,6 @@
 {
-  "version": "1.7.0",
-  "lastSyncedAt": "2026-11-24T13:05:00Z",
+  "version": "1.9.8",
+  "lastSyncedAt": "2026-11-27T12:00:00Z",
   "repository": "FlavioSantTI/bertuol-flow",
   "branch": "main",
   "supportUrl": "https://bertuolflow.app-bertuol.tech/suporte",
@@ -10,13 +10,13 @@
       "label": "Paciente",
       "shortLabel": "Pacientes",
       "audience": "Pacientes das unidades Palmas - TO e Paraíso do Tocantins - TO",
-      "bookletTitle": "Cartilha do Paciente — Portal & Clube Sorriso",
-      "bookletSubtitle": "Guia prático de primeiro acesso, confirmação de consultas, check-in no Totem QR, pontos e vouchers.",
+      "bookletTitle": "Manual do Paciente — Portal & Clube Sorriso Bertuol (v1.0)",
+      "bookletSubtitle": "Guia completo de primeiro acesso, aceite obrigatório do regulamento e LGPD, check-in no Totem QR, níveis (Bronze a Diamante), regras de pontuação e resgates.",
       "suggestedQuestions": [
-        "Como faço meu primeiro acesso ao Portal do Paciente?",
-        "Como funciona o check-in no Totem QR Code da recepção?",
-        "Como usar meu voucher de aniversário BRT-ANIV?",
-        "Como instalar o aplicativo no iPhone e ativar notificações?"
+        "Como faço meu primeiro acesso e o aceite do regulamento do Clube Sorriso?",
+        "Como funcionam os níveis Bronze, Prata, Ouro e Diamante e os multiplicadores?",
+        "Como funciona o Crédito Sorriso, os resgates e a avaliação clínica?",
+        "Como instalar o aplicativo no iPhone ou Android e ativar notificações?"
       ]
     },
     "dentist": {
@@ -24,13 +24,13 @@
       "label": "Dentista",
       "shortLabel": "Dentistas",
       "audience": "Corpo clínico e cirurgiões-dentistas da rede Bertuol",
-      "bookletTitle": "Cartilha do Dentista — Agenda Clínica & IA",
-      "bookletSubtitle": "Guia prático de timeline sincronizada com Clinicorp, resumos executivos com IA, alertas de chegada e biometria.",
+      "bookletTitle": "Manual do Dentista — Agenda Clínica, IA & Clube Sorriso",
+      "bookletSubtitle": "Guia prático de timeline sincronizada com Clinicorp, resumos executivos com IA, alertas de chegada, autonomia clínica no Clube Sorriso e biometria.",
       "suggestedQuestions": [
+        "Como funciona a autonomia clínica nos resgates do Clube Sorriso?",
         "Como sou avisado quando meu paciente chega na recepção?",
         "Como gerar o Resumo Executivo Clínico com IA?",
-        "Como ativar a biometria Face ID ou Touch ID?",
-        "Como ativar notificações push no iPhone?"
+        "Como ativar a biometria Face ID ou Touch ID?"
       ]
     },
     "receptionist": {
@@ -38,13 +38,13 @@
       "label": "Atendente / Recepção",
       "shortLabel": "Atendentes",
       "audience": "Equipe de recepção, atendimento comercial, CRM e gerência",
-      "bookletTitle": "Cartilha da Recepção & CRM Comercial",
-      "bookletSubtitle": "Guia operacional de credenciais de clientes, CRM multi-funil, agendamento Clinicorp, baixa de vouchers e automação de aniversariantes.",
+      "bookletTitle": "Manual da Recepção — Clube Sorriso v1.0, CRM & Operação",
+      "bookletSubtitle": "Guia operacional de credenciais, aceite de termos LGPD, Protocolo Diamante, baixa de vouchers, CRM multi-funil, campanha WhatsApp e agendamento Clinicorp.",
       "suggestedQuestions": [
-        "Como dar baixa em um voucher BRT-ANIV ou Clube Sorriso na recepção?",
-        "Como funciona a automação diária do funil de Aniversariantes?",
-        "Como agendar um lead do CRM direto na agenda do Clinicorp?",
-        "Como importar o histórico de 1 ano de orçamentos em aberto?"
+        "Como funciona o Protocolo de Prioridade Diamante e o fast-track por contrato?",
+        "Como dar baixa em um voucher do Clube Sorriso ou BRT-ANIV na recepção?",
+        "Como gerar leads no funil Lançamento Sorriso Bertuol e disparar convites?",
+        "Como agendar um lead do CRM direto na agenda do Clinicorp?"
       ]
     }
   },
@@ -52,7 +52,22 @@
     {
       "pattern": "src/patient/",
       "profiles": ["patient"],
-      "area": "Portal do Paciente e Clube Sorriso"
+      "area": "Portal do Paciente, Aceite de Termos LGPD e Clube Sorriso"
+    },
+    {
+      "pattern": "src/data/clubeSorrisoTerms.ts",
+      "profiles": ["patient", "receptionist", "dentist"],
+      "area": "Regulamento Oficial do Clube Sorriso v1.0 e Privacidade (LGPD)"
+    },
+    {
+      "pattern": "server/patientTermsEngine.ts",
+      "profiles": ["patient", "receptionist"],
+      "area": "Persistência e Validação Obrigatória do Aceite de Termos"
+    },
+    {
+      "pattern": "server/sorrisoCampaignEngine.ts",
+      "profiles": ["receptionist"],
+      "area": "Campanha WhatsApp Lançamento Sorriso Bertuol"
     },
     {
       "pattern": "paciente.html",
@@ -122,7 +137,7 @@
     {
       "pattern": "server.ts",
       "profiles": ["receptionist", "dentist", "patient"],
-      "area": "APIs, Integrações Clinicorp/WhatsApp e Automações"
+      "area": "APIs, Clube Sorriso v1.0, Integrações Clinicorp/WhatsApp e Automações"
     }
   ]
 }

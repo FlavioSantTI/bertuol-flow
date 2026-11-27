@@ -17,11 +17,16 @@ import {
 import { BertuolLogo } from '../../components/BertuolLogo';
 import { APP_VERSION } from '../../config/version';
 
+import type { PatientTermsAcceptanceRecord } from '../../data/clubeSorrisoTerms';
+
 export interface PatientLoginSuccessPayload {
+  id?: string;
   name: string;
   phone: string;
   clinicId: number;
   token?: string;
+  termsAccepted?: boolean;
+  termsAcceptance?: PatientTermsAcceptanceRecord | null;
 }
 
 interface PatientLoginScreenProps {
@@ -122,10 +127,13 @@ export const PatientLoginScreen: React.FC<PatientLoginScreenProps> = ({
       }
 
       onLoginSuccess({
+        id: data.patient.id ? String(data.patient.id) : undefined,
         name: data.patient.name,
         phone: data.patient.phone,
         clinicId: data.patient.clinicId || clinicId,
         token: data.token,
+        termsAccepted: data.termsAccepted === true,
+        termsAcceptance: data.termsAcceptance || null,
       });
     } catch {
       setError('Falha de conexão com o servidor. Tente novamente em instantes.');
@@ -175,10 +183,13 @@ export const PatientLoginScreen: React.FC<PatientLoginScreenProps> = ({
       }
 
       onLoginSuccess({
+        id: data.patient.id ? String(data.patient.id) : undefined,
         name: data.patient.name,
         phone: data.patient.phone,
         clinicId: data.patient.clinicId || clinicId,
         token: data.token,
+        termsAccepted: data.termsAccepted === true,
+        termsAcceptance: data.termsAcceptance || null,
       });
     } catch {
       setError('Falha de conexão com o servidor. Tente novamente em instantes.');
@@ -226,10 +237,13 @@ export const PatientLoginScreen: React.FC<PatientLoginScreenProps> = ({
       }
 
       onLoginSuccess({
+        id: data.patient.id ? String(data.patient.id) : undefined,
         name: data.patient.name,
         phone: data.patient.phone,
         clinicId: data.patient.clinicId || clinicId,
         token: data.token,
+        termsAccepted: data.termsAccepted === true,
+        termsAcceptance: data.termsAcceptance || null,
       });
     } catch {
       setError('Falha de conexão com o servidor. Tente novamente em instantes.');

@@ -5,3 +5,9 @@ dist
 .DS_Store
 *.log
 npm-debug.log*
+public/assets/aistudio
+temp_hyperframes
+*_store.json
+birthday_gift_requests.json
+in_app_notifications.json
+access_logs.json

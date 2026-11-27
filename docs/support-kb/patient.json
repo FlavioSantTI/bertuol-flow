@@ -2,129 +2,157 @@
   {
     "id": "pat-primeiro-acesso",
     "profile": "patient",
-    "category": "Primeiro Acesso e Conta",
+    "category": "Primeiro Acesso, Termos e Conta",
     "title": "Como faço meu primeiro acesso ao Portal do Paciente?",
-    "summary": "Entre usando seu celular (WhatsApp) ou CPF com o token de ativação enviado pela clínica.",
+    "summary": "Entre usando seu celular (WhatsApp) ou CPF, crie sua senha e aceite o Regulamento do Clube Sorriso Bertuol para liberar o aplicativo.",
     "steps": [
       "Acesse o link oficial do Portal do Paciente enviado no WhatsApp ou escaneie o QR Code da recepção.",
       "Na tela de login, toque na aba Primeiro Acesso (ou abra diretamente o link de convite com token de ativação).",
-      "Informe seu número de celular (WhatsApp) com DDD ou seu CPF cadastrado na clínica.",
-      "Crie sua senha pessoal definitiva e conclua o login para visualizar suas consultas e pontos do Clube Sorriso."
+      "Informe seu número de celular (WhatsApp) com DDD ou seu CPF cadastrado na clínica e defina sua senha pessoal.",
+      "Logo após entrar, leia o Regulamento do Clube Sorriso Bertuol (Versão 1.0) e a Política de Privacidade (LGPD) apresentados na tela.",
+      "Marque o aceite obrigatório dos termos e toque em Aceitar Termos e Acessar o App para desbloquear suas consultas, check-in e pontos."
     ],
-    "tip": "Se você recebeu um link de convite personalizado pelo WhatsApp, o sistema reconhece seu token automaticamente e facilita a definição da senha.",
-    "keywords": ["login", "entrar", "primeiro acesso", "senha", "cpf", "celular", "token", "convite", "ativacao"],
+    "tip": "Ao completar seu cadastro no app você ganha +100 pontos de boas-vindas, e +50 pontos adicionais ao preencher a anamnese digital antes da 1ª consulta.",
+    "keywords": ["login", "entrar", "primeiro acesso", "senha", "cpf", "celular", "token", "convite", "ativacao", "aceite", "termos"],
     "includeInPrint": true,
     "printOrder": 1,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
+  },
+  {
+    "id": "pat-aceite-termos-lgpd",
+    "profile": "patient",
+    "category": "Primeiro Acesso, Termos e Conta",
+    "title": "Como funciona o aceite obrigatório do Regulamento e da Política de Privacidade (LGPD)?",
+    "summary": "O acesso ao aplicativo só é liberado após o aceite eletrônico das 12 cláusulas do regulamento e da política de privacidade, que fica salvo com segurança.",
+    "steps": [
+      "No primeiro acesso (ou sempre que houver nova versão do regulamento), o app exibe automaticamente as 3 abas oficiais: Regulamento (12 cláusulas), Regras e Níveis e Privacidade (LGPD).",
+      "A confirmação do Regulamento e da Política de Privacidade é obrigatória para acessar consultas, check-in, saldo de pontos e resgates. Caso opte por não concordar, a sessão é encerrada com segurança.",
+      "A autorização para receber comunicações e novidades do Clube Sorriso é opcional (consentimento específico da LGPD) e pode ser ajustada sem prejuízo ao seu atendimento.",
+      "Seus dados clínicos (prontuário odontológico) permanecem sob sigilo e totalmente separados dos dados de pontuação do Clube Sorriso.",
+      "Após aceitar, você pode consultar o regulamento completo e seu comprovante eletrônico de aceite (data, hora e versão) a qualquer momento tocando no ícone de documento no topo do aplicativo."
+    ],
+    "tip": "Conforme o Código de Defesa do Consumidor, qualquer alteração futura no regulamento é avisada com 30 dias de antecedência no app, sempre preservando os pontos já creditados.",
+    "keywords": ["regulamento", "termos", "privacidade", "lgpd", "aceite", "obrigatorio", "clausulas", "comprovante", "exclusao", "dados pessoais"],
+    "includeInPrint": true,
+    "printOrder": 2,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-esqueci-senha",
     "profile": "patient",
-    "category": "Primeiro Acesso e Conta",
+    "category": "Primeiro Acesso, Termos e Conta",
     "title": "Esqueci minha senha ou não recebi meu convite de acesso. O que fazer?",
-    "summary": "A recepção da sua unidade pode reenviar um novo link de ativação em segundos pelo WhatsApp.",
+    "summary": "Redefina sua senha direto pela tela de login confirmando seu primeiro nome ou solicite um novo link à recepção.",
     "steps": [
       "Verifique se está digitando o mesmo número de celular (com DDD) ou CPF informado no cadastro da clínica.",
-      "Caso tenha esquecido a senha ou trocado de número, entre em contato com a recepção da unidade (Palmas - TO ou Paraíso do Tocantins - TO).",
-      "Nossa equipe gerará um novo link de ativação seguro e enviará direto para o seu WhatsApp."
+      "Na tela de login, toque em Esqueci ou criar senha, informe seu celular/CPF, confirme seu primeiro nome e cadastre uma nova senha.",
+      "Se trocou de número de telefone ou precisar de ajuda, fale com a recepção da sua unidade (Palmas - TO ou Paraíso do Tocantins - TO) para receber um novo link de ativação no WhatsApp."
     ],
     "keywords": ["esqueci", "senha", "recuperar", "acesso", "bloqueado", "troquei celular"],
     "includeInPrint": true,
-    "printOrder": 2,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 3,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-confirmar-consulta",
     "profile": "patient",
     "category": "Consultas e Check-in",
-    "title": "Como confirmar minha consulta em 1 toque e ganhar pontos?",
-    "summary": "Confirme sua presença na aba Minha Consulta para agilizar o atendimento e ganhar +10 pontos no Clube Sorriso.",
+    "title": "Como confirmar minha consulta em 1 toque pelo aplicativo?",
+    "summary": "Confirme sua presença antecipadamente na aba Minha Consulta para agilizar seu atendimento na unidade.",
     "steps": [
       "Abra o Portal do Paciente e acesse a aba Minha Consulta.",
       "Confira a data, o horário, o profissional e a unidade do seu próximo atendimento.",
-      "Toque no botão Confirmar Presença para confirmar em 1 toque.",
-      "A recepção recebe a confirmação na hora e você ganha +10 pontos automaticamente no seu extrato do Clube Sorriso."
+      "Toque no botão Confirmar Presença para avisar a recepção em 1 toque e manter sua agenda garantida."
     ],
-    "keywords": ["consulta", "confirmar", "presenca", "agendamento", "10 pontos", "horario"],
+    "keywords": ["consulta", "confirmar", "presenca", "agendamento", "horario"],
     "includeInPrint": true,
-    "printOrder": 3,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 4,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-totem-checkin",
     "profile": "patient",
     "category": "Consultas e Check-in",
-    "title": "Como fazer check-in no Totem QR Code ao chegar na clínica?",
-    "summary": "Escaneie o QR Code no balcão da recepção para avisar imediatamente o dentista e ganhar +30 pontos.",
+    "title": "Como fazer check-in pontual no Totem QR Code e ganhar +20 pontos?",
+    "summary": "Escaneie o QR Code no balcão da recepção até o horário marcado para avisar seu dentista na hora e acumular +20 pontos base (multiplicados pelo seu nível).",
     "steps": [
       "Ao chegar na recepção da clínica, abra o Portal do Paciente e toque na aba Check-in.",
       "Permita o acesso à câmera do celular quando solicitado e aponte para o QR Code do Totem no balcão.",
       "Aguarde a confirmação na tela: sua chegada é avisada em tempo real para a recepção e para o seu dentista.",
-      "Você acumula +30 pontos automaticamente no Clube Sorriso a cada check-in válido."
+      "Realizando o check-in até o horário agendado, você recebe +20 pontos base multiplicados pelo fator do seu nível (Bronze 1,00x até Diamante 1,50x)."
     ],
     "tip": "Se a câmera não abrir, verifique nas configurações do navegador se a permissão de câmera está liberada para o site da Bertuol.",
-    "keywords": ["totem", "qr code", "check-in", "checkin", "camera", "chegada", "30 pontos"],
+    "keywords": ["totem", "qr code", "check-in", "checkin", "camera", "chegada", "20 pontos", "pontualidade"],
     "includeInPrint": true,
-    "printOrder": 4,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 5,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-clube-sorriso",
     "profile": "patient",
-    "category": "Clube Sorriso e Vouchers",
-    "title": "Como funciona o Clube Sorriso e como acumular pontos?",
-    "summary": "Cada interação no Portal acumula pontos que elevam seu nível e liberam benefícios exclusivos.",
+    "category": "Clube Sorriso Bertuol (Regras v1.0)",
+    "title": "Como funcionam os níveis, multiplicadores e pontuação do Clube Sorriso?",
+    "summary": "Cada R$ 1,00 efetivamente pago gera 1 ponto base multiplicado pelo seu nível (Bronze 1,00x a Diamante 1,50x), além de bônus por prevenção e indicações.",
     "steps": [
-      "Confirmação de consulta em 1 toque no app: +10 pontos.",
-      "Check-in via QR Code no Totem da recepção ao chegar na clínica: +30 pontos.",
-      "Indicações e ações especiais de relacionamento também pontuam conforme campanhas vigentes.",
-      "Acompanhe seu saldo, histórico detalhado (extrato) e nível atual (Bronze, Prata, Ouro ou Diamante) na aba Clube Sorriso."
+      "O Clube opera com duas contas: Pontos de Status (R$ 1,00 pago nos últimos 12 meses = 1 ponto, sem multiplicador, que define seu nível) e Pontos Sorriso (saldo resgatável = pontos base × multiplicador do nível + bônus por comportamento).",
+      "Nível Bronze (1,00x): automático no cadastro e 1ª consulta. Dá boas-vindas (+100 pts perfil completo e +50 pts anamnese digital), bônus de aniversário (+150 pts) e acesso ao Catálogo Bronze e Crédito Sorriso.",
+      "Nível Prata (1,15x): atingido com 2.500 pontos de status em 12 meses ou 2 indicações convertidas. Libera Kit Cuidado Profissional na ascensão, catálogo Prata e lista de espera preferencial.",
+      "Nível Ouro (1,25x): atingido com 7.000 pontos de status ou contrato ≥ R$ 7.000 com entrada paga. Libera Escova Elétrica Oral-B Pro Series 1 na ascensão, agenda preferencial (7 dias), Conta Família (até 3 dependentes) e revisão estética anual.",
+      "Nível Diamante (1,50x): atingido com 15.000 pontos de status ou contrato ≥ R$ 15.000 com entrada paga. Libera Irrigador Oral Waterpik na ascensão, urgência em até 24h, concierge direto no WhatsApp, Check-up anual incluso e Conta Família (até 5 dependentes com multiplicador 1,15x).",
+      "Principais bônus por comportamento (pontos base multiplicados pelo nível): revisão semestral no prazo (+150, até 2/ano), indicação convertida (+500, sem limite), boas-vindas do indicado (+200), aniversário (+150/ano), publicação marcando a clínica com termo de imagem (+100/mês), pesquisa interna de satisfação (+30), check-in pontual (+20) e parcela paga até o vencimento (+15). Avaliações em plataformas externas como o Google não são premiadas.",
+      "Validade: cada lote de pontos vale por 24 meses a partir do crédito, com avisos automáticos em 60, 30 e 7 dias antes do vencimento."
     ],
-    "keywords": ["clube sorriso", "pontos", "extrato", "bronze", "prata", "ouro", "diamante", "fidelidade", "recompensas"],
+    "tip": "Cláusula de manutenção preventiva: quem realiza as duas revisões semestrais no ciclo preserva seu nível por mais 12 meses, e um eventual rebaixamento suave nunca apaga os Pontos Sorriso já acumulados.",
+    "keywords": ["clube sorriso", "pontos", "status", "multiplicador", "bronze", "prata", "ouro", "diamante", "conta familia", "validade", "24 meses", "indicacao", "bonus", "revisao"],
     "includeInPrint": true,
-    "printOrder": 5,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 6,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-resgate-voucher",
     "profile": "patient",
-    "category": "Clube Sorriso e Vouchers",
-    "title": "Como resgatar e usar um voucher do Clube Sorriso (BRT-XXXX)?",
-    "summary": "Troque seus pontos no catálogo de recompensas e apresente o código gerado na recepção.",
+    "category": "Clube Sorriso Bertuol (Regras v1.0)",
+    "title": "Como resgatar Crédito Sorriso, serviços clínicos e produtos de cuidado bucal?",
+    "summary": "Troque seus pontos a partir de 600 pts por produtos, serviços da clínica ou Crédito Sorriso (1.000 pts = R$ 30,00), sempre respeitando a avaliação clínica.",
     "steps": [
-      "Acesse a aba Clube Sorriso e escolha uma recompensa disponível para o seu saldo de pontos.",
-      "Toque em Resgatar para gerar seu código único no formato BRT-XXXX.",
-      "No dia do seu atendimento, informe ou mostre o código do voucher na recepção para validação e baixa."
+      "Acesse a aba Prêmios / Clube Sorriso para conferir seu saldo, seu nível atual e os itens disponíveis no catálogo oficial.",
+      "Crédito Sorriso (resgate universal): cada 1.000 pontos equivalem a R$ 30,00 de abatimento em qualquer tratamento (mínimo 3.000 pontos = R$ 90,00), limitado a até 30% do valor de cada pagamento.",
+      "Serviços da clínica (1.500 a 12.000 pts): aplicação de flúor/dessensibilizante (1.500 pts · Bronze), profilaxia extra (3.000 pts · Bronze), manutenção de lentes de resina (4.500 pts · Prata), simulação digital do sorriso (6.000 pts · Ouro), clareamento caseiro completo (9.000 pts · Ouro) e sessão de clareamento em consultório (12.000 pts · Ouro).",
+      "Produtos de cuidado bucal (600 a 23.000 pts): fio dental Oral-B (600 pts), escova Curaprox CS 5460 (1.300 pts), kit viagem (1.300 pts), raspador Curaprox (1.600 pts), garrafa inox personalizada (1.600 pts · Prata), refil de gel clareador com avaliação (2.000 pts · Prata), escova elétrica Oral-B Pro Series 1 (5.700 pts · Ouro) e irrigador oral Waterpik (23.000 pts · Diamante).",
+      "Toque em Resgatar para gerar seu voucher na aba Vouchers e apresente o código na recepção da clínica.",
+      "Regra Clínica Inegociável: resgates de serviços clínicos geram um voucher condicionado à avaliação e indicação do cirurgião-dentista. Havendo contraindicação clínica, os pontos utilizados retornam integralmente ao seu saldo."
     ],
-    "keywords": ["voucher", "brt", "resgatar", "recompensa", "premio", "codigo", "trocar pontos"],
+    "tip": "Os pontos não têm valor monetário, não são conversíveis em dinheiro e são intransferíveis, exceto dentro da Conta Família (níveis Ouro e Diamante). Pagamentos cancelados ou estornados implicam a retirada dos pontos correspondentes.",
+    "keywords": ["voucher", "credito sorriso", "resgatar", "recompensa", "premio", "codigo", "trocar pontos", "avaliacao clinica", "estorno", "curaprox", "waterpik", "clareamento", "profilaxia"],
     "includeInPrint": true,
-    "printOrder": 6,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 7,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-voucher-aniversario",
     "profile": "patient",
-    "category": "Clube Sorriso e Vouchers",
-    "title": "Como funciona o Presente e Voucher de Aniversário (BRT-ANIV)?",
-    "summary": "No dia do seu aniversário você recebe um voucher exclusivo válido por 7 dias para agendar sua cortesia.",
+    "category": "Clube Sorriso Bertuol (Regras v1.0)",
+    "title": "Como funciona o Presente e Bônus de Aniversário (BRT-ANIV)?",
+    "summary": "No seu aniversário você acumula +150 pontos base no Clube Sorriso e recebe avisos sobre presentes e cortesias exclusivas do seu nível.",
     "steps": [
-      "Na data exata do seu aniversário, você recebe automaticamente uma mensagem no WhatsApp e um aviso no Portal do Paciente.",
-      "O benefício traz um código exclusivo no formato BRT-ANIV-XXXX, válido por 7 dias corridos.",
-      "Responda a mensagem no WhatsApp ou fale pelo Chat do Portal para reservar o melhor horário na sua unidade.",
-      "Apresente o código BRT-ANIV-XXXX na recepção no dia do atendimento para validar sua cortesia."
+      "Na data do seu aniversário, você recebe o bônus anual de 150 pontos base (multiplicados pelo seu nível) e uma mensagem especial da equipe Bertuol.",
+      "Quando houver voucher de cortesia BRT-ANIV-XXXX ativo na campanha da unidade, ele traz o código exclusivo e o prazo de validade para agendamento.",
+      "Membros Ouro recebem ainda o Kit Aniversário Ouro (garrafa térmica inox personalizada) e membros Diamante o Kit Aniversário Premium.",
+      "Apresente o código do voucher na recepção ou agende diretamente pelo Chat do aplicativo."
     ],
-    "tip": "Fique atento à data de validade informada na mensagem: o agendamento e uso do voucher devem ocorrer dentro do prazo de 7 dias.",
-    "keywords": ["aniversario", "presente", "cortesia", "brt-aniv", "voucher aniversario", "7 dias", "validade"],
+    "tip": "Fique atento à validade informada na mensagem do voucher de aniversário para garantir sua reserva no prazo.",
+    "keywords": ["aniversario", "presente", "cortesia", "brt-aniv", "voucher aniversario", "150 pontos", "kit aniversario"],
     "includeInPrint": true,
-    "printOrder": 7,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 8,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-instalar-iphone",
@@ -138,12 +166,12 @@
       "Role as opções e toque em Adicionar à Tela de Início.",
       "Confirme em Adicionar e passe a abrir o app sempre pelo ícone criado na tela inicial."
     ],
-    "tip": "No iPhone, instalar na Tela de Início pelo Safari também é obrigatório para receber notificações push de lembretes e vouchers.",
+    "tip": "No iPhone, instalar na Tela de Início pelo Safari também é obrigatório para receber notificações push de lembretes, vencimento de pontos e vouchers.",
     "keywords": ["iphone", "ios", "safari", "instalar", "aplicativo", "pwa", "tela de inicio", "app store"],
     "includeInPrint": true,
-    "printOrder": 8,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 9,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-instalar-android",
@@ -159,34 +187,34 @@
     ],
     "keywords": ["android", "chrome", "instalar", "aplicativo", "pwa", "play store"],
     "includeInPrint": true,
-    "printOrder": 9,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 10,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-notificacoes",
     "profile": "patient",
     "category": "App no Celular e Notificações",
-    "title": "Como ativar notificações de consultas, pontos e mensagens?",
-    "summary": "Ative os avisos no celular para receber lembretes de consultas, respostas da clínica e vouchers.",
+    "title": "Como ativar notificações de consultas, vencimento de pontos e mensagens?",
+    "summary": "Ative os avisos no celular para receber lembretes de consultas, alertas de revisão semestral, pontos prestes a vencer e respostas da clínica.",
     "steps": [
       "Abra o aplicativo instalado na Tela de Início do celular (em iPhone, sempre pelo ícone instalado via Safari).",
       "Toque no ícone de sino no topo da tela para abrir a Central de Notificações.",
       "Quando o aparelho solicitar permissão de notificações, toque em Permitir.",
       "Se havia bloqueado antes, vá em Ajustes/Configurações do celular > Notificações e habilite o app Bertuol Paciente."
     ],
-    "keywords": ["notificacao", "push", "alerta", "lembrete", "sino", "nao recebo", "permitir"],
+    "keywords": ["notificacao", "push", "alerta", "lembrete", "sino", "nao recebo", "permitir", "vencimento pontos"],
     "includeInPrint": true,
-    "printOrder": 10,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 11,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "pat-chat-clinica",
     "profile": "patient",
     "category": "Atendimento e Mensagens",
     "title": "Como falar diretamente com a clínica pelo aplicativo?",
-    "summary": "Use o ícone de mensagens no topo do Portal para enviar dúvidas, áudios ou fotos para a recepção.",
+    "summary": "Use o ícone de mensagens no topo do Portal para enviar dúvidas, áudios ou fotos para a recepção e equipe clínica.",
     "steps": [
       "No topo do Portal do Paciente, toque no ícone de mensagens (balão de conversa).",
       "Inicie uma conversa ou continue o atendimento em andamento com a equipe da sua unidade.",
@@ -194,8 +222,8 @@
     ],
     "keywords": ["chat", "mensagem", "falar com clinica", "recepcao", "audio", "foto", "duvida", "remarcar"],
     "includeInPrint": true,
-    "printOrder": 11,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 12,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   }
 ]

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Bell, HelpCircle, LogOut, ShieldCheck, Sparkles, User, MessageSquare } from 'lucide-react';
+import { Award, Bell, FileText, HelpCircle, LogOut, ShieldCheck, Sparkles, User, MessageSquare } from 'lucide-react';
 import { APP_VERSION } from '../../config/version';
 import type { PatientTier } from '../types/patientTypes';
 
@@ -12,6 +12,7 @@ interface PatientHeaderProps {
   onOpenNotifications: () => void;
   onOpenMessages?: () => void;
   onOpenSupport?: () => void;
+  onOpenTerms?: () => void;
   onOpenAdminModal?: () => void;
   isBirthdayToday?: boolean;
   onLogout?: () => void;
@@ -60,6 +61,7 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
   onOpenNotifications,
   onOpenMessages,
   onOpenSupport,
+  onOpenTerms,
   onOpenAdminModal,
   isBirthdayToday = false,
   onLogout,
@@ -139,6 +141,19 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
               aria-label="Abrir Central de Suporte"
             >
               <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          )}
+
+          {/* Regulamento & Termos Aceitos (CDC / LGPD) */}
+          {onOpenTerms && (
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] p-2 sm:p-2.5 rounded-xl text-gray-600 hover:text-[#147A80] hover:bg-teal-50 transition-colors cursor-pointer flex items-center justify-center"
+              title="Regulamento do Clube Sorriso e Termos Aceitos"
+              aria-label="Ver regulamento e termos aceitos"
+            >
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
 

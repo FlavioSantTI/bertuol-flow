@@ -39,6 +39,8 @@ import {
   PatientLoginScreen,
   PatientLoginSuccessPayload,
 } from './components/PatientLoginScreen';
+import { PatientTermsGate } from './components/PatientTermsGate';
+import type { PatientTermsAcceptanceRecord } from '../data/clubeSorrisoTerms';
 
 // Patient Services & Types
 import { patientApiService } from './services/patientApiService';
@@ -183,6 +185,11 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     Boolean(!hasExplicitUrlPatient && !hasStoredAuthSession && urlActivationToken)
   );
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [termsStatusChecked, setTermsStatusChecked] = useState<boolean>(false);
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [termsAcceptance, setTermsAcceptance] = useState<PatientTermsAcceptanceRecord | null>(null);
+  const [isTermsViewerOpen, setIsTermsViewerOpen] = useState<boolean>(false);
 
   const [phone, setPhone] = useState(initialPhone);
   const [patientName, setPatientName] = useState(initialName);
@@ -224,6 +231,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           const pName = cleanPatientName(data.patient.name);
           const pPhone = String(data.patient.phone || '');
           const pClinicId = Number(data.patient.clinicId || initialClinicId || 1);
+          setPatientId(data.patient.id ? String(data.patient.id) : null);
           setPhone(pPhone);
           setPatientName(pName);
           setClinicId(pClinicId);
@@ -232,6 +240,9 @@ export const PatientApp: React.FC<PatientAppProps> = ({
               ? 'Bertuol Odontologia — Unidade Paraíso'
               : 'Unidade Matriz Palmas • 104 Sul, Av. JK'
           );
+          setTermsAccepted(data.termsAccepted === true);
+          setTermsAcceptance(data.termsAcceptance || null);
+          setTermsStatusChecked(true);
           localStorage.setItem('bertuol_patient_authenticated', 'true');
           localStorage.setItem('bertuol_patient_phone', pPhone);
           localStorage.setItem('bertuol_patient_name', pName);
@@ -258,6 +269,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     const targetClinicId = payload.clinicId || initialClinicId || 1;
     const matched = TEST_PATIENTS.find((p) => p.phone === cleanPhone);
 
+    setPatientId(payload.id ? String(payload.id) : null);
     setPhone(cleanPhone);
     setPatientName(cleanName);
     setClinicId(targetClinicId);
@@ -276,12 +288,54 @@ export const PatientApp: React.FC<PatientAppProps> = ({
       setProcedures(matched.procedures);
     }
 
+    if (typeof payload.termsAccepted === 'boolean') {
+      setTermsAccepted(payload.termsAccepted);
+      setTermsAcceptance(payload.termsAcceptance || null);
+      setTermsStatusChecked(true);
+    } else {
+      setTermsAccepted(false);
+      setTermsAcceptance(null);
+      setTermsStatusChecked(false);
+    }
+
     localStorage.setItem('bertuol_patient_authenticated', 'true');
     localStorage.setItem('bertuol_patient_phone', cleanPhone);
     localStorage.setItem('bertuol_patient_name', cleanName);
     setLoginError(null);
     setIsAuthenticated(true);
   };
+
+  // Verificação obrigatória no servidor do aceite dos Termos e Privacidade (nunca depende só do navegador)
+  useEffect(() => {
+    if (!isAuthenticated || !phone) {
+      setTermsStatusChecked(false);
+      setTermsAccepted(false);
+      setTermsAcceptance(null);
+      return;
+    }
+    if (termsStatusChecked) return;
+
+    let active = true;
+    patientApiService
+      .getTermsStatus(phone, patientId || undefined)
+      .then((res) => {
+        if (!active) return;
+        setTermsAccepted(Boolean(res?.accepted));
+        setTermsAcceptance(res?.acceptance || null);
+        setTermsStatusChecked(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        // Fail-closed: sem confirmação do servidor, exige tela de aceite
+        setTermsAccepted(false);
+        setTermsAcceptance(null);
+        setTermsStatusChecked(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, phone, patientId, termsStatusChecked]);
 
   const initialAba = urlParams.get('aba');
   const initialOpenMsg = urlParams.get('chat') === 'true' || urlParams.get('msg') === 'true' || urlParams.get('mensagens') === 'true';
@@ -389,7 +443,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // Carregar contagem de mensagens de chat não lidas do paciente
   useEffect(() => {
-    if (!isAuthenticated || (!phone && !patientName)) return;
+    if (!isAuthenticated || !termsAccepted || (!phone && !patientName)) return;
     const fetchPatientUnread = async () => {
       try {
         const queryParams = new URLSearchParams();
@@ -411,7 +465,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     fetchPatientUnread();
     const interval = setInterval(fetchPatientUnread, 4000);
     return () => clearInterval(interval);
-  }, [phone, patientName]);
+  }, [isAuthenticated, termsAccepted, phone, patientName]);
 
   const handleMarkNotificationsRead = async (id?: string) => {
     try {
@@ -465,6 +519,15 @@ export const PatientApp: React.FC<PatientAppProps> = ({
       const res = await fetch(`/api/patient/profile?phone=${encodeURIComponent(phone)}`);
       if (res.ok) {
         const data = await res.json();
+        if (data.termsAccepted === false) {
+          setTermsAccepted(false);
+          setTermsAcceptance(null);
+          setTermsStatusChecked(true);
+          return;
+        }
+        if (data.termsAcceptance) {
+          setTermsAcceptance(data.termsAcceptance);
+        }
         setTotalPoints(data.totalPoints || 0);
         setTier(data.tier || 'bronze');
         setTierProgress(data.tierProgress || 0);
@@ -509,7 +572,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
 
   // Consultar Aniversariantes do Clinicorp ao vivo
   useEffect(() => {
-    if (!isAuthenticated || !phone) return;
+    if (!isAuthenticated || !termsAccepted || !phone) return;
     const checkBirthdays = async () => {
       try {
         const res = await fetch(`/api/clinicorp/birthdays?clinic_id=${clinicId}`);
@@ -554,7 +617,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     };
 
     checkBirthdays();
-  }, [isAuthenticated, phone, clinicId, patientName]);
+  }, [isAuthenticated, termsAccepted, phone, clinicId, patientName]);
 
   const handleSubscribePush = async () => {
     setIsSubscribingPush(true);
@@ -765,8 +828,13 @@ export const PatientApp: React.FC<PatientAppProps> = ({
     localStorage.removeItem('bertuol_patient_phone');
     localStorage.removeItem('bertuol_patient_name');
     setIsAuthenticated(false);
+    setPatientId(null);
     setPhone('');
     setPatientName('');
+    setTermsStatusChecked(false);
+    setTermsAccepted(false);
+    setTermsAcceptance(null);
+    setIsTermsViewerOpen(false);
 
     const url = new URL(window.location.href);
     url.searchParams.delete('phone');
@@ -923,7 +991,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
   };
 
   useEffect(() => {
-    if (!isAuthenticated || !phone) return;
+    if (!isAuthenticated || !termsStatusChecked || !termsAccepted || !phone) return;
     loadProfile();
     loadRewards();
 
@@ -938,7 +1006,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
       } catch {}
     }
-  }, [isAuthenticated, phone, loadProfile]);
+  }, [isAuthenticated, termsStatusChecked, termsAccepted, phone, loadProfile]);
 
   if (!isAuthenticated) {
     return (
@@ -955,6 +1023,35 @@ export const PatientApp: React.FC<PatientAppProps> = ({
             window.location.href = '/';
           }
         }}
+      />
+    );
+  }
+
+  if (!termsStatusChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-11 h-11 rounded-2xl border-2 border-[#147A80]/20 border-t-[#147A80] animate-spin" />
+        <p className="mt-4 text-sm font-semibold text-slate-900">Verificando seu acesso ao Clube Sorriso...</p>
+        <p className="mt-1 text-xs text-slate-500">Validando regulamento e privacidade no sistema</p>
+      </div>
+    );
+  }
+
+  if (!termsAccepted) {
+    return (
+      <PatientTermsGate
+        mode="gate"
+        patientName={patientName || 'Paciente Bertuol'}
+        patientPhone={phone}
+        patientId={patientId}
+        clinicId={clinicId}
+        onAccepted={(record) => {
+          setTermsAcceptance(record);
+          setTermsAccepted(true);
+          setTermsStatusChecked(true);
+          showNotification('Regulamento e Política de Privacidade aceitos! Bem-vindo ao Clube Sorriso Bertuol.');
+        }}
+        onDeclineAndLogout={handleLogout}
       />
     );
   }
@@ -1025,6 +1122,7 @@ export const PatientApp: React.FC<PatientAppProps> = ({
           setIsMessagingDrawerOpen(true);
         }}
         onOpenSupport={() => setIsSupportModalOpen(true)}
+        onOpenTerms={() => setIsTermsViewerOpen(true)}
         onOpenAdminModal={() => {
           if (onOpenAdminGamificationModal) {
             onOpenAdminGamificationModal();
@@ -1359,6 +1457,19 @@ export const PatientApp: React.FC<PatientAppProps> = ({
         userName={patientName}
         initialProfile="patient"
       />
+
+      {/* Regulamento Oficial e Comprovante de Aceite (leitura a qualquer momento) */}
+      {isTermsViewerOpen && (
+        <PatientTermsGate
+          mode="viewer"
+          patientName={patientName || 'Paciente Bertuol'}
+          patientPhone={phone}
+          patientId={patientId}
+          clinicId={clinicId}
+          existingAcceptance={termsAcceptance}
+          onCloseViewer={() => setIsTermsViewerOpen(false)}
+        />
+      )}
     </div>
   );
 };

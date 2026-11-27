@@ -13,8 +13,8 @@
     "keywords": ["primeiro login", "senha provisoria", "lgpd", "acesso", "lembrar acesso", "entrar"],
     "includeInPrint": true,
     "printOrder": 1,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-esqueci-senha",
@@ -30,8 +30,8 @@
     "keywords": ["esqueci senha", "redefinir", "resetar", "bloqueado", "ti", "administrador"],
     "includeInPrint": true,
     "printOrder": 2,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-biometria",
@@ -48,8 +48,8 @@
     "keywords": ["biometria", "face id", "touch id", "digital", "webauthn", "passkey"],
     "includeInPrint": true,
     "printOrder": 3,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-timeline-clinicorp",
@@ -66,8 +66,8 @@
     "keywords": ["timeline", "agenda", "clinicorp", "sincronizacao", "alergia", "prontuario", "status"],
     "includeInPrint": true,
     "printOrder": 4,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-troca-unidade",
@@ -83,8 +83,8 @@
     "keywords": ["unidade", "palmas", "paraiso", "multi-clinica", "trocar clinica", "cadeado"],
     "includeInPrint": true,
     "printOrder": 5,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-alerta-chegada",
@@ -102,8 +102,8 @@
     "keywords": ["chegada", "check-in", "alerta", "campainha", "som", "vibracao", "whatsapp", "push"],
     "includeInPrint": true,
     "printOrder": 6,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-briefing-matinal",
@@ -119,8 +119,8 @@
     "keywords": ["briefing", "matinal", "08:00", "resumo do dia", "notificacao", "agenda"],
     "includeInPrint": true,
     "printOrder": 7,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-push-iphone",
@@ -136,8 +136,8 @@
     "keywords": ["iphone", "ios", "safari", "push", "nao recebo notificacao", "pwa"],
     "includeInPrint": true,
     "printOrder": 8,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-resumo-ia",
@@ -154,13 +154,32 @@
     "keywords": ["resumo", "ia", "inteligencia artificial", "gemini", "prontuario", "clinico", "pre-atendimento"],
     "includeInPrint": true,
     "printOrder": 9,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
+  },
+  {
+    "id": "den-clube-autonomia-clinica",
+    "profile": "dentist",
+    "category": "Clube Sorriso v1.0 e Mensageria",
+    "title": "Como funciona a autonomia clínica nos resgates do Clube Sorriso e o cuidado Ouro/Diamante?",
+    "summary": "Nenhum voucher de serviço obriga a realização de procedimento sem indicação clínica; havendo contraindicação, os pontos são devolvidos integralmente.",
+    "steps": [
+      "Regra Clínica Inegociável: todos os resgates de serviços clínicos (aplicação de flúor, profilaxia extra, manutenção de lentes, simulação digital, clareamento caseiro ou em consultório) e refis de gel clareador geram apenas um voucher sujeito à sua avaliação técnica.",
+      "Caso o procedimento seja contraindicado ou precise ser substituído, informe à recepção para cancelamento do voucher — os pontos voltam integralmente para a conta do paciente, preservando ética (Resolução CFO 271/2025) e segurança.",
+      "Cuidados programados por nível: pacientes Ouro têm direito à revisão estética anual (20 min para fotografia, avaliação de cor e polimento) e orientação de uso da escova elétrica; pacientes Diamante contam com Check-up Diamante anual completo, treinamento do irrigador Waterpik e retorno clínico em até 48h após cirurgias e procedimentos relevantes.",
+      "Os dados clínicos do prontuário são mantidos totalmente separados das informações do programa de fidelidade (conformidade LGPD)."
+    ],
+    "tip": "Ao entregar um presente de ascensão ou Kit Pós-Procedimento ao paciente Ouro/Diamante, um cartão assinado pelo especialista potencializa a fidelização.",
+    "keywords": ["clube sorriso", "autonomia clinica", "regra clinica", "voucher", "contraindicacao", "cfo", "diamante", "ouro", "check-up", "revisao estetica"],
+    "includeInPrint": true,
+    "printOrder": 10,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   },
   {
     "id": "den-clube-chat",
     "profile": "dentist",
-    "category": "Clube Sorriso e Mensageria",
+    "category": "Clube Sorriso v1.0 e Mensageria",
     "title": "Como consultar vouchers do Clube Sorriso e falar com a recepção?",
     "summary": "Use os botões do cabeçalho para consultar pontos/vouchers de pacientes e trocar mensagens diretas com a recepção.",
     "steps": [
@@ -169,8 +188,8 @@
     ],
     "keywords": ["clube sorriso", "voucher", "mensageria", "chat interno", "recepcao", "audio"],
     "includeInPrint": true,
-    "printOrder": 10,
-    "updatedInVersion": "1.6.0",
-    "lastReviewedAt": "2026-11-24"
+    "printOrder": 11,
+    "updatedInVersion": "1.9.8",
+    "lastReviewedAt": "2026-11-27"
   }
 ]
