@@ -161,7 +161,18 @@ export default function App() {
   const [isAdminGamificationOpen, setIsAdminGamificationOpen] = useState(false);
   const [isWebAuthnModalOpen, setIsWebAuthnModalOpen] = useState(false);
   const [isInternalMessagingOpen, setIsInternalMessagingOpen] = useState(false);
-  const [isCRMModalOpen, setIsCRMModalOpen] = useState(false);
+  const [isCRMModalOpen, setIsCRMModalOpen] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const modalParam = params.get('modal')?.toLowerCase();
+      const appParam = params.get('app')?.toLowerCase();
+      if (modalParam === 'crm' || appParam === 'crm') return true;
+      if (sessionStorage.getItem('bertuol_open_modal') === 'crm') return true;
+    } catch {
+      // Ignore storage/URL restrictions
+    }
+    return false;
+  });
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [arrivalAlert, setArrivalAlert] = useState<{
@@ -398,7 +409,10 @@ export default function App() {
             if (freshRecord) {
               const freshRole = normalizeUserRole(freshRecord.role);
               const freshClinicId = freshRecord.clinicId || activeCtx.clinicId || 1;
-              const syncedCtx: AppUserContext = {
+                const definedRemotePerms = Object.fromEntries(
+                  Object.entries(freshRecord.permissions || {}).filter(([, v]) => v !== undefined)
+                );
+                const syncedCtx: AppUserContext = {
                 ...activeCtx,
                 userId: freshRecord.id,
                 userName: freshRecord.name || activeCtx.userName,
@@ -410,7 +424,7 @@ export default function App() {
                 dentistId: freshRole === 'receptionist' ? undefined : (freshRecord.dentist_id ?? activeCtx.dentistId),
                 permissions: {
                   ...getDefaultPermissionsForRole(freshRole),
-                  ...(freshRecord.permissions || {}),
+                  ...definedRemotePerms,
                   ...(freshRole === 'receptionist' ? { canViewAllDentistsAgenda: true } : {}),
                 },
               };
@@ -772,7 +786,40 @@ export default function App() {
     }
   };
 
+  const handleOpenCRMModal = () => {
+    setIsCRMModalOpen(true);
+    try {
+      sessionStorage.setItem('bertuol_open_modal', 'crm');
+      const params = new URLSearchParams(window.location.search);
+      params.set('modal', 'crm');
+      window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    } catch {
+      // Safe fallback
+    }
+  };
+
+  const handleCloseCRMModal = () => {
+    setIsCRMModalOpen(false);
+    try {
+      sessionStorage.removeItem('bertuol_open_modal');
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('modal')?.toLowerCase() === 'crm') {
+        params.delete('modal');
+        const qs = params.toString();
+        window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+      }
+    } catch {
+      // Safe fallback
+    }
+  };
+
   const handleLogout = () => {
+    try {
+      sessionStorage.removeItem('bertuol_open_modal');
+    } catch {
+      // ignore
+    }
+    setIsCRMModalOpen(false);
     dataService.logout();
     setUserContext(dataService.getUserContext());
   };
@@ -1003,7 +1050,7 @@ export default function App() {
         onOpenAdminGamificationModal={() => setIsAdminGamificationOpen(true)}
         onOpenMessagingModal={() => setIsInternalMessagingOpen(true)}
         unreadMessagesCount={unreadStaffMessagesCount}
-        onOpenCRMModal={() => setIsCRMModalOpen(true)}
+        onOpenCRMModal={handleOpenCRMModal}
         onOpenSupportModal={() => setIsSupportModalOpen(true)}
         onLogout={handleLogout}
       />
@@ -1462,7 +1509,7 @@ export default function App() {
       {componentAccess.crm && (
         <MiniCRMModal
           isOpen={isCRMModalOpen}
-          onClose={() => setIsCRMModalOpen(false)}
+          onClose={handleCloseCRMModal}
           clinics={clinics}
           dentists={dentists}
           patients={dataService.getPatients()}

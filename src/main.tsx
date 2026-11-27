@@ -67,15 +67,12 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 // Safely register PWA Service Worker without crashing if iframe restricts it
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    const updateSW = registerSW({
+    registerSW({
       immediate: true,
       onNeedRefresh() {
-        updateSW(true);
-      },
-      onRegisteredSW(_swUrl, r) {
-        if (r) {
-          r.update();
-        }
+        // Atualização pronta em segundo plano: será aplicada suavemente na próxima abertura/recarregamento
+        // sem interromper nem expulsar o usuário da tela atual (ex.: CRM ou Mensageria).
+        console.info('[PWA] Nova versão disponível em segundo plano; será ativada no próximo recarregamento.');
       },
       onRegisterError(error) {
         console.warn('Falha no registro do Service Worker:', error);

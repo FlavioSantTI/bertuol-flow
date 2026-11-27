@@ -9,15 +9,10 @@ import { APP_VERSION } from '../config/version';
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   try {
-    const updateSW = registerSW({
+    registerSW({
       immediate: true,
       onNeedRefresh() {
-        updateSW(true);
-      },
-      onRegisteredSW(_swUrl, r) {
-        if (r) {
-          r.update();
-        }
+        console.info('[PWA Paciente] Nova versão disponível em segundo plano; será ativada no próximo recarregamento.');
       },
       onRegisterError(error) {
         console.warn('Falha no registro do Service Worker do Paciente:', error);

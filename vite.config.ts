@@ -10,7 +10,7 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: '/',
@@ -44,13 +44,11 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          cacheId: 'bertuol-flow-v1.4.0',
+          cacheId: 'bertuol-flow-v1.9.9',
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           cleanupOutdatedCaches: true,
-          clientsClaim: true,
-          skipWaiting: true,
-          importScripts: ['/sw-push.js?v=1.4.0'],
+          importScripts: ['/sw-push.js?v=1.9.9'],
         },
         devOptions: {
           enabled: false,
